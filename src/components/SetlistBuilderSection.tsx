@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
   ArrowDown,
+  ChevronsUp,
   Trash2,
   Plus,
   Copy,
@@ -11,6 +12,7 @@ import {
   RotateCcw,
   ListMusic,
   BookOpen,
+  Search,
 } from 'lucide-react';
 import {
   SongItem,
@@ -23,6 +25,7 @@ import {
   isSafeAssetUrl,
   sanitizeUserText,
   SetlistEntry,
+  sortTourArchives,
 } from '../utils/fanLogic';
 
 interface SetlistBuilderSectionProps {
@@ -32,7 +35,7 @@ interface SetlistBuilderSectionProps {
   onChangeTitle: (title: string) => void;
   onAddSong: (songId: string, isEncore?: boolean) => void;
   onRemoveSong: (index: number) => void;
-  onMoveSong: (index: number, direction: 'up' | 'down') => void;
+  onMoveSong: (index: number, direction: 'up' | 'down' | 'top') => void;
   onToggleEncore: (index: number) => void;
   onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => void;
   attendedTourIds: string[];
@@ -57,6 +60,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   initialSubTab = 'builder',
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'builder' | 'tours'>(initialSubTab);
+  const [tourSortOrder, setTourSortOrder] = useState<'newest' | 'oldest'>('newest');
+  const [songSearchFilter, setSongSearchFilter] = useState<string>('');
   const [selectedSongToAdd, setSelectedSongToAdd] = useState<string>(
     songs.find((s) => !setlist.some((item) => item.songId === s.id))?.id ||
       songs[0]?.id ||
@@ -65,6 +70,30 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [addAsEncore, setAddAsEncore] = useState<boolean>(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const copyTimerRef = useRef<number | null>(null);
+
+  const sortedTours = useMemo(
+    () => sortTourArchives(TOUR_ARCHIVES, tourSortOrder),
+    [tourSortOrder]
+  );
+
+  const selectableSongsByAlbum = useMemo(() => {
+    const q = songSearchFilter.trim().toLowerCase();
+    const matching = q
+      ? songs.filter(
+          (s) =>
+            s.title.toLowerCase().includes(q) ||
+            s.album.toLowerCase().includes(q) ||
+            s.tieUp.toLowerCase().includes(q)
+        )
+      : songs;
+    const groups = new Map<string, SongItem[]>();
+    for (const s of matching) {
+      const list = groups.get(s.album) || [];
+      list.push(s);
+      groups.set(s.album, list);
+    }
+    return Array.from(groups.entries());
+  }, [songs, songSearchFilter]);
 
   useEffect(() => {
     setActiveSubTab(initialSubTab);
@@ -246,31 +275,69 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 </button>
               </div>
 
-              {/* Song Adder Row */}
-              <div className="mt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 rounded-lg bg-[#F2EFE9] p-3 border border-[#E6E1D6]">
-                <div className="flex-1 min-w-0">
-                  <label htmlFor="add-song-select" className="sr-only">
-                    追加する曲を選択
-                  </label>
-                  <select
-                    id="add-song-select"
-                    value={selectedSongToAdd}
-                    onChange={(e) => setSelectedSongToAdd(e.target.value)}
-                    className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] min-h-[38px]"
-                  >
-                    {songs.map((s) => {
-                      const alreadyIn = setlistIdSet.has(s.id);
-                      return (
-                        <option key={s.id} value={s.id}>
-                          {s.title}
-                          {alreadyIn ? '（追加済み）' : `（${s.album} · BPM ${s.bpm} · ${formatDuration(s.durationSec)}）`}
-                        </option>
-                      );
-                    })}
-                  </select>
+              {/* Song Adder Row with Quick Filter & Album Grouping */}
+              <div className="mt-4 space-y-2.5 rounded-lg bg-[#F2EFE9] p-3 border border-[#E6E1D6]">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                  <div className="relative sm:col-span-5">
+                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78716C]" />
+                    <label htmlFor="setlist-song-filter" className="sr-only">
+                      追加したい曲名を検索
+                    </label>
+                    <input
+                      id="setlist-song-filter"
+                      type="text"
+                      maxLength={40}
+                      value={songSearchFilter}
+                      onChange={(e) => {
+                        const val = sanitizeUserText(e.target.value, 40);
+                        setSongSearchFilter(val);
+                        const q = val.trim().toLowerCase();
+                        if (q) {
+                          const firstHit = songs.find(
+                            (s) =>
+                              s.title.toLowerCase().includes(q) ||
+                              s.album.toLowerCase().includes(q)
+                          );
+                          if (firstHit) {
+                            setSelectedSongToAdd(firstHit.id);
+                          }
+                        }
+                      }}
+                      placeholder="曲名・アルバム名で絞り込み..."
+                      className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-3 py-2 text-xs text-[#1C1917] min-h-[38px]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-7 min-w-0">
+                    <label htmlFor="add-song-select" className="sr-only">
+                      追加する曲を選択
+                    </label>
+                    <select
+                      id="add-song-select"
+                      value={selectedSongToAdd}
+                      onChange={(e) => setSelectedSongToAdd(e.target.value)}
+                      className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] min-h-[38px]"
+                    >
+                      {selectableSongsByAlbum.map(([albumName, groupSongs]) => (
+                        <optgroup key={albumName} label={`収録：${albumName}`}>
+                          {groupSongs.map((s) => {
+                            const alreadyIn = setlistIdSet.has(s.id);
+                            return (
+                              <option key={s.id} value={s.id}>
+                                {s.title}
+                                {alreadyIn
+                                  ? '（追加済み）'
+                                  : `（BPM ${s.bpm} · ${formatDuration(s.durationSec)}）`}
+                              </option>
+                            );
+                          })}
+                        </optgroup>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between sm:justify-end gap-3">
+                <div className="flex items-center justify-between sm:justify-end gap-3 pt-1">
                   <label className="inline-flex items-center gap-1.5 text-xs font-medium text-[#1C1917] cursor-pointer whitespace-nowrap shrink-0">
                     <input
                       type="checkbox"
@@ -366,6 +433,20 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             className="rounded border border-[#D5CEC2] bg-[#FBF9F5] px-2 py-1 text-[11px] font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] whitespace-nowrap shrink-0 cursor-pointer"
                           >
                             {entry.isEncore ? '本編へ' : 'アンコールへ'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onMoveSong(idx, 'top')}
+                            disabled={
+                              idx === 0 ||
+                              setlist[idx - 1]?.isEncore !== entry.isEncore
+                            }
+                            title="1曲目（先頭）へ移動"
+                            aria-label={`${song.title}を先頭へ移動`}
+                            className="inline-flex items-center gap-0.5 rounded border border-[#D5CEC2] px-1.5 py-1 text-[11px] font-bold text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
+                          >
+                            <ChevronsUp className="h-3 w-3" />
+                            <span className="hidden sm:inline">先頭</span>
                           </button>
                           <button
                             type="button"
@@ -509,9 +590,40 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
         ) : (
           /* Sub-Tab 2: Tour Archive & Participation Log */
-          <div className="mt-5">
+          <div className="mt-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E6E1D6] bg-white px-4 py-3">
+              <div className="text-xs text-[#57534E]">
+                <strong className="text-[#1C1917]">2019年『Hall Travelers』〜 2026年全国ツアー（全{sortedTours.length}公演シリーズ）：</strong>
+                開催時期（新しい順・古い順）で並び替えたり、代表セトリを1クリックで読み込めます。
+              </div>
+              <div className="inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] shrink-0">
+                <button
+                  type="button"
+                  onClick={() => setTourSortOrder('newest')}
+                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+                    tourSortOrder === 'newest'
+                      ? 'bg-[#1C1917] text-white'
+                      : 'text-[#57534E] hover:text-[#1C1917]'
+                  }`}
+                >
+                  開催が新しい順 (2026→2019)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTourSortOrder('oldest')}
+                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
+                    tourSortOrder === 'oldest'
+                      ? 'bg-[#1C1917] text-white'
+                      : 'text-[#57534E] hover:text-[#1C1917]'
+                  }`}
+                >
+                  開催が古い順 (2019→2026)
+                </button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {TOUR_ARCHIVES.map((tour) => {
+              {sortedTours.map((tour) => {
                 const attended = attendedTourIds.includes(tour.id);
                 return (
                   <article

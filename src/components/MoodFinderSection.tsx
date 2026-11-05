@@ -74,6 +74,8 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
   const [selectedSound, setSelectedSound] = useState<SoundTag>('brass_funk');
   const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const [isShareCardOpen, setIsShareCardOpen] = useState<boolean>(false);
+  const [shareCardRankIndex, setShareCardRankIndex] = useState<number>(0);
+  const [shareCardTheme, setShareCardTheme] = useState<'dark' | 'editorial'>('dark');
   const [copiedShareText, setCopiedShareText] = useState<boolean>(false);
   const copyShareTimerRef = useRef<number | null>(null);
 
@@ -98,6 +100,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
 
   const bestMatch = topMatches[0];
   const subMatches = topMatches.slice(1, 3);
+  const activeShareMatch = topMatches[shareCardRankIndex] || bestMatch;
 
   const handlePreviewTempo = (song: SongItem) => {
     if (playingSongId === song.id) {
@@ -121,13 +124,14 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
     stopTempoPreview();
     setPlayingSongId(null);
     setIsShareCardOpen(false);
+    setShareCardRankIndex(0);
     setCopiedShareText(false);
     setStep(1);
   };
 
   const handleCopyShareCardText = () => {
-    if (!bestMatch) return;
-    const text = formatDiagnosisShareText(bestMatch, {
+    if (!activeShareMatch) return;
+    const text = formatDiagnosisShareText(activeShareMatch, {
       mood: selectedMood,
       situation: selectedSituation,
       sound: selectedSound,
@@ -310,6 +314,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       type="button"
                       onClick={() => {
                         setSelectedSound(opt.id);
+                        setShareCardRankIndex(0);
                         setIsShareCardOpen(false);
                         setStep('result');
                       }}
@@ -527,7 +532,10 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
 
                         <button
                           type="button"
-                          onClick={() => setIsShareCardOpen((prev) => !prev)}
+                          onClick={() => {
+                            setShareCardRankIndex(0);
+                            setIsShareCardOpen((prev) => !prev);
+                          }}
                           aria-expanded={isShareCardOpen}
                           aria-controls="diagnosis-share-card-panel"
                           className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
@@ -578,22 +586,25 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                 </div>
 
                 {/* DOM-Based SNS Share Card Generator Preview */}
-                {isShareCardOpen && (
+                {isShareCardOpen && activeShareMatch && (
                   <div
                     id="diagnosis-share-card-panel"
                     role="region"
                     aria-label="SNSシェアカードプレビュー"
                     data-testid="diagnosis-sns-share-card"
-                    className="mt-6 pt-6 border-t border-[#E6E1D6] space-y-3"
+                    className="mt-6 pt-6 border-t border-[#E6E1D6] space-y-4"
                   >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h4 className="text-sm sm:text-base font-bold text-[#1C1917]">
-                          マイソング診断シェアカード（スクリーンショットやテキストコピーで共有できます）
+                          マイソング診断 SNS風シェアカード（既存のDOM要素のみで構築）
                         </h4>
+                        <p className="text-xs text-[#57534E]">
+                          おすすめ1位〜3位の楽曲切り替えや、カード背景テーマの切り替えにも対応しています。
+                        </p>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button
                           type="button"
                           onClick={handleCopyShareCardText}
@@ -623,33 +634,104 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       </div>
                     </div>
 
+                    {/* Controls: Switch Recommended Song (1st / 2nd / 3rd) & Theme (Dark / Editorial) */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-[#78716C] mr-1">
+                          カード表示曲：
+                        </span>
+                        {topMatches.map((m, idx) => (
+                          <button
+                            key={m.song.id}
+                            type="button"
+                            onClick={() => setShareCardRankIndex(idx)}
+                            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                              shareCardRankIndex === idx
+                                ? 'bg-[#C83E2B] text-white'
+                                : 'border border-[#D5CEC2] bg-white text-[#1C1917] hover:bg-[#F2EFE9]'
+                            }`}
+                          >
+                            {idx + 1}位：{m.song.title} ({m.matchScore}%)
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[11px] font-bold text-[#78716C]">
+                          配色：
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setShareCardTheme('dark')}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                            shareCardTheme === 'dark'
+                              ? 'bg-[#1C1917] text-white'
+                              : 'border border-[#D5CEC2] bg-white text-[#57534E]'
+                          }`}
+                        >
+                          ダーク仕様
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShareCardTheme('editorial')}
+                          className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                            shareCardTheme === 'editorial'
+                              ? 'bg-[#1C1917] text-white'
+                              : 'border border-[#D5CEC2] bg-white text-[#57534E]'
+                          }`}
+                        >
+                          マガジン紙面仕様
+                        </button>
+                      </div>
+                    </div>
+
                     {/* The Visual SNS Card Constructed Purely with Existing DOM & Assets */}
-                    <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] shadow-lg">
+                    <div
+                      className={`mx-auto max-w-2xl overflow-hidden rounded-2xl border shadow-lg transition-colors ${
+                        shareCardTheme === 'dark'
+                          ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
+                          : 'border-[#1C1917] bg-[#FBF9F5] text-[#1C1917]'
+                      }`}
+                    >
                       {/* Card Top Strip */}
-                      <div className="flex items-center justify-between gap-2 border-b border-white/15 bg-black/30 px-5 py-3 text-xs">
-                        <span className="font-bold text-[#F5D0C9]">
+                      <div
+                        className={`flex items-center justify-between gap-2 border-b px-5 py-3 text-xs ${
+                          shareCardTheme === 'dark'
+                            ? 'border-white/15 bg-black/30'
+                            : 'border-[#E6E1D6] bg-[#F2EFE9]'
+                        }`}
+                      >
+                        <span
+                          className={`font-bold ${
+                            shareCardTheme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
+                          }`}
+                        >
                           115万キロのファンノート · マイソング診断結果
                         </span>
-                        <span className="font-mono-num font-bold text-white">
-                          マッチ度 {bestMatch.matchScore}%
+                        <span
+                          className={`font-mono-num font-bold ${
+                            shareCardTheme === 'dark' ? 'text-white' : 'text-[#1C1917]'
+                          }`}
+                        >
+                          マッチ度 {activeShareMatch.matchScore}%
                         </span>
                       </div>
 
                       {/* Card Body: Song Jacket Image + Song Title & Match Reason */}
                       <div className="p-5 sm:p-6 grid grid-cols-1 sm:grid-cols-12 gap-5 items-center">
                         <div className="sm:col-span-5">
-                          <div className="relative aspect-square w-full max-w-[220px] sm:max-w-none mx-auto overflow-hidden rounded-xl bg-black ring-1 ring-white/20 shadow-md">
-                            {isSafeAssetUrl(bestMatch.song.jacketImage) && (
+                          <div className="relative aspect-square w-full max-w-[220px] sm:max-w-none mx-auto overflow-hidden rounded-xl bg-black ring-1 ring-black/15 shadow-md">
+                            {isSafeAssetUrl(activeShareMatch.song.jacketImage) && (
                               <img
-                                src={bestMatch.song.jacketImage}
-                                alt={`${bestMatch.song.title} シェアカードジャケット`}
+                                src={activeShareMatch.song.jacketImage}
+                                alt={`${activeShareMatch.song.title} シェアカードジャケット`}
                                 referrerPolicy="no-referrer"
                                 className="h-full w-full object-cover"
                               />
                             )}
                             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/45 to-transparent p-3">
                               <span className="block text-[10px] font-mono-num text-white/75">
-                                {bestMatch.song.album} · {bestMatch.song.releaseDate}
+                                {activeShareMatch.song.album} · {activeShareMatch.song.releaseDate}
                               </span>
                               <span className="block text-xs font-bold text-white truncate">
                                 Official髭男dism
@@ -660,38 +742,77 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
 
                         <div className="sm:col-span-7 space-y-3">
                           <div>
-                            <div className="text-[11px] font-medium text-[#F5D0C9]">
-                              今のあなたに響くおすすめの1曲
+                            <div
+                              className={`text-[11px] font-bold ${
+                                shareCardTheme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
+                              }`}
+                            >
+                              今のあなたに響くおすすめの1曲（おすすめ第{shareCardRankIndex + 1}位）
                             </div>
-                            <div className="mt-0.5 text-xl sm:text-2xl font-bold tracking-tight text-white">
-                              『{bestMatch.song.title}』
+                            <div
+                              className={`mt-0.5 text-xl sm:text-2xl font-bold tracking-tight ${
+                                shareCardTheme === 'dark' ? 'text-white' : 'text-[#1C1917]'
+                              }`}
+                            >
+                              『{activeShareMatch.song.title}』
                             </div>
-                            <div className="mt-1 text-[11px] text-white/70">
+                            <div
+                              className={`mt-1 text-[11px] ${
+                                shareCardTheme === 'dark' ? 'text-white/70' : 'text-[#57534E]'
+                              }`}
+                            >
                               {MOOD_LABELS[selectedMood]} ／ {SITUATION_LABELS[selectedSituation]} ／{' '}
                               {SOUND_LABELS[selectedSound]}
                             </div>
                           </div>
 
-                          <div className="rounded-xl border border-white/15 bg-white/5 p-3.5 space-y-1.5">
-                            <div className="text-[11px] font-bold text-[#F5D0C9]">
+                          <div
+                            className={`rounded-xl border p-3.5 space-y-1.5 ${
+                              shareCardTheme === 'dark'
+                                ? 'border-white/15 bg-white/5'
+                                : 'border-[#E6E1D6] bg-white'
+                            }`}
+                          >
+                            <div
+                              className={`text-[11px] font-bold ${
+                                shareCardTheme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
+                              }`}
+                            >
                               今の気分にマッチする理由
                             </div>
-                            <p className="text-xs text-white/95 leading-relaxed">
-                              {bestMatch.moodMatchExplanation}
+                            <p
+                              className={`text-xs leading-relaxed ${
+                                shareCardTheme === 'dark' ? 'text-white/95' : 'text-[#1C1917]'
+                              }`}
+                            >
+                              {activeShareMatch.moodMatchExplanation}
                             </p>
                           </div>
 
-                          <p className="font-editorial text-xs italic text-white/80 border-t border-white/15 pt-2.5">
-                            「{bestMatch.song.iconicLyricQuote}」
+                          <p
+                            className={`font-editorial text-xs italic border-t pt-2.5 ${
+                              shareCardTheme === 'dark'
+                                ? 'text-white/80 border-white/15'
+                                : 'text-[#57534E] border-[#E6E1D6]'
+                            }`}
+                          >
+                            「{activeShareMatch.song.iconicLyricQuote}」
                           </p>
                         </div>
                       </div>
 
                       {/* Card Bottom Hashtag Strip */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-black/25 px-5 py-2.5 text-[11px] text-white/65">
+                      <div
+                        className={`flex flex-wrap items-center justify-between gap-2 border-t px-5 py-2.5 text-[11px] ${
+                          shareCardTheme === 'dark'
+                            ? 'border-white/10 bg-black/25 text-white/65'
+                            : 'border-[#E6E1D6] bg-[#F2EFE9] text-[#57534E]'
+                        }`}
+                      >
                         <span>#115万キロのファンノート #Official髭男dism #マイソング診断</span>
                         <span className="font-mono-num">
-                          BPM {bestMatch.song.bpm} · 転調{bestMatch.song.keyChanges}回
+                          BPM {activeShareMatch.song.bpm} · 転調{activeShareMatch.song.keyChanges}回 · 最高音{' '}
+                          {activeShareMatch.song.vocalRange.highestChestNote}
                         </span>
                       </div>
                     </div>

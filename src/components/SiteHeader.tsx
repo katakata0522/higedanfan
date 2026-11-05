@@ -13,18 +13,22 @@ import {
   HelpCircle,
   ChevronRight,
   Music4,
+  Mic2,
+  Newspaper,
 } from 'lucide-react';
 
 export type ActiveFeatureTab =
   | 'home'
   | 'mood'
   | 'discography'
+  | 'vocal_range'
   | 'sacred_map'
   | 'setlist'
   | 'tour_archive'
   | 'community'
   | 'fan_reviews'
-  | 'quiz';
+  | 'quiz'
+  | 'quiz_archive';
 
 export interface NavMenuItem {
   id: ActiveFeatureTab;
@@ -43,14 +47,20 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'mood',
     label: 'マイソング診断',
-    shortDesc: '3つの質問に答えて今の気分に合う1曲を診断',
+    shortDesc: '3つの質問で今の気分に合う1曲を診断＆SNSシェアカード生成',
     icon: <Sparkles className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'discography',
-    label: '楽曲ガイド',
-    shortDesc: '時代・曲調・転調回数で探せる全曲ライナーノーツ',
+    label: '楽曲ガイド（全86曲）',
+    shortDesc: '発売順・ガイド順・転調回数で探せる全曲ライナーノーツ',
     icon: <Disc className="h-4 w-4 shrink-0" />,
+  },
+  {
+    id: 'vocal_range',
+    label: '全曲の音域・発売日一覧',
+    shortDesc: '最高音・最低音の登場パート分析と発売順・公式API照会',
+    icon: <Mic2 className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'sacred_map',
@@ -84,9 +94,15 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   },
   {
     id: 'quiz',
-    label: 'ヒゲダン検定クイズ',
-    shortDesc: '初級・中級・上級コースから選べる歌詞＆トリビア検定',
+    label: 'ヒゲダン検定クイズ（全60問）',
+    shortDesc: '4択＆1〜4番目並び替え！各20問・全60問の本格検定',
     icon: <HelpCircle className="h-4 w-4 shrink-0" />,
+  },
+  {
+    id: 'quiz_archive',
+    label: '出典記事＆トリビア図鑑（120資料）',
+    shortDesc: '全60問の記事ソース・50音順・歌詞文字種検証一覧',
+    icon: <Newspaper className="h-4 w-4 shrink-0" />,
   },
 ];
 

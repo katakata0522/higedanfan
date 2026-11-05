@@ -116,11 +116,7 @@ export default function App() {
       const validSpotIds = new Set(SACRED_SPOTS.map((s) => s.id));
       const validTourIds = new Set(TOUR_ARCHIVES.map((t) => t.id));
 
-      if (
-        parsed.songs &&
-        Array.isArray(parsed.songs) &&
-        parsed.songs.length === HIGEDAN_SONGS.length
-      ) {
+      if (parsed.songs && Array.isArray(parsed.songs)) {
         const voteMap = new Map<string, SongItem['votes']>();
         for (const item of parsed.songs) {
           if (
@@ -283,8 +279,18 @@ export default function App() {
     setSetlist((prev) => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleMoveSetlistSong = (index: number, direction: 'up' | 'down') => {
+  const handleMoveSetlistSong = (index: number, direction: 'up' | 'down' | 'top') => {
     setSetlist((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      if (direction === 'top') {
+        const current = prev[index];
+        const firstSameTypeIdx = prev.findIndex((item) => item.isEncore === current.isEncore);
+        if (firstSameTypeIdx < 0 || firstSameTypeIdx === index) return prev;
+        const copy = [...prev];
+        copy.splice(index, 1);
+        copy.splice(firstSameTypeIdx, 0, current);
+        return copy;
+      }
       const targetIdx = direction === 'up' ? index - 1 : index + 1;
       if (targetIdx < 0 || targetIdx >= prev.length) return prev;
       if (prev[index].isEncore !== prev[targetIdx].isEncore) return prev;
@@ -436,18 +442,18 @@ export default function App() {
     },
     {
       id: 'discography',
-      secondaryId: 'sacred_map',
+      secondaryId: 'vocal_range',
       stepNum: '02',
-      subtitle: '全曲ライナーノーツ＆ゆかりの地',
-      title: '楽曲ガイド・聖地巡礼マップ',
+      subtitle: '発売順・ガイド順・音域分析・ゆかりの地',
+      title: '楽曲ガイド・音域一覧・聖地マップ',
       description:
-        'インディーズ期から最新曲までの代表曲ライナーノーツ（人気順・転調回数順・BPM順で並び替え可能）と、山陰（松江・米子）〜横浜の聖地巡礼ガイド。',
+        '全曲の最高音・最低音と登場パート（秒数）の分析表、発売順（古い順／新しい順）・楽曲ガイド順での並び替え、松江〜横浜の聖地巡礼マップを収録しています。',
       points: [
-        '転調回数やBPMで並び替えられる楽曲解説',
-        '松江・宍道湖などゆかりの聖地スポット訪問チェック',
+        '地声最高音・裏声最高音・最低音の登場パート比較表',
+        '発売順・ガイド順ソート＆公式公開APIによる発売日照会',
       ],
       ctaLabel: '楽曲ガイドを見る',
-      secondaryCtaLabel: '聖地巡礼マップへ',
+      secondaryCtaLabel: '全曲の音域・発売日表へ',
     },
     {
       id: 'setlist',
@@ -481,16 +487,18 @@ export default function App() {
     },
     {
       id: 'quiz',
+      secondaryId: 'quiz_archive',
       stepNum: '05',
-      subtitle: '歌詞フレーズ＆楽曲トリビア検定',
-      title: 'ヒゲダン検定クイズ',
+      subtitle: '各レベル20問（全60問）＆並び替え・データ検証クイズ',
+      title: 'ヒゲダン検定クイズ・出典＆トリビア図鑑',
       description:
-        '印象的な歌詞のフレーズや、ヒゲダンならではの転調トリビア、バンド結成の歩みをコース別で楽しめる検定クイズです。',
+        '初級20問・中級20問・上級20問の全60問！CDリリース順や演奏時間順の「1〜4番目並び替え問題」、五十音順の先頭・末尾、『エルダーフラワー』歌詞文字種検証、メンバーの好物まで計120本の出典資料付きで収録。',
       points: [
-        '初級・中級・上級の難易度コースから選択してスタート',
-        '1問ごとに詳しい解説と関連曲のライナーノーツ連動付き',
+        '初級（20問）・中級（20問）・上級（20問）・並び替え特訓の多彩なモード',
+        '全60問の出典記事＆サイト内データ検証（120本）をキーワード・媒体別に検索可能',
       ],
       ctaLabel: 'ヒゲダン検定に挑戦する',
+      secondaryCtaLabel: '出典記事＆トリビア図鑑へ',
     },
   ];
 
@@ -549,10 +557,10 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => handleSelectTab('sacred_map')}
+                        onClick={() => handleSelectTab('vocal_range')}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
                       >
-                        <span>聖地巡礼マップ</span>
+                        <span>全曲の音域・発売日表</span>
                       </button>
                     </div>
                   </div>
@@ -788,17 +796,57 @@ export default function App() {
               </section>
             </div>
           ) : (
-            /* Feature Screen View with Clean Back-to-Home Navigation Bar */
+            /* Feature Screen View with Direct Cross-Feature Switch Bar */
             <div>
-              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-5">
-                <button
-                  type="button"
-                  onClick={() => handleSelectTab('home', 'all')}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
+              <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-3.5">
+                <nav
+                  aria-label="コーナー切り替えナビゲーション"
+                  className="flex items-center gap-1.5 overflow-x-auto sm:flex-wrap rounded-xl border border-[#E6E1D6] bg-white p-1.5 sm:p-2"
                 >
-                  <ArrowLeft className="h-3.5 w-3.5" />
-                  トップページへ戻る
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab('home', 'all')}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer shrink-0"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    トップへ
+                  </button>
+
+                  <span aria-hidden="true" className="text-[#D5CEC2] px-0.5 hidden sm:inline">
+                    |
+                  </span>
+
+                  {(
+                    [
+                      { id: 'mood', label: 'マイソング診断' },
+                      { id: 'discography', label: '楽曲ガイド(86曲)' },
+                      { id: 'vocal_range', label: '音域・発売日表' },
+                      { id: 'sacred_map', label: '聖地マップ' },
+                      { id: 'setlist', label: 'マイセトリ作成' },
+                      { id: 'tour_archive', label: '歴代ツアー記録' },
+                      { id: 'community', label: '人気曲投票' },
+                      { id: 'fan_reviews', label: '感想ノート' },
+                      { id: 'quiz', label: '検定クイズ(60問)' },
+                      { id: 'quiz_archive', label: '出典図鑑(120本)' },
+                    ] as { id: ActiveFeatureTab; label: string }[]
+                  ).map((navItem) => {
+                    const isCurrent = activeFeatureTab === navItem.id;
+                    return (
+                      <button
+                        key={navItem.id}
+                        type="button"
+                        onClick={() => handleSelectTab(navItem.id, 'all')}
+                        className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                          isCurrent
+                            ? 'bg-[#1C1917] text-[#FBF9F5]'
+                            : 'text-[#57534E] hover:bg-[#F2EFE9] hover:text-[#1C1917]'
+                        }`}
+                      >
+                        {navItem.label}
+                      </button>
+                    );
+                  })}
+                </nav>
               </div>
 
               {activeFeatureTab === 'mood' && (
@@ -811,6 +859,7 @@ export default function App() {
               )}
 
               {(activeFeatureTab === 'discography' ||
+                activeFeatureTab === 'vocal_range' ||
                 activeFeatureTab === 'sacred_map') && (
                 <DiscographySection
                   songs={songs}
@@ -820,7 +869,11 @@ export default function App() {
                   visitedSpotIds={visitedSpotIds}
                   onToggleVisitedSpot={handleToggleVisitedSpot}
                   initialSubView={
-                    activeFeatureTab === 'sacred_map' ? 'sacred_map' : 'discography'
+                    activeFeatureTab === 'sacred_map'
+                      ? 'sacred_map'
+                      : activeFeatureTab === 'vocal_range'
+                      ? 'vocal_range'
+                      : 'discography'
                   }
                   initialEraFilter={discographyEraPreset}
                 />
@@ -866,12 +919,16 @@ export default function App() {
                 />
               )}
 
-              {activeFeatureTab === 'quiz' && (
+              {(activeFeatureTab === 'quiz' ||
+                activeFeatureTab === 'quiz_archive') && (
                 <QuizSection
                   bestScorePercentage={bestQuizScore}
                   onUpdateBestScore={handleUpdateBestQuizScore}
                   songs={songs}
                   onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  initialTab={
+                    activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
+                  }
                 />
               )}
             </div>
@@ -892,7 +949,7 @@ export default function App() {
             <p className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#15803D] shrink-0" />
               <span>
-                すべての入力データはXSSサニタイズ処理およびスキーマ検証を経て、お使いのブラウザ内にのみ安全に保存されます。
+                投票・マイセトリ・感想メモは、あなた専用のファンノートとしてお使いのブラウザ内に自動保存されます。
               </span>
             </p>
           </div>

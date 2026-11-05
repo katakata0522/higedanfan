@@ -8,9 +8,12 @@ import {
   ShieldCheck,
   Trophy,
   ArrowLeft,
+  Search,
+  X,
+  ChevronDown,
 } from 'lucide-react';
 import { FanReview, SongItem } from '../data/higedanData';
-import { validateReviewInput } from '../utils/fanLogic';
+import { sanitizeUserText, validateReviewInput } from '../utils/fanLogic';
 
 export type VoteCategory = 'overall' | 'lyric' | 'live' | 'hiddenGem';
 
@@ -46,6 +49,8 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
 }) => {
   const [activeSubTab, setActiveSubTab] = useState<'ranking' | 'reviews'>(initialSubTab);
   const [activeCategory, setActiveCategory] = useState<VoteCategory>('overall');
+  const [pollSearchQuery, setPollSearchQuery] = useState<string>('');
+  const [showAllRankedSongs, setShowAllRankedSongs] = useState<boolean>(false);
   const [reviewFilterCategory, setReviewFilterCategory] = useState<string>('all');
   const [isWritingReview, setIsWritingReview] = useState<boolean>(false);
 
@@ -73,15 +78,31 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
     };
   }, []);
 
-  const rankedSongs = useMemo(
-    () =>
-      [...songs]
-        .sort((a, b) => b.votes[activeCategory] - a.votes[activeCategory])
-        .slice(0, 6),
-    [songs, activeCategory]
-  );
+  const allSortedSongsWithRank = useMemo(() => {
+    return [...songs]
+      .sort((a, b) => b.votes[activeCategory] - a.votes[activeCategory])
+      .map((song, idx) => ({ song, rank: idx + 1 }));
+  }, [songs, activeCategory]);
 
-  const maxVotes = Math.max(1, rankedSongs[0]?.votes[activeCategory] || 1);
+  const rankedSongs = useMemo(() => {
+    const q = pollSearchQuery.trim().toLowerCase();
+    if (q) {
+      return allSortedSongsWithRank.filter(
+        ({ song }) =>
+          song.title.toLowerCase().includes(q) ||
+          song.album.toLowerCase().includes(q) ||
+          song.tieUp.toLowerCase().includes(q)
+      );
+    }
+    return showAllRankedSongs
+      ? allSortedSongsWithRank
+      : allSortedSongsWithRank.slice(0, 12);
+  }, [allSortedSongsWithRank, pollSearchQuery, showAllRankedSongs]);
+
+  const maxVotes = Math.max(
+    1,
+    allSortedSongsWithRank[0]?.song.votes[activeCategory] || 1
+  );
   const songMap = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
 
   const filteredReviews = useMemo(
@@ -197,37 +218,83 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
         </div>
 
         {activeSubTab === 'ranking' ? (
-          /* Sub-Tab 1: Category Ranking Poll */
+          /* Sub-Tab 1: Category Ranking Poll (Supports All 86 Songs + Search) */
           <div className="mt-5">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                {RANK_CATEGORIES.map((cat) => {
-                  const active = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => setActiveCategory(cat.id)}
-                      aria-pressed={active}
-                      className={`rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                        active
-                          ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
-                          : 'border-[#E6E1D6] bg-[#FBF9F5] text-[#57534E] hover:text-[#1C1917] hover:bg-[#F2EFE9]'
-                      }`}
-                    >
-                      {cat.label}
-                    </button>
-                  );
-                })}
+            <div className="space-y-3 rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {RANK_CATEGORIES.map((cat) => {
+                    const active = activeCategory === cat.id;
+                    return (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => setActiveCategory(cat.id)}
+                        aria-pressed={active}
+                        className={`rounded-lg px-3 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                          active
+                            ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
+                            : 'border-[#E6E1D6] bg-[#FBF9F5] text-[#57534E] hover:text-[#1C1917] hover:bg-[#F2EFE9]'
+                        }`}
+                      >
+                        {cat.label}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <span className="text-xs text-[#78716C]">
+                  {RANK_CATEGORIES.find((c) => c.id === activeCategory)?.desc}
+                </span>
               </div>
 
-              <span className="text-xs text-[#78716C]">
-                {RANK_CATEGORIES.find((c) => c.id === activeCategory)?.desc}
-              </span>
+              {/* Search Any of the 86 Songs to Vote */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 pt-2.5 border-t border-[#E6E1D6]">
+                <div className="relative flex-1 sm:max-w-sm">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78716C]" />
+                  <label htmlFor="poll-song-search" className="sr-only">
+                    投票したい曲を検索
+                  </label>
+                  <input
+                    id="poll-song-search"
+                    type="text"
+                    maxLength={50}
+                    value={pollSearchQuery}
+                    onChange={(e) => setPollSearchQuery(sanitizeUserText(e.target.value, 50))}
+                    placeholder="全86曲から曲名・アルバム名で検索して投票..."
+                    className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-8 py-2 text-xs text-[#1C1917] min-h-[38px]"
+                  />
+                  {pollSearchQuery.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPollSearchQuery('')}
+                      aria-label="検索をクリア"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1C1917] cursor-pointer"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowAllRankedSongs((prev) => !prev)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] transition-colors cursor-pointer shrink-0"
+                >
+                  <ChevronDown
+                    className={`h-3.5 w-3.5 transition-transform ${
+                      showAllRankedSongs ? 'rotate-180' : ''
+                    }`}
+                  />
+                  {showAllRankedSongs
+                    ? '上位12曲表示に戻す'
+                    : `全${songs.length}曲のランキングをすべて表示`}
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {rankedSongs.map((song, idx) => {
+              {rankedSongs.map(({ song, rank }) => {
                 const count = song.votes[activeCategory];
                 const barWidth = Math.max(12, Math.round((count / maxVotes) * 100));
                 const voteKey = `${song.id}:${activeCategory}`;
@@ -243,16 +310,16 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                         <div className="flex items-baseline gap-2.5 min-w-0">
                           <span
                             className={`font-editorial font-mono-num text-lg font-bold shrink-0 ${
-                              idx === 0
+                              rank === 1
                                 ? 'text-[#C83E2B]'
-                                : idx === 1
+                                : rank === 2
                                 ? 'text-[#1E3A5F]'
-                                : idx === 2
+                                : rank === 3
                                 ? 'text-[#B45309]'
                                 : 'text-[#78716C]'
                             }`}
                           >
-                            {idx + 1}位
+                            {rank}位
                           </span>
                           <h3 className="text-base sm:text-lg font-bold text-[#1C1917] truncate">
                             {song.title}
@@ -265,14 +332,15 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                       </div>
 
                       <p className="mt-1 text-xs text-[#78716C] truncate">
-                        {song.album} · {song.tieUp}
+                        {song.album}
+                        {song.trackNumber ? ` (M${song.trackNumber})` : ''} · {song.tieUp}
                       </p>
 
                       {/* Progress Bar */}
                       <div className="mt-3.5 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
                         <div
                           className={`h-full rounded-full transition-opacity ${
-                            idx === 0 ? 'bg-[#C83E2B]' : 'bg-[#1C1917]'
+                            rank === 1 ? 'bg-[#C83E2B]' : 'bg-[#1C1917]'
                           }`}
                           style={{ width: `${barWidth}%` }}
                         />
@@ -509,7 +577,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
 
               <div className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
                 <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[#15803D]" />
-                <span>入力内容は安全にサニタイズ処理されて保存されます。</span>
+                <span>投稿した感想は、あなた専用のファンノートとしてこのブラウザ内に記録されます。</span>
               </div>
 
               <div className="flex items-center justify-end gap-2.5 pt-2">

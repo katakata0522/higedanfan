@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
-import { formatDuration, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
+import { formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
 import { playSongTempoPreview, stopTempoPreview } from '../utils/audioPreview';
 
 interface SongDetailModalProps {
@@ -87,7 +87,8 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             )}
             <div className="min-w-0">
               <div className="text-xs font-medium text-[#78716C] font-mono-num">
-                {song.album} · {song.releaseDate}
+                {song.album}
+                {song.trackNumber ? ` (M${song.trackNumber})` : ''} · {song.releaseDate}
               </div>
               <h2
                 id="song-modal-title"
@@ -96,7 +97,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 {song.title}
               </h2>
               <p className="mt-1 text-xs text-[#57534E]">
-                {SOUND_LABELS[song.sound]} · {song.tieUp}
+                {getSongwriterCredit(song)} · {SOUND_LABELS[song.sound]} · {song.tieUp}
               </p>
             </div>
           </div>
@@ -154,15 +155,59 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             {isPlayingTempo ? (
               <>
                 <Square className="h-3.5 w-3.5 fill-current" />
-                テンポ再生中 (BPM {song.bpm})
+                メトロノーム停止 (BPM {song.bpm})
               </>
             ) : (
               <>
                 <Volume2 className="h-4 w-4 text-[#C83E2B]" />
-                BPM {song.bpm} のテンポ感を試聴
+                BPM {song.bpm} のテンポ確認（メトロノーム音）
               </>
             )}
           </button>
+        </div>
+
+        {/* Vocal Range & High/Low Note Section Analysis */}
+        <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-4">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E6E1D6] pb-3">
+            <h3 className="text-sm font-bold text-[#1C1917]">
+              音域データ（最高音・最低音）＆登場パート分析
+            </h3>
+            <span className="text-xs font-mono-num text-[#78716C]">
+              音域幅：約 {song.vocalRange.rangeSpanSemitones} 半音
+            </span>
+          </div>
+
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
+              <span className="block text-[11px] font-bold text-[#78716C]">地声最低音</span>
+              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#1E3A5F]">
+                {song.vocalRange.lowestNote}
+              </span>
+              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
+                {song.vocalRange.lowNoteSection}
+              </span>
+            </div>
+
+            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
+              <span className="block text-[11px] font-bold text-[#78716C]">地声最高音</span>
+              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#C83E2B]">
+                {song.vocalRange.highestChestNote}
+              </span>
+              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
+                {song.vocalRange.highNoteSection}
+              </span>
+            </div>
+
+            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
+              <span className="block text-[11px] font-bold text-[#78716C]">裏声（ファルセット）最高音</span>
+              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#B45309]">
+                {song.vocalRange.highestFalsettoNote}
+              </span>
+              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
+                歌唱ポイント：{song.vocalRange.singingAdvice}
+              </span>
+            </div>
+          </div>
         </div>
 
         {/* Pull Quote Lyric */}
@@ -171,7 +216,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             「{song.iconicLyricQuote}」
           </p>
           <footer className="mt-1.5 text-xs text-[#78716C]">
-            — 作詞・作曲：藤原聡（Official髭男dism『{song.title}』より）
+            — {getSongwriterCredit(song)}（Official髭男dism『{song.title}』より）
           </footer>
         </blockquote>
 
