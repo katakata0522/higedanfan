@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* 60% Dominant Neutral Canvas: Archival Warm Paper & Gallery White */
+    --background: #FBF9F5;
+    --surface: #F2EFE9;
+    --surface-card: #FFFFFF;
+
+    /* 30% Structural Ink & Hairline Rules */
+    --foreground: #1C1917;
+    --muted: #57534E;
+    --subtle: #78716C;
+    --border: #E6E1D6;
+    --border-strong: #D5CEC2;
+
+    /* 10% Curated Editorial Accents (Film Vermilion, Shinji Indigo, Analog Brass) */
+    --primary: #C83E2B;
+    --primary-hover: #A93020;
+    --accent-indigo: #1E3A5F;
+    --accent-brass: #B45309;
+    --accent-forest: #15803D;
+
+    --font-display: 'Outfit', 'Noto Sans JP', sans-serif;
+    --font-serif: 'Fraunces', 'Noto Serif JP', serif;
+    --font-sans: 'Noto Sans JP', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--background);
+    color: var(--foreground);
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: var(--font-display);
+  }
+
+  .font-editorial {
+    font-family: var(--font-serif);
+  }
+
+  .font-mono-num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
