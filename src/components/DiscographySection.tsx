@@ -1,5 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { Search, BookOpen, MapPin, Plus, Check, Disc, Compass, X } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Search,
+  BookOpen,
+  MapPin,
+  Plus,
+  Check,
+  Disc,
+  Compass,
+  X,
+  ArrowUpDown,
+} from 'lucide-react';
 import {
   EraTag,
   SACRED_SPOTS,
@@ -9,6 +19,7 @@ import {
   MATSUE_IMAGE_PATH,
 } from '../data/higedanData';
 import {
+  DiscographySortOption,
   filterAndSortDiscography,
   formatDuration,
   isSafeAssetUrl,
@@ -23,6 +34,8 @@ interface DiscographySectionProps {
   setlistSongIds: string[];
   visitedSpotIds: string[];
   onToggleVisitedSpot: (spotId: string) => void;
+  initialSubView?: 'discography' | 'sacred_map';
+  initialEraFilter?: EraTag | 'all';
 }
 
 const ERA_TABS: { id: EraTag | 'all'; label: string }[] = [
@@ -42,6 +55,13 @@ const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
   { id: 'stadium_rock', label: 'スタジアムロック' },
 ];
 
+const SORT_OPTIONS: { id: DiscographySortOption; label: string }[] = [
+  { id: 'popular', label: '並び順：人気投票順' },
+  { id: 'newest', label: '並び順：リリースが新しい順' },
+  { id: 'keyChanges', label: '並び順：転調回数が多い順' },
+  { id: 'bpm', label: '並び順：テンポ（BPM）が速い順' },
+];
+
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
   songs,
   onSelectSong,
@@ -49,12 +69,25 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   setlistSongIds,
   visitedSpotIds,
   onToggleVisitedSpot,
+  initialSubView = 'discography',
+  initialEraFilter = 'all',
 }) => {
-  const [activeSubView, setActiveSubView] = useState<'discography' | 'sacred_map'>('discography');
-  const [eraFilter, setEraFilter] = useState<EraTag | 'all'>('all');
+  const [activeSubView, setActiveSubView] = useState<'discography' | 'sacred_map'>(
+    initialSubView
+  );
+  const [eraFilter, setEraFilter] = useState<EraTag | 'all'>(initialEraFilter);
   const [soundFilter, setSoundFilter] = useState<SoundTag | 'all'>('all');
+  const [sortBy, setSortBy] = useState<DiscographySortOption>('popular');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
+
+  useEffect(() => {
+    setActiveSubView(initialSubView);
+  }, [initialSubView]);
+
+  useEffect(() => {
+    setEraFilter(initialEraFilter);
+  }, [initialEraFilter]);
 
   const filteredSongs = useMemo(
     () =>
@@ -62,8 +95,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         era: eraFilter,
         sound: soundFilter,
         searchQuery,
+        sortBy,
       }),
-    [songs, eraFilter, soundFilter, searchQuery]
+    [songs, eraFilter, soundFilter, searchQuery, sortBy]
   );
 
   const filteredSpots = useMemo(
@@ -84,17 +118,18 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {/* Clean Header & Sub-View Switcher */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
           <div>
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-              CHAPTER 02 · DISCOGRAPHY & PILGRIMAGE
-            </div>
             <h2
               id="discography-heading"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              楽曲ガイド ＆ 聖地巡礼マップ
+              {activeSubView === 'sacred_map'
+                ? '聖地巡礼マップ（松江・米子・横浜）'
+                : '楽曲ガイド（時代別・転調・曲調検索）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              時代別・曲調別のライナーノーツ考察と、結成の地・松江から日産スタジアムまでの聖地ガイドです。
+              {activeSubView === 'sacred_map'
+                ? 'バンド結成の地・山陰（松江・米子）から記念すべきスタジアム会場まで、ゆかりの聖地スポット案内です。'
+                : '代表曲からアルバム曲まで、時代・曲調・転調回数・BPMで自由に並び替えてライナーノーツを読めます。'}
             </p>
           </div>
 
@@ -115,7 +150,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               }`}
             >
               <Disc className="h-3.5 w-3.5 shrink-0" />
-              代表曲・アルバム曲ガイド
+              楽曲ガイド
             </button>
             <button
               type="button"
@@ -129,15 +164,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               }`}
             >
               <Compass className="h-3.5 w-3.5 shrink-0" />
-              ゆかりの聖地巡礼マップ
+              聖地巡礼マップ
             </button>
           </div>
         </div>
 
         {activeSubView === 'discography' ? (
           <div>
-            {/* Filter & Search Bar */}
-            <div className="mt-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
+            {/* Filter, Sort & Search Bar */}
+            <div className="mt-5 space-y-3 rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
               <div className="flex flex-wrap items-center gap-1.5">
                 {ERA_TABS.map((tab) => {
                   const active = eraFilter === tab.id;
@@ -158,24 +193,47 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 })}
               </div>
 
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
-                <label className="sr-only" htmlFor="sound-filter-select">
-                  曲調フィルター
-                </label>
-                <select
-                  id="sound-filter-select"
-                  value={soundFilter}
-                  onChange={(e) => setSoundFilter(e.target.value as SoundTag | 'all')}
-                  className="rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-medium text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
-                >
-                  {SOUND_FILTERS.map((sf) => (
-                    <option key={sf.id} value={sf.id}>
-                      {sf.label}
-                    </option>
-                  ))}
-                </select>
+              <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-2.5 pt-2.5 border-t border-[#E6E1D6]">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                  <div>
+                    <label className="sr-only" htmlFor="sound-filter-select">
+                      曲調フィルター
+                    </label>
+                    <select
+                      id="sound-filter-select"
+                      value={soundFilter}
+                      onChange={(e) => setSoundFilter(e.target.value as SoundTag | 'all')}
+                      className="w-full sm:w-auto rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-medium text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
+                    >
+                      {SOUND_FILTERS.map((sf) => (
+                        <option key={sf.id} value={sf.id}>
+                          {sf.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div className="relative flex-1 sm:w-60">
+                  <div className="relative flex items-center">
+                    <ArrowUpDown className="pointer-events-none absolute left-3 h-3.5 w-3.5 text-[#78716C]" />
+                    <label className="sr-only" htmlFor="discography-sort-select">
+                      楽曲の並び替え
+                    </label>
+                    <select
+                      id="discography-sort-select"
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value as DiscographySortOption)}
+                      className="w-full sm:w-auto rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-3 py-2 text-xs font-bold text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
+                    >
+                      {SORT_OPTIONS.map((opt) => (
+                        <option key={opt.id} value={opt.id}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="relative flex-1 md:max-w-xs">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
                   <label htmlFor="discography-search" className="sr-only">
                     曲名や歌詞フレーズで検索
@@ -258,8 +316,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         </p>
 
                         {/* Clean Unboxed Metadata Line */}
-                        <div className="mt-3 flex items-center gap-2 text-[11px] text-[#78716C]">
+                        <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#78716C]">
                           <span>{SOUND_LABELS[song.sound]}</span>
+                          <span aria-hidden="true">·</span>
+                          <span className="font-mono-num">BPM {song.bpm}</span>
                           <span aria-hidden="true">·</span>
                           <span className="font-mono-num">{formatDuration(song.durationSec)}</span>
                           <span aria-hidden="true">·</span>
@@ -359,9 +419,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5"
                   >
                     <div>
-                      <div className="flex items-center justify-between gap-2 text-xs text-[#78716C]">
-                        <span className="font-bold text-[#C83E2B]">{spot.area}</span>
-                        <span>ゆかりの曲: {spot.relatedSong}</span>
+                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs text-[#78716C]">
+                        <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">{spot.area}</span>
+                        <span className="truncate">ゆかりの曲: {spot.relatedSong}</span>
                       </div>
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}

@@ -6,13 +6,16 @@ import {
   Award,
   ArrowRight,
   ArrowLeft,
+  BookOpen,
 } from 'lucide-react';
-import { QUIZ_QUESTIONS, QuizQuestion } from '../data/higedanData';
+import { QUIZ_QUESTIONS, QuizQuestion, SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
 
 interface QuizSectionProps {
   bestScorePercentage: number;
   onUpdateBestScore: (percentage: number) => void;
+  songs?: SongItem[];
+  onSelectSong?: (song: SongItem) => void;
 }
 
 const QUIZ_COURSES: {
@@ -27,34 +30,36 @@ const QUIZ_COURSES: {
     indexCode: '01',
     title: '総合チャレンジコース',
     desc: '代表曲の歌詞からサウンドの秘密、バンドのルーツまで幅広く出題します。',
-    badge: 'STANDARD · 全範囲',
+    badge: 'おすすめ・全範囲',
   },
   {
     id: 'beginner',
     indexCode: '02',
     title: '初級：代表曲・歌詞フレーズ編',
     desc: '『Pretender』『Subtitle』など、誰もが一度は耳にした名曲の歌詞やタイアップから出題。',
-    badge: 'BEGINNER · 入門',
+    badge: '入門コース',
   },
   {
     id: 'intermediate',
     indexCode: '03',
     title: '中級：転調・結成ルーツ編',
     desc: '山陰での結成エピソードや、ヒゲダンならではの緻密な転調ギミックに迫る問題。',
-    badge: 'INTERMEDIATE · 中級',
+    badge: '中級コース',
   },
   {
     id: 'brothers',
     indexCode: '04',
     title: '上級：ディープ楽曲考察編',
     desc: 'アルバム曲の制作背景やライブ定番のコール＆レスポンスなど、熱心なファン向けの問題。',
-    badge: 'ADVANCED · 上級',
+    badge: '上級コース',
   },
 ];
 
 export const QuizSection: React.FC<QuizSectionProps> = ({
   bestScorePercentage,
   onUpdateBestScore,
+  songs = [],
+  onSelectSong,
 }) => {
   const [quizStage, setQuizStage] = useState<'select' | 'playing' | 'finished'>('select');
   const [difficultyFilter, setDifficultyFilter] = useState<
@@ -73,6 +78,13 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
   );
 
   const currentQuestion = activeQuestions[currentIndex] || activeQuestions[0];
+  const relatedSong = useMemo(
+    () =>
+      currentQuestion?.relatedSongId
+        ? songs.find((s) => s.id === currentQuestion.relatedSongId) || null
+        : null,
+    [currentQuestion, songs]
+  );
 
   const handleStartCourse = (mode: 'all' | QuizQuestion['difficulty']) => {
     setDifficultyFilter(mode);
@@ -123,12 +135,9 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
         {/* Clean Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
           <div>
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-              CHAPTER 05 · LYRIC & TRIVIA QUIZ
-            </div>
             <h2
               id="quiz-heading"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
               歌詞フレーズ ＆ 楽曲トリビア「ヒゲダン検定クイズ」
             </h2>
@@ -175,7 +184,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                         <span className="font-editorial font-mono-num text-xl font-bold text-[#C83E2B]">
                           {course.indexCode}.
                         </span>
-                        <span className="text-[11px] font-bold tracking-wider uppercase text-[#78716C]">
+                        <span className="text-xs font-bold text-[#78716C]">
                           {course.badge}
                         </span>
                       </div>
@@ -267,7 +276,20 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                 <p className="mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
                   {currentQuestion.explanation}
                 </p>
-                <div className="mt-4 flex justify-end">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+                  {relatedSong && onSelectSong ? (
+                    <button
+                      type="button"
+                      onClick={() => onSelectSong(relatedSong)}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
+                    >
+                      <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+                      『{relatedSong.title}』の楽曲解説を読む
+                    </button>
+                  ) : (
+                    <span />
+                  )}
+
                   <button
                     type="button"
                     onClick={handleNext}
@@ -291,8 +313,8 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
               <Award className="h-7 w-7" />
             </div>
 
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#78716C]">
-              OFFICIAL HIGEDAN FAN QUIZ CERTIFICATE
+            <div className="text-xs font-bold text-[#78716C]">
+              ヒゲダン検定クイズ 認定結果
             </div>
 
             <h3 className="text-xl sm:text-2xl font-bold text-[#1C1917]">

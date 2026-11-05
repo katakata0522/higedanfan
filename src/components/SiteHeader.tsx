@@ -5,10 +5,13 @@ import {
   Home,
   Sparkles,
   Disc,
+  Compass,
   ListMusic,
-  Heart,
+  Ticket,
+  Trophy,
+  MessageSquarePlus,
   HelpCircle,
-  ArrowUpRight,
+  ChevronRight,
   Music4,
 } from 'lucide-react';
 
@@ -16,13 +19,15 @@ export type ActiveFeatureTab =
   | 'home'
   | 'mood'
   | 'discography'
+  | 'sacred_map'
   | 'setlist'
+  | 'tour_archive'
   | 'community'
+  | 'fan_reviews'
   | 'quiz';
 
 export interface NavMenuItem {
   id: ActiveFeatureTab;
-  indexLabel: string;
   label: string;
   shortDesc: string;
   icon: React.ReactNode;
@@ -31,44 +36,56 @@ export interface NavMenuItem {
 export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'home',
-    indexLabel: '00',
     label: 'トップページ',
-    shortDesc: 'ファンサイト全体の案内・コンテンツ目次',
+    shortDesc: 'サイト案内・メンバー紹介・コンテンツ一覧',
     icon: <Home className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'mood',
-    indexLabel: '01',
     label: 'マイソング診断',
-    shortDesc: '3つの質問に1問ずつ答えて今の気分に合う1曲を診断',
+    shortDesc: '3つの質問に答えて今の気分に合う1曲を診断',
     icon: <Sparkles className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'discography',
-    indexLabel: '02',
-    label: '楽曲ガイド・聖地巡礼',
-    shortDesc: '時代別ライナーノーツ解説と松江〜横浜の聖地マップ',
+    label: '楽曲ガイド',
+    shortDesc: '時代・曲調・転調回数で探せる全曲ライナーノーツ',
     icon: <Disc className="h-4 w-4 shrink-0" />,
   },
   {
+    id: 'sacred_map',
+    label: '聖地巡礼マップ',
+    shortDesc: '結成の地・松江や米子、日産スタジアムなどゆかりの地',
+    icon: <Compass className="h-4 w-4 shrink-0" />,
+  },
+  {
     id: 'setlist',
-    indexLabel: '03',
-    label: 'マイセトリ・ライブ記録',
-    shortDesc: '理想のセットリスト編成と歴代ツアー参戦アーカイブ',
+    label: 'マイセトリ作成',
+    shortDesc: '理想の曲順づくりと合計演奏時間・盛り上がり計算',
     icon: <ListMusic className="h-4 w-4 shrink-0" />,
   },
   {
+    id: 'tour_archive',
+    label: '歴代ツアー記録',
+    shortDesc: '過去ツアーの代表セトリ読込とライブ参戦チェック',
+    icon: <Ticket className="h-4 w-4 shrink-0" />,
+  },
+  {
     id: 'community',
-    indexLabel: '04',
-    label: '人気投票・感想ノート',
-    shortDesc: '4部門の人気曲ランキング投票と歌詞考察・感想シェア',
-    icon: <Heart className="h-4 w-4 shrink-0" />,
+    label: '人気曲ランキング投票',
+    shortDesc: '総合・歌詞・ライブ・隠れた名曲の4部門ファン投票',
+    icon: <Trophy className="h-4 w-4 shrink-0" />,
+  },
+  {
+    id: 'fan_reviews',
+    label: '感想・考察ノート',
+    shortDesc: 'ファン同士で綴る歌詞考察・ライブの思い出シェア',
+    icon: <MessageSquarePlus className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'quiz',
-    indexLabel: '05',
     label: 'ヒゲダン検定クイズ',
-    shortDesc: 'コース別で挑戦できる歌詞フレーズ＆転調トリビアクイズ',
+    shortDesc: '初級・中級・上級コースから選べる歌詞＆トリビア検定',
     icon: <HelpCircle className="h-4 w-4 shrink-0" />,
   },
 ];
@@ -111,8 +128,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#E6E1D6] bg-[#FBF9F5]/95 backdrop-blur-md">
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
-        {/* Zone 1: Brand Emblem & Single-Line Wordmark */}
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
+        {/* Left: Site Title (Clean Japanese, Zero Decorative English Clutter) */}
         <button
           type="button"
           onClick={() => handleNavigate('home')}
@@ -125,22 +142,17 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             <span className="block text-sm sm:text-base font-bold tracking-tight text-[#1C1917] group-hover:text-[#C83E2B] transition-colors truncate">
               115万キロのファンノート
             </span>
-            <span className="hidden sm:block text-[11px] text-[#78716C] tracking-wide truncate">
-              Official髭男dism Unofficial Editorial Archive
+            <span className="hidden sm:block text-[11px] text-[#78716C] truncate">
+              Official髭男dism 非公式ファンサイト
             </span>
           </span>
         </button>
 
-        {/* Zone 3: Current Section Indicator + Top-Right Hamburger Menu Button */}
+        {/* Right: Current Section Label + Top-Right Hamburger Menu Button */}
         <div className="flex items-center gap-3 shrink-0">
-          <div className="hidden md:flex items-center gap-2 text-xs text-[#57534E]">
-            <span className="font-mono-num text-[11px] text-[#78716C]">
-              {currentNav.indexLabel}
-            </span>
-            <span aria-hidden="true" className="text-[#D5CEC2]">
-              /
-            </span>
-            <span className="font-bold text-[#1C1917]">{currentNav.label}</span>
+          <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-[#1C1917]">
+            <span className="text-[#C83E2B]">{currentNav.icon}</span>
+            <span>{currentNav.label}</span>
           </div>
 
           <button
@@ -168,89 +180,92 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             )}
           </button>
         </div>
-      </div>
 
-      {/* Top-Right Hamburger Navigation Drawer & Backdrop */}
-      {isMenuOpen && (
-        <>
-          <div
-            aria-hidden="true"
-            onClick={() => setIsMenuOpen(false)}
-            className="fixed inset-x-0 top-14 sm:top-16 bottom-0 z-30 bg-[#1C1917]/40 backdrop-blur-[1px]"
-          />
-          <nav
-            id="global-nav-drawer"
-            aria-label="サイト内メニュー"
-            className="relative z-40 border-t border-[#E6E1D6] bg-[#FBF9F5] shadow-xl"
-          >
-            <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-5 sm:py-6">
-              <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E6E1D6]">
-                <span className="text-[11px] font-bold tracking-widest uppercase text-[#78716C]">
-                  EDITORIAL DIRECTORY · 移動したいページを選択
-                </span>
-                <span className="text-[11px] text-[#78716C] hidden sm:inline">
-                  Escキーまたは枠外クリックで閉じます
-                </span>
-              </div>
+        {/* Top-Right Vertical Content Menu Panel */}
+        {isMenuOpen && (
+          <>
+            <div
+              aria-hidden="true"
+              onClick={() => setIsMenuOpen(false)}
+              className="fixed inset-x-0 top-14 sm:top-16 bottom-0 z-30 bg-[#1C1917]/35 backdrop-blur-[1px]"
+            />
+            <nav
+              id="global-nav-drawer"
+              aria-label="サイト内メニュー"
+              className="fixed sm:absolute right-0 sm:right-6 lg:right-8 top-14 sm:top-16 z-40 w-full sm:w-[400px] max-h-[calc(100vh-4rem)] overflow-y-auto sm:rounded-b-2xl border-b sm:border border-[#D5CEC2] bg-[#FBF9F5] shadow-2xl"
+            >
+              <div className="p-3.5 sm:p-4">
+                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[#E6E1D6] px-1">
+                  <span className="text-xs font-bold text-[#1C1917]">
+                    コンテンツメニュー（縦一覧）
+                  </span>
+                  <span className="text-[11px] text-[#78716C]">
+                    押すと各画面へ移動します
+                  </span>
+                </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                {SITE_NAV_ITEMS.map((item) => {
-                  const isCurrent = activeTab === item.id;
-                  return (
-                    <button
-                      key={item.id}
-                      type="button"
-                      onClick={() => handleNavigate(item.id)}
-                      className={`group flex items-start justify-between gap-3 rounded-xl border p-4 text-left transition-all cursor-pointer ${
-                        isCurrent
-                          ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
-                          : 'border-[#E6E1D6] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]/50'
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <span
-                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg font-mono-num text-xs font-bold ${
-                            isCurrent
-                              ? 'bg-[#C83E2B] text-white'
-                              : 'bg-[#F2EFE9] text-[#1C1917] group-hover:bg-[#1C1917] group-hover:text-white transition-colors'
-                          }`}
-                        >
-                          {item.indexLabel}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold truncate">
-                              {item.label}
-                            </span>
-                            {isCurrent && (
-                              <span className="text-[10px] font-medium text-[#F5D0C9] whitespace-nowrap">
-                                · 表示中
-                              </span>
-                            )}
-                          </div>
-                          <p
-                            className={`mt-1 text-xs leading-relaxed ${
-                              isCurrent ? 'text-[#E6E1D6]' : 'text-[#57534E]'
+                {/* Vertical Stack of Content Items */}
+                <div className="flex flex-col gap-1.5">
+                  {SITE_NAV_ITEMS.map((item) => {
+                    const isCurrent = activeTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        type="button"
+                        onClick={() => handleNavigate(item.id)}
+                        className={`group flex items-center justify-between gap-3 rounded-xl border px-3.5 py-2.5 text-left transition-all cursor-pointer ${
+                          isCurrent
+                            ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
+                            : 'border-[#E6E1D6] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]/60'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span
+                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors ${
+                              isCurrent
+                                ? 'bg-[#C83E2B] text-white'
+                                : 'bg-[#F2EFE9] text-[#1C1917] group-hover:bg-[#C83E2B] group-hover:text-white'
                             }`}
                           >
-                            {item.shortDesc}
-                          </p>
+                            {item.icon}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold truncate">
+                                {item.label}
+                              </span>
+                              {isCurrent && (
+                                <span className="text-[10px] font-medium text-[#F5D0C9] whitespace-nowrap">
+                                  · 表示中
+                                </span>
+                              )}
+                            </div>
+                            <p
+                              className={`text-[11px] leading-snug truncate ${
+                                isCurrent ? 'text-[#E6E1D6]' : 'text-[#57534E]'
+                              }`}
+                            >
+                              {item.shortDesc}
+                            </p>
+                          </div>
                         </div>
-                      </div>
 
-                      <ArrowUpRight
-                        className={`h-4 w-4 shrink-0 mt-0.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${
-                          isCurrent ? 'text-[#F5D0C9]' : 'text-[#78716C] group-hover:text-[#1C1917]'
-                        }`}
-                      />
-                    </button>
-                  );
-                })}
+                        <ChevronRight
+                          className={`h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${
+                            isCurrent
+                              ? 'text-[#F5D0C9]'
+                              : 'text-[#78716C] group-hover:text-[#1C1917]'
+                          }`}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          </nav>
-        </>
-      )}
+            </nav>
+          </>
+        )}
+      </div>
     </header>
   );
 };

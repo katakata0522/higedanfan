@@ -143,6 +143,15 @@ test('filterAndSortDiscography filters by era, sound, and search query', () => {
   });
   assert.equal(searchSubtitle.length, 1);
   assert.equal(searchSubtitle[0].id, 'subtitle');
+
+  const sortedByKeyChanges = filterAndSortDiscography(HIGEDAN_SONGS, {
+    era: 'all',
+    sound: 'all',
+    searchQuery: '',
+    sortBy: 'keyChanges',
+  });
+  assert.equal(sortedByKeyChanges[0].id, 'cry-baby');
+  assert.ok(sortedByKeyChanges[0].keyChanges >= sortedByKeyChanges[1].keyChanges);
 });
 
 test('calculateSetlistStats computes duration, BPM, key changes, and encore counts', () => {

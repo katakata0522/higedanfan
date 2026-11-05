@@ -51,11 +51,14 @@ export interface SetlistStats {
   vibeDescription: string;
 }
 
+export type DiscographySortOption = 'popular' | 'newest' | 'keyChanges' | 'bpm';
+
 export interface DiscographyFilter {
   era: EraTag | 'all';
   sound: SoundTag | 'all';
   searchQuery: string;
   onlyHiddenGems?: boolean;
+  sortBy?: DiscographySortOption;
 }
 
 export interface QuizResultSummary {
@@ -307,7 +310,7 @@ export function filterAndSortDiscography(
 ): SongItem[] {
   const query = sanitizeUserText(filter.searchQuery, 60).toLowerCase();
 
-  return songs.filter((song) => {
+  const filtered = songs.filter((song) => {
     if (filter.era !== 'all' && song.era !== filter.era) {
       return false;
     }
@@ -332,6 +335,25 @@ export function filterAndSortDiscography(
       }
     }
     return true;
+  });
+
+  if (!filter.sortBy) {
+    return filtered;
+  }
+
+  return [...filtered].sort((a, b) => {
+    switch (filter.sortBy) {
+      case 'popular':
+        return b.votes.overall - a.votes.overall;
+      case 'newest':
+        return b.releaseDate.localeCompare(a.releaseDate);
+      case 'keyChanges':
+        return b.keyChanges - a.keyChanges || b.votes.overall - a.votes.overall;
+      case 'bpm':
+        return b.bpm - a.bpm || b.votes.overall - a.votes.overall;
+      default:
+        return 0;
+    }
   });
 }
 

@@ -11,9 +11,13 @@ import {
   ArrowRight,
   ArrowLeft,
   Compass,
+  BookOpen,
+  Users,
 } from 'lucide-react';
 import {
+  EraTag,
   FanReview,
+  HIGEDAN_MEMBERS,
   HIGEDAN_SONGS,
   INITIAL_FAN_REVIEWS,
   SACRED_SPOTS,
@@ -68,11 +72,21 @@ const DEFAULT_SETLIST: SetlistEntry[] = [
   { songId: 'stand-by-you', isEncore: true },
 ];
 
-const HERO_JACKET_SHOWCASE = [
-  { src: REJOICE_IMAGE_PATH, label: 'Rejoice', year: '2024' },
-  { src: EDITORIAL_IMAGE_PATH, label: 'Editorial', year: '2021' },
-  { src: TRAVELER_IMAGE_PATH, label: 'Traveler', year: '2019' },
-  { src: SAME_BLUE_IMAGE_PATH, label: 'Same Blue / らしさ', year: '2024–2025' },
+const HERO_JACKET_SHOWCASE: {
+  src: string;
+  label: string;
+  year: string;
+  era: EraTag;
+}[] = [
+  { src: REJOICE_IMAGE_PATH, label: 'Rejoice', year: '2024', era: 'rejoice' },
+  { src: EDITORIAL_IMAGE_PATH, label: 'Editorial', year: '2021', era: 'editorial' },
+  { src: TRAVELER_IMAGE_PATH, label: 'Traveler', year: '2019', era: 'traveler' },
+  {
+    src: SAME_BLUE_IMAGE_PATH,
+    label: 'Same Blue / らしさ',
+    year: '2024–2025',
+    era: 'latest_2025_2026',
+  },
 ];
 
 export default function App() {
@@ -90,6 +104,7 @@ export default function App() {
   const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<ActiveFeatureTab>('home');
+  const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
 
   // Load & schema-validate persisted state from localStorage with strict XSS/ID sanitization
   useEffect(() => {
@@ -244,7 +259,8 @@ export default function App() {
     }, 2600);
   };
 
-  const handleSelectTab = (tab: ActiveFeatureTab) => {
+  const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
+    setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -396,75 +412,83 @@ export default function App() {
 
   const HOME_FEATURE_CARDS: {
     id: Exclude<ActiveFeatureTab, 'home'>;
+    secondaryId?: Exclude<ActiveFeatureTab, 'home'>;
     stepNum: string;
-    categoryLabel: string;
+    subtitle: string;
     title: string;
     description: string;
     points: string[];
     ctaLabel: string;
+    secondaryCtaLabel?: string;
   }[] = [
     {
       id: 'mood',
       stepNum: '01',
-      categoryLabel: 'MY SONG DIAGNOSIS',
+      subtitle: '今の気分から1曲を見つける',
       title: 'マイソング診断',
       description:
         '今の気分・聴きたい場面・好みのサウンドを1問ずつ選ぶだけで、今のあなたに一番響く1曲を大型ジャケット写真とマッチ度グラフ付きで提案します。',
       points: [
         '3つの質問に1問ずつ順番に答えるステップ遷移式',
-        '今の気分にマッチする1〜2文の理由とサウンド解説を表示',
+        '診断結果のSNS風シェアカード生成＆理由解説付き',
       ],
       ctaLabel: 'マイソング診断をはじめる',
     },
     {
       id: 'discography',
+      secondaryId: 'sacred_map',
       stepNum: '02',
-      categoryLabel: 'DISCOGRAPHY & PILGRIMAGE',
+      subtitle: '全曲ライナーノーツ＆ゆかりの地',
       title: '楽曲ガイド・聖地巡礼マップ',
       description:
-        'インディーズ期から最新アルバム『Rejoice』までの代表曲ライナーノーツと、結成の地・山陰（松江・米子）からMVロケ地までの聖地巡礼ガイド。',
+        'インディーズ期から最新曲までの代表曲ライナーノーツ（人気順・転調回数順・BPM順で並び替え可能）と、山陰（松江・米子）〜横浜の聖地巡礼ガイド。',
       points: [
-        '転調の仕掛けや制作背景をまとめた楽曲解説モーダル',
+        '転調回数やBPMで並び替えられる楽曲解説',
         '松江・宍道湖などゆかりの聖地スポット訪問チェック',
       ],
-      ctaLabel: '楽曲ガイド・聖地を見る',
+      ctaLabel: '楽曲ガイドを見る',
+      secondaryCtaLabel: '聖地巡礼マップへ',
     },
     {
       id: 'setlist',
+      secondaryId: 'tour_archive',
       stepNum: '03',
-      categoryLabel: 'SETLIST & LIVE ARCHIVE',
-      title: 'マイセトリ作成・ライブ記録',
+      subtitle: 'ライブ曲順シミュレーション＆参戦記録',
+      title: 'マイセトリ作成・歴代ツアー記録',
       description:
         '自分がライブで聴きたい理想のセットリストを自由に組んで曲順やアンコールを編集したり、歴代ツアーの思い出を振り返ることができます。',
       points: [
         '本編・アンコールの構成や合計演奏時間・転調数を自動計算',
-        '日産スタジアム公演など歴代ツアーアーカイブ収録',
+        '日産スタジアム公演など歴代ツアーのセトリ読込＆参戦記録',
       ],
       ctaLabel: 'マイセトリを作る',
+      secondaryCtaLabel: '歴代ツアー記録へ',
     },
     {
       id: 'community',
+      secondaryId: 'fan_reviews',
       stepNum: '04',
-      categoryLabel: 'RANKING & FAN NOTE',
-      title: '人気曲投票・感想考察ノート',
+      subtitle: 'ファン投票＆歌詞考察シェア',
+      title: '人気曲ランキング投票・感想ノート',
       description:
         '「歌詞が刺さる曲」「ライブで盛り上がる曲」など4部門の人気投票と、ファン同士で好きな歌詞の解釈やライブ体験を綴る感想ノート。',
       points: [
         '4つのテーマから1クリックで推し曲に投票',
-        'みんなが綴った歌詞考察や思い出の閲覧・安全な投稿画面',
+        'みんなが綴った歌詞考察や思い出の閲覧・投稿画面',
       ],
-      ctaLabel: '人気投票・感想ノートへ',
+      ctaLabel: '人気曲投票を見る',
+      secondaryCtaLabel: '感想・考察ノートへ',
     },
     {
       id: 'quiz',
       stepNum: '05',
-      categoryLabel: 'LYRIC & TRIVIA QUIZ',
+      subtitle: '歌詞フレーズ＆楽曲トリビア検定',
       title: 'ヒゲダン検定クイズ',
       description:
         '印象的な歌詞のフレーズや、ヒゲダンならではの転調トリビア、バンド結成の歩みをコース別で楽しめる検定クイズです。',
       points: [
         '初級・中級・上級の難易度コースから選択してスタート',
-        '1問ごとに詳しい楽曲トリビア解説を表示',
+        '1問ごとに詳しい解説と関連曲のライナーノーツ連動付き',
       ],
       ctaLabel: 'ヒゲダン検定に挑戦する',
     },
@@ -472,35 +496,26 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917]">
-      {/* Slim Editorial Header with Top-Right Hamburger Menu Drawer & Zero Scrollbars */}
-      <SiteHeader activeTab={activeFeatureTab} onSelectTab={handleSelectTab} />
+      {/* Slim Header with Top-Right Vertical Content Menu */}
+      <SiteHeader
+        activeTab={activeFeatureTab}
+        onSelectTab={(tab) => handleSelectTab(tab, 'all')}
+      />
 
       {/* Main Content Area Protected by ErrorBoundary */}
-      <ErrorBoundary onResetApp={() => handleSelectTab('home')}>
+      <ErrorBoundary onResetApp={() => handleSelectTab('home', 'all')}>
         <main id="top" className="flex-1">
           {activeFeatureTab === 'home' ? (
-            /* Top Page: Editorial Cover Spread + Curated Chapter Directory */
+            /* Top Page: Clean Intro + Content Directory + 4 Members Guide */
             <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-10 sm:space-y-12">
-              {/* Editorial Cover Hero Spread */}
+              {/* Hero Spread (Removed decorative English filler like MATSUE/TOKYO/STADIUM) */}
               <div className="overflow-hidden rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-8 lg:p-10 shadow-[0_2px_16px_rgba(28,25,23,0.03)]">
-                {/* Top Editorial Masthead Strip (Unboxed Typography, Zero Pill Clutter) */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-4 mb-6 border-b border-[#E6E1D6] text-[11px] tracking-widest uppercase text-[#78716C]">
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold text-[#C83E2B]">ISSUE 01</span>
-                    <span aria-hidden="true">·</span>
-                    <span>UNOFFICIAL HIGEDAN EDITORIAL NOTEBOOK</span>
-                  </div>
-                  <span className="font-mono-num hidden sm:inline">
-                    MATSUE / TOKYO / STADIUM ARCHIVE
-                  </span>
-                </div>
-
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-7 lg:gap-10 items-center">
-                  {/* Left: Editorial Intro & Primary Entry Actions */}
+                  {/* Left: Intro & Primary Entry Actions */}
                   <div className="lg:col-span-7 space-y-5">
-                    <div className="space-y-2.5">
-                      <p className="text-xs sm:text-sm font-bold tracking-wide text-[#C83E2B]">
-                        Official髭男dism 非公式ファンマガジン＆アーカイブ
+                    <div className="space-y-2">
+                      <p className="text-xs sm:text-sm font-bold text-[#C83E2B]">
+                        Official髭男dism 非公式ファンサイト
                       </p>
                       <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-bold tracking-tight text-[#1C1917] leading-[1.2] text-balance">
                         115万キロのファンノート
@@ -509,7 +524,7 @@ export default function App() {
 
                     <p className="text-xs sm:text-base text-[#57534E] leading-relaxed max-w-2xl">
                       グッドメロディと緻密な転調、心に寄り添う歌詞の世界をもっと深く味わうためのファンノートです。
-                      今の気分から1曲を見つける「マイソング診断」をはじめ、時代別ライナーノーツ、山陰〜横浜の聖地巡礼ガイド、理想のセットリスト作成、人気投票、検定クイズまで、読みたい項目からページをめくるように進めます。
+                      今の気分から1曲を見つける「マイソング診断」をはじめ、楽曲ガイド、聖地巡礼マップ、マイセトリ作成、人気投票、検定クイズまで、気になる項目から選んで進めます。
                     </p>
 
                     <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
@@ -525,16 +540,24 @@ export default function App() {
 
                       <button
                         type="button"
-                        onClick={() => handleSelectTab('discography')}
+                        onClick={() => handleSelectTab('discography', 'all')}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-5 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         <Compass className="h-4 w-4 text-[#1E3A5F]" />
-                        <span>楽曲ガイド・聖地巡礼を見る</span>
+                        <span>楽曲ガイドを見る</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleSelectTab('sacred_map')}
+                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
+                      >
+                        <span>聖地巡礼マップ</span>
                       </button>
                     </div>
                   </div>
 
-                  {/* Right: 2x2 Vinyl Sleeve Artwork Showcase */}
+                  {/* Right: 2x2 Album Jacket Showcase (Clicking filters Song Guide by that Era!) */}
                   <div className="lg:col-span-5">
                     <div className="rounded-xl bg-[#F2EFE9] p-3.5 sm:p-4 border border-[#E6E1D6]">
                       <div className="grid grid-cols-2 gap-3">
@@ -542,7 +565,7 @@ export default function App() {
                           <button
                             key={art.label}
                             type="button"
-                            onClick={() => handleSelectTab('discography')}
+                            onClick={() => handleSelectTab('discography', art.era)}
                             className="group relative aspect-square overflow-hidden rounded-lg bg-[#1C1917] ring-1 ring-black/10 shadow-xs text-left cursor-pointer"
                           >
                             {isSafeAssetUrl(art.src) && (
@@ -564,30 +587,23 @@ export default function App() {
                           </button>
                         ))}
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#78716C] px-0.5">
-                        <span className="font-editorial italic">
-                          Selected Discography Visuals
-                        </span>
-                        <span>ジャケット選択で楽曲ガイドへ →</span>
+                      <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#57534E] px-0.5">
+                        <span>アルバム・年代別の収録曲を見る</span>
+                        <span className="font-bold text-[#1C1917]">ジャケットを選択 →</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* 5 Content Appeal Cards (Cohesive Editorial Chapter Directory) */}
+              {/* 5 Content Appeal Cards (Direct Access to Every Feature & Sub-Feature) */}
               <div className="space-y-5">
                 <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-[#E6E1D6] pb-3.5">
-                  <div className="flex items-baseline gap-3">
-                    <span className="font-mono-num text-xs font-bold tracking-widest uppercase text-[#C83E2B]">
-                      DIRECTORY 01–05
-                    </span>
-                    <h2 className="text-lg sm:text-xl font-bold text-[#1C1917]">
-                      コンテンツ目次（気になる項目を選んで進んでください）
-                    </h2>
-                  </div>
+                  <h2 className="text-lg sm:text-xl font-bold text-[#1C1917]">
+                    コンテンツ一覧（気になる項目を選んで進んでください）
+                  </h2>
                   <span className="text-xs text-[#78716C]">
-                    右上の「メニュー」からもいつでも各ページへ移動できます
+                    右上の「メニュー」からも全項目を縦一覧で開けます
                   </span>
                 </div>
 
@@ -595,12 +611,12 @@ export default function App() {
                 <article className="rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-8 transition-colors hover:border-[#1C1917]">
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
                     <div className="lg:col-span-8 space-y-3">
-                      <div className="flex items-baseline gap-3">
+                      <div className="flex items-baseline gap-2.5">
                         <span className="font-editorial text-2xl sm:text-3xl font-bold text-[#C83E2B] font-mono-num">
                           {HOME_FEATURE_CARDS[0].stepNum}.
                         </span>
-                        <span className="text-[11px] font-bold tracking-widest uppercase text-[#78716C]">
-                          {HOME_FEATURE_CARDS[0].categoryLabel}
+                        <span className="text-xs font-bold text-[#78716C]">
+                          {HOME_FEATURE_CARDS[0].subtitle}
                         </span>
                       </div>
 
@@ -639,7 +655,7 @@ export default function App() {
                   </div>
                 </article>
 
-                {/* Other 4 Content Appeal Cards in a Clean, Unified 2x2 Editorial Grid */}
+                {/* Other 4 Content Appeal Cards in a Clean, Unified 2x2 Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                   {HOME_FEATURE_CARDS.slice(1).map((card) => (
                     <article
@@ -652,8 +668,8 @@ export default function App() {
                             <span className="font-editorial text-xl sm:text-2xl font-bold text-[#1C1917] group-hover:text-[#C83E2B] transition-colors font-mono-num">
                               {card.stepNum}.
                             </span>
-                            <span className="text-[11px] font-bold tracking-widest uppercase text-[#78716C]">
-                              {card.categoryLabel}
+                            <span className="text-xs font-bold text-[#78716C]">
+                              {card.subtitle}
                             </span>
                           </div>
                         </div>
@@ -678,7 +694,16 @@ export default function App() {
                         </div>
                       </div>
 
-                      <div className="mt-5 pt-4 border-t border-[#E6E1D6] flex justify-end">
+                      <div className="mt-5 pt-4 border-t border-[#E6E1D6] flex flex-wrap items-center justify-end gap-2">
+                        {card.secondaryId && card.secondaryCtaLabel && (
+                          <button
+                            type="button"
+                            onClick={() => handleSelectTab(card.secondaryId!)}
+                            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3.5 py-2.5 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[40px] whitespace-nowrap shrink-0 cursor-pointer"
+                          >
+                            <span>{card.secondaryCtaLabel}</span>
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleSelectTab(card.id)}
@@ -692,6 +717,75 @@ export default function App() {
                   ))}
                 </div>
               </div>
+
+              {/* Newly Added Essential Fan Section: 4 Band Members Profile & Musical Highlights */}
+              <section
+                aria-labelledby="members-heading"
+                className="space-y-4 pt-2"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-[#E6E1D6] pb-3.5">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5 text-[#C83E2B]" />
+                    <h2
+                      id="members-heading"
+                      className="text-lg sm:text-xl font-bold text-[#1C1917]"
+                    >
+                      Official髭男dism メンバー紹介 ＆ 演奏の聴きどころ
+                    </h2>
+                  </div>
+                  <span className="text-xs text-[#78716C]">
+                    2012年6月7日 島根・松江にて結成
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {HIGEDAN_MEMBERS.map((member) => {
+                    const sigSong = songs.find((s) => s.id === member.signatureSongId);
+                    return (
+                      <article
+                        key={member.id}
+                        className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2 text-xs text-[#78716C]">
+                            <span className="font-bold text-[#C83E2B]">{member.role}</span>
+                            <span>{member.birthplace}</span>
+                          </div>
+                          <div className="mt-1.5 flex items-baseline gap-2">
+                            <h3 className="text-base sm:text-lg font-bold text-[#1C1917]">
+                              {member.name}
+                            </h3>
+                            <span className="text-xs text-[#78716C]">
+                              （{member.nickname}）
+                            </span>
+                          </div>
+                          <p className="mt-2.5 text-xs text-[#57534E] leading-relaxed">
+                            {member.playStyleSummary}
+                          </p>
+                        </div>
+
+                        {sigSong && (
+                          <div className="mt-4 pt-3 border-t border-[#E6E1D6]">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedModalSongId(sigSong.id)}
+                              className="w-full inline-flex items-center justify-between gap-2 text-xs font-bold text-[#1E3A5F] hover:text-[#C83E2B] transition-colors cursor-pointer"
+                            >
+                              <span className="inline-flex items-center gap-1.5 truncate">
+                                <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">
+                                  聴きどころ曲：『{member.signatureSongTitle}』
+                                </span>
+                              </span>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0" />
+                            </button>
+                          </div>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+              </section>
             </div>
           ) : (
             /* Feature Screen View with Clean Back-to-Home Navigation Bar */
@@ -699,11 +793,11 @@ export default function App() {
               <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 pt-5">
                 <button
                   type="button"
-                  onClick={() => handleSelectTab('home')}
+                  onClick={() => handleSelectTab('home', 'all')}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  トップページ（コンテンツ目次）へ戻る
+                  トップページへ戻る
                 </button>
               </div>
 
@@ -716,7 +810,8 @@ export default function App() {
                 />
               )}
 
-              {activeFeatureTab === 'discography' && (
+              {(activeFeatureTab === 'discography' ||
+                activeFeatureTab === 'sacred_map') && (
                 <DiscographySection
                   songs={songs}
                   onSelectSong={(song) => setSelectedModalSongId(song.id)}
@@ -724,10 +819,15 @@ export default function App() {
                   setlistSongIds={setlistSongIds}
                   visitedSpotIds={visitedSpotIds}
                   onToggleVisitedSpot={handleToggleVisitedSpot}
+                  initialSubView={
+                    activeFeatureTab === 'sacred_map' ? 'sacred_map' : 'discography'
+                  }
+                  initialEraFilter={discographyEraPreset}
                 />
               )}
 
-              {activeFeatureTab === 'setlist' && (
+              {(activeFeatureTab === 'setlist' ||
+                activeFeatureTab === 'tour_archive') && (
                 <SetlistBuilderSection
                   songs={songs}
                   setlist={setlist}
@@ -742,10 +842,15 @@ export default function App() {
                   onLoadPresetSetlist={handleLoadPresetSetlist}
                   attendedTourIds={attendedTourIds}
                   onToggleAttendedTour={handleToggleAttendedTour}
+                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  initialSubTab={
+                    activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
+                  }
                 />
               )}
 
-              {activeFeatureTab === 'community' && (
+              {(activeFeatureTab === 'community' ||
+                activeFeatureTab === 'fan_reviews') && (
                 <FanCommunitySection
                   songs={songs}
                   votedSongIds={votedKeys}
@@ -755,6 +860,9 @@ export default function App() {
                   likedReviewIds={likedReviewIds}
                   onLikeReview={handleLikeReview}
                   onSubmitReview={handleSubmitReview}
+                  initialSubTab={
+                    activeFeatureTab === 'fan_reviews' ? 'reviews' : 'ranking'
+                  }
                 />
               )}
 
@@ -762,6 +870,8 @@ export default function App() {
                 <QuizSection
                   bestScorePercentage={bestQuizScore}
                   onUpdateBestScore={handleUpdateBestQuizScore}
+                  songs={songs}
+                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
                 />
               )}
             </div>

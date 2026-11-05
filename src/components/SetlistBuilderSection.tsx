@@ -10,6 +10,7 @@ import {
   Music2,
   RotateCcw,
   ListMusic,
+  BookOpen,
 } from 'lucide-react';
 import {
   SongItem,
@@ -36,6 +37,8 @@ interface SetlistBuilderSectionProps {
   onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => void;
   attendedTourIds: string[];
   onToggleAttendedTour: (tourId: string) => void;
+  onSelectSong?: (song: SongItem) => void;
+  initialSubTab?: 'builder' | 'tours';
 }
 
 export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
@@ -50,8 +53,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onLoadPresetSetlist,
   attendedTourIds,
   onToggleAttendedTour,
+  onSelectSong,
+  initialSubTab = 'builder',
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'builder' | 'tours'>('builder');
+  const [activeSubTab, setActiveSubTab] = useState<'builder' | 'tours'>(initialSubTab);
   const [selectedSongToAdd, setSelectedSongToAdd] = useState<string>(
     songs.find((s) => !setlist.some((item) => item.songId === s.id))?.id ||
       songs[0]?.id ||
@@ -60,6 +65,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [addAsEncore, setAddAsEncore] = useState<boolean>(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const copyTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setActiveSubTab(initialSubTab);
+  }, [initialSubTab]);
 
   useEffect(() => {
     return () => {
@@ -128,17 +137,18 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         {/* Clean Section Heading + Sub-Tab Switcher */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
           <div>
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-              CHAPTER 03 · SETLIST & LIVE ARCHIVE
-            </div>
             <h2
               id="setlist-heading"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              マイセットリスト作成 ＆ ライブ参戦記録
+              {activeSubTab === 'tours'
+                ? '歴代ツアー記録 ＆ セットリスト読込'
+                : 'マイセットリスト作成'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              自分が聴きたい理想の曲順を組んで演奏時間や盛り上がりをシミュレーションしたり、歴代ツアーの参戦記録を残せます。
+              {activeSubTab === 'tours'
+                ? '歴代ツアーの主要セットリストをマイセトリに読み込んだり、参戦・視聴の記録を残せます。'
+                : '自分が聴きたい理想の曲順を組んで、合計演奏時間やライブの盛り上がり推移をシミュレーションできます。'}
             </p>
           </div>
 
@@ -329,11 +339,22 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             {trackBadge}
                           </span>
                           <div className="min-w-0 flex-1">
-                            <div className="text-sm font-bold text-[#1C1917] truncate">
-                              {song.title}
-                            </div>
+                            {onSelectSong ? (
+                              <button
+                                type="button"
+                                onClick={() => onSelectSong(song)}
+                                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#1C1917] hover:text-[#C83E2B] transition-colors truncate cursor-pointer text-left"
+                              >
+                                <span className="truncate">{song.title}</span>
+                                <BookOpen className="h-3 w-3 shrink-0 text-[#78716C]" />
+                              </button>
+                            ) : (
+                              <div className="text-sm font-bold text-[#1C1917] truncate">
+                                {song.title}
+                              </div>
+                            )}
                             <div className="text-[11px] text-[#78716C] truncate">
-                              {song.album} · {formatDuration(song.durationSec)} · BPM {song.bpm}
+                              {song.album} · {formatDuration(song.durationSec)} · BPM {song.bpm} · 転調{song.keyChanges}回
                             </div>
                           </div>
                         </div>
@@ -399,8 +420,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917] via-[#1C1917]/40 to-transparent flex flex-col justify-end p-4">
-                    <span className="text-[11px] font-bold tracking-wider uppercase text-[#F5D0C9]">
-                      STAGE SIMULATION · セットリスト診断
+                    <span className="text-[11px] font-bold text-[#F5D0C9]">
+                      セットリスト構成データ
                     </span>
                     <h3 className="mt-0.5 text-base sm:text-lg font-bold text-white truncate">
                       {safeDisplayTitle}

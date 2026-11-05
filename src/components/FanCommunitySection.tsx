@@ -23,6 +23,7 @@ interface FanCommunitySectionProps {
   likedReviewIds: string[];
   onLikeReview: (reviewId: string) => void;
   onSubmitReview: (newReview: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => void;
+  initialSubTab?: 'ranking' | 'reviews';
 }
 
 const RANK_CATEGORIES: { id: VoteCategory; label: string; desc: string }[] = [
@@ -41,8 +42,9 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   likedReviewIds,
   onLikeReview,
   onSubmitReview,
+  initialSubTab = 'ranking',
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'ranking' | 'reviews'>('ranking');
+  const [activeSubTab, setActiveSubTab] = useState<'ranking' | 'reviews'>(initialSubTab);
   const [activeCategory, setActiveCategory] = useState<VoteCategory>('overall');
   const [reviewFilterCategory, setReviewFilterCategory] = useState<string>('all');
   const [isWritingReview, setIsWritingReview] = useState<boolean>(false);
@@ -57,6 +59,11 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<boolean>(false);
   const successTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setActiveSubTab(initialSubTab);
+    setIsWritingReview(false);
+  }, [initialSubTab]);
 
   useEffect(() => {
     return () => {
@@ -132,17 +139,18 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
         {/* Clean Section Header + Sub-Tab Switcher */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
           <div>
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-              CHAPTER 04 · RANKING & FAN NOTE
-            </div>
             <h2
               id="community-heading"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              人気曲投票 ＆ 感想・考察ノート
+              {activeSubTab === 'reviews'
+                ? '感想・考察ノート'
+                : '部門別・人気曲ランキング投票'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              テーマ別の人気曲ランキング投票と、好きな歌詞やライブの思い出を共有できるファンノートです。
+              {activeSubTab === 'reviews'
+                ? '好きな歌詞の解釈やライブで聴いた時の思い出をファン同士で共有できるノートです。'
+                : '4つのテーマから、あなたの推し曲に1クリックで投票できます。'}
             </p>
           </div>
 
@@ -166,7 +174,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
               }`}
             >
               <Trophy className="h-3.5 w-3.5 shrink-0" />
-              部門別・人気投票
+              人気曲ランキング投票
             </button>
             <button
               type="button"
@@ -244,7 +252,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                                 : 'text-[#78716C]'
                             }`}
                           >
-                            0{idx + 1}.
+                            {idx + 1}位
                           </span>
                           <h3 className="text-base sm:text-lg font-bold text-[#1C1917] truncate">
                             {song.title}

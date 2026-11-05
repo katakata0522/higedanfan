@@ -77,7 +77,6 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
   const [copiedShareText, setCopiedShareText] = useState<boolean>(false);
   const copyShareTimerRef = useRef<number | null>(null);
 
-  // Stop any playing audio preview and clear timers when leaving this section
   useEffect(() => {
     return () => {
       stopTempoPreview();
@@ -156,12 +155,9 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
         {/* Section Title */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-5 border-b border-[#E6E1D6]">
           <div>
-            <div className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-              CHAPTER 01 · MY SONG DIAGNOSIS
-            </div>
             <h2
               id="mood-heading"
-              className="mt-1 text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
               マイソング診断
             </h2>
@@ -198,8 +194,8 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                     戻る
                   </button>
                 )}
-                <span className="text-xs font-bold tracking-wide text-[#C83E2B] font-mono-num">
-                  QUESTION 0{step} / 03
+                <span className="text-xs font-bold text-[#C83E2B] font-mono-num">
+                  質問 {step} / 3
                 </span>
               </div>
 
@@ -342,7 +338,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
         ) : (
           /* Diagnosis Result Screen (Shown after answering Q1 -> Q2 -> Q3) */
           <div className="mt-6 space-y-6">
-            {/* Selected Answers Summary Bar (Unboxed Editorial Separators) */}
+            {/* Selected Answers Summary Bar */}
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] px-4 py-3 text-xs text-[#57534E]">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-bold text-[#1C1917]">診断条件：</span>
@@ -468,9 +464,9 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                   <div className="md:col-span-7 flex flex-col justify-between">
                     <div>
                       <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
-                        <span className="inline-flex items-center gap-1.5 font-bold tracking-wide text-[#C83E2B]">
+                        <span className="inline-flex items-center gap-1.5 font-bold text-[#C83E2B]">
                           <Sparkles className="h-3.5 w-3.5" />
-                          BEST MATCH FOR YOUR MOOD
+                          あなたへのベストマッチ楽曲
                         </span>
                         <span className="font-mono-num">
                           {formatDuration(bestMatch.song.durationSec)} · BPM {bestMatch.song.bpm} · 転調{bestMatch.song.keyChanges}回
@@ -484,10 +480,10 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         {bestMatch.song.tieUp}
                       </p>
 
-                      {/* 1-2 Sentence Mood Match Reason (Clean Hairline Editorial Box — Zero Thick Left Bar) */}
+                      {/* 1-2 Sentence Mood Match Reason */}
                       <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-2.5">
-                        <div className="text-[11px] font-bold tracking-wider uppercase text-[#C83E2B]">
-                          WHY THIS SONG MATCHES · 今の気分にマッチする理由
+                        <div className="text-xs font-bold text-[#C83E2B]">
+                          今の気分にマッチする理由
                         </div>
                         <p className="text-xs sm:text-sm text-[#1C1917] leading-relaxed font-medium">
                           {bestMatch.moodMatchExplanation}
@@ -498,7 +494,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         </p>
                       </div>
 
-                      {/* Iconic Lyric Quote (Editorial Pull Quote with Top/Bottom Hairlines) */}
+                      {/* Iconic Lyric Quote */}
                       <blockquote className="mt-4 font-editorial text-xs sm:text-sm italic text-[#1C1917] border-y border-[#E6E1D6] py-3 px-2">
                         「{bestMatch.song.iconicLyricQuote}」
                       </blockquote>
@@ -592,9 +588,6 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div>
-                        <span className="text-[11px] font-bold tracking-widest uppercase text-[#C83E2B]">
-                          SNS SHARE CARD PREVIEW
-                        </span>
                         <h4 className="text-sm sm:text-base font-bold text-[#1C1917]">
                           マイソング診断シェアカード（スクリーンショットやテキストコピーで共有できます）
                         </h4>
@@ -632,13 +625,13 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
 
                     {/* The Visual SNS Card Constructed Purely with Existing DOM & Assets */}
                     <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] shadow-lg">
-                      {/* Card Top Editorial Header Strip */}
-                      <div className="flex items-center justify-between gap-2 border-b border-white/15 bg-black/30 px-5 py-3 text-[11px] tracking-widest uppercase">
+                      {/* Card Top Strip */}
+                      <div className="flex items-center justify-between gap-2 border-b border-white/15 bg-black/30 px-5 py-3 text-xs">
                         <span className="font-bold text-[#F5D0C9]">
-                          115万キロのファンノート · MY SONG DIAGNOSIS
+                          115万キロのファンノート · マイソング診断結果
                         </span>
                         <span className="font-mono-num font-bold text-white">
-                          MATCH {bestMatch.matchScore}%
+                          マッチ度 {bestMatch.matchScore}%
                         </span>
                       </div>
 
@@ -680,8 +673,8 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                           </div>
 
                           <div className="rounded-xl border border-white/15 bg-white/5 p-3.5 space-y-1.5">
-                            <div className="text-[10px] font-bold tracking-wider uppercase text-[#F5D0C9]">
-                              WHY THIS SONG MATCHES · 診断理由
+                            <div className="text-[11px] font-bold text-[#F5D0C9]">
+                              今の気分にマッチする理由
                             </div>
                             <p className="text-xs text-white/95 leading-relaxed">
                               {bestMatch.moodMatchExplanation}
@@ -737,7 +730,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1 text-xs text-[#78716C]">
                                 <span className="font-bold text-[#1E3A5F] font-mono-num">
-                                  #{idx + 2} · マッチ度 {matchScore}%
+                                  候補 {idx + 2}位 · マッチ度 {matchScore}%
                                 </span>
                                 <span className="font-mono-num">BPM {song.bpm}</span>
                               </div>

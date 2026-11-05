@@ -600,3 +600,62 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     relatedSongId: 'editorial-song',
   },
 ];
+
+export interface BandMemberProfile {
+  id: string;
+  name: string;
+  nickname: string;
+  role: string;
+  birthplace: string;
+  playStyleSummary: string;
+  signatureSongId: string;
+  signatureSongTitle: string;
+}
+
+export const HIGEDAN_MEMBERS: BandMemberProfile[] = [
+  {
+    id: 'satoshi',
+    name: '藤原 聡',
+    nickname: 'さとっちゃん',
+    role: 'Vocal / Piano',
+    birthplace: '鳥取県米子市出身',
+    playStyleSummary:
+      'ほとんどの楽曲の作詞・作曲を手がけるフロントマン。ブラックミュージックやジャズをルーツに持つ躍動的なピアノリフと、ハイトーンまで突き抜ける表現力豊かな歌声が特徴。',
+    signatureSongId: 'subtitle',
+    signatureSongTitle: 'Subtitle',
+  },
+  {
+    id: 'daisuke',
+    name: '小笹 大輔',
+    nickname: '大ちゃん',
+    role: 'Guitar / Chorus',
+    birthplace: '島根県松江市出身',
+    playStyleSummary:
+      '繊細なアルペジオからハードロック直系のエモーショナルなギターソロまで自在に操るギタリスト。『115万キロのフィルム』の間奏やライブアレンジでのギターソロは必見。',
+    signatureSongId: 'pretender',
+    signatureSongTitle: 'Pretender',
+  },
+  {
+    id: 'makoto',
+    name: '楢﨑 誠',
+    nickname: 'ならちゃん',
+    role: 'Bass / Sax / Synth Bass',
+    birthplace: '広島県福山市出身',
+    playStyleSummary:
+      'エレキベース・ウッドベース・シンセベースに加え、バリトン＆ソプラノサックスまで演奏するマルチプレイヤー。楽曲のファンクネスと温かみを支える要。',
+    signatureSongId: 'editorial-song',
+    signatureSongTitle: 'アポトーシス',
+  },
+  {
+    id: 'masaki',
+    name: '松浦 匡希',
+    nickname: 'ちゃんまつ',
+    role: 'Drums / Percussion',
+    birthplace: '鳥取県米子市出身',
+    playStyleSummary:
+      'ジャズ・フュージョン的な細かいゴーストノートからスタジアムを揺らすパワフルなビートまで叩き分けるドラマー。複雑な変拍子や11回転調を自然に聴かせるリズムの心臓部。',
+    signatureSongId: 'mixed-nuts',
+    signatureSongTitle: 'ミックスナッツ',
+  },
+];
+
