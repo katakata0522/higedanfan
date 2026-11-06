@@ -108,8 +108,10 @@ export function useFanRecords(showToast: (message: string) => void) {
     showToast(`「${targetSong.title}」をマイセトリに追加しました！`);
   };
 
-  const removeFromSetlist = (index: number) => {
-    setSetlist((prev) => prev.filter((_, idx) => idx !== index));
+  const removeFromSetlist = (songId: string) => {
+    const song = songs.find(item => item.id === songId);
+    if (!song || !window.confirm(`「${song.title}」をこのセットリストから外しますか？`)) return;
+    setSetlist(prev => prev.filter(entry => entry.songId !== songId));
   };
 
   const moveSetlistSong = (index: number, direction: 'up' | 'down' | 'top') => {
@@ -147,9 +149,11 @@ export function useFanRecords(showToast: (message: string) => void) {
 
   const loadPresetSetlist = (entries: SetlistEntry[], title: string) => {
     const validIds = new Set(songs.map((s) => s.id));
-    if (setlist.length && !window.confirm("現在のセトリをこの選曲に置き換えますか？")) return false;
     const safeEntries = sanitizeSetlistEntries(entries, validIds);
     const safeTitle = sanitizeUserText(title, 160) || 'マイセットリスト';
+    const hasCustomTitle = setlistTitle.trim() !== '' && setlistTitle.trim() !== DEFAULT_SETLIST_TITLE;
+    if ((setlist.length > 0 || hasCustomTitle) &&
+        !window.confirm(`今のセトリの名前と曲順を「${safeTitle}」の選曲に置き換えますか？`)) return false;
     if (safeEntries) {
       setSetlist(safeEntries);
     }
@@ -232,7 +236,7 @@ export function useFanRecords(showToast: (message: string) => void) {
   };
 
   const resetAllUserData = () => {
-    if (!window.confirm('この端末のセトリ・訪問記録・感想を初期状態に戻しますか？')) return;
+    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nマイセトリの名前と曲順は初期の見本に戻ります。感想・共感・投票、聖地の訪問、公演の参戦、検定の最高正答率の記録は消去されます。')) return;
     try {
       localStorage.removeItem(STORAGE_KEY);
     } catch {

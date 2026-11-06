@@ -35,7 +35,7 @@ interface SetlistBuilderSectionProps {
   setlistTitle: string;
   onChangeTitle: (title: string) => void;
   onAddSong: (songId: string, isEncore?: boolean) => void;
-  onRemoveSong: (index: number) => void;
+  onRemoveSong: (songId: string) => void;
   onMoveSong: (index: number, direction: 'up' | 'down' | 'top') => void;
   onToggleEncore: (index: number) => void;
   onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => boolean;
@@ -428,7 +428,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-end gap-1.5 shrink-0 pt-1 sm:pt-0">
+                        <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5 shrink-0 pt-1 sm:pt-0">
                           <button
                             type="button"
                             onClick={() => onToggleEncore(idx)}
@@ -476,11 +476,12 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                           </button>
                           <button
                             type="button"
-                            onClick={() => onRemoveSong(idx)}
-                            aria-label={`${song.title}をセットリストから削除`}
-                            className="rounded border border-[#D5CEC2] p-1 text-[#C83E2B] hover:bg-[#FDF3F1] cursor-pointer"
+                            onClick={() => onRemoveSong(song.id)}
+                            aria-label={`${song.title}をセットリストから外す`}
+                            className="ml-2 inline-flex min-h-[44px] items-center gap-1 rounded border border-[#D5CEC2] px-2 text-xs font-bold text-[#9B3021] hover:bg-[#FDF3F1] cursor-pointer"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
+                            外す
                           </button>
                         </div>
                       </div>
