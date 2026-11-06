@@ -1,0 +1,49 @@
+name: Fan-site audio evidence audit
+on:
+  push:
+    branches: ['audit/deep-review-20261106']
+    paths: ['.audio-review/**', '.github/workflows/audio-review.yml']
+permissions:
+  contents: read
+concurrency:
+  group: higedanfan-audio-review
+  cancel-in-progress: true
+jobs:
+  audio-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prepare bounded analysis environment
+        run: |
+          mkdir -p audio-evidence audit-evidence /tmp/higedan-audio-tools
+          cd /tmp/higedan-audio-tools
+          npm init -y
+          npm install --ignore-scripts --no-audit --no-fund tsx@4.20.6
+          python3 -m venv /tmp/audio-venv
+          /tmp/audio-venv/bin/pip install librosa==0.11.0 soundfile==0.13.1 requests==2.32.5 yt-dlp
+          /tmp/audio-venv/bin/pip freeze > "$GITHUB_WORKSPACE/audio-evidence/python-packages.txt"
+      - name: Reuse catalog and public metadata collectors
+        run: |
+          /tmp/higedan-audio-tools/node_modules/.bin/tsx .audit/export-data.ts > audio-evidence/catalog-summary.log
+          node .audit/source-audit.mjs > audio-evidence/source-lookup.log
+      - name: Analyze public previews; never upload audio files
+        env:
+          OMP_NUM_THREADS: '1'
+          OPENBLAS_NUM_THREADS: '1'
+        run: |
+          export PATH="/tmp/audio-venv/bin:$PATH"
+          python .audio-review/analyze.py 2>&1 | tee audio-evidence/analysis.log
+      - name: Preserve numerical evidence only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-audio-evidence
+          path: audio-evidence/
+          retention-days: 7
+          if-no-files-found: error
