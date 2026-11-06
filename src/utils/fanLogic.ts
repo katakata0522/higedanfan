@@ -500,19 +500,8 @@ export function calculateSetlistStats(
   const mainCount = resolved.filter((r) => !r.isEncore).length;
   const encoreCount = resolved.filter((r) => r.isEncore).length;
 
-  let vibeTitle = '王道スタジアム・バランス型';
-  let vibeDescription =
-    'アッパーなロック・ファンクと心を揺さぶるピアノバラードが絶妙に交錯する、ドーム＆スタジアム級の構成です。';
-
-  if (avgEnergy >= 8.6) {
-    vibeTitle = '熱狂ノンストップ・フェス＆ライブハウス型';
-    vibeDescription =
-      '序盤から終盤までハイボルテージなキラーチューンが畳み掛ける、汗だく必至の攻めのセットリストです。';
-  } else if (avgEnergy <= 7.2) {
-    vibeTitle = '極上アコースティック＆ライナーノーツ没入型';
-    vibeDescription =
-      '藤原聡の歌声とピアノ、繊細な歌詞の世界観をじっくり堪能できる、ホール公演向きのドラマチックな構成です。';
-  }
+  const vibeTitle = avgEnergy >= 8.6 ? '高めの曲が中心' : avgEnergy <= 7.2 ? '穏やかな曲が中心' : '中間の構成';
+  const vibeDescription = '棒の高さは、編集時に各曲に付けた熱量の目安（10段階）です。選曲の平均は ' + avgEnergy.toFixed(1) + ' / 10。';
 
   return {
     totalSongs: resolved.length,

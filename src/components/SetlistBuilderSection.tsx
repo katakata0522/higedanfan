@@ -179,7 +179,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
                 ? 'ツアーをイメージした編集部の選曲例をマイセトリに読み込んだり、参戦・視聴の記録を残せます。'
-                : '自分が聴きたい理想の曲順を組んで、合計演奏時間やライブの盛り上がり推移をシミュレーションできます。'}
+                : '自分が聴きたい理想の曲順を組んで、合計演奏時間や曲順で見る熱量の目安をシミュレーションできます。'}
             </p>
           </div>
 
@@ -539,7 +539,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   <div>
                     <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
                       <span className="font-bold text-white/90">
-                        ライブの盛り上がり推移
+                        曲順で見る熱量の目安
                       </span>
                       <span className="font-bold text-[#FDE68A]">{stats.vibeTitle}</span>
                     </div>
