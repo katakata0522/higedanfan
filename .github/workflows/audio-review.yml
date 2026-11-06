@@ -16,6 +16,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
+          fetch-depth: 20
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
@@ -56,6 +57,13 @@ jobs:
           OPENBLAS_NUM_THREADS: '1'
         run: |
           export PATH="/tmp/audio-venv/bin:$PATH"
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('.audio-review/analyze.py')
+          s=p.read_text().replace('ensure_ascii=False,indent=2', 'ensure_ascii=False,indent=2,default=lambda x:x.item() if isinstance(x,np.generic) else str(x)')
+          p.write_text(s)
+          Path('audio-evidence/executed-analysis.py').write_text(s)
+          PY
           set -o pipefail
           python .audio-review/analyze.py 2>&1 | tee audio-evidence/analysis.log
       - name: Preserve numerical evidence only
