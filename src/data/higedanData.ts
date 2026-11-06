@@ -1,5 +1,3 @@
-import { verifiedSongs } from './fullCatalogSongs';
-
 export type MoodTag = 'push_back' | 'heartbreak_night' | 'euphoric_drive' | 'deep_lyric';
 export type SituationTag = 'morning_commute' | 'late_night_alone' | 'live_warmup' | 'weekend_walk';
 export type SoundTag = 'piano_pop' | 'brass_funk' | 'emotional_ballad' | 'stadium_rock';
@@ -97,7 +95,7 @@ export const SAME_BLUE_IMAGE_PATH = '/images/album_art_same_blue_vibe_1793854124
 export const MATSUE_IMAGE_PATH = '/images/sacred_matsue_sunset_1793849698665.jpg';
 export const STADIUM_IMAGE_PATH = '/images/live_stadium_confetti_1793849699286.jpg';
 
-export const HIGEDAN_SONGS: SongItem[] = verifiedSongs.map(song => ({...song, votes: {overall: 0, lyric: 0, live: 0, hiddenGem: 0}}));
+export { verifiedSongs as HIGEDAN_SONGS } from './fullCatalogSongs';
 
 export const SACRED_SPOTS: SacredSpot[] = [
   {
