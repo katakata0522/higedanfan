@@ -1,0 +1,108 @@
+name: Isolated fan-site deep review
+on:
+  push:
+    branches: ['audit/deep-review-20261106']
+    paths: ['.audit/**', '.github/workflows/deep-review.yml']
+permissions:
+  contents: read
+concurrency:
+  group: higedanfan-deep-review
+  cancel-in-progress: true
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout reviewed source and audit harness
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 10
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Record environment and archive exact original source
+        shell: bash
+        run: |
+          mkdir -p audit-evidence/logs
+          { date -u; node -v; npm -v; git rev-parse HEAD; } > audit-evidence/environment.txt
+          git diff 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 -- src public index.html package.json tsconfig.json vite.config.ts > audit-evidence/product-source-diff.txt
+          git archive --format=tar.gz 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 > audit-evidence/original-source.tar.gz
+      - name: Install original dependencies without lifecycle scripts
+        id: install
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm install --ignore-scripts --no-fund --no-audit 2>&1 | tee audit-evidence/logs/install.log
+          cp package-lock.json audit-evidence/resolved-package-lock.json
+      - name: Build original application
+        id: build
+        if: steps.install.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run build 2>&1 | tee audit-evidence/logs/build.log
+          tar czf audit-evidence/original-build.tar.gz dist
+      - name: Type-check original application
+        if: steps.install.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee audit-evidence/logs/typecheck.log
+      - name: Install independent audit tools
+        shell: bash
+        run: |
+          mkdir -p /tmp/higedan-audit-tools
+          cd /tmp/higedan-audit-tools
+          npm init -y
+          npm install --ignore-scripts --no-fund --no-audit playwright@1.56.1 tsx@4.20.6 axe-core@4.10.3
+      - name: Export all catalog records and inspect internal integrity
+        shell: bash
+        run: /tmp/higedan-audit-tools/node_modules/.bin/tsx .audit/export-data.ts | tee audit-evidence/logs/catalog.log
+      - name: Run existing unit tests unchanged
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          /tmp/higedan-audit-tools/node_modules/.bin/tsx --test src/utils/fanLogic.test.ts 2>&1 | tee audit-evidence/logs/unit-tests.log
+      - name: Check every source URL and discover official-store audio metadata
+        continue-on-error: true
+        shell: bash
+        run: node .audit/source-audit.mjs | tee audit-evidence/logs/sources.log
+      - name: Install Chromium for real browser checks
+        if: steps.build.outcome == 'success'
+        shell: bash
+        run: /tmp/higedan-audit-tools/node_modules/.bin/playwright install --with-deps chromium
+      - name: Operate the production build and compare development assets
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 --port 4173 > audit-evidence/logs/preview-server.log 2>&1 &
+          PREVIEW_PID=$!
+          npm run dev -- --host 127.0.0.1 > audit-evidence/logs/dev-server.log 2>&1 &
+          DEV_PID=$!
+          trap 'kill $PREVIEW_PID $DEV_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          set -o pipefail
+          node .audit/browser-audit.mjs 2>&1 | tee audit-evidence/logs/browser.log
+      - name: Record actual build outcomes
+        if: always()
+        env:
+          INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          BUILD_OUTCOME: ${{ steps.build.outcome }}
+        run: |
+          printf 'original_install=%s\noriginal_build=%s\n' "$INSTALL_OUTCOME" "$BUILD_OUTCOME" > audit-evidence/build-status.txt
+          find audit-evidence -type f -not -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > audit-evidence/SHA256SUMS
+      - name: Retain evidence for this review only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-deep-review-evidence
+          path: audit-evidence/
+          retention-days: 7
+          if-no-files-found: error
