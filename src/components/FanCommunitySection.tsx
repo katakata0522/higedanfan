@@ -328,7 +328,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                           >
                             {rank}位
                           </span>
-                          <h3 className="text-base sm:text-lg font-bold text-[#1C1917] truncate">
+                          <h3 className="text-base sm:text-lg font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                             {song.title}
                           </h3>
                         </div>
@@ -338,7 +338,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                         </span>
                       </div>
 
-                      <p className="mt-1 text-xs text-[#78716C] truncate">
+                      <p className="mt-1 text-xs text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
                         {song.album}
                         {song.trackNumber ? ` (M${song.trackNumber})` : ''} · {song.tieUp}
                       </p>
@@ -669,7 +669,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                           <span>{rev.category}</span>
                           <span aria-hidden="true"> · </span>
                           <span>
-                            {rev.author}（{rev.fanTenure}）
+                            <span className="wrap-anywhere">{rev.author}（{rev.fanTenure}）</span>
                           </span>
                         </div>
                         <span className="font-mono-num">{rev.postedAt}</span>
@@ -679,11 +679,11 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                         <button onClick={() => { setEditingId(rev.id); setAuthor(rev.author); setFanTenure(rev.fanTenure); setSongId(rev.songId); setReviewCategory(rev.category); setTitle(rev.title); setComment(rev.comment); setFormError(null); setIsWritingReview(true); }}>編集</button>
                         <button onClick={() => { if (window.confirm('「' + rev.title + '」を削除しますか？')) onDeleteReview(rev.id); }}>この感想を削除</button>
                       </div>
-                      <h4 className="mt-2.5 text-sm sm:text-base font-bold text-[#1C1917]">
+                      <h4 className="mt-2.5 wrap-anywhere text-sm sm:text-base font-bold text-[#1C1917]">
                         {rev.title}
                       </h4>
 
-                      <p className="whitespace-pre-wrap mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
+                      <p className="whitespace-pre-wrap wrap-anywhere mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
                         {rev.comment}
                       </p>
                     </div>

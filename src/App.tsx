@@ -576,7 +576,7 @@ export default function App() {
                       今の気分から1曲を見つける「マイソング診断」をはじめ、楽曲ガイド、聖地巡礼マップ、マイセトリ作成、人気投票、検定クイズまで、気になる項目から選んで進めます。
                     </p>
 
-                    <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="pt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
                       <button
                         type="button"
                         onClick={() => handleSelectTab('discography', 'all')}
@@ -629,7 +629,7 @@ export default function App() {
                               <span className="block text-[10px] font-mono-num text-white/75">
                                 {art.year}
                               </span>
-                              <span className="block text-xs font-bold text-white truncate">
+                              <span className="block text-xs font-bold text-white min-w-0 wrap-anywhere whitespace-normal">
                                 {art.label}
                               </span>
                             </div>
@@ -820,9 +820,9 @@ export default function App() {
                               onClick={() => selectSong(sigSong.id)}
                               className="w-full inline-flex items-center justify-between gap-2 text-xs font-bold text-[#1E3A5F] hover:text-[#C83E2B] transition-colors cursor-pointer"
                             >
-                              <span className="inline-flex items-center gap-1.5 truncate">
+                              <span className="inline-flex items-center gap-1.5 min-w-0">
                                 <BookOpen className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">
+                                <span className="min-w-0 wrap-anywhere whitespace-normal">
                                   聴きどころ曲：『{member.signatureSongTitle}』
                                 </span>
                               </span>
