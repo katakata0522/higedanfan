@@ -602,7 +602,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                   type="submit"
                   className="rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
                 >
-                  感想ノートに投稿する
+                  {editingId ? '変更を保存する' : '感想ノートに保存する'}
                 </button>
               </div>
             </form>
@@ -645,7 +645,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#C83E2B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#A93020] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <MessageSquarePlus className="h-4 w-4" />
-                {editingId ? '感想を編集する' : '推し曲の感想を書く'}
+                推し曲の感想を書く
               </button>
             </div>
 
