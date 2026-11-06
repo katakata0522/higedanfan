@@ -19,8 +19,10 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Prepare bounded analysis environment
+      - name: Prepare bounded analysis environment and decoder
         run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg > /tmp/ffmpeg-install.log
           mkdir -p audio-evidence audit-evidence /tmp/higedan-audio-tools
           cd /tmp/higedan-audio-tools
           npm init -y
@@ -28,6 +30,22 @@ jobs:
           python3 -m venv /tmp/audio-venv
           /tmp/audio-venv/bin/pip install librosa==0.11.0 soundfile==0.13.1 requests==2.32.5 yt-dlp
           /tmp/audio-venv/bin/pip freeze > "$GITHUB_WORKSPACE/audio-evidence/python-packages.txt"
+          ffmpeg -version > "$GITHUB_WORKSPACE/audio-evidence/ffmpeg-version.txt"
+      - name: Clean product typecheck without copied evidence scripts
+        continue-on-error: true
+        run: |
+          git archive 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 > /tmp/original.tar
+          mkdir -p /tmp/higedan-clean-typecheck
+          tar -xf /tmp/original.tar -C /tmp/higedan-clean-typecheck
+          cd /tmp/higedan-clean-typecheck
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.devDependencies.esbuild='0.28.2';fs.writeFileSync('package.json',JSON.stringify(p,null,2));"
+          npm install --ignore-scripts --no-fund --no-audit > "$GITHUB_WORKSPACE/audio-evidence/typecheck-install.log" 2>&1
+          set +e
+          npm run lint > "$GITHUB_WORKSPACE/audio-evidence/clean-typecheck.log" 2>&1
+          code=$?
+          printf '%s\n' "$code" > "$GITHUB_WORKSPACE/audio-evidence/clean-typecheck-exit.txt"
+          cat "$GITHUB_WORKSPACE/audio-evidence/clean-typecheck.log"
+          exit "$code"
       - name: Reuse catalog and public metadata collectors
         run: |
           /tmp/higedan-audio-tools/node_modules/.bin/tsx .audit/export-data.ts > audio-evidence/catalog-summary.log
@@ -38,6 +56,7 @@ jobs:
           OPENBLAS_NUM_THREADS: '1'
         run: |
           export PATH="/tmp/audio-venv/bin:$PATH"
+          set -o pipefail
           python .audio-review/analyze.py 2>&1 | tee audio-evidence/analysis.log
       - name: Preserve numerical evidence only
         if: always()
