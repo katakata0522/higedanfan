@@ -9,7 +9,8 @@ import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
 import { HomePage } from './components/home/HomePage';
 import { useFanRecords } from './hooks/useFanRecords';
-import { SiteHeader, ActiveFeatureTab, SITE_NAV_ITEMS } from './components/SiteHeader';
+import { SiteHeader, ActiveFeatureTab, type SiteTab, SITE_NAV_ITEMS } from './components/SiteHeader';
+import { infoPages, isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import { SongDetailModal } from './components/SongDetailModal';
@@ -27,9 +28,11 @@ const FanCommunitySection = React.lazy(() =>
 const QuizSection = React.lazy(() =>
   import('./components/QuizSection').then(module => ({default: module.QuizSection}))
 );
+const InfoPage = React.lazy(() => import('./components/info/InfoPage'));
 
 function readLocation() {
   const [feature, song] = window.location.hash.slice(1).split('/');
+  if (isInfoPage(feature)) return {tab: feature, songId: null};
   const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
   const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
   return {tab, songId};
@@ -38,7 +41,7 @@ function readLocation() {
 export default function App() {
   const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(() => readLocation().songId);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [activeFeatureTab, setActiveFeatureTab] = useState<ActiveFeatureTab>(() => readLocation().tab);
+  const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
 
   const toastTimerRef = React.useRef<number | null>(null);
@@ -122,6 +125,10 @@ export default function App() {
         <main id="top" className="flex-1">
           {activeFeatureTab === 'home' ? (
             <HomePage songs={songs} onSelectTab={handleSelectTab} onSelectSong={selectSong} />
+          ) : isInfoPage(activeFeatureTab) ? (
+            <React.Suspense fallback={<p role="status" className="p-5">読み込み中…</p>}>
+              <InfoPage page={activeFeatureTab} />
+            </React.Suspense>
           ) : (
             /* Feature Screen View with Direct Cross-Feature Switch Bar */
             <div>
@@ -274,6 +281,11 @@ export default function App() {
       <footer className="border-t border-[#E6E1D6] bg-[#F2EFE9] py-7 mt-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-[#57534E]">
           <div className="space-y-1.5">
+            <nav aria-label="サイト情報" className="flex flex-wrap gap-x-4">
+              {Object.entries(infoPages).map(([id, label]) => (
+                <a key={id} href={'#' + id} className="py-1 underline">{label}</a>
+              ))}
+            </nav>
             <p className="font-bold text-[#1C1917]">
               115万キロのファンノート — Official髭男dism 非公式ファンサイト
             </p>

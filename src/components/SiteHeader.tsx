@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { infoPages, isInfoPage, type InfoPageId } from './info/infoPages';
 import {
   Menu,
   X,
@@ -106,8 +107,10 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   },
 ];
 
+export type SiteTab = ActiveFeatureTab | InfoPageId;
+
 interface SiteHeaderProps {
-  activeTab: ActiveFeatureTab;
+  activeTab: SiteTab;
   onSelectTab: (tab: ActiveFeatureTab) => void;
 }
 
@@ -169,8 +172,8 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         {/* Right: Current Section Label + Top-Right Hamburger Menu Button */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-[#1C1917]">
-            <span className="text-[#C83E2B]">{currentNav.icon}</span>
-            <span>{currentNav.label}</span>
+            {!isInfoPage(activeTab) && <span className="text-[#C83E2B]">{currentNav.icon}</span>}
+            <span>{isInfoPage(activeTab) ? infoPages[activeTab] : currentNav.label}</span>
           </div>
 
           <button
@@ -287,6 +290,16 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                       </button>
                     );
                   })}
+                </div>
+                <div className="mt-3 border-t border-[#E6E1D6] pt-2">
+                  {Object.entries(infoPages).map(([id, label]) => (
+                    <a
+                      key={id} href={'#' + id}
+                      aria-current={id === activeTab ? 'page' : undefined}
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium hover:bg-[#F2EFE9] aria-[current=page]:font-bold"
+                    >{label}</a>
+                  ))}
                 </div>
               </div>
             </nav>
