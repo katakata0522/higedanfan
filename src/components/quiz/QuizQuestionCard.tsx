@@ -1,5 +1,5 @@
 import { CheckCircle2, XCircle, RotateCcw, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { QuizQuestion, SongItem } from '../../data/higedanData';
 import { formatOrderingSequence, isOrderingAnswerCorrect } from '../../utils/fanLogic';
 import { DIFFICULTY_LABEL } from './quizCourses';
@@ -11,17 +11,20 @@ interface Props {
   questionCount: number;
   score: number;
   onCorrect: () => void;
+  onAnswerInputChange: (hasInput: boolean) => void;
   onNext: () => void;
   relatedSong?: SongItem;
   onSelectSong?: (song: SongItem) => void;
 }
 
 export function QuizQuestionCard({
-  visible, question, currentIndex, questionCount, score, onCorrect, onNext, relatedSong, onSelectSong,
+  visible, question, currentIndex, questionCount, score, onCorrect, onAnswerInputChange, onNext, relatedSong, onSelectSong,
 }: Props) {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<number[]>([]);
   const [isOrderingSubmitted, setIsOrderingSubmitted] = useState(false);
+  const hasInput = selectedOption !== null || selectedOrder.length > 0;
+  useEffect(() => { onAnswerInputChange(hasInput); }, [hasInput, onAnswerInputChange]);
   const isOrderingQuestion = question.questionType === 'ordering';
   const isQuestionAnswered = isOrderingQuestion ? isOrderingSubmitted : selectedOption !== null;
   const isCurrentQuestionCorrect = isOrderingQuestion

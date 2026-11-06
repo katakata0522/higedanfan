@@ -24,6 +24,7 @@ export function QuizSection({
   const [scope, setScope] = useState<QuestionScopeFilter>('full');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [score, setScore] = useState(0);
+  const [hasAnswerInput, setHasAnswerInput] = useState(false);
   const questions = useMemo(() => getCourseQuestions(difficulty, scope), [difficulty, scope]);
   const question = questions[currentIndex];
 
@@ -31,6 +32,7 @@ export function QuizSection({
     setDifficulty(course);
     setCurrentIndex(0);
     setScore(0);
+    setHasAnswerInput(false);
     setQuizStage('playing');
     window.location.hash = 'quiz';
   }
@@ -45,6 +47,9 @@ export function QuizSection({
   }
 
   function chooseCourse() {
+    if (quizStage === 'playing' && (currentIndex > 0 || hasAnswerInput)) {
+      if (!window.confirm('今回の検定を終了して、コース選択に戻りますか？\nもう一度挑戦すると、第1問から始まります。')) return;
+    }
     setQuizStage('select');
     setCurrentIndex(0);
     setScore(0);
@@ -78,7 +83,7 @@ export function QuizSection({
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              コース選択へ戻る
+              {quizStage === 'playing' ? '検定を終了する' : 'コース選択へ戻る'}
             </button>
           )}
         </div>
@@ -137,6 +142,7 @@ export function QuizSection({
             currentIndex={currentIndex}
             questionCount={questions.length}
             score={score}
+            onAnswerInputChange={setHasAnswerInput}
             relatedSong={songs.find(song => song.id === question.relatedSongId)}
             onSelectSong={onSelectSong}
             onCorrect={() => setScore(count => count + 1)}

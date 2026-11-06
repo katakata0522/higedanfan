@@ -279,7 +279,7 @@ export default function App() {
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#FBF9F5] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               <RotateCcw className="h-3.5 w-3.5 text-[#57534E]" />
-              保存データを初期状態に戻す
+              このブラウザの保存記録をすべて初期化
             </button>
           </div>
         </div>
