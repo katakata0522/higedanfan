@@ -40,12 +40,21 @@ import {
 } from './utils/fanLogic';
 import { SiteHeader, ActiveFeatureTab, SITE_NAV_ITEMS } from './components/SiteHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { MoodFinderSection } from './components/MoodFinderSection';
 import { DiscographySection } from './components/DiscographySection';
-import { SetlistBuilderSection } from './components/SetlistBuilderSection';
-import { FanCommunitySection } from './components/FanCommunitySection';
-import { QuizSection } from './components/QuizSection';
 import { SongDetailModal } from './components/SongDetailModal';
+
+const MoodFinderSection = React.lazy(() =>
+  import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
+);
+const SetlistBuilderSection = React.lazy(() =>
+  import('./components/SetlistBuilderSection').then(module => ({default: module.SetlistBuilderSection}))
+);
+const FanCommunitySection = React.lazy(() =>
+  import('./components/FanCommunitySection').then(module => ({default: module.FanCommunitySection}))
+);
+const QuizSection = React.lazy(() =>
+  import('./components/QuizSection').then(module => ({default: module.QuizSection}))
+);
 
 const STORAGE_KEY = 'higedan_fan_magazine_state_v1';
 
@@ -881,93 +890,95 @@ export default function App() {
                 </nav>
               </div>
 
-              {activeFeatureTab === 'mood' && (
-                <MoodFinderSection
-                  songs={songs}
-                  onSelectSong={(song) => selectSong(song.id)}
-                  onAddToSetlist={(id) => handleAddToSetlist(id, false)}
-                  setlistSongIds={setlistSongIds}
-                />
-              )}
+              <React.Suspense fallback={<p role="status" className="p-5">読み込み中…</p>}>
+                {activeFeatureTab === 'mood' && (
+                  <MoodFinderSection
+                    songs={songs}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    onAddToSetlist={(id) => handleAddToSetlist(id, false)}
+                    setlistSongIds={setlistSongIds}
+                  />
+                )}
 
-              {(activeFeatureTab === 'discography' ||
-                activeFeatureTab === 'vocal_range' ||
-                activeFeatureTab === 'sacred_map') && (
-                <DiscographySection
-                  songs={songs}
-                  onSelectSong={(song) => selectSong(song.id)}
-                  onAddToSetlist={(id) => handleAddToSetlist(id, false)}
-                  setlistSongIds={setlistSongIds}
-                  visitedSpotIds={visitedSpotIds}
-                  onToggleVisitedSpot={handleToggleVisitedSpot}
-                  initialSubView={
-                    activeFeatureTab === 'sacred_map'
-                      ? 'sacred_map'
-                      : activeFeatureTab === 'vocal_range'
-                      ? 'vocal_range'
-                      : 'discography'
-                  }
-                  initialEraFilter={discographyEraPreset}
-                />
-              )}
+                {(activeFeatureTab === 'discography' ||
+                  activeFeatureTab === 'vocal_range' ||
+                  activeFeatureTab === 'sacred_map') && (
+                  <DiscographySection
+                    songs={songs}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    onAddToSetlist={(id) => handleAddToSetlist(id, false)}
+                    setlistSongIds={setlistSongIds}
+                    visitedSpotIds={visitedSpotIds}
+                    onToggleVisitedSpot={handleToggleVisitedSpot}
+                    initialSubView={
+                      activeFeatureTab === 'sacred_map'
+                        ? 'sacred_map'
+                        : activeFeatureTab === 'vocal_range'
+                        ? 'vocal_range'
+                        : 'discography'
+                    }
+                    initialEraFilter={discographyEraPreset}
+                  />
+                )}
 
-              {(activeFeatureTab === 'setlist' ||
-                activeFeatureTab === 'tour_archive') && (
-                <SetlistBuilderSection
-                  songs={songs}
-                  setlist={setlist}
-                  setlistTitle={setlistTitle}
-                  onChangeTitle={(val) =>
-                    setSetlistTitle(val.replace(/[<>＜＞]/g, '').slice(0, 50))
-                  }
-                  onAddSong={handleAddToSetlist}
-                  onRemoveSong={handleRemoveFromSetlist}
-                  onMoveSong={handleMoveSetlistSong}
-                  onToggleEncore={handleToggleEncore}
-                  onLoadPresetSetlist={handleLoadPresetSetlist}
-                  attendedTourIds={attendedTourIds}
-                  onToggleAttendedTour={handleToggleAttendedTour}
-                  onSelectSong={(song) => selectSong(song.id)}
-                  initialSubTab={
-                    activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
-                  }
-                />
-              )}
+                {(activeFeatureTab === 'setlist' ||
+                  activeFeatureTab === 'tour_archive') && (
+                  <SetlistBuilderSection
+                    songs={songs}
+                    setlist={setlist}
+                    setlistTitle={setlistTitle}
+                    onChangeTitle={(val) =>
+                      setSetlistTitle(val.replace(/[<>＜＞]/g, '').slice(0, 50))
+                    }
+                    onAddSong={handleAddToSetlist}
+                    onRemoveSong={handleRemoveFromSetlist}
+                    onMoveSong={handleMoveSetlistSong}
+                    onToggleEncore={handleToggleEncore}
+                    onLoadPresetSetlist={handleLoadPresetSetlist}
+                    attendedTourIds={attendedTourIds}
+                    onToggleAttendedTour={handleToggleAttendedTour}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    initialSubTab={
+                      activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
+                    }
+                  />
+                )}
 
-              {(activeFeatureTab === 'community' ||
-                activeFeatureTab === 'fan_reviews') && (
-                <FanCommunitySection
-                  songs={songs}
-                  votedSongIds={votedKeys}
-                  onVoteSong={handleVoteSong}
-                  onSelectSong={(song) => selectSong(song.id)}
-                  reviews={reviews}
-                  likedReviewIds={likedReviewIds}
-                  onLikeReview={handleLikeReview}
-                  onSubmitReview={handleSubmitReview}
-                  onEditReview={(id, fields) => setReviews(prev => prev.map(r => r.id === id ? {...r, ...fields} : r))}
-                  onDeleteReview={id => {
-                    setReviews(prev => prev.filter(r => r.id !== id));
-                    setLikedReviewIds(prev => prev.filter(key => key !== id));
-                  }}
-                  initialSubTab={
-                    activeFeatureTab === 'fan_reviews' ? 'reviews' : 'ranking'
-                  }
-                />
-              )}
+                {(activeFeatureTab === 'community' ||
+                  activeFeatureTab === 'fan_reviews') && (
+                  <FanCommunitySection
+                    songs={songs}
+                    votedSongIds={votedKeys}
+                    onVoteSong={handleVoteSong}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    reviews={reviews}
+                    likedReviewIds={likedReviewIds}
+                    onLikeReview={handleLikeReview}
+                    onSubmitReview={handleSubmitReview}
+                    onEditReview={(id, fields) => setReviews(prev => prev.map(r => r.id === id ? {...r, ...fields} : r))}
+                    onDeleteReview={id => {
+                      setReviews(prev => prev.filter(r => r.id !== id));
+                      setLikedReviewIds(prev => prev.filter(key => key !== id));
+                    }}
+                    initialSubTab={
+                      activeFeatureTab === 'fan_reviews' ? 'reviews' : 'ranking'
+                    }
+                  />
+                )}
 
-              {(activeFeatureTab === 'quiz' ||
-                activeFeatureTab === 'quiz_archive') && (
-                <QuizSection
-                  bestScorePercentage={bestQuizScore}
-                  onUpdateBestScore={handleUpdateBestQuizScore}
-                  songs={songs}
-                  onSelectSong={(song) => selectSong(song.id)}
-                  initialTab={
-                    activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
-                  }
-                />
-              )}
+                {(activeFeatureTab === 'quiz' ||
+                  activeFeatureTab === 'quiz_archive') && (
+                  <QuizSection
+                    bestScorePercentage={bestQuizScore}
+                    onUpdateBestScore={handleUpdateBestQuizScore}
+                    songs={songs}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    initialTab={
+                      activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
+                    }
+                  />
+                )}
+              </React.Suspense>
             </div>
           )}
         </main>
