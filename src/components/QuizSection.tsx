@@ -77,7 +77,7 @@ const DIFFICULTY_LABEL: Record<QuizQuestion['difficulty'], string> = {
   brothers: '上級（深層トリビア・歌詞検証）',
 };
 
-type PublisherFilter = 'all' | 'natalie' | 'realsound' | 'official' | 'sitedb' | 'other';
+type PublisherFilter = string;
 
 const NEW_VARIATION_IDS = new Set(
   Array.from({ length: 30 }, (_, i) => `q${i + 31}`)
@@ -149,29 +149,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
       if (archiveDifficulty !== 'all' && q.difficulty !== archiveDifficulty) {
         return false;
       }
-      if (publisherFilter !== 'all') {
-        const hasMatchingPublisher = q.sources.some((src) => {
-          const pub = src.publisher.toLowerCase();
-          if (publisherFilter === 'natalie') return pub.includes('ナタリー');
-          if (publisherFilter === 'realsound')
-            return pub.includes('real sound') || pub.includes('リアルサウンド');
-          if (publisherFilter === 'official') return pub.includes('公式');
-          if (publisherFilter === 'sitedb')
-            return (
-              pub.includes('115万キロのファンノート') ||
-              pub.includes('wikipedia') ||
-              pub.includes('歌ネット')
-            );
-          return (
-            !pub.includes('ナタリー') &&
-            !pub.includes('real sound') &&
-            !pub.includes('リアルサウンド') &&
-            !pub.includes('公式') &&
-            !pub.includes('115万キロのファンノート')
-          );
-        });
-        if (!hasMatchingPublisher) return false;
-      }
+      if (publisherFilter !== 'all' && !q.sources.some(s => s.publisher === publisherFilter)) return false;
       if (!qLower) return true;
       const inPrompt = q.prompt.toLowerCase().includes(qLower);
       const inExplanation = q.explanation.toLowerCase().includes(qLower);
@@ -1032,11 +1010,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                 {(
                   [
                     { id: 'all', label: 'すべての媒体' },
-                    { id: 'natalie', label: '音楽ナタリー' },
-                    { id: 'realsound', label: 'Real Sound' },
-                    { id: 'official', label: '公式インタビュー・特設サイト' },
-                    { id: 'sitedb', label: '当サイト全曲DB・歌ネット・Wikipedia' },
-                    { id: 'other', label: 'Billboard / ORICON / 専門誌ほか' },
+                    ...Array.from(new Set(QUIZ_QUESTIONS.flatMap(q => q.sources.map(s => s.publisher)))).sort((a,b) => a.localeCompare(b,'ja')).map(label=>({id:label,label})),
                   ] as { id: PublisherFilter; label: string }[]
                 ).map((pub) => (
                   <button
