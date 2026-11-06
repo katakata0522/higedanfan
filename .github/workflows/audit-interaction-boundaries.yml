@@ -1,0 +1,71 @@
+name: Fan-site interaction boundary audit
+on:
+  push:
+    branches: ['audit/deep-review-20261106']
+    paths: ['.github/workflows/audit-interaction-boundaries.yml']
+permissions:
+  contents: read
+jobs:
+  boundaries:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+          fetch-depth: 20
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Assert app source unchanged and build diagnostic toolchain
+        run: |
+          mkdir -p audit-extra
+          git diff --exit-code 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 -- src public index.html package.json tsconfig.json vite.config.ts > audit-extra/source-diff.txt
+          { date -u; node -v; npm -v; git rev-parse HEAD; } > audit-extra/environment.txt
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.devDependencies.esbuild='0.28.2';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+          git diff -- package.json > audit-extra/diagnostic-toolchain.patch
+          npm install --ignore-scripts --no-fund --no-audit > audit-extra/install.log 2>&1
+          npm run build > audit-extra/build.log 2>&1
+          mkdir -p /tmp/higedan-extra-tools
+          cd /tmp/higedan-extra-tools
+          npm init -y
+          npm install --ignore-scripts --no-fund --no-audit playwright@1.56.1
+          ./node_modules/.bin/playwright install --with-deps chromium
+      - name: Execute real browser boundary interactions
+        run: |
+          cat > /tmp/higedan-extra-tools/extra.mjs <<'JS'
+          import fs from 'node:fs';
+          import {chromium} from 'playwright';
+          const base='http://127.0.0.1:4173';
+          const key='higedan_fan_magazine_state_v1';
+          const out={baseline:'04857ef1f88bcb9b788a2bc260eb6d58419d19d9',startedAt:new Date().toISOString(),cases:[]};
+          const browser=await chromium.launch();out.browser=browser.version();
+          const save=()=>fs.writeFileSync('audit-extra/results.json',JSON.stringify(out,null,2));
+          async function nav(p,i){const open=p.getByRole('button',{name:'メニューを開く',exact:true});if(await open.count())await open.click();await p.locator('#global-nav-drawer button').nth(i).click();}
+          async function state(p){await p.waitForTimeout(80);return p.evaluate(k=>JSON.parse(localStorage.getItem(k)),key);}
+          async function run(name,width,fn,init){let c;try{c=await browser.newContext({viewport:{width,height:900},locale:'ja-JP',reducedMotion:'reduce'});const p=await c.newPage();p.setDefaultTimeout(4000);const errors=[];p.on('pageerror',e=>errors.push(String(e)));if(init)await p.addInitScript(init);await p.goto(base,{waitUntil:'networkidle'});const evidence=await fn(p);out.cases.push({name,width,status:'executed',evidence,pageErrors:errors});}catch(e){out.cases.push({name,width,status:'test-error',error:String(e)});}finally{await c?.close();save();}}
+          for(const width of [1440,390,320]){
+            await run('all navigation entries, drawer Escape and backdrop',width,async p=>{const headings=[];for(let i=0;i<11;i++){await nav(p,i);headings.push((await p.locator('main h1, main h2').first().innerText()));}await p.getByRole('button',{name:'メニューを開く',exact:true}).click();await p.keyboard.press('Escape');const escapeClosed=await p.locator('#global-nav-drawer').count()===0;await p.getByRole('button',{name:'メニューを開く',exact:true}).click();await p.locator('header [aria-hidden="true"]').first().click({position:{x:5,y:800},force:true});return{headings,escapeClosed,backdropClosed:await p.locator('#global-nav-drawer').count()===0};});
+            await run('setlist reorder, encore boundary, duplicate and empty states',width,async p=>{await nav(p,5);const initial=(await state(p)).setlist;const target=initial[2].songId;const row=p.getByRole('button',{name:'115万キロのフィルムを先頭へ移動',exact:true});await row.click();const movedTop=(await state(p)).setlist[0].songId===target;await p.getByRole('button',{name:'115万キロのフィルムを1つ下へ移動',exact:true}).click();const movedDown=(await state(p)).setlist[1].songId===target;await p.getByRole('button',{name:'115万キロのフィルムを1つ上へ移動',exact:true}).click();const restored=(await state(p)).setlist[0].songId===target;const track=p.locator('div.flex.flex-col').filter({has:p.getByRole('button',{name:'115万キロのフィルムをセットリストから削除',exact:true})}).last();await track.getByRole('button',{name:'アンコールへ',exact:true}).click();const afterEncore=(await state(p)).setlist;const mainBeforeEncore=afterEncore.every((x,i)=>!x.isEncore||afterEncore.slice(i).every(y=>y.isEncore));await p.locator('#add-song-select').selectOption(target);const duplicateBlocked=await p.getByRole('button',{name:'追加済み',exact:true}).isDisabled();while(await p.getByRole('button',{name:/をセットリストから削除$/}).count())await p.getByRole('button',{name:/をセットリストから削除$/}).first().click();return{movedTop,movedDown,restored,mainBeforeEncore,duplicateBlocked,emptyCount:(await state(p)).setlist.length,emptyMessage:(await p.locator('main').innerText()).includes('セットリストが空')};});
+            await run('modal keyboard focus can escape dialog',width,async p=>{await nav(p,2);await p.getByRole('button',{name:'音域・解説を見る',exact:true}).first().click();const initialInside=await p.evaluate(()=>!!document.activeElement?.closest('[role="dialog"]'));await p.getByRole('button',{name:'楽曲解説を閉じる',exact:true}).focus();const positions=[];for(let i=0;i<12;i++){await p.keyboard.press('Tab');positions.push(await p.evaluate(()=>({inside:!!document.activeElement?.closest('[role="dialog"]'),tag:document.activeElement?.tagName,text:document.activeElement?.textContent?.slice(0,80)})));}await p.keyboard.press('Escape');return{initialInside,positions,closedByEscape:await p.getByRole('dialog').count()===0};});
+          }
+          for(const feature of ['diagnosis','quiz'])await run(feature+' copy rejection accuracy',390,async p=>{await nav(p,feature==='diagnosis'?1:9);if(feature==='diagnosis'){for(const label of ['背中を押してほしい','朝の通勤・通学','王道ピアノポップ'])await p.getByRole('button',{name:new RegExp(label)}).click();await p.getByRole('button',{name:/シェアカード/}).first().click();const b=p.getByRole('button',{name:/コピー/}).first();await b.click();return{copyText:await b.innerText(),falseSuccess:(await b.innerText()).includes('コピーしました')};}await p.getByRole('button',{name:'並び替え問題のみ特訓',exact:false}).click();await p.getByRole('button',{name:/総合チャレンジコース/}).click();let count=0;while(count<10){const opts=p.locator('#section-quiz button').filter({has:p.locator('span')});const selection=p.locator('#section-quiz button').filter({hasText:/^[^\n]+$/});const btns=await p.locator('#section-quiz button').allTextContents();const question=p.locator('#section-quiz h3').last();const text=await question.innerText();const answers=text.includes('メンバー')?['楢﨑誠','藤原聡','松浦匡希','小笹大輔']:null;if(!answers)return{note:'quiz certificate copy handler has not been exercised by this extra case; full 60-question run remains the evidence',buttons:btns.slice(-10)};for(const a of answers)await p.getByRole('button',{name:a,exact:true}).click();await p.getByRole('button',{name:'この順番で回答する',exact:true}).click();count++;const end=p.getByRole('button',{name:'検定結果を見る',exact:true});if(await end.count()){await end.click();break;}await p.getByRole('button',{name:'次の問題へ進む',exact:true}).click();}return{questions:count};},()=>Object.defineProperty(navigator,'clipboard',{value:{writeText:async()=>{throw new DOMException('Audit denied','NotAllowedError')}}}));
+          await run('storage quota write error: notification honesty',390,async p=>{await nav(p,5);await p.locator('#setlist-title-input').fill('保存できないはずの検証タイトル');return{visibleTitle:await p.locator('#setlist-title-input').inputValue(),messages:await p.locator('[role="alert"],[role="status"]').allTextContents(),stored:await p.evaluate(k=>localStorage.getItem(k),key)};},()=>{Storage.prototype.setItem=function(){throw new DOMException('Quota exceeded','QuotaExceededError');};});
+          await run('storage read denied: fallback and reset safety',390,async p=>{const loaded=await p.locator('main h1').count()>0;await p.getByRole('button',{name:'保存データを初期状態に戻す',exact:true}).click();return{loaded,messages:await p.locator('[role="alert"],[role="status"]').allTextContents()};},()=>{Storage.prototype.getItem=function(){throw new DOMException('Denied','SecurityError');};Storage.prototype.removeItem=function(){throw new DOMException('Denied','SecurityError');};});
+          await run('quiz archive: all difficulty and publisher filters plus zero-state recovery',390,async p=>{await nav(p,10);const results=[];for(const name of ['初級 (20問)','中級 (20問)','上級 (20問)','全60問']){await p.getByRole('button',{name,exact:true}).click();results.push({name,count:await p.locator('#section-quiz article').count()});}for(const name of ['音楽ナタリー','Real Sound','公式インタビュー・特設サイト','当サイト全曲DB・歌ネット・Wikipedia','Billboard / ORICON / 専門誌ほか','すべての媒体']){await p.getByRole('button',{name,exact:true}).click();results.push({name,count:await p.locator('#section-quiz article').count()});}await p.locator('#quiz-archive-search').fill('存在しない検証語');const zero=await p.locator('#section-quiz article').count();await p.getByRole('button',{name:'フィルタをリセットする',exact:true}).click();return{results,zero,recovered:await p.locator('#section-quiz article').count()};});
+          await run('ranking zero-state and review category filtering',390,async p=>{await nav(p,7);await p.locator('#poll-song-search').fill('存在しない検証語');const zeroBody=await p.locator('#section-community').innerText();await nav(p,8);const categories=[];for(const name of ['歌詞考察','ライブ体験','楽曲アレンジ','人生の支え','すべて']){await p.getByRole('button',{name,exact:true}).click();categories.push({name,count:await p.locator('#section-community article').count()});}return{zeroResultExplanation:/一致|見つか|0曲|0 曲/.test(zeroBody),categories};});
+          out.finishedAt=new Date().toISOString();save();await browser.close();console.log(JSON.stringify(out,null,2));
+          JS
+          npm run preview -- --host 127.0.0.1 --port 4173 > audit-extra/server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
+          node /tmp/higedan-extra-tools/extra.mjs > audit-extra/browser.log 2>&1
+          cp /tmp/higedan-extra-tools/extra.mjs audit-extra/executed-test.mjs
+      - name: Retain isolated evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-interaction-boundaries
+          path: audit-extra/
+          retention-days: 7
