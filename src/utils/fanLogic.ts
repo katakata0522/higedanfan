@@ -20,7 +20,6 @@ export interface MatchBreakdown {
   sceneFitPercent: number;
   soundMatchPercent: number;
   tempoParameter: number;
-  modulationDramaParameter: number;
   liveEnergyParameter: number;
   lyricDepthParameter: number;
 }
@@ -46,7 +45,6 @@ export interface SetlistStats {
   totalDurationSec: number;
   formattedDuration: string;
   avgBpm: number;
-  totalKeyChanges: number;
   energyCurve: { index: number; title: string; energy: number; bpm: number; isEncore: boolean }[];
   vibeTitle: string;
   vibeDescription: string;
@@ -60,7 +58,6 @@ export type DiscographySortOption =
   | 'release_oldest'
   | 'highest_note'
   | 'vocal_span'
-  | 'keyChanges'
   | 'bpm';
 
 export interface DiscographyFilter {
@@ -149,7 +146,7 @@ export function buildMoodMatchExplanation(
   };
 
   const situationFollowUpMap: Record<SituationTag, string> = {
-    morning_commute: `BPM ${song.bpm}のリズムと計${song.keyChanges}回の転調が、朝の通勤・通学の一歩目を鮮やかに彩ってくれる1曲です。`,
+    morning_commute: `BPM ${song.bpm}のリズムが、朝の通勤・通学の一歩目を鮮やかに彩ってくれる1曲です。`,
     late_night_alone: `藤原聡の繊細なボーカルと${SOUND_LABELS[song.sound]}の響きが、ひとり静かに過ごす夜の時間を豊かに包み込みます。`,
     live_warmup: `BPM ${song.bpm}の躍動感あふれるグルーヴが、ライブ前やドライブ中のテンションを一気に引き上げてくれます。`,
     weekend_walk: `心地よいBPM ${song.bpm}のテンポ感と開放的なメロディが、休日の散歩やカフェタイムの空気感にぴったり調和します。`,
@@ -183,10 +180,6 @@ export function buildMatchBreakdown(
       : 76;
 
   const tempoParameter = Math.min(100, Math.max(35, Math.round(((song.bpm - 75) / 95) * 100)));
-  const modulationDramaParameter = Math.min(
-    100,
-    Math.max(40, Math.round(45 + Math.min(song.keyChanges, 6) * 9))
-  );
   const liveEnergyParameter = Math.min(100, Math.max(40, song.energyLevel * 10));
   const lyricDepthParameter = Math.min(
     100,
@@ -198,7 +191,6 @@ export function buildMatchBreakdown(
     sceneFitPercent,
     soundMatchPercent,
     tempoParameter,
-    modulationDramaParameter,
     liveEnergyParameter,
     lyricDepthParameter,
   };
@@ -280,7 +272,7 @@ export function scoreSongsByMood(
     }
 
     if (reasons.length === 0) {
-      reasons.push(`転調${song.keyChanges}回・BPM ${song.bpm}のグッドメロディ`);
+      reasons.push(`BPM ${song.bpm}のグッドメロディ`);
     }
 
     const matchScore = Math.min(99, rawPoints);
@@ -314,7 +306,7 @@ export function formatDiagnosisShareText(
     `【マイソング診断結果：『${match.song.title}』（マッチ度 ${match.matchScore}%）】`,
     `診断条件：${MOOD_LABELS[criteria.mood]} ／ ${SITUATION_LABELS[criteria.situation]} ／ ${SOUND_LABELS[criteria.sound]}`,
     `理由：${match.moodMatchExplanation}`,
-    `「${match.song.iconicLyricQuote}」`,
+    `曲調：${match.song.musicalHighlight}`,
     '#115万キロのファンノート #Official髭男dism #マイソング診断',
   ].join('\n');
 }
@@ -349,7 +341,7 @@ export const EP_TRACK_ORDER_MAP: Record<string, Record<string, number>> = {
   },
   'ミックスナッツ EP': {
     'mixed-nuts': 1,
-    'anarchy-song': 2,
+    // The EP has the single version; the guide covers the Rejoice recording.
     'choral-a-song': 3,
     'hagan-song': 4,
   },
@@ -386,7 +378,7 @@ export function filterAndSortDiscography(
         song.title,
         song.album,
         song.tieUp,
-        song.iconicLyricQuote,
+        song.musicalHighlight,
         song.linerNotes,
         song.vocalRange?.highestChestNote ?? '',
         song.vocalRange?.lowestNote ?? '',
@@ -445,8 +437,6 @@ export function filterAndSortDiscography(
           b.vocalRange.chestSemitoneScore - a.vocalRange.chestSemitoneScore ||
           a.guideOrder - b.guideOrder
         );
-      case 'keyChanges':
-        return b.keyChanges - a.keyChanges || b.votes.overall - a.votes.overall;
       case 'bpm':
         return b.bpm - a.bpm || b.votes.overall - a.votes.overall;
       default:
@@ -492,7 +482,6 @@ export function calculateSetlistStats(
       totalDurationSec: 0,
       formattedDuration: '0分00秒',
       avgBpm: 0,
-      totalKeyChanges: 0,
       energyCurve: [],
       vibeTitle: 'セットリスト未編成',
       vibeDescription: '楽曲を追加すると、ライブ全体の盛り上がり波形と総演奏時間を自動算出します。',
@@ -505,7 +494,6 @@ export function calculateSetlistStats(
   const avgBpm = Math.round(
     resolved.reduce((acc, item) => acc + item.song.bpm, 0) / resolved.length
   );
-  const totalKeyChanges = resolved.reduce((acc, item) => acc + item.song.keyChanges, 0);
   const avgEnergy =
     resolved.reduce((acc, item) => acc + item.song.energyLevel, 0) / resolved.length;
 
@@ -533,7 +521,6 @@ export function calculateSetlistStats(
     totalDurationSec,
     formattedDuration: `${totalMinutes}分${remainSeconds.toString().padStart(2, '0')}秒`,
     avgBpm,
-    totalKeyChanges,
     energyCurve: resolved.map((r) => ({
       index: r.index,
       title: r.song.title,
@@ -618,7 +605,7 @@ export function sanitizeSetlistEntries(
 ): SetlistEntry[] | null {
   if (!Array.isArray(rawEntries)) return null;
   const safe: SetlistEntry[] = [];
-  for (const item of rawEntries.slice(0, 25)) {
+  for (const item of rawEntries) {
     if (
       item &&
       typeof item === 'object' &&
@@ -645,7 +632,7 @@ export function sanitizeReviewsList(
   const allowedCategories = new Set(['歌詞考察', 'ライブ体験', '楽曲アレンジ', '人生の支え']);
   const safe: FanReview[] = [];
 
-  for (const item of rawReviews.slice(0, 50)) {
+  for (const item of rawReviews) {
     if (!item || typeof item !== 'object') continue;
     const r = item as Record<string, unknown>;
     const author = sanitizeUserText(String(r.author ?? ''), 30);

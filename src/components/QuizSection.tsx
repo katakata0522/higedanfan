@@ -45,28 +45,28 @@ const QUIZ_COURSES: {
     id: 'all',
     indexCode: '01',
     title: '総合チャレンジコース（全60問）',
-    desc: '初級20問・中級20問・上級20問の全60問を一挙に出題。4択問題に加え、リリース順・収録順・年齢順の「並び替え問題」や、五十音順・演奏時間・歌詞文字種・メンバー好物まで完全網羅します。',
+    desc: '全60問の4択・並び替えに挑戦できます。',
     badge: '完全制覇・全60問',
   },
   {
     id: 'beginner',
     indexCode: '02',
-    title: '初級：代表曲・並び替え・50音＆好物編（全20問）',
-    desc: '『Pretender』『Subtitle』『ミックスナッツ』等の名曲解説に加え、アルバム発売順の並び替え、五十音順の先頭曲、最長曲、小笹大輔の大好物「麻婆豆腐」など楽しく学べる20問。',
+    title: '初級：代表曲・並び替え・作品情報編（全20問）',
+    desc: '代表曲やタイアップ、作品名から答える20問。',
     badge: '初級コース・全20問',
   },
   {
     id: 'intermediate',
     indexCode: '03',
-    title: '中級：転調・変拍子・最短曲・資格＆聖地編（全20問）',
-    desc: '『Cry Baby』11回転調、『Same Blue』変拍子、インディーズ作品の発売順並び替え、演奏時間の短い順並び替え、五十音順の末尾曲、メンバーの段位・サウナ資格など20問。',
+    title: '中級：音源・作品・聖地編（全20問）',
+    desc: '楽曲の長さや収録順、作品の背景をたどる20問。',
     badge: '中級コース・全20問',
   },
   {
     id: 'brothers',
     indexCode: '04',
     title: '上級：メンバー作曲・『エルダーフラワー』歌詞検証・深層編（全20問）',
-    desc: 'メンバー4人の生年月日順・『Rejoice』収録曲順の並び替え、カタカナ語・英語ゼロで綴られた『エルダーフラワー』の歌詞検証、吹奏楽部・教員免許ルーツまで極める20問。',
+    desc: '作品のクレジットやメンバーのインタビューから出題する20問。',
     badge: '上級コース・全20問',
   },
 ];
@@ -77,7 +77,7 @@ const DIFFICULTY_LABEL: Record<QuizQuestion['difficulty'], string> = {
   brothers: '上級（深層トリビア・歌詞検証）',
 };
 
-type PublisherFilter = 'all' | 'natalie' | 'realsound' | 'official' | 'sitedb' | 'other';
+type PublisherFilter = string;
 
 const NEW_VARIATION_IDS = new Set(
   Array.from({ length: 30 }, (_, i) => `q${i + 31}`)
@@ -149,29 +149,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
       if (archiveDifficulty !== 'all' && q.difficulty !== archiveDifficulty) {
         return false;
       }
-      if (publisherFilter !== 'all') {
-        const hasMatchingPublisher = q.sources.some((src) => {
-          const pub = src.publisher.toLowerCase();
-          if (publisherFilter === 'natalie') return pub.includes('ナタリー');
-          if (publisherFilter === 'realsound')
-            return pub.includes('real sound') || pub.includes('リアルサウンド');
-          if (publisherFilter === 'official') return pub.includes('公式');
-          if (publisherFilter === 'sitedb')
-            return (
-              pub.includes('115万キロのファンノート') ||
-              pub.includes('wikipedia') ||
-              pub.includes('歌ネット')
-            );
-          return (
-            !pub.includes('ナタリー') &&
-            !pub.includes('real sound') &&
-            !pub.includes('リアルサウンド') &&
-            !pub.includes('公式') &&
-            !pub.includes('115万キロのファンノート')
-          );
-        });
-        if (!hasMatchingPublisher) return false;
-      }
+      if (publisherFilter !== 'all' && !q.sources.some(s => s.publisher === publisherFilter)) return false;
       if (!qLower) return true;
       const inPrompt = q.prompt.toLowerCase().includes(qLower);
       const inExplanation = q.explanation.toLowerCase().includes(qLower);
@@ -343,7 +321,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
               並び替え＆データ検証で深掘りする「ヒゲダン検定クイズ（全60問）」
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              初級20問・中級20問・上級20問の全60問！CDリリース順や演奏時間順の「1〜4番目並び替え問題」、五十音順の最初と最後、『エルダーフラワー』の歌詞文字種、メンバーの好物まで出典付きで完全網羅。
+              初級・中級・上級は各20問。答え合わせで作品情報・インタビュー・使用した音源を確認できます。
             </p>
           </div>
 
@@ -392,7 +370,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
               }`}
             >
               <Newspaper className="h-4 w-4" />
-              全60問の出典＆トリビア図鑑（120資料）
+              全60問の出典＆トリビア図鑑
             </button>
           </div>
 
@@ -415,7 +393,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                         1. 出題範囲・バリエーションモードを選択
                       </h3>
                       <p className="text-xs text-[#57534E]">
-                        全20問フル出題のほか、今回追加された「並び替え・50音・時間・歌詞表記・好物（各10問）」や「並び替え問題のみ」に絞って挑戦することもできます。
+                        全20問フル出題のほか、今回追加された「作品情報と曲順の追加問題」や「並び替え問題のみ」に絞って挑戦することもできます。
                       </p>
                     </div>
                   </div>
@@ -431,7 +409,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                         {
                           id: 'new_variation',
                           title: '新設バリエーション編',
-                          sub: '並び替え・50音・表記・好物（各10問）',
+                          sub: '作品情報・曲順・演奏時間',
                         },
                         {
                           id: 'ordering_only',
@@ -951,7 +929,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                       </div>
                       <div className="flex items-center justify-between border-t border-white/10 bg-black/25 px-5 py-2.5 text-[11px] text-white/65">
                         <span>#115万キロのファンノート #Official髭男dism #ヒゲダン検定</span>
-                        <span>全60問・120出典資料収録</span>
+                        <span>全60問・出題ごとに出典を掲載</span>
                       </div>
                     </div>
                   </div>
@@ -969,14 +947,14 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">
-                    全60問のトリビア解説 ＆ 出典インタビュー・データ検証図鑑（計120資料）
+                    全60問のトリビア解説 ＆ 出典インタビュー・データ検証図鑑
                   </h3>
                   <p className="mt-0.5 text-xs text-[#57534E]">
-                    各レベル20問（計60問）の正解・制作背景と、裏付けとなるインタビュー・当サイト全曲データベース検証（計120本）を難易度・媒体・キーワードで検索できます。
+                    作品情報・本人インタビュー・収録音源を、難易度やキーワードで検索できます。
                   </p>
                 </div>
                 <span className="text-xs font-mono-num font-bold text-[#C83E2B] shrink-0">
-                  表示中：{archiveQuestions.length} 問（出典資料 {archiveQuestions.length * 2} 本）
+                  表示中：{archiveQuestions.length} 問（出典資料 {new Set(archiveQuestions.flatMap(q => q.sources.map(s => s.url))).size} 本）
                 </span>
               </div>
 
@@ -993,7 +971,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                     type="search"
                     value={archiveSearchQuery}
                     onChange={(e) => setArchiveSearchQuery(e.target.value)}
-                    placeholder="エルダーフラワー・麻婆豆腐・五十音・並び替え..."
+                    placeholder="曲名・アルバム名・並び替え…"
                     className="w-full rounded-xl border border-[#D5CEC2] bg-[#FBF9F5] pl-9 pr-3 py-2 text-xs text-[#1C1917] placeholder:text-[#78716C] focus:border-[#1C1917] focus:bg-white focus:outline-none"
                   />
                 </div>
@@ -1032,11 +1010,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                 {(
                   [
                     { id: 'all', label: 'すべての媒体' },
-                    { id: 'natalie', label: '音楽ナタリー' },
-                    { id: 'realsound', label: 'Real Sound' },
-                    { id: 'official', label: '公式インタビュー・特設サイト' },
-                    { id: 'sitedb', label: '当サイト全曲DB・歌ネット・Wikipedia' },
-                    { id: 'other', label: 'Billboard / ORICON / 専門誌ほか' },
+                    ...Array.from(new Set(QUIZ_QUESTIONS.flatMap(q => q.sources.map(s => s.publisher)))).sort((a,b) => a.localeCompare(b,'ja')).map(label=>({id:label,label})),
                   ] as { id: PublisherFilter; label: string }[]
                 ).map((pub) => (
                   <button

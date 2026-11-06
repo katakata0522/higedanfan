@@ -1,3 +1,5 @@
+import { GuideArtwork } from './GuideArtwork';
+import { songEvidence } from '../data/fullCatalogSongs';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Search,
@@ -71,7 +73,7 @@ const ALBUM_FILTERS: { id: string; label: string }[] = [
 ];
 
 const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
-  { id: 'all', label: 'すべての曲調' },
+  { id: 'all', label: 'すべてのおすすめ分類' },
   { id: 'piano_pop', label: '王道ピアノポップ' },
   { id: 'brass_funk', label: 'ブラス＆ファンク' },
   { id: 'emotional_ballad', label: 'バラード' },
@@ -81,12 +83,11 @@ const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
 const SORT_OPTIONS: { id: DiscographySortOption; label: string }[] = [
   { id: 'guide_order', label: '並び順：代表曲→アルバム順（ガイド順）' },
   { id: 'album_track_order', label: '並び順：アルバム収録曲順（M1〜最終曲）' },
-  { id: 'release_oldest', label: '並び順：発売が古い順（2015年初期〜）' },
-  { id: 'newest', label: '並び順：発売が新しい順（最新曲〜）' },
+  { id: 'release_oldest', label: '並び順：配信掲載日が古い順（2015年初期〜）' },
+  { id: 'newest', label: '並び順：配信掲載日が新しい順（最新曲〜）' },
   { id: 'highest_note', label: '並び順：地声最高音が高い順' },
   { id: 'vocal_span', label: '並び順：音域が広い順（半音幅）' },
   { id: 'popular', label: '並び順：人気投票順' },
-  { id: 'keyChanges', label: '並び順：転調回数が多い順' },
   { id: 'bpm', label: '並び順：テンポ（BPM）が速い順' },
 ];
 
@@ -151,6 +152,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     [selectedArea]
   );
 
+  const [mapSpotId, setMapSpotId] = useState('');
+  const mapSpot = filteredSpots.find(s => s.id === mapSpotId) ?? filteredSpots[0];
+  const mapQuery = encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint);
   const hasActiveFilter =
     eraFilter !== 'all' ||
     albumFilter !== 'all' ||
@@ -183,15 +187,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               {activeSubView === 'sacred_map'
                 ? '聖地巡礼マップ（松江・米子・横浜）'
                 : activeSubView === 'vocal_range'
-                ? '全86曲の音域・最高音パート・発売日一覧'
-                : '全86曲 楽曲ガイド（アルバム収録曲順・音域・転調）'}
+                ? '掲載86曲の音域・発売日一覧'
+                : '全86曲 楽曲ガイド（収録曲順・音域・曲調）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubView === 'sacred_map'
                 ? '結成の地・山陰（松江・米子）から記念すべきスタジアム会場まで、ゆかりの聖地スポット案内です。'
                 : activeSubView === 'vocal_range'
-                ? '1stミニ『ラブとピースは君の中』から最新曲まで全86曲の地声最高音・裏声最高音・最低音と登場箇所を比較できます。'
-                : '歴代アルバム・EPの全86曲を収録。アルバム別の曲順（M1〜）や発売順、地声最高音順で自在に探せます。'}
+                ? '地声・裏声は曲別の採譜による値です。配信サービス掲載日と収録作品のCD発売日は別々に表示します。'
+                : '当ガイドが取り上げる86曲。アルバム別の曲順（M1〜）や発売順、地声最高音順で自在に探せます。'}
             </p>
           </div>
 
@@ -304,7 +308,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   type="text"
                   maxLength={60}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(sanitizeUserText(e.target.value, 60))}
+                  onChange={(e) => setSearchQuery(e.target.value.slice(0, 60))}
                   placeholder="曲名・最高音(hiD#等)・タイアップ検索..."
                   className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-7 py-2 text-xs text-[#1C1917] min-h-[38px] placeholder:text-[#78716C] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
                 />
@@ -369,7 +373,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               {/* Sound Type Filter (2 cols on desktop) */}
               <div className="lg:col-span-2">
                 <label className="sr-only" htmlFor="sound-filter-select">
-                  曲調フィルター
+                  おすすめ分類（編集部）
                 </label>
                 <select
                   id="sound-filter-select"
@@ -421,9 +425,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <div>
                           <div className="flex items-start gap-3">
                             {isSafeAssetUrl(song.jacketImage) && (
-                              <img
+                              <GuideArtwork
                                 src={song.jacketImage}
-                                alt={`${song.title} ジャケット`}
+                                alt={`${song.title} のイメージ画像`}
                                 referrerPolicy="no-referrer"
                                 className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
                               />
@@ -437,7 +441,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 {song.title}
                               </h3>
                               <p className="text-xs text-[#57534E] truncate">
-                                {song.tieUp}
+                                {songEvidence[song.id as keyof typeof songEvidence].recording}
                               </p>
                             </div>
                           </div>
@@ -459,20 +463,17 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 裏声 <strong className="text-[#B45309]">{song.vocalRange.highestFalsettoNote}</strong>
                               </span>
                             </div>
-                            <p className="mt-1 text-[#57534E] truncate" title={song.vocalRange.highNoteSection}>
-                              <strong className="text-[#1C1917]">最高音箇所：</strong>
-                              {song.vocalRange.highNoteSection}
-                            </p>
+                            <a className="mt-1 block underline" target="_blank" rel="noreferrer" href={songEvidence[song.id as keyof typeof songEvidence].rangeSource}>この曲の採譜を見る ↗</a>
                           </div>
 
                           {/* Clean Unboxed Metadata Line */}
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#78716C]">
-                            <span>{getSongwriterCredit(song)}</span>
+                            <span>収録音源 {formatDuration(song.durationSec)}</span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono-num">BPM {song.bpm}</span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono-num">
-                              転調 <strong className="text-[#C83E2B]">{song.keyChanges}回</strong>
+                              配信サービス掲載日
                             </span>
                           </div>
                         </div>
@@ -542,230 +543,21 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {/* Sub-View 2: Vocal Range & Release Date Comparison (Mobile Vertical Cards + Desktop Sticky Table) */}
         {activeSubView === 'vocal_range' && (
           <div className="mt-4 space-y-4">
-            {/* Fan-Centric Vocal Range Highlights Summary Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] p-3.5 text-xs">
-              <div className="rounded-lg bg-white p-3 border border-[#E6E1D6]">
-                <span className="block text-[11px] text-[#78716C]">地声最高音トップクラス（hiE / E5）</span>
-                <span className="mt-0.5 block font-bold text-[#C83E2B]">
-                  SOULSOUP · LADY · 犬かキャットか〜
-                </span>
-              </div>
-              <div className="rounded-lg bg-white p-3 border border-[#E6E1D6]">
-                <span className="block text-[11px] text-[#78716C]">裏声最高音トップ（hiG# / G#5）</span>
-                <span className="mt-0.5 block font-bold text-[#B45309]">
-                  ミックスナッツ（ラスサビ最高潮フェイク）
-                </span>
-              </div>
-              <div className="rounded-lg bg-white p-3 border border-[#E6E1D6]">
-                <span className="block text-[11px] text-[#78716C]">音域幅トップクラス（約3.3オクターブ）</span>
-                <span className="mt-0.5 block font-bold text-[#1E3A5F]">
-                  Subtitle · 50%（mid1D 〜 hiF# / 40半音）
-                </span>
-              </div>
-            </div>
-
-            {filteredSongs.length === 0 ? (
-              <div className="rounded-xl border border-[#E6E1D6] bg-white p-8 text-center">
-                <p className="text-sm font-bold text-[#1C1917]">
-                  条件に一致する楽曲が見つかりませんでした。
-                </p>
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="mt-3 rounded-lg bg-[#1C1917] px-4 py-2 text-xs font-bold text-white cursor-pointer"
-                >
-                  絞り込みをリセット
-                </button>
-              </div>
-            ) : (
+            <p className="rounded-xl bg-white p-4 text-sm">「配信掲載日」はApple Musicの楽曲欄の日付です。CD欄は表示中の収録作品の発売日です。裏声の「記載なし」は採譜資料に値がないことを示します。各曲名から資料間の違いも確認できます。</p>
+            {filteredSongs.length === 0 ? <p>条件に一致する曲はありません。</p> : (
               <>
-                {/* Mobile View: Zero-Horizontal-Scroll Vocal Range Cards (md:hidden) */}
-                <div className="md:hidden space-y-3">
-                  {displayedSongs.map((song) => {
-                    const albumBadgeText = EP_TRACK_ORDER_MAP[albumFilter]?.[song.id]
-                      ? `${albumFilter} (M${EP_TRACK_ORDER_MAP[albumFilter][song.id]})`
-                      : `${song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
-
-                    return (
-                      <article
-                        key={song.id}
-                        className="rounded-xl border border-[#E6E1D6] bg-white p-4 space-y-2.5"
-                      >
-                        <div className="flex items-start justify-between gap-2 border-b border-[#E6E1D6] pb-2.5">
-                          <div className="min-w-0">
-                            <div className="text-[11px] font-mono-num text-[#78716C]">
-                              {song.releaseDate} · {albumBadgeText}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => onSelectSong(song)}
-                              className="mt-0.5 text-left text-base font-bold text-[#1C1917] hover:text-[#C83E2B] cursor-pointer"
-                            >
-                              {song.title}
-                            </button>
-                            <div className="text-[11px] text-[#78716C]">
-                              {getSongwriterCredit(song)} · 転調{song.keyChanges}回 · BPM {song.bpm}
-                            </div>
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => onSelectSong(song)}
-                            className="shrink-0 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-1.5 text-[11px] font-bold text-[#1C1917] cursor-pointer"
-                          >
-                            解説・コツ
-                          </button>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-1.5 rounded-lg bg-[#FBF9F5] p-2.5 border border-[#E6E1D6] text-center font-mono-num">
-                          <div>
-                            <span className="block text-[10px] text-[#78716C]">地声最低</span>
-                            <span className="text-xs font-bold text-[#1E3A5F]">
-                              {song.vocalRange.lowestNote}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="block text-[10px] text-[#78716C]">地声最高</span>
-                            <span className="text-xs font-bold text-[#C83E2B]">
-                              {song.vocalRange.highestChestNote}
-                            </span>
-                          </div>
-                          <div>
-                            <span className="block text-[10px] text-[#78716C]">裏声最高</span>
-                            <span className="text-xs font-bold text-[#B45309]">
-                              {song.vocalRange.highestFalsettoNote}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="space-y-1.5 text-xs">
-                          <p className="text-[#1C1917] leading-snug">
-                            <strong className="text-[#C83E2B]">一番高い所：</strong>
-                            {song.vocalRange.highNoteSection}
-                          </p>
-                          <p className="text-[#57534E] leading-snug">
-                            <strong className="text-[#1E3A5F]">一番低い所：</strong>
-                            {song.vocalRange.lowNoteSection}
-                          </p>
-                        </div>
-                      </article>
-                    );
-                  })}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {displayedSongs.map(song => {
+                    const f = songEvidence[song.id as keyof typeof songEvidence];
+                    return <article key={song.id} className="rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm">
+                      <button className="text-left font-bold underline" onClick={()=>onSelectSong(song)}>{song.title}</button>
+                      <p className="my-1 text-xs">{f.album} ／ {formatDuration(song.durationSec)}</p>
+                      <p>地声 {song.vocalRange.lowestNote} ～ {song.vocalRange.highestChestNote} ／ 裏声最高 {song.vocalRange.highestFalsettoNote}</p>
+                      <p>配信掲載日 <a className="underline" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a>
+                      {f.cd && <> ／ 収録作品CD <a className="underline" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a></>}</p>
+                      <a className="text-xs underline" href={f.rangeSource} target="_blank" rel="noreferrer">採譜：{f.rangeLabel} ↗</a>
+                    </article>})}
                 </div>
-
-                {/* Desktop View: Sticky-Column Comparison Table (hidden md:block) */}
-                <div className="hidden md:block overflow-x-auto rounded-xl border border-[#E6E1D6] bg-white">
-                  <table className="w-full min-w-[780px] text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-[#E6E1D6] bg-[#FBF9F5] text-[11px] font-bold text-[#57534E]">
-                        <th className="py-3 px-4 sticky left-0 bg-[#FBF9F5] z-10">
-                          楽曲名 / 収録アルバム (曲順)
-                        </th>
-                        <th className="py-3 px-4">発売日</th>
-                        <th className="py-3 px-4">最低音 〜 地声最高音（裏声）</th>
-                        <th className="py-3 px-4">一番高いところ（登場パート・秒数）</th>
-                        <th className="py-3 px-4">一番低いところ（登場パート・秒数）</th>
-                        <th className="py-3 px-4 text-right">詳細</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E6E1D6] text-xs">
-                      {displayedSongs.map((song) => {
-                        const barPercent = Math.min(
-                          100,
-                          Math.max(
-                            25,
-                            Math.round(((song.vocalRange.chestSemitoneScore - 68) / 9) * 100)
-                          )
-                        );
-                        const albumBadgeText = EP_TRACK_ORDER_MAP[albumFilter]?.[song.id]
-                          ? `${albumFilter} (M${EP_TRACK_ORDER_MAP[albumFilter][song.id]})`
-                          : `${song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
-
-                        return (
-                          <tr
-                            key={song.id}
-                            className="group hover:bg-[#FBF9F5] transition-colors"
-                          >
-                            <td className="py-3.5 px-4 align-top sticky left-0 bg-white group-hover:bg-[#FBF9F5] z-10">
-                              <button
-                                type="button"
-                                onClick={() => onSelectSong(song)}
-                                className="text-left font-bold text-sm text-[#1C1917] hover:text-[#C83E2B] transition-colors cursor-pointer"
-                              >
-                                {song.title}
-                              </button>
-                              <div className="mt-0.5 text-[11px] text-[#78716C]">
-                                {albumBadgeText} · 転調{song.keyChanges}回 · BPM {song.bpm}
-                              </div>
-                              <div className="text-[11px] text-[#78716C]">
-                                {getSongwriterCredit(song)}
-                              </div>
-                            </td>
-
-                            <td className="py-3.5 px-4 align-top font-mono-num whitespace-nowrap">
-                              <div className="text-xs font-bold text-[#1C1917]">
-                                {song.releaseDate}
-                              </div>
-                              <div className="mt-0.5 text-[11px] text-[#78716C]">
-                                #{song.guideOrder} · {formatDuration(song.durationSec)}
-                              </div>
-                            </td>
-
-                            <td className="py-3.5 px-4 align-top font-mono-num whitespace-nowrap">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-[#1E3A5F] font-bold">
-                                  {song.vocalRange.lowestNote}
-                                </span>
-                                <span className="text-[#78716C]">〜</span>
-                                <span className="text-[#C83E2B] font-bold">
-                                  地声 {song.vocalRange.highestChestNote}
-                                </span>
-                              </div>
-                              <div className="mt-1 flex items-center justify-between text-[11px] text-[#78716C]">
-                                <span>裏声: {song.vocalRange.highestFalsettoNote}</span>
-                                <span>幅 {song.vocalRange.rangeSpanSemitones}半音</span>
-                              </div>
-                              <div className="mt-1.5 h-1.5 w-36 rounded-full bg-[#E6E1D6] overflow-hidden">
-                                <div
-                                  className="h-full rounded-full bg-[#C83E2B]"
-                                  style={{ width: `${barPercent}%` }}
-                                />
-                              </div>
-                            </td>
-
-                            <td className="py-3.5 px-4 align-top max-w-[240px]">
-                              <span className="font-bold text-[#C83E2B] block text-[11px]">
-                                最高音（{song.vocalRange.highestChestNote} / {song.vocalRange.highestFalsettoNote}）
-                              </span>
-                              <p className="mt-0.5 text-[#1C1917] leading-relaxed">
-                                {song.vocalRange.highNoteSection}
-                              </p>
-                            </td>
-
-                            <td className="py-3.5 px-4 align-top max-w-[220px]">
-                              <span className="font-bold text-[#1E3A5F] block text-[11px]">
-                                最低音（{song.vocalRange.lowestNote}）
-                              </span>
-                              <p className="mt-0.5 text-[#57534E] leading-relaxed">
-                                {song.vocalRange.lowNoteSection}
-                              </p>
-                            </td>
-
-                            <td className="py-3.5 px-4 align-top text-right whitespace-nowrap">
-                              <button
-                                type="button"
-                                onClick={() => onSelectSong(song)}
-                                className="inline-flex items-center gap-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-1.5 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer"
-                              >
-                                解説・コツ
-                              </button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
                 {/* Progressive Pagination Controls */}
                 {filteredSongs.length > visibleCount && (
                   <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3 rounded-xl border border-[#E6E1D6] bg-white p-4">
@@ -797,16 +589,16 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-xl border border-[#E6E1D6] bg-white p-4 sm:p-5">
               <div className="flex items-center gap-4">
                 {isSafeAssetUrl(MATSUE_IMAGE_PATH) && (
-                  <img
+                  <GuideArtwork
                     src={MATSUE_IMAGE_PATH}
-                    alt="島根県松江市・宍道湖の夕景"
+                    alt="宍道湖の夕景をイメージした図柄"
                     referrerPolicy="no-referrer"
                     className="h-16 w-24 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
                   />
                 )}
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">
-                    山陰（松江・米子）から横浜スタジアムまで
+                    山陰（松江・米子）から横浜のライブ会場まで
                   </h3>
                   <p className="mt-0.5 text-xs text-[#57534E]">
                     バンド結成の地や聖地ライブ会場のガイドです。行ったことのある場所にチェックを残せます。
@@ -834,6 +626,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               </div>
             </div>
 
+            <section className="rounded-xl border bg-white p-4">
+              <label className="font-bold" htmlFor="map-place">地図で見る場所</label>
+              <select id="map-place" className="mx-2 max-w-full border p-2" value={mapSpot.id} onChange={e=>setMapSpotId(e.target.value)}>
+                {filteredSpots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+              </select>
+              <iframe className="mt-3 w-full rounded-xl border" height="280" title={mapSpot.name+'の地図'} loading="lazy" src={'https://maps.google.com/maps?output=embed&q='+mapQuery}></iframe>
+              <a className="underline text-sm" href={'https://www.google.com/maps/search/?api=1&query='+mapQuery} target="_blank" rel="noreferrer">Google マップで開く・経路検索 ↗</a>
+            </section>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSpots.map((spot) => {
                 const visited = visitedSpotIds.includes(spot.id);
@@ -847,7 +647,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">
                           {spot.area}
                         </span>
-                        <span className="truncate">ゆかりの曲: {spot.relatedSong}</span>
+                        <span className="truncate">散策のお供に（編集部選曲）: {spot.relatedSong}</span>
                       </div>
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}
@@ -858,6 +658,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       <div className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
                         <strong className="text-[#1C1917]">スポットメモ：</strong>
                         {spot.fanTip}
+                        <div className="mt-2 flex flex-wrap gap-3">
+                          <button className="underline" onClick={()=>{setMapSpotId(spot.id); document.getElementById('map-place')?.focus();}}>地図で見る</button>
+                          <a className="underline" href={spot.source} target="_blank" rel="noreferrer">施設・観光案内 ↗</a>
+                          {spot.historySource && <a className="underline" href={spot.historySource} target="_blank" rel="noreferrer">公演・結成の資料 ↗</a>}
+                        </div>
                       </div>
                     </div>
 

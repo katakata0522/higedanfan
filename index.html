@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self';"
+      content="default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; frame-src https://maps.google.com https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self';"
     />
+    <link rel="canonical" href="https://katakatalab.com/higedanfan/" />
     <title>115万キロのファンノート — Official髭男dism 非公式ファンサイト</title>
     <meta
       name="description"
@@ -20,6 +21,8 @@
       property="og:description"
       content="Official髭男dismのマイソング診断、楽曲ガイド・聖地巡礼マップ、マイセットリスト作成、人気曲投票・感想考察ノート、ヒゲダン検定クイズを楽しめる非公式ファンサイト。"
     />
+    <meta property="og:url" content="https://katakatalab.com/higedanfan/" />
+    <meta property="og:image" content="https://katakatalab.com/ogp.png" />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="referrer" content="no-referrer" />
@@ -31,7 +34,14 @@
     />
   </head>
   <body class="bg-[#FAF7F2] text-[#18181B] antialiased selection:bg-[#E11D48] selection:text-white">
-    <div id="root"></div>
+    <div id="root"><main class="mx-auto max-w-6xl p-5">
+      <h1>115万キロのファンノート</h1>
+      <p>Official髭男dismの非公式ファンサイトです。掲載86曲の曲調・演奏時間・音域を曲別の資料と一緒に確認できます。</p>
+      <p>演奏時間は掲載した配信音源の長さを秒に丸めた値です。地声・裏声は採譜者による判断で、資料によって異なります。配信サービスの楽曲日付と、アルバムのCD発売日は別のものです。</p>
+      <details><summary>86曲の楽曲データと出典を見る</summary><ol><!--verified-songs--></ol></details>
+      <p>マイセトリ作成・検定クイズ・地図・ツアー記録はJavaScriptの画面で利用できます。</p>
+      <a href="https://katakatalab.com/">KatakataLabに戻る</a>
+    </main></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

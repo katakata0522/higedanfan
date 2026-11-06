@@ -1,3 +1,4 @@
+import { GuideArtwork } from './GuideArtwork';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
@@ -380,7 +381,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                   <div className="md:col-span-5 space-y-4">
                     <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
                       {isSafeAssetUrl(bestMatch.song.jacketImage) && (
-                        <img
+                        <GuideArtwork
                           src={bestMatch.song.jacketImage}
                           alt={`${bestMatch.song.title} ジャケットビジュアル`}
                           referrerPolicy="no-referrer"
@@ -474,7 +475,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                           あなたへのベストマッチ楽曲
                         </span>
                         <span className="font-mono-num">
-                          {formatDuration(bestMatch.song.durationSec)} · BPM {bestMatch.song.bpm} · 転調{bestMatch.song.keyChanges}回
+                          {formatDuration(bestMatch.song.durationSec)} · BPM {bestMatch.song.bpm}
                         </span>
                       </div>
 
@@ -500,9 +501,9 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       </div>
 
                       {/* Iconic Lyric Quote */}
-                      <blockquote className="mt-4 font-editorial text-xs sm:text-sm italic text-[#1C1917] border-y border-[#E6E1D6] py-3 px-2">
-                        「{bestMatch.song.iconicLyricQuote}」
-                      </blockquote>
+                      <p className="mt-4 font-editorial text-xs sm:text-sm italic text-[#1C1917] border-y border-[#E6E1D6] py-3 px-2">
+                        曲調：{bestMatch.song.musicalHighlight}
+                      </p>
                     </div>
 
                     {/* Action Bar including Share Card Generator Button */}
@@ -722,7 +723,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         <div className="sm:col-span-5">
                           <div className="relative aspect-square w-full max-w-[220px] sm:max-w-none mx-auto overflow-hidden rounded-xl bg-black ring-1 ring-black/15 shadow-md">
                             {isSafeAssetUrl(activeShareMatch.song.jacketImage) && (
-                              <img
+                              <GuideArtwork
                                 src={activeShareMatch.song.jacketImage}
                                 alt={`${activeShareMatch.song.title} シェアカードジャケット`}
                                 referrerPolicy="no-referrer"
@@ -796,7 +797,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                                 : 'text-[#57534E] border-[#E6E1D6]'
                             }`}
                           >
-                            「{activeShareMatch.song.iconicLyricQuote}」
+                            曲調：{activeShareMatch.song.musicalHighlight}
                           </p>
                         </div>
                       </div>
@@ -811,7 +812,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       >
                         <span>#115万キロのファンノート #Official髭男dism #マイソング診断</span>
                         <span className="font-mono-num">
-                          BPM {activeShareMatch.song.bpm} · 転調{activeShareMatch.song.keyChanges}回 · 最高音{' '}
+                          BPM {activeShareMatch.song.bpm} · 最高音{' '}
                           {activeShareMatch.song.vocalRange.highestChestNote}
                         </span>
                       </div>
@@ -841,7 +842,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         <div>
                           <div className="flex items-start gap-3.5">
                             {isSafeAssetUrl(song.jacketImage) && (
-                              <img
+                              <GuideArtwork
                                 src={song.jacketImage}
                                 alt={`${song.title} ジャケット`}
                                 referrerPolicy="no-referrer"
