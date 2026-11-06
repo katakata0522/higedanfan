@@ -11,5 +11,6 @@
 | セトリ・投票などの個人記録と旧データの復元 | `src/hooks/useFanRecords.ts`、`src/hooks/fanRecordStorage.ts` |
 | 曲順やタグなどの編集情報／録音の曲長・音域・出典 | `src/data/catalogEntries.ts` ／ `src/data/songEvidence.json` |
 | 選曲・採点・検索・セトリ集計 | `src/utils/` 内の機能別モジュール |
+| 楽曲ガイドの読み検索 | `src/data/songReadings.ts`、[曲ごとの確認資料](docs/song-readings.md) |
 
 楽曲ガイドとセトリは同じ録音データを参照します。曲の情報を更新するときは該当する曲IDのデータと出典を確認してください。個人記録の保存形式を変更するときは、以前のブラウザに残っている記録の復元も確認します。

@@ -1,18 +1,16 @@
+import { matchesTieUp } from '../utils/songSearch';
+import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Search,
   BookOpen,
   MapPin,
   Plus,
   Check,
   Disc,
   Compass,
-  X,
-  ArrowUpDown,
   Mic2,
-  RotateCcw,
   ChevronDown,
 } from 'lucide-react';
 import {
@@ -20,18 +18,13 @@ import {
   SACRED_SPOTS,
   SacredSpot,
   SongItem,
-  SoundTag,
   MATSUE_IMAGE_PATH,
 } from '../data/higedanData';
 import {
-  DiscographySortOption,
   EP_TRACK_ORDER_MAP,
   filterAndSortDiscography,
   formatDuration,
-  getSongwriterCredit,
   isSafeAssetUrl,
-  sanitizeUserText,
-  SOUND_LABELS,
 } from '../utils/fanLogic';
 
 export type DiscographySubView = 'discography' | 'vocal_range' | 'sacred_map';
@@ -47,50 +40,6 @@ interface DiscographySectionProps {
   initialEraFilter?: EraTag | 'all';
 }
 
-const ERA_TABS: { id: EraTag | 'all'; label: string; shortLabel: string }[] = [
-  { id: 'all', label: 'すべて（全86曲）', shortLabel: '全86曲' },
-  { id: 'indies_escaparade', label: '初期〜エスカパレード', shortLabel: '初期〜エスカパレード' },
-  { id: 'traveler', label: 'Traveler期', shortLabel: 'Traveler期' },
-  { id: 'editorial', label: 'Editorial期', shortLabel: 'Editorial期' },
-  { id: 'rejoice', label: 'Rejoice期', shortLabel: 'Rejoice期' },
-  { id: 'latest_2025_2026', label: '2024–2025最新曲', shortLabel: '最新シングル' },
-];
-
-const ALBUM_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'すべての収録アルバム・EP（全86曲）' },
-  { id: 'ラブとピースは君の中', label: '1st Mini『ラブとピースは君の中』(2015・全8曲)' },
-  { id: 'MAN IN THE MIRROR', label: '2nd Mini『MAN IN THE MIRROR』(2016・全6曲)' },
-  { id: "What's Going On? EP", label: "1st EP『What's Going On?』(2016・全4曲)" },
-  { id: 'レポート', label: '3rd Mini『レポート』(2017・全7曲)' },
-  { id: 'エスカパレード', label: '1st Full『エスカパレード』(2018・全13曲)' },
-  { id: 'Stand By You EP', label: '2nd EP『Stand By You EP』(2018・3曲)' },
-  { id: 'Traveler', label: 'Major 1st『Traveler』(2019・ボーカル13曲)' },
-  { id: 'HELLO EP', label: '3rd EP『HELLO EP』(2020・全4曲)' },
-  { id: 'Editorial', label: 'Major 2nd『Editorial』(2021・全14曲)' },
-  { id: 'ミックスナッツ EP', label: '4th EP『ミックスナッツ EP』(2022・全4曲)' },
-  { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・ボーカル15曲)' },
-  { id: 'Single / 2024-2026 Collection', label: '2024–2025 最新配信シングル群' },
-];
-
-const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
-  { id: 'all', label: 'すべてのおすすめ分類' },
-  { id: 'piano_pop', label: '王道ピアノポップ' },
-  { id: 'brass_funk', label: 'ブラス＆ファンク' },
-  { id: 'emotional_ballad', label: 'バラード' },
-  { id: 'stadium_rock', label: 'スタジアムロック' },
-];
-
-const SORT_OPTIONS: { id: DiscographySortOption; label: string }[] = [
-  { id: 'guide_order', label: '並び順：代表曲→アルバム順（ガイド順）' },
-  { id: 'album_track_order', label: '並び順：アルバム収録曲順（M1〜最終曲）' },
-  { id: 'release_oldest', label: '並び順：配信掲載日が古い順（2015年初期〜）' },
-  { id: 'newest', label: '並び順：配信掲載日が新しい順（最新曲〜）' },
-  { id: 'highest_note', label: '並び順：地声最高音が高い順' },
-  { id: 'vocal_span', label: '並び順：音域が広い順（半音幅）' },
-  { id: 'popular', label: '並び順：人気投票順' },
-  { id: 'bpm', label: '並び順：テンポ（BPM）が速い順' },
-];
-
 const INITIAL_VISIBLE_COUNT = 18;
 
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
@@ -104,36 +53,28 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   initialEraFilter = 'all',
 }) => {
   const activeSubView = initialSubView;
-  const [eraFilter, setEraFilter] = useState<EraTag | 'all'>(initialEraFilter);
-  const [albumFilter, setAlbumFilter] = useState<string>('all');
-  const [soundFilter, setSoundFilter] = useState<SoundTag | 'all'>('all');
-  const [sortBy, setSortBy] = useState<DiscographySortOption>('guide_order');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [filters, setFilters] = useState({ ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
+  const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery, sortBy } = filters;
   const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE_COUNT);
 
   useEffect(() => {
-    setEraFilter(initialEraFilter);
+    setFilters(current => current.era === initialEraFilter ? current : { ...current, era: initialEraFilter });
   }, [initialEraFilter]);
 
   // Reset pagination whenever filters or sub-view change
   useEffect(() => {
     setVisibleCount(
-      albumFilter !== 'all' || searchQuery.trim().length > 0 ? 100 : INITIAL_VISIBLE_COUNT
+      albumFilter !== 'all' || searchQuery.trim().length > 0 ? songs.length : INITIAL_VISIBLE_COUNT
     );
-  }, [eraFilter, albumFilter, soundFilter, searchQuery, sortBy, activeSubView]);
+  }, [eraFilter, albumFilter, soundFilter, searchQuery, sortBy, activeSubView, songs.length]);
 
-  const filteredSongs = useMemo(
-    () =>
-      filterAndSortDiscography(songs, {
-        era: eraFilter,
-        album: albumFilter,
-        sound: soundFilter,
-        searchQuery,
-        sortBy,
-      }),
-    [songs, eraFilter, albumFilter, soundFilter, searchQuery, sortBy]
-  );
+  const filteredSongs = useMemo(() => filterAndSortDiscography(songs, filters), [songs, filters]);
+  const globalMatchCount = useMemo(() => {
+    if (filteredSongs.length || !searchQuery.trim() ||
+        (eraFilter === 'all' && albumFilter === 'all' && soundFilter === 'all')) return 0;
+    return filterAndSortDiscography(songs, { ...DEFAULT_GUIDE_FILTERS, searchQuery }).length;
+  }, [songs, filteredSongs.length, searchQuery, eraFilter, albumFilter, soundFilter]);
 
   const displayedSongs = useMemo(
     () => filteredSongs.slice(0, visibleCount),
@@ -151,20 +92,23 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const [mapSpotId, setMapSpotId] = useState('');
   const mapSpot = filteredSpots.find(s => s.id === mapSpotId) ?? filteredSpots[0];
   const mapQuery = encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint);
-  const hasActiveFilter =
-    eraFilter !== 'all' ||
-    albumFilter !== 'all' ||
-    soundFilter !== 'all' ||
-    searchQuery.trim().length > 0 ||
-    sortBy !== 'guide_order';
-
-  const handleResetFilters = () => {
-    setEraFilter('all');
-    setAlbumFilter('all');
-    setSoundFilter('all');
-    setSearchQuery('');
-    setSortBy('guide_order');
-  };
+  const emptyResults = (
+    <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-5 text-center">
+      <p className="text-sm font-bold text-[#1C1917]">条件に一致する楽曲が見つかりませんでした。</p>
+      {globalMatchCount > 0 ? (
+        <button type="button"
+          onClick={() => setFilters({ ...DEFAULT_GUIDE_FILTERS, searchQuery, sortBy })}
+          className="mt-3 min-h-[44px] max-w-full wrap-anywhere rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-bold text-white">
+          全{songs.length}曲から「{searchQuery.trim()}」を探す（{globalMatchCount}曲）
+        </button>
+      ) : (
+        <button type="button" onClick={() => setFilters(DEFAULT_GUIDE_FILTERS)}
+          className="mt-3 min-h-[44px] rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-bold text-white">
+          絞り込みをリセット
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <section
@@ -245,166 +189,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           </div>
         </div>
 
-        {/* Streamlined Filter, Sort & Search Bar (Compact on Mobile & Desktop) */}
         {activeSubView !== 'sacred_map' && (
-          <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E1D6] bg-white p-3 sm:p-4">
-            {/* Row 1: Era Quick Tabs + Result Counter */}
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-1">
-                {ERA_TABS.map((tab) => {
-                  const active = eraFilter === tab.id && albumFilter === 'all';
-                  return (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => {
-                        setEraFilter(tab.id);
-                        setAlbumFilter('all');
-                      }}
-                      className={`rounded-md px-2.5 py-1.5 text-[11px] sm:text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        active
-                          ? 'bg-[#1C1917] text-[#FBF9F5]'
-                          : 'bg-[#FBF9F5] text-[#57534E] hover:text-[#1C1917] hover:bg-[#F2EFE9]'
-                      }`}
-                    >
-                      <span className="sm:hidden">{tab.shortLabel}</span>
-                      <span className="hidden sm:inline">{tab.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div className="flex items-center gap-2">
-                {hasActiveFilter && (
-                  <button
-                    type="button"
-                    onClick={handleResetFilters}
-                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#C83E2B] hover:underline cursor-pointer"
-                  >
-                    <RotateCcw className="h-3 w-3" />
-                    条件リセット
-                  </button>
-                )}
-                <span className="text-xs font-mono-num font-bold text-[#1C1917]">
-                  該当：{filteredSongs.length} 曲
-                </span>
-              </div>
-            </div>
-
-            {/* Row 2: Search Input + Album Select + Sort Select + Sound Select */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-2 pt-2 border-t border-[#E6E1D6]">
-              {/* Search Box (4 cols on desktop) */}
-              <div className="relative lg:col-span-3">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78716C]" />
-                <label htmlFor="discography-search" className="sr-only">
-                  曲名や音域・アルバム名で検索
-                </label>
-                <input
-                  id="discography-search"
-                  type="text"
-                  maxLength={60}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value.slice(0, 60))}
-                  placeholder="曲名・最高音(hiD#等)・タイアップ検索..."
-                  className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-7 py-2 text-xs text-[#1C1917] min-h-[38px] placeholder:text-[#78716C] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
-                />
-                {searchQuery.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery('')}
-                    aria-label="検索キーワードをクリア"
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[#78716C] hover:text-[#1C1917] cursor-pointer"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
-                )}
-              </div>
-
-              {/* Album / EP Filter (4 cols on desktop) */}
-              <div className="lg:col-span-4">
-                <label className="sr-only" htmlFor="album-filter-select">
-                  収録アルバム・EPで絞り込み
-                </label>
-                <select
-                  id="album-filter-select"
-                  value={albumFilter}
-                  onChange={(e) => {
-                    const nextAlbum = e.target.value;
-                    setAlbumFilter(nextAlbum);
-                    if (nextAlbum !== 'all') {
-                      setEraFilter('all');
-                      setSortBy('album_track_order');
-                    }
-                  }}
-                  className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-2 text-xs font-bold text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
-                >
-                  {ALBUM_FILTERS.map((af) => (
-                    <option key={af.id} value={af.id}>
-                      {af.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sort Order Select (3 cols on desktop) */}
-              <div className="relative flex items-center lg:col-span-3">
-                <ArrowUpDown className="pointer-events-none absolute left-2.5 h-3.5 w-3.5 text-[#78716C]" />
-                <label className="sr-only" htmlFor="discography-sort-select">
-                  楽曲の並び替え
-                </label>
-                <select
-                  id="discography-sort-select"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as DiscographySortOption)}
-                  className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-7 pr-2.5 py-2 text-xs font-bold text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.id} value={opt.id}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Sound Type Filter (2 cols on desktop) */}
-              <div className="lg:col-span-2">
-                <label className="sr-only" htmlFor="sound-filter-select">
-                  おすすめ分類（編集部）
-                </label>
-                <select
-                  id="sound-filter-select"
-                  value={soundFilter}
-                  onChange={(e) => setSoundFilter(e.target.value as SoundTag | 'all')}
-                  className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-2 text-xs font-medium text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
-                >
-                  {SOUND_FILTERS.map((sf) => (
-                    <option key={sf.id} value={sf.id}>
-                      {sf.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
+          <SongGuideFilters values={filters} onChange={setFilters}
+            resultCount={filteredSongs.length} shownCount={displayedSongs.length} />
         )}
 
         {/* Sub-View 1: Song Guide Cards */}
         {activeSubView === 'discography' && (
           <div>
-            {filteredSongs.length === 0 ? (
-              <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-8 text-center">
-                <p className="text-sm font-bold text-[#1C1917]">
-                  条件に一致する楽曲が見つかりませんでした。
-                </p>
-                <button
-                  type="button"
-                  onClick={handleResetFilters}
-                  className="mt-3 rounded-lg bg-[#1C1917] px-4 py-2 text-xs font-bold text-white cursor-pointer"
-                >
-                  絞り込みをリセット
-                </button>
-              </div>
-            ) : (
+            {filteredSongs.length === 0 ? emptyResults : (
               <>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayedSongs.map((song) => {
@@ -445,6 +238,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           <p className="mt-3 text-xs leading-relaxed text-[#57534E] wrap-anywhere">
                             {song.linerNotes}
                           </p>
+
+                          {searchQuery.trim() && matchesTieUp(searchQuery, song) && (
+                            <p className="mt-1 text-xs leading-relaxed text-[#1E3A5F] wrap-anywhere">タイアップ：{song.tieUp}</p>
+                          )}
 
                           {/* Vocal Range & High-Note Section Mini Box */}
                           <div className="mt-3 rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] px-3 py-2 text-[11px]">
@@ -520,7 +317,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#C83E2B] transition-colors cursor-pointer min-h-[42px]"
                     >
                       <ChevronDown className="h-4 w-4" />
-                      さらに24曲を表示（残り {filteredSongs.length - visibleCount} 曲）
+                      さらに{Math.min(24, filteredSongs.length - visibleCount)}曲を表示（残り {filteredSongs.length - visibleCount} 曲）
                     </button>
                     <button
                       type="button"
@@ -540,7 +337,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {activeSubView === 'vocal_range' && (
           <div className="mt-4 space-y-4">
             <p className="rounded-xl bg-white p-4 text-sm">「配信掲載日」はApple Musicの楽曲欄の日付です。CD欄は表示中の収録作品の発売日です。裏声の「記載なし」は採譜資料に値がないことを示します。各曲名から資料間の違いも確認できます。</p>
-            {filteredSongs.length === 0 ? <p>条件に一致する曲はありません。</p> : (
+            {filteredSongs.length === 0 ? emptyResults : (
               <>
                 <div className="grid gap-2 sm:grid-cols-2">
                   {displayedSongs.map(song => {
@@ -563,7 +360,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#C83E2B] transition-colors cursor-pointer min-h-[42px]"
                     >
                       <ChevronDown className="h-4 w-4" />
-                      さらに24曲を表示（残り {filteredSongs.length - visibleCount} 曲）
+                      さらに{Math.min(24, filteredSongs.length - visibleCount)}曲を表示（残り {filteredSongs.length - visibleCount} 曲）
                     </button>
                     <button
                       type="button"

@@ -1,5 +1,5 @@
 import type { EraTag, SongItem, SoundTag, TourArchive } from '../data/higedanData';
-import { sanitizeUserText } from './userInput';
+import { prepareSongSearch } from './songSearch';
 
 export type DiscographySortOption =
   | 'guide_order'
@@ -60,7 +60,8 @@ export function filterAndSortDiscography(
   songs: SongItem[],
   filter: DiscographyFilter
 ): SongItem[] {
-  const query = sanitizeUserText(filter.searchQuery, 60).toLowerCase();
+  const rankSong = prepareSongSearch(filter.searchQuery);
+  const ranks = new Map<string, number>();
 
   const filtered = songs.filter((song) => {
     if (filter.era !== 'all' && song.era !== filter.era) {
@@ -82,22 +83,10 @@ export function filterAndSortDiscography(
     if (filter.onlyHiddenGems && !song.isHiddenGem) {
       return false;
     }
-    if (query.length > 0) {
-      const haystack = [
-        song.title,
-        song.album,
-        song.tieUp,
-        song.musicalHighlight,
-        song.linerNotes,
-        song.vocalRange?.highestChestNote ?? '',
-        song.vocalRange?.lowestNote ?? '',
-        song.vocalRange?.highNoteSection ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-      if (!haystack.includes(query)) {
-        return false;
-      }
+    if (rankSong) {
+      const rank = rankSong(song);
+      if (rank === undefined) return false;
+      ranks.set(song.id, rank);
     }
     return true;
   });
@@ -109,7 +98,7 @@ export function filterAndSortDiscography(
   return filtered.sort((a, b) => {
     switch (filter.sortBy) {
       case 'guide_order':
-        return a.guideOrder - b.guideOrder;
+        return (ranks.get(a.id) ?? 0) - (ranks.get(b.id) ?? 0) || a.guideOrder - b.guideOrder;
       case 'album_track_order': {
         if (filter.album && EP_TRACK_ORDER_MAP[filter.album]) {
           const epMap = EP_TRACK_ORDER_MAP[filter.album];
