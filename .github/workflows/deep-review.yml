@@ -10,14 +10,14 @@ concurrency:
   cancel-in-progress: true
 jobs:
   audit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - name: Checkout reviewed source and audit harness
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
-          fetch-depth: 10
+          fetch-depth: 20
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
@@ -29,6 +29,7 @@ jobs:
           { date -u; node -v; npm -v; git rev-parse HEAD; } > audit-evidence/environment.txt
           git diff 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 -- src public index.html package.json tsconfig.json vite.config.ts > audit-evidence/product-source-diff.txt
           git archive --format=tar.gz 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 > audit-evidence/original-source.tar.gz
+          cp -r .audit audit-evidence/audit-harness
       - name: Install original dependencies without lifecycle scripts
         id: install
         continue-on-error: true
@@ -36,18 +37,28 @@ jobs:
         run: |
           set -o pipefail
           npm install --ignore-scripts --no-fund --no-audit 2>&1 | tee audit-evidence/logs/install.log
-          cp package-lock.json audit-evidence/resolved-package-lock.json
-      - name: Build original application
+      - name: Isolated compatible-toolchain diagnostic if original install fails
+        id: compatible
+        if: steps.install.outcome == 'failure'
+        continue-on-error: true
+        shell: bash
+        run: |
+          node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json'));p.devDependencies.esbuild='0.28.2';fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n');"
+          git diff -- package.json > audit-evidence/diagnostic-toolchain-only.patch
+          set -o pipefail
+          npm install --ignore-scripts --no-fund --no-audit 2>&1 | tee audit-evidence/logs/compatible-install.log
+      - name: Build original application source with recorded toolchain
         id: build
-        if: steps.install.outcome == 'success'
+        if: steps.install.outcome == 'success' || steps.compatible.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
           set -o pipefail
           npm run build 2>&1 | tee audit-evidence/logs/build.log
-          tar czf audit-evidence/original-build.tar.gz dist
-      - name: Type-check original application
-        if: steps.install.outcome == 'success'
+          cp package-lock.json audit-evidence/resolved-package-lock.json
+          tar czf audit-evidence/diagnostic-build.tar.gz dist
+      - name: Type-check original application source
+        if: steps.install.outcome == 'success' || steps.compatible.outcome == 'success'
         continue-on-error: true
         shell: bash
         run: |
@@ -90,13 +101,15 @@ jobs:
           for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break || sleep 1; done
           set -o pipefail
           node .audit/browser-audit.mjs 2>&1 | tee audit-evidence/logs/browser.log
-      - name: Record actual build outcomes
+      - name: Record actual build outcomes and product-source integrity
         if: always()
         env:
           INSTALL_OUTCOME: ${{ steps.install.outcome }}
+          COMPATIBLE_OUTCOME: ${{ steps.compatible.outcome }}
           BUILD_OUTCOME: ${{ steps.build.outcome }}
         run: |
-          printf 'original_install=%s\noriginal_build=%s\n' "$INSTALL_OUTCOME" "$BUILD_OUTCOME" > audit-evidence/build-status.txt
+          printf 'original_install=%s\ncompatible_install=%s\napp_source_build=%s\n' "$INSTALL_OUTCOME" "$COMPATIBLE_OUTCOME" "$BUILD_OUTCOME" > audit-evidence/build-status.txt
+          git diff 04857ef1f88bcb9b788a2bc260eb6d58419d19d9 -- src public index.html tsconfig.json vite.config.ts > audit-evidence/app-source-after-tests.diff
           find audit-evidence -type f -not -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > audit-evidence/SHA256SUMS
       - name: Retain evidence for this review only
         if: always()
