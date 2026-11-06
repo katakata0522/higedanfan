@@ -21,10 +21,10 @@
     --accent-brass: #B45309;
     --accent-forest: #15803D;
 
-    --font-display: 'Outfit', 'Noto Sans JP', sans-serif;
-    --font-serif: 'Fraunces', 'Noto Serif JP', serif;
-    --font-sans: 'Noto Sans JP', sans-serif;
-    --font-mono: 'JetBrains Mono', monospace;
+    --font-display: 'Outfit', system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    --font-serif: 'Fraunces', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+    --font-sans: system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   }
 
   html {
