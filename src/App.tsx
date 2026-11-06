@@ -448,7 +448,7 @@ export default function App() {
         '3つの質問に1問ずつ順番に答えるステップ遷移式',
         '診断結果のSNS風シェアカード生成＆理由解説付き',
       ],
-      ctaLabel: '86曲の楽曲ガイドを開く',
+      ctaLabel: 'マイソング診断をはじめる',
     },
     {
       id: 'discography',
