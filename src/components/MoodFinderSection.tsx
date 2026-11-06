@@ -402,7 +402,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         <div className="text-[11px] font-mono-num text-white/80">
                           {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
                         </div>
-                        <div className="mt-0.5 text-base font-bold truncate">
+                        <div className="mt-0.5 text-base font-bold min-w-0 wrap-anywhere whitespace-normal">
                           {bestMatch.song.title}
                         </div>
                       </div>
@@ -737,7 +737,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                               <span className="block text-[10px] font-mono-num text-white/75">
                                 {activeShareMatch.song.album} · {activeShareMatch.song.releaseDate}
                               </span>
-                              <span className="block text-xs font-bold text-white truncate">
+                              <span className="block text-xs font-bold text-white min-w-0 wrap-anywhere whitespace-normal">
                                 Official髭男dism
                               </span>
                             </div>
@@ -859,7 +859,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                                 </span>
                                 <span className="font-mono-num">BPM {song.bpm}</span>
                               </div>
-                              <h5 className="mt-0.5 text-base font-bold text-[#1C1917] truncate">
+                              <h5 className="mt-0.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                                 {song.title}
                               </h5>
                               <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
@@ -871,7 +871,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             </div>
                           </div>
 
-                          <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] line-clamp-2 leading-relaxed">
+                          <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
                             {moodMatchExplanation}
                           </p>
                         </div>

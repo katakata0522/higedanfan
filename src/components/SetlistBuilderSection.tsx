@@ -395,7 +395,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     return (
                       <div
                         key={`${entry.songId}-${idx}`}
-                        className={`flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-2.5 px-2 transition-colors ${
+                        className={`flex flex-col md:flex-row md:items-center justify-between gap-2 py-2.5 px-2 transition-colors ${
                           entry.isEncore ? 'bg-[#FEF8EC]/70' : 'bg-white'
                         }`}
                       >
@@ -412,17 +412,17 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               <button
                                 type="button"
                                 onClick={() => onSelectSong(song)}
-                                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#1C1917] hover:text-[#C83E2B] transition-colors truncate cursor-pointer text-left"
+                                className="inline-flex items-center gap-1.5 text-sm font-bold text-[#1C1917] hover:text-[#C83E2B] transition-colors min-w-0 wrap-anywhere whitespace-normal cursor-pointer text-left"
                               >
-                                <span className="truncate">{song.title}</span>
+                                <span className="min-w-0 wrap-anywhere whitespace-normal">{song.title}</span>
                                 <BookOpen className="h-3 w-3 shrink-0 text-[#78716C]" />
                               </button>
                             ) : (
-                              <div className="text-sm font-bold text-[#1C1917] truncate">
+                              <div className="text-sm font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                                 {song.title}
                               </div>
                             )}
-                            <div className="text-[11px] text-[#78716C] truncate">
+                            <div className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
                               {song.album} · {formatDuration(song.durationSec)} · BPM {song.bpm}
                             </div>
                           </div>
@@ -506,7 +506,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     <span className="text-[11px] font-bold text-[#F5D0C9]">
                       セットリスト構成データ
                     </span>
-                    <h3 className="mt-0.5 text-base sm:text-lg font-bold text-white truncate">
+                    <h3 className="mt-0.5 text-base sm:text-lg font-bold text-white min-w-0 wrap-anywhere whitespace-normal">
                       {safeDisplayTitle}
                     </h3>
                   </div>
@@ -547,11 +547,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       {stats.vibeDescription}
                     </p>
 
-                    <div className="mt-3 flex items-end gap-1.5 h-24 pt-3 px-2 rounded-lg bg-white/5 border border-white/10">
+                    <div className="mt-3 flex items-end overflow-x-auto gap-1.5 h-24 pt-3 px-2 rounded-lg bg-white/5 border border-white/10">
                       {stats.energyCurve.map((pt) => (
                         <div
                           key={`${pt.index}-${pt.title}`}
-                          className="flex-1 flex flex-col items-center gap-1 min-w-0"
+                          className="flex-1 flex flex-col items-center gap-1 min-w-[2ch]"
                           title={`${pt.title} (熱量 Lv.${pt.energy})`}
                         >
                           <div
@@ -560,7 +560,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             }`}
                             style={{ height: `${Math.max(14, pt.energy * 6.5)}px` }}
                           />
-                          <span className="text-[10px] font-mono-num text-white/70 truncate w-full text-center">
+                          <span className="text-[10px] font-mono-num text-white/70 w-full text-center">
                             {pt.isEncore ? 'EN' : pt.index}
                           </span>
                         </div>
@@ -644,7 +644,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                         主要会場: {tour.venueHighlight}
                       </p>
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
-                        {tour.description} <a className="underline" href={tour.source} target="_blank" rel="noreferrer">公演資料 ↗</a>
+                        {tour.description} <a className="inline-block underline" href={tour.source} target="_blank" rel="noreferrer">公演資料 ↗</a>
                       </p>
                       <div className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
                         <strong className="text-[#1C1917]">このツアーをイメージした選曲例（実演順ではありません）：</strong>

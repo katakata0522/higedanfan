@@ -212,7 +212,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               }`}
             >
               <Disc className="h-3.5 w-3.5 shrink-0 hidden sm:inline-block" />
-              <span className="truncate">楽曲ガイド</span>
+              <span className="min-w-0 wrap-anywhere whitespace-normal">楽曲ガイド</span>
             </button>
             <button
               type="button"
@@ -226,7 +226,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               }`}
             >
               <Mic2 className="h-3.5 w-3.5 shrink-0 hidden sm:inline-block" />
-              <span className="truncate">音域・発売日表</span>
+              <span className="min-w-0 wrap-anywhere whitespace-normal">音域・発売日表</span>
             </button>
             <button
               type="button"
@@ -240,7 +240,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               }`}
             >
               <Compass className="h-3.5 w-3.5 shrink-0 hidden sm:inline-block" />
-              <span className="truncate">聖地マップ</span>
+              <span className="min-w-0 wrap-anywhere whitespace-normal">聖地マップ</span>
             </button>
           </div>
         </div>
@@ -430,19 +430,19 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             )}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
-                                <span className="truncate">{albumBadgeText}</span>
+                                <span className="min-w-0 wrap-anywhere whitespace-normal">{albumBadgeText}</span>
                                 <span className="shrink-0">{song.releaseDate}</span>
                               </div>
-                              <h3 className="mt-0.5 text-base sm:text-lg font-bold text-[#1C1917] truncate">
+                              <h3 className="mt-0.5 text-base sm:text-lg font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                                 {song.title}
                               </h3>
-                              <p className="text-xs text-[#57534E] truncate">
+                              <p className="text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
                                 {songEvidence[song.id as keyof typeof songEvidence].recording}
                               </p>
                             </div>
                           </div>
 
-                          <p className="mt-3 text-xs leading-relaxed text-[#57534E] line-clamp-2">
+                          <p className="mt-3 text-xs leading-relaxed text-[#57534E] wrap-anywhere">
                             {song.linerNotes}
                           </p>
 
@@ -643,7 +643,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">
                           {spot.area}
                         </span>
-                        <span className="truncate">散策のお供に（編集部選曲）: {spot.relatedSong}</span>
+                        <span className="min-w-0 wrap-anywhere whitespace-normal">散策のお供に（編集部選曲）: {spot.relatedSong}</span>
                       </div>
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}
@@ -662,8 +662,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
-                      <span className="text-[11px] text-[#78716C] truncate">
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
+                      <span className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
                         {spot.addressHint}
                       </span>
                       <button

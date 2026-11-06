@@ -155,10 +155,10 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             <Music4 className="h-4 w-4" />
           </span>
           <span className="min-w-0">
-            <span className="block text-sm sm:text-base font-bold tracking-tight text-[#1C1917] group-hover:text-[#C83E2B] transition-colors truncate">
+            <span className="block text-sm sm:text-base font-bold tracking-tight text-[#1C1917] group-hover:text-[#C83E2B] transition-colors min-w-0 wrap-anywhere whitespace-normal">
               115万キロのファンノート
             </span>
-            <span className="hidden sm:block text-[11px] text-[#78716C] truncate">
+            <span className="hidden sm:block text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
               Official髭男dism 非公式ファンサイト
             </span>
           </span>
@@ -247,7 +247,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                           </span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-bold truncate">
+                              <span className="text-sm font-bold min-w-0 wrap-anywhere whitespace-normal">
                                 {item.label}
                               </span>
                               {isCurrent && (
@@ -257,7 +257,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                               )}
                             </div>
                             <p
-                              className={`text-[11px] leading-snug truncate ${
+                              className={`text-[11px] leading-snug min-w-0 wrap-anywhere whitespace-normal ${
                                 isCurrent ? 'text-[#E6E1D6]' : 'text-[#57534E]'
                               }`}
                             >

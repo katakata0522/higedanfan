@@ -575,7 +575,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
                               <div className="text-[10px] font-mono-num font-bold text-[#C83E2B]">
                                 {slotPos + 1}番目
                               </div>
-                              <div className="mt-0.5 truncate">{chosenLabel}</div>
+                              <div className="mt-0.5 min-w-0 wrap-anywhere whitespace-normal">{chosenLabel}</div>
                             </div>
                           );
                         })}
