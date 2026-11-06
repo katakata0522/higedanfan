@@ -31,6 +31,8 @@ export interface SongItem {
   situations: SituationTag[];
   sound: SoundTag;
   tieUp: string;
+  tieUps: { text: string; source: string }[];
+  releaseNote?: string;
   iconicLyricQuote: string;
   musicalHighlight: string;
   linerNotes: string;
@@ -115,10 +117,10 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "area": "島根・松江",
     "relatedSong": "愛なんだが… / 恋の前ならえ",
     "addressHint": "島根県松江市嫁島町13-25",
-    "description": "2012年7月7日、バンドが初ライブを行った会場。後年の公演で藤原聡がその日を振り返っています。",
+    "description": "藤原聡が地元での活動拠点として挙げたライブハウス。リハーサルを終えて外に出ると、宍道湖に沈む夕日が見えたと振り返っています。",
     "fanTip": "営業・公演予定は会場の案内を確認してください。",
     "source": "https://aztic.net/canova/",
-    "historySource": "https://www.oricon.co.jp/news/2139557/full/"
+    "historySource": "https://www.diskgarage.com/digaonline/pleasure/55307"
   },
   {
     "id": "spot-shimane-univ",
@@ -184,7 +186,7 @@ export const TOUR_ARCHIVES: TourArchive[] = [
       "I LOVE...",
       "Stand By You"
     ],
-    "source": "https://hello-ep.jp/interview/"
+    "source": "https://hello-ep.jp/"
   },
   {
     "id": "tour-editorial-2021",

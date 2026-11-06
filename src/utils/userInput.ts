@@ -6,19 +6,18 @@
  * - Strips inline DOM event handlers (e.g., onerror=, onclick=, onload=)
  * - Enforces a strict maximum character length
  */
-export function sanitizeUserText(input: unknown, maxLength = 200): string {
+export function sanitizeUserText(input: unknown, maxLength = 200, { trim = true } = {}): string {
   if (typeof input !== 'string') return '';
   const safeMax = Math.max(1, Math.min(2000, Math.floor(maxLength) || 200));
-  return input
+  const cleaned = input
     .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g, '')
     .replace(/<!--[\s\S]*?-->/g, '')
     .replace(/<\/?[a-zA-Z][^>]*>/g, '')
     .replace(/＜\/?[a-zA-Z][^＞]*＞/g, '')
     .replace(/[<>＜＞]/g, '')
     .replace(/\b(?:javascript|data|vbscript|file|blob)\s*:/gi, '')
-    .replace(/\bon[a-z]+\s*=/gi, '')
-    .trim()
-    .slice(0, safeMax);
+    .replace(/\bon[a-z]+\s*=/gi, '');
+  return (trim ? cleaned.trim() : cleaned).slice(0, safeMax);
 }
 
 /**

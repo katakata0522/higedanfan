@@ -1,5 +1,12 @@
 import type { SongItem } from '../data/higedanData';
-import { sanitizeSafeId } from './userInput';
+import { sanitizeSafeId, sanitizeUserText } from './userInput';
+
+export const SETLIST_TITLE_LIMIT = 160;
+
+// Another tab may read this value between the user's space and their next word.
+export function sanitizeSetlistTitle(title: string) {
+  return sanitizeUserText(title, SETLIST_TITLE_LIMIT, { trim: false });
+}
 
 export interface SetlistEntry {
   songId: string;

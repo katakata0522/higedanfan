@@ -1,7 +1,8 @@
 import { CheckCircle2, XCircle, RotateCcw, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useRef } from 'react';
 import type { QuizQuestion, SongItem } from '../../data/higedanData';
-import { formatOrderingSequence, isOrderingAnswerCorrect } from '../../utils/fanLogic';
+import { formatOrderingSequence } from '../../utils/fanLogic';
+import { isAnswerCorrect, type QuizAnswer } from './quizSession';
 import { DIFFICULTY_LABEL } from './quizCourses';
 
 interface Props {
@@ -10,51 +11,44 @@ interface Props {
   currentIndex: number;
   questionCount: number;
   score: number;
-  onCorrect: () => void;
-  onAnswerInputChange: (hasInput: boolean) => void;
+  answer: QuizAnswer;
+  onAnswerChange: (answer: QuizAnswer) => void;
   onNext: () => void;
   relatedSong?: SongItem;
   onSelectSong?: (song: SongItem) => void;
 }
 
 export function QuizQuestionCard({
-  visible, question, currentIndex, questionCount, score, onCorrect, onAnswerInputChange, onNext, relatedSong, onSelectSong,
+  visible, question, currentIndex, questionCount, score, answer, onAnswerChange, onNext, relatedSong, onSelectSong,
 }: Props) {
-  const [selectedOption, setSelectedOption] = useState<number | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<number[]>([]);
-  const [isOrderingSubmitted, setIsOrderingSubmitted] = useState(false);
-  const hasInput = selectedOption !== null || selectedOrder.length > 0;
-  useEffect(() => { onAnswerInputChange(hasInput); }, [hasInput, onAnswerInputChange]);
+  const { selectedOption, selectedOrder, isOrderingSubmitted } = answer;
+  const heading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    if (visible && heading.current) {
+      heading.current.focus({ preventScroll: true });
+      heading.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }, [visible, question.id]);
   const isOrderingQuestion = question.questionType === 'ordering';
   const isQuestionAnswered = isOrderingQuestion ? isOrderingSubmitted : selectedOption !== null;
-  const isCurrentQuestionCorrect = isOrderingQuestion
-    ? isOrderingSubmitted && !!question.correctOrder && isOrderingAnswerCorrect(selectedOrder, question.correctOrder)
-    : selectedOption === question.correctIndex;
+  const isCurrentQuestionCorrect = isAnswerCorrect(question, answer);
 
   const handleAnswerSingleChoice = (optionIdx: number) => {
     if (selectedOption !== null) return;
-    setSelectedOption(optionIdx);
-    if (optionIdx === question.correctIndex) {
-      onCorrect();
-    }
+    onAnswerChange({ ...answer, selectedOption: optionIdx });
   };
 
   const handleToggleOrderOption = (optionIdx: number) => {
     if (isOrderingSubmitted) return;
-    setSelectedOrder((prev) => {
-      if (prev.includes(optionIdx)) {
-        return prev.filter((item) => item !== optionIdx);
-      }
-      if (prev.length >= question.options.length) {
-        return prev;
-      }
-      return [...prev, optionIdx];
-    });
+    const nextOrder = selectedOrder.includes(optionIdx)
+      ? selectedOrder.filter(item => item !== optionIdx)
+      : [...selectedOrder, optionIdx];
+    onAnswerChange({ ...answer, selectedOrder: nextOrder });
   };
 
   const handleResetOrdering = () => {
     if (isOrderingSubmitted) return;
-    setSelectedOrder([]);
+    onAnswerChange({ ...answer, selectedOrder: [] });
   };
 
   const handleSubmitOrdering = () => {
@@ -65,10 +59,7 @@ export function QuizQuestionCard({
     ) {
       return;
     }
-    setIsOrderingSubmitted(true);
-    if (isOrderingAnswerCorrect(selectedOrder, question.correctOrder)) {
-      onCorrect();
-    }
+    onAnswerChange({ ...answer, isOrderingSubmitted: true });
   };
 
   if (!visible) return null;
@@ -91,7 +82,7 @@ export function QuizQuestionCard({
         <span className="font-mono-num">現在 {score} 問正解</span>
       </div>
 
-      <h3 className="mt-4 text-base sm:text-xl font-bold text-[#1C1917] leading-relaxed">
+      <h3 ref={heading} tabIndex={-1} className="mt-4 scroll-mt-20 text-base sm:text-xl font-bold text-[#1C1917] leading-relaxed">
         Q{currentIndex + 1}. {question.prompt}
       </h3>
 

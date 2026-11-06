@@ -141,7 +141,7 @@ export function MoodResults({
                   {bestMatch.song.title}
                 </h3>
                 <p className="mt-1 text-xs font-medium text-[#57534E]">
-                  {bestMatch.song.tieUp}
+                  {bestMatch.song.tieUp || bestMatch.song.englishSub}
                 </p>
 
                 {/* 1-2 Sentence Mood Match Reason */}

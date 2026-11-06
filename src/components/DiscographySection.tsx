@@ -1,4 +1,5 @@
-import { matchesTieUp } from '../utils/songSearch';
+import { albumForSearch, matchedSongContexts } from '../utils/songSearch';
+import { partialEpCoverage } from '../utils/songCatalog';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
@@ -70,6 +71,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   }, [eraFilter, albumFilter, soundFilter, searchQuery, sortBy, activeSubView, songs.length]);
 
   const filteredSongs = useMemo(() => filterAndSortDiscography(songs, filters), [songs, filters]);
+  const resultAlbum = albumFilter !== 'all' ? albumFilter : albumForSearch(searchQuery);
+  const epCoverage = resultAlbum ? partialEpCoverage[resultAlbum] : undefined;
   const globalMatchCount = useMemo(() => {
     if (filteredSongs.length || !searchQuery.trim() ||
         (eraFilter === 'all' && albumFilter === 'all' && soundFilter === 'all')) return 0;
@@ -97,7 +100,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       <p className="text-sm font-bold text-[#1C1917]">条件に一致する楽曲が見つかりませんでした。</p>
       {globalMatchCount > 0 ? (
         <button type="button"
-          onClick={() => setFilters({ ...DEFAULT_GUIDE_FILTERS, searchQuery, sortBy })}
+          onClick={() => setFilters({ ...DEFAULT_GUIDE_FILTERS, searchQuery })}
           className="mt-3 min-h-[44px] max-w-full wrap-anywhere rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-bold text-white">
           全{songs.length}曲から「{searchQuery.trim()}」を探す（{globalMatchCount}曲）
         </button>
@@ -128,14 +131,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 ? '聖地巡礼マップ（松江・米子・横浜）'
                 : activeSubView === 'vocal_range'
                 ? '掲載86曲の音域・発売日一覧'
-                : '全86曲 楽曲ガイド（収録曲順・音域・曲調）'}
+                : '掲載86曲 楽曲ガイド（収録曲順・音域・曲調）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubView === 'sacred_map'
                 ? '結成の地・山陰（松江・米子）から記念すべきスタジアム会場まで、ゆかりの聖地スポット案内です。'
                 : activeSubView === 'vocal_range'
                 ? '地声・裏声は曲別の採譜による値です。配信サービス掲載日と収録作品のCD発売日は別々に表示します。'
-                : '当ガイドが取り上げる86曲。アルバム別の曲順（M1〜）や発売順、地声最高音順で自在に探せます。'}
+                : '2015年から2025年8月「らしさ」までに発表された楽曲から86曲を掲載。インスト曲と同じ曲の別バージョンは掲載対象を絞っています。'}
             </p>
           </div>
 
@@ -194,6 +197,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             resultCount={filteredSongs.length} shownCount={displayedSongs.length} />
         )}
 
+        {activeSubView !== 'sacred_map' && epCoverage && (
+          <p className="mt-3 rounded-lg border border-[#E6E1D6] bg-white p-3 text-sm text-[#57534E]">
+            {epCoverage.note} <a className="underline" href={epCoverage.source} target="_blank" rel="noreferrer">公式の収録曲 ↗</a>
+          </p>
+        )}
+
         {/* Sub-View 1: Song Guide Cards */}
         {activeSubView === 'discography' && (
           <div>
@@ -202,8 +211,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayedSongs.map((song) => {
                     const inSetlist = setlistSongIds.includes(song.id);
-                    const albumBadgeText = EP_TRACK_ORDER_MAP[albumFilter]?.[song.id]
-                      ? `${albumFilter} (M${EP_TRACK_ORDER_MAP[albumFilter][song.id]})`
+                    const albumBadgeText = resultAlbum && EP_TRACK_ORDER_MAP[resultAlbum]?.[song.id]
+                      ? `${resultAlbum} (M${EP_TRACK_ORDER_MAP[resultAlbum][song.id]})`
                       : `${song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
 
                     return (
@@ -230,7 +239,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 {song.title}
                               </h3>
                               <p className="text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
-                                {songEvidence[song.id as keyof typeof songEvidence].recording}
+                                掲載音源：{songEvidence[song.id as keyof typeof songEvidence].album}
                               </p>
                             </div>
                           </div>
@@ -239,9 +248,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             {song.linerNotes}
                           </p>
 
-                          {searchQuery.trim() && matchesTieUp(searchQuery, song) && (
-                            <p className="mt-1 text-xs leading-relaxed text-[#1E3A5F] wrap-anywhere">タイアップ：{song.tieUp}</p>
-                          )}
+                          {searchQuery.trim() && matchedSongContexts(searchQuery, song)
+                            .filter(item => item.label !== '収録作品' || item.text !== albumBadgeText)
+                            .map(item => <p key={item.label + item.text} className="mt-1 text-xs leading-relaxed text-[#1E3A5F] wrap-anywhere">
+                              {item.label}：{item.text}{item.source && <> <a className="underline" href={item.source} target="_blank" rel="noreferrer">{item.label}の出典 ↗</a></>}
+                            </p>)}
 
                           {/* Vocal Range & High-Note Section Mini Box */}
                           <div className="mt-3 rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] px-3 py-2 text-[11px]">

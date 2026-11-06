@@ -1,4 +1,6 @@
+import { prepareSongSearch } from '../utils/songSearch';
 import { GuideArtwork } from './GuideArtwork';
+import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
@@ -78,15 +80,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   );
 
   const selectableSongsByAlbum = useMemo(() => {
-    const q = songSearchFilter.trim().toLowerCase();
-    const matching = q
-      ? songs.filter(
-          (s) =>
-            s.title.toLowerCase().includes(q) ||
-            s.album.toLowerCase().includes(q) ||
-            s.tieUp.toLowerCase().includes(q)
-        )
-      : songs;
+    const match = prepareSongSearch(songSearchFilter);
+    const matching = match ? songs.filter(song => match(song) !== undefined) : songs;
     const groups = new Map<string, SongItem[]>();
     for (const s of matching) {
       const list = groups.get(s.album) || [];
@@ -110,7 +105,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const visibleSongs = selectableSongsByAlbum.flatMap(([, group]) => group);
   const selectedSongToAdd = visibleSongs.find(s => s.id === requestedSong)?.id ?? visibleSongs.find(s => !setlistIdSet.has(s.id))?.id ?? visibleSongs[0]?.id ?? '';
   const isSelectedAlreadyInSetlist = !selectedSongToAdd || setlistIdSet.has(selectedSongToAdd);
-  const safeDisplayTitle = sanitizeUserText(setlistTitle, 160) || 'マイ・ドリームライブ';
+  const safeDisplayTitle = sanitizeUserText(setlistTitle, SETLIST_TITLE_LIMIT) || 'マイ・ドリームライブ';
 
   const handleAddSelectedSong = () => {
     if (isSelectedAlreadyInSetlist) return;
@@ -234,17 +229,17 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       マイセットリストのタイトル
                     </label>
                     <span className="text-[11px] font-mono-num text-[#78716C]">
-                      {setlistTitle.length} / 50文字
+                      {setlistTitle.length} / {SETLIST_TITLE_LIMIT}文字
                     </span>
                   </div>
                   <input
                     id="setlist-title-input"
                     type="text"
-                    maxLength={50}
+                    maxLength={SETLIST_TITLE_LIMIT}
                     value={setlistTitle}
                     onChange={(e) =>
                       onChangeTitle(
-                        e.target.value.replace(/[<>＜＞\u0000-\u001F]/g, '').slice(0, 50)
+                        e.target.value.replace(/[<>＜＞\u0000-\u001F]/g, '').slice(0, SETLIST_TITLE_LIMIT)
                       )
                     }
                     className="mt-1.5 w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-sm font-bold text-[#1C1917] min-h-[38px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
@@ -597,7 +592,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E6E1D6] bg-white px-4 py-3">
               <div className="text-xs text-[#57534E]">
                 <strong className="text-[#1C1917]">2019年『Hall Travelers』〜 2026年全国ツアー（全{sortedTours.length}公演シリーズ）：</strong>
-                開催時期（新しい順・古い順）で並び替えたり、代表セトリを1クリックで読み込めます。
+                開催時期で並べ替えたり、編集部の選曲例をマイセトリに読み込めます。
               </div>
               <div className="inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] shrink-0">
                 <button

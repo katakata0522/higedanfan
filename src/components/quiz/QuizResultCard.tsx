@@ -1,5 +1,5 @@
 import { RotateCcw, Award, Newspaper, Share2, Copy, Check, X } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { QuizResultSummary } from '../../utils/fanLogic';
 
 interface Props {
@@ -16,6 +16,13 @@ export function QuizResultCard({
   const [isCertShareOpen, setIsCertShareOpen] = useState(false);
   const [copiedCert, setCopiedCert] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    if (visible && heading.current) {
+      heading.current.focus({ preventScroll: true });
+      heading.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }, [visible]);
 
   useEffect(() => {
     return () => {
@@ -26,7 +33,7 @@ export function QuizResultCard({
   }, []);
 
   const handleCopyCertShareText = async () => {
-    const shareText = `【ヒゲダン検定クイズ（全60問）】\n挑戦コース：${activeCourseLabel}\n認定ランク：${quizSummary.rankTitle}（${quizSummary.rankBadgeCode}）\n正解数：${quizSummary.score} / ${quizSummary.total} 問（正答率 ${quizSummary.percentage}%）\n#115万キロのファンノート #Official髭男dism #ヒゲダン検定`;
+    const shareText = `【ヒゲダン検定クイズ】\n挑戦コース：${activeCourseLabel}\n認定ランク：${quizSummary.rankTitle}（${quizSummary.rankBadgeCode}）\n正解数：${quizSummary.score} / ${quizSummary.total} 問（正答率 ${quizSummary.percentage}%）\n#115万キロのファンノート #Official髭男dism #ヒゲダン検定`;
     try {
       await navigator.clipboard.writeText(shareText);
     } catch {
@@ -54,7 +61,7 @@ export function QuizResultCard({
         ヒゲダン検定クイズ 認定結果（{activeCourseLabel}）
       </div>
 
-      <h3 className="text-xl sm:text-2xl font-bold text-[#1C1917]">
+      <h3 ref={heading} tabIndex={-1} className="scroll-mt-20 text-xl sm:text-2xl font-bold text-[#1C1917]">
         認定ランク：{quizSummary.rankTitle}
       </h3>
 
@@ -168,7 +175,7 @@ export function QuizResultCard({
             </div>
             <div className="flex items-center justify-between border-t border-white/10 bg-black/25 px-5 py-2.5 text-[11px] text-white/65">
               <span>#115万キロのファンノート #Official髭男dism #ヒゲダン検定</span>
-              <span>全60問・出題ごとに出典を掲載</span>
+              <span>今回の出題数：{quizSummary.total}問</span>
             </div>
           </div>
         </div>

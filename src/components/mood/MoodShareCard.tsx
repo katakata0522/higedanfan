@@ -64,7 +64,7 @@ export function MoodShareCard({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h4 className="text-sm sm:text-base font-bold text-[#1C1917]">
-            マイソング診断 SNS風シェアカード（既存のDOM要素のみで構築）
+            マイソング診断 シェアカード
           </h4>
           <p className="text-xs text-[#57534E]">
             おすすめ1位〜3位の楽曲切り替えや、カード背景テーマの切り替えにも対応しています。

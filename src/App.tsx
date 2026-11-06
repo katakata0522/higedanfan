@@ -13,6 +13,7 @@ import { SiteHeader, ActiveFeatureTab, SITE_NAV_ITEMS } from './components/SiteH
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import { SongDetailModal } from './components/SongDetailModal';
+import type { QuizSession } from './components/quiz/quizSession';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -73,8 +74,16 @@ export default function App() {
   }, []);
 
   const selectSong = (id: string | null) => {
+    if (id === null) {
+      if (window.history.state?.songParent === activeFeatureTab) {
+        window.history.back();
+        return;
+      }
+      window.history.replaceState(null, '', '#' + activeFeatureTab);
+    } else {
+      window.history.pushState({songParent: activeFeatureTab}, '', '#' + activeFeatureTab + '/' + id);
+    }
     setSelectedModalSongId(id);
-    window.location.hash = activeFeatureTab + (id ? '/' + id : '');
   };
 
   const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
@@ -86,6 +95,7 @@ export default function App() {
   };
 
   const records = useFanRecords(showToast);
+  const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist, votedKeys } = records;
 
   const modalSong = selectedModalSongId
@@ -221,6 +231,7 @@ export default function App() {
                 {(activeFeatureTab === 'community' ||
                   activeFeatureTab === 'fan_reviews') && (
                   <FanCommunitySection
+                    key={records.resetEpoch}
                     songs={songs}
                     votedSongIds={votedKeys}
                     onVoteSong={records.voteSong}
@@ -229,6 +240,8 @@ export default function App() {
                     likedReviewIds={records.likedReviewIds}
                     onLikeReview={records.likeReview}
                     onSubmitReview={records.submitReview}
+                    onExportRecords={records.downloadRecords}
+                    storageNotice={records.storageNotice}
                     onEditReview={records.editReview}
                     onDeleteReview={records.deleteReview}
                     initialSubTab={
@@ -240,6 +253,8 @@ export default function App() {
                 {(activeFeatureTab === 'quiz' ||
                   activeFeatureTab === 'quiz_archive') && (
                   <QuizSection
+                    key={records.resetEpoch}
+                    sessionRef={quizSession}
                     bestScorePercentage={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}
                     songs={songs}

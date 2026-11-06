@@ -25,7 +25,7 @@ export function calculateQuizResult(
       rankTitle: '名誉編集長 / BROTHERS マスター',
       rankBadgeCode: 'RANK S · EDITORIAL CHIEF',
       editorialMessage:
-        '全問正解！歌詞の細部から転調トリビア、松江〜日産スタジアムの歴史まで完璧に網羅した生粋のヒゲダン博士です。',
+        `今回挑戦した${total}問にすべて正解しました！`,
     };
   }
   if (percentage >= 65) {
@@ -36,7 +36,7 @@ export function calculateQuizResult(
       rankTitle: 'グッドミュージック特派員',
       rankBadgeCode: 'RANK A · SENIOR WRITER',
       editorialMessage:
-        '高い正答率です！代表曲だけでなくアルバム曲やライブの醍醐味までしっかり味わえている頼もしいファンです。',
+        '出典図鑑では、気になった問題の作品情報やインタビューを読めます。',
     };
   }
   return {

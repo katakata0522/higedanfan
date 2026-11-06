@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useState, type RefObject } from 'react';
 import { ArrowLeft, HelpCircle, Newspaper } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
@@ -6,10 +6,12 @@ import { QuizCoursePicker } from './quiz/QuizCoursePicker';
 import { QuizQuestionCard } from './quiz/QuizQuestionCard';
 import { QuizResultCard } from './quiz/QuizResultCard';
 import { QuizSourceArchive } from './quiz/QuizSourceArchive';
-import { getCourseLabel, getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter } from './quiz/quizCourses';
+import { getCourseLabel, getCourseQuestions, type CourseDifficulty } from './quiz/quizCourses';
+import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
 
 interface QuizSectionProps {
-  bestScorePercentage: number;
+  bestScorePercentage: number | null;
+  sessionRef: RefObject<QuizSession | null>;
   onUpdateBestScore: (percentage: number) => void;
   songs?: SongItem[];
   onSelectSong?: (song: SongItem) => void;
@@ -17,42 +19,35 @@ interface QuizSectionProps {
 }
 
 export function QuizSection({
-  bestScorePercentage, onUpdateBestScore, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
+  bestScorePercentage, sessionRef, onUpdateBestScore, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
 }: QuizSectionProps) {
-  const [quizStage, setQuizStage] = useState<'select' | 'playing' | 'finished'>('select');
-  const [difficulty, setDifficulty] = useState<CourseDifficulty>('all');
-  const [scope, setScope] = useState<QuestionScopeFilter>('full');
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [hasAnswerInput, setHasAnswerInput] = useState(false);
+  const [session, setSession] = useState(() => sessionRef.current ?? INITIAL_SESSION);
+  useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
+  const { stage: quizStage, difficulty, scope, currentIndex, correctBefore, answer } = session;
   const questions = useMemo(() => getCourseQuestions(difficulty, scope), [difficulty, scope]);
   const question = questions[currentIndex];
+  const score = correctBefore + Number(quizStage === 'playing' && isAnswerCorrect(question, answer));
 
   function startCourse(course: CourseDifficulty) {
-    setDifficulty(course);
-    setCurrentIndex(0);
-    setScore(0);
-    setHasAnswerInput(false);
-    setQuizStage('playing');
+    setSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope });
     window.location.hash = 'quiz';
   }
 
   function nextQuestion() {
     if (currentIndex + 1 < questions.length) {
-      setCurrentIndex(index => index + 1);
+      setSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER });
     } else {
-      setQuizStage('finished');
+      setSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER });
       onUpdateBestScore(calculateQuizResult(score, questions).percentage);
     }
   }
 
   function chooseCourse() {
+    const hasAnswerInput = answer.selectedOption !== null || answer.selectedOrder.length > 0;
     if (quizStage === 'playing' && (currentIndex > 0 || hasAnswerInput)) {
       if (!window.confirm('今回の検定を終了して、コース選択に戻りますか？\nもう一度挑戦すると、第1問から始まります。')) return;
     }
-    setQuizStage('select');
-    setCurrentIndex(0);
-    setScore(0);
+    setSession({ ...INITIAL_SESSION, scope });
   }
 
   return (
@@ -126,12 +121,12 @@ export function QuizSection({
           </div>
 
           <span className="text-xs font-mono-num text-[#78716C]">
-            全コース共通の最高正答率： <strong className="text-[#1C1917]">{bestScorePercentage}%</strong>
+            全コース共通の最高正答率： <strong className="text-[#1C1917]">{bestScorePercentage === null ? '記録なし' : `${bestScorePercentage}%`}</strong>
           </span>
         </div>
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker scopeFilter={scope} onScopeChange={setScope} onStart={startCourse} />
+          <QuizCoursePicker scopeFilter={scope} onScopeChange={next => setSession({ ...session, scope: next })} onStart={startCourse} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
@@ -142,10 +137,10 @@ export function QuizSection({
             currentIndex={currentIndex}
             questionCount={questions.length}
             score={score}
-            onAnswerInputChange={setHasAnswerInput}
+            answer={answer}
+            onAnswerChange={next => setSession({ ...session, answer: next })}
             relatedSong={songs.find(song => song.id === question.relatedSongId)}
             onSelectSong={onSelectSong}
-            onCorrect={() => setScore(count => count + 1)}
             onNext={nextQuestion}
           />
         )}

@@ -18,7 +18,7 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
               1. 出題範囲・バリエーションモードを選択
             </h3>
             <p className="text-xs text-[#57534E]">
-              全20問フル出題のほか、今回追加された「作品情報と曲順の追加問題」や「並び替え問題のみ」に絞って挑戦することもできます。
+              出題範囲を選ぶと、下の各コースに今回の問題数が表示されます。
             </p>
           </div>
         </div>
@@ -51,6 +51,7 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
             <button
               key={mode.id}
               type="button"
+              aria-pressed={scopeFilter === mode.id}
               onClick={() => onScopeChange(mode.id)}
               className={`rounded-xl border p-3 text-left transition-all cursor-pointer ${
                 scopeFilter === mode.id
@@ -106,9 +107,11 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
                   <h4 className="mt-3.5 text-base sm:text-lg font-bold text-[#1C1917]">
                     {course.title}
                   </h4>
-                  <p className="mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
-                    {course.desc}
-                  </p>
+                  {scopeFilter === 'full' && (
+                    <p className="mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
+                      {course.desc}
+                    </p>
+                  )}
                 </div>
               </button>
             );

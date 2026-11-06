@@ -3,7 +3,7 @@ import test from 'node:test';
 import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songReadings } from '../data/songReadings';
 import { filterAndSortDiscography, type DiscographyFilter } from './discography';
-import { matchesTieUp } from './songSearch';
+import { matchedSongContexts } from './songSearch';
 
 function search(searchQuery: string, filters: Partial<DiscographyFilter> = {}) {
   return filterAndSortDiscography(HIGEDAN_SONGS, {
@@ -60,9 +60,38 @@ test('album filters remain active even if the same title matches elsewhere', () 
 
 test('tie-up hints reflect the keywords that matched the actual work', () => {
   const song = HIGEDAN_SONGS.find(s => s.id === 'mixed-nuts')!;
-  assert.equal(matchesTieUp('spy family', song), true);
-  assert.equal(matchesTieUp('ミックスナッツ', song), false);
-  assert.equal(matchesTieUp('', song), false);
+  assert.ok(matchedSongContexts('spy family', song).some(item => item.label === 'タイアップ'));
+  assert.deepEqual(matchedSongContexts('ミックスナッツ', song), []);
+  assert.deepEqual(matchedSongContexts('', song), []);
+});
+
+test('EP searches use the same recordings and track order as the release selector', () => {
+  for (const album of ["What's Going On? EP", 'HELLO EP', 'ミックスナッツ EP', 'Stand By You EP', 'Rejoice']) {
+    assert.deepEqual(search(album).map(s => s.id), search('', { album, sortBy: 'album_track_order' }).map(s => s.id));
+  }
+  assert.deepEqual(search('みっくすなっつＥＰ').map(s => s.title), ['ミックスナッツ', 'Choral A', '破顔']);
+  assert.deepEqual(search('ミックスナッツ EP Anarchy'), []);
+  assert.deepEqual(search('HELLO EP 夏模様').map(s => s.title), ['夏模様の猫']);
+});
+
+test('production credits, album notes, and sourced tie-ups remain distinct', () => {
+  const byWriter = search('小笹大輔');
+  assert.deepEqual(byWriter.map(s => s.title).sort(), ['Bedroom Talk', 'Rowan']);
+  for (const song of byWriter) {
+    const [match] = matchedSongContexts('小笹大輔', song);
+    assert.equal(match.label, '作詞・作曲');
+    assert.equal(match.text, '小笹大輔');
+    assert.ok(match.source?.includes('ponycanyon.co.jp/interview/'));
+  }
+  const ending = search('最終曲').find(s => s.title === 'Travelers');
+  assert.ok(ending);
+  assert.deepEqual(matchedSongContexts('最終曲', ending), [{ label: '収録メモ', text: '最終曲' }]);
+  assert.deepEqual(search('出雲駅伝').map(s => s.title), ['フィラメント']);
+  assert.deepEqual(search('FMV'), []);
+  assert.deepEqual(search('SUUMO').map(s => s.title), ['115万キロのフィルム']);
+  for (const song of HIGEDAN_SONGS) {
+    for (const item of song.tieUps) assert.equal(new URL(item.source).protocol, 'https:');
+  }
 });
 
 test('a sharp sign still distinguishes vocal-range searches', () => {

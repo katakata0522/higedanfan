@@ -3,7 +3,7 @@ import test from 'node:test';
 import { restoreFanRecords } from './fanRecordStorage';
 
 test('unreadable v1 roots fail restoration so the app can preserve the original save', () => {
-  for (const raw of ['null', 'true', '42', '"personal notes"', '[]', '[{"id":"pretender"}]', '{']) {
+  for (const raw of ['null', 'true', '42', '"personal notes"', '[]', '[{"id":"pretender"}]', '{"backup":"keep"}', '{']) {
     assert.throws(() => restoreFanRecords(raw), raw);
   }
 });
