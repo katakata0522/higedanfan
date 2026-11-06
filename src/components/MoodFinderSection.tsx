@@ -130,15 +130,18 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
     setStep(1);
   };
 
-  const handleCopyShareCardText = () => {
+  const handleCopyShareCardText = async () => {
     if (!activeShareMatch) return;
     const text = formatDiagnosisShareText(activeShareMatch, {
       mood: selectedMood,
       situation: selectedSituation,
       sound: selectedSound,
     });
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).catch(() => {});
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      window.prompt('以下の文章を選択してコピーしてください。', text);
+      return;
     }
     setCopiedShareText(true);
     if (copyShareTimerRef.current !== null) {
@@ -383,7 +386,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       {isSafeAssetUrl(bestMatch.song.jacketImage) && (
                         <GuideArtwork
                           src={bestMatch.song.jacketImage}
-                          alt={`${bestMatch.song.title} ジャケットビジュアル`}
+                          alt={`${bestMatch.song.title}  オリジナル図柄`}
                           referrerPolicy="no-referrer"
                           className="h-full w-full object-cover"
                         />
@@ -393,7 +396,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                         <span>{bestMatch.song.album}</span>
                       </div>
                       <div className="absolute top-3 right-3 rounded-md bg-[#C83E2B] px-2.5 py-1 text-xs font-bold font-mono-num text-white shadow-xs">
-                        マッチ度 {bestMatch.matchScore}%
+                        選曲スコア {bestMatch.matchScore}点
                       </div>
                       <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 text-white">
                         <div className="text-[11px] font-mono-num text-white/80">
@@ -410,10 +413,10 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                       <div className="flex items-center justify-between text-xs font-bold text-[#1C1917] border-b border-[#E6E1D6] pb-2">
                         <span className="flex items-center gap-1.5">
                           <BarChart3 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                          診断マッチ度の内訳
+                          編集部の選曲基準（基本60点＋気分18点・場面11点・曲調10点）
                         </span>
                         <span className="font-mono-num text-[#C83E2B]">
-                          総合 {bestMatch.matchScore}%
+                          選曲スコア {bestMatch.matchScore}点
                         </span>
                       </div>
 
@@ -422,13 +425,13 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                           <div className="flex justify-between text-[11px] font-medium text-[#1C1917]">
                             <span>今の気分とのシンクロ度</span>
                             <span className="font-mono-num font-bold text-[#C83E2B]">
-                              {bestMatch.matchBreakdown.moodSyncPercent}%
+                              {bestMatch.matchBreakdown.moodSyncPercent >= 90 ? '一致' : '対象外'}
                             </span>
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
                             <div
                               className="h-full rounded-full bg-[#C83E2B]"
-                              style={{ width: `${bestMatch.matchBreakdown.moodSyncPercent}%` }}
+                              style={{ width: `${bestMatch.matchBreakdown.moodSyncPercent >= 90 ? '一致' : '対象外'}` }}
                             />
                           </div>
                         </div>
@@ -437,13 +440,13 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                           <div className="flex justify-between text-[11px] font-medium text-[#1C1917]">
                             <span>シーン・時間帯の適合度</span>
                             <span className="font-mono-num font-bold text-[#1E3A5F]">
-                              {bestMatch.matchBreakdown.sceneFitPercent}%
+                              {bestMatch.matchBreakdown.sceneFitPercent >= 90 ? '一致' : '対象外'}
                             </span>
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
                             <div
                               className="h-full rounded-full bg-[#1E3A5F]"
-                              style={{ width: `${bestMatch.matchBreakdown.sceneFitPercent}%` }}
+                              style={{ width: `${bestMatch.matchBreakdown.sceneFitPercent >= 90 ? '一致' : '対象外'}` }}
                             />
                           </div>
                         </div>
@@ -452,13 +455,13 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                           <div className="flex justify-between text-[11px] font-medium text-[#1C1917]">
                             <span>サウンド・曲調の一致度</span>
                             <span className="font-mono-num font-bold text-[#1C1917]">
-                              {bestMatch.matchBreakdown.soundMatchPercent}%
+                              {bestMatch.matchBreakdown.soundMatchPercent === 99 ? '一致' : '対象外'}
                             </span>
                           </div>
                           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
                             <div
                               className="h-full rounded-full bg-[#1C1917]"
-                              style={{ width: `${bestMatch.matchBreakdown.soundMatchPercent}%` }}
+                              style={{ width: `${bestMatch.matchBreakdown.soundMatchPercent === 99 ? '一致' : '対象外'}` }}
                             />
                           </div>
                         </div>
@@ -652,7 +655,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                                 : 'border border-[#D5CEC2] bg-white text-[#1C1917] hover:bg-[#F2EFE9]'
                             }`}
                           >
-                            {idx + 1}位：{m.song.title} ({m.matchScore}%)
+                            {idx + 1}位：{m.song.title} ({m.matchScore}点)
                           </button>
                         ))}
                       </div>
@@ -714,7 +717,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             shareCardTheme === 'dark' ? 'text-white' : 'text-[#1C1917]'
                           }`}
                         >
-                          マッチ度 {activeShareMatch.matchScore}%
+                          選曲スコア {activeShareMatch.matchScore}点
                         </span>
                       </div>
 
@@ -725,7 +728,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             {isSafeAssetUrl(activeShareMatch.song.jacketImage) && (
                               <GuideArtwork
                                 src={activeShareMatch.song.jacketImage}
-                                alt={`${activeShareMatch.song.title} シェアカードジャケット`}
+                                alt={`${activeShareMatch.song.title}  オリジナル図柄`}
                                 referrerPolicy="no-referrer"
                                 className="h-full w-full object-cover"
                               />
@@ -844,7 +847,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             {isSafeAssetUrl(song.jacketImage) && (
                               <GuideArtwork
                                 src={song.jacketImage}
-                                alt={`${song.title} ジャケット`}
+                                alt={`${song.title} オリジナル図柄`}
                                 referrerPolicy="no-referrer"
                                 className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
                               />
@@ -852,7 +855,7 @@ export const MoodFinderSection: React.FC<MoodFinderSectionProps> = ({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1 text-xs text-[#78716C]">
                                 <span className="font-bold text-[#1E3A5F] font-mono-num">
-                                  候補 {idx + 2}位 · マッチ度 {matchScore}%
+                                  候補 {idx + 2}位 · 選曲スコア {matchScore}点
                                 </span>
                                 <span className="font-mono-num">BPM {song.bpm}</span>
                               </div>

@@ -294,7 +294,7 @@ export function scoreSongsByMood(
     if (b.matchScore !== a.matchScore) {
       return b.matchScore - a.matchScore;
     }
-    return b.song.votes.overall - a.song.votes.overall;
+    return a.song.title.localeCompare(b.song.title, 'ja');
   });
 }
 
@@ -303,7 +303,7 @@ export function formatDiagnosisShareText(
   criteria: MoodCriteria
 ): string {
   return [
-    `【マイソング診断結果：『${match.song.title}』（マッチ度 ${match.matchScore}%）】`,
+    `【マイソング診断結果：『${match.song.title}』（選曲スコア ${match.matchScore}点）】`,
     `診断条件：${MOOD_LABELS[criteria.mood]} ／ ${SITUATION_LABELS[criteria.situation]} ／ ${SOUND_LABELS[criteria.sound]}`,
     `理由：${match.moodMatchExplanation}`,
     `曲調：${match.song.musicalHighlight}`,
@@ -722,6 +722,8 @@ const SONGWRITER_CREDIT_MAP: Record<string, string> = {
   'choral-a': '作詞・作曲：楢﨑誠',
   'choral-a-song': '作詞・作曲：楢﨑誠',
   'Choral A': '作詞・作曲：楢﨑誠',
+  // https://www.jasrac.or.jp/magazine/jasrac-awards/21/210519.html
+  pretender: '作詞・作曲：藤原聡',
   filament: '作詞・作曲：松浦匡希・藤原聡',
   'filament-song': '作詞・作曲：松浦匡希・藤原聡',
   'フィラメント': '作詞・作曲：松浦匡希・藤原聡',
@@ -733,7 +735,7 @@ export function getSongwriterCredit(
   return (
     SONGWRITER_CREDIT_MAP[song.id] ??
     (song.title ? SONGWRITER_CREDIT_MAP[song.title] : undefined) ??
-    '作詞・作曲：藤原聡'
+    '作者情報未確認'
   );
 }
 

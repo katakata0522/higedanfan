@@ -90,7 +90,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
   onSelectSong,
   initialTab = 'quiz',
 }) => {
-  const [viewTab, setViewTab] = useState<'quiz' | 'archive'>(initialTab);
+  const viewTab = initialTab;
   const [archiveDifficulty, setArchiveDifficulty] = useState<
     'all' | QuizQuestion['difficulty']
   >('all');
@@ -112,10 +112,6 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
   const [isCertShareOpen, setIsCertShareOpen] = useState(false);
   const [copiedCert, setCopiedCert] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    setViewTab(initialTab);
-  }, [initialTab]);
 
   useEffect(() => {
     return () => {
@@ -198,7 +194,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
     setScore(0);
     setIsCertShareOpen(false);
     setQuizStage('playing');
-    setViewTab('quiz');
+    (window.location.hash = 'quiz');
   };
 
   const handleAnswerSingleChoice = (optionIdx: number) => {
@@ -275,10 +271,13 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
     return baseTitle;
   }, [difficultyFilter, scopeFilter]);
 
-  const handleCopyCertShareText = () => {
+  const handleCopyCertShareText = async () => {
     const shareText = `【ヒゲダン検定クイズ（全60問）】\n挑戦コース：${activeCourseLabel}\n認定ランク：${quizSummary.rankTitle}（${quizSummary.rankBadgeCode}）\n正解数：${quizSummary.score} / ${quizSummary.total} 問（正答率 ${quizSummary.percentage}%）\n#115万キロのファンノート #Official髭男dism #ヒゲダン検定`;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(shareText).catch(() => {});
+    try {
+      await navigator.clipboard.writeText(shareText);
+    } catch {
+      window.prompt('以下の文章を選択してコピーしてください。', shareText);
+      return;
     }
     setCopiedCert(true);
     if (copyTimerRef.current !== null) {
@@ -340,15 +339,15 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
         {/* Sub-navigation Tabs: Quiz Mode vs Source Archive Mode */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
           <div
-            role="tablist"
+            role="group"
             aria-label="クイズと出典記事図鑑の切り替え"
             className="inline-flex rounded-xl border border-[#D5CEC2] bg-[#F2EFE9] p-1"
           >
             <button
               type="button"
-              role="tab"
-              aria-selected={viewTab === 'quiz'}
-              onClick={() => setViewTab('quiz')}
+
+              aria-pressed={viewTab === 'quiz'}
+              onClick={() => (window.location.hash = 'quiz')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
                 viewTab === 'quiz'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -360,9 +359,9 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={viewTab === 'archive'}
-              onClick={() => setViewTab('archive')}
+
+              aria-pressed={viewTab === 'archive'}
+              onClick={() => (window.location.hash = 'quiz_archive')}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
                 viewTab === 'archive'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -375,7 +374,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
           </div>
 
           <span className="text-xs font-mono-num text-[#78716C]">
-            自己ベスト正答率: <strong className="text-[#1C1917]">{bestScorePercentage}%</strong>
+            全コース共通の最高正答率： <strong className="text-[#1C1917]">{bestScorePercentage}%</strong>
           </span>
         </div>
 
@@ -861,7 +860,7 @@ export const QuizSection: React.FC<QuizSectionProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setViewTab('archive')}
+                    onClick={() => (window.location.hash = 'quiz_archive')}
                     className="inline-flex items-center gap-2 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-5 py-2.5 text-xs font-bold text-[#1E3A5F] hover:border-[#1E3A5F] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                   >
                     <Newspaper className="h-4 w-4" />

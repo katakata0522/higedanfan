@@ -20,7 +20,6 @@ import {
   FanReview,
   HIGEDAN_MEMBERS,
   HIGEDAN_SONGS,
-  INITIAL_FAN_REVIEWS,
   SACRED_SPOTS,
   SongItem,
   TOUR_ARCHIVES,
@@ -39,7 +38,7 @@ import {
   sanitizeUserText,
   SetlistEntry,
 } from './utils/fanLogic';
-import { SiteHeader, ActiveFeatureTab } from './components/SiteHeader';
+import { SiteHeader, ActiveFeatureTab, SITE_NAV_ITEMS } from './components/SiteHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { MoodFinderSection } from './components/MoodFinderSection';
 import { DiscographySection } from './components/DiscographySection';
@@ -90,6 +89,13 @@ const HERO_JACKET_SHOWCASE: {
   },
 ];
 
+function readLocation() {
+  const [feature, song] = window.location.hash.slice(1).split('/');
+  const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
+  const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
+  return {tab, songId};
+}
+
 export default function App() {
   const [songs, setSongs] = useState<SongItem[]>(HIGEDAN_SONGS);
   const [setlist, setSetlist] = useState<SetlistEntry[]>(DEFAULT_SETLIST);
@@ -99,12 +105,12 @@ export default function App() {
   const [visitedSpotIds, setVisitedSpotIds] = useState<string[]>([]);
   const [attendedTourIds, setAttendedTourIds] = useState<string[]>([]);
   const [votedKeys, setVotedKeys] = useState<string[]>([]);
-  const [reviews, setReviews] = useState<FanReview[]>(INITIAL_FAN_REVIEWS);
+  const [reviews, setReviews] = useState<FanReview[]>([]);
   const [likedReviewIds, setLikedReviewIds] = useState<string[]>([]);
   const [bestQuizScore, setBestQuizScore] = useState<number>(0);
-  const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(null);
+  const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(() => readLocation().songId);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [activeFeatureTab, setActiveFeatureTab] = useState<ActiveFeatureTab>('home');
+  const [activeFeatureTab, setActiveFeatureTab] = useState<ActiveFeatureTab>(() => readLocation().tab);
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
 
   const [storageReady, setStorageReady] = useState(false);
@@ -119,30 +125,16 @@ export default function App() {
       const validSpotIds = new Set(SACRED_SPOTS.map((s) => s.id));
       const validTourIds = new Set(TOUR_ARCHIVES.map((t) => t.id));
 
-      if (parsed.songs && Array.isArray(parsed.songs)) {
-        const voteMap = new Map<string, SongItem['votes']>();
-        for (const item of parsed.songs) {
-          if (
-            item &&
-            typeof item.id === 'string' &&
-            validSongIds.has(item.id) &&
-            item.votes
-          ) {
-            voteMap.set(item.id, {
-              overall: Math.max(0, Math.min(99999, Number(item.votes.overall) || 0)),
-              lyric: Math.max(0, Math.min(99999, Number(item.votes.lyric) || 0)),
-              live: Math.max(0, Math.min(99999, Number(item.votes.live) || 0)),
-              hiddenGem: Math.max(0, Math.min(99999, Number(item.votes.hiddenGem) || 0)),
-            });
-          }
-        }
-        setSongs(
-          HIGEDAN_SONGS.map((base) => ({
-            ...base,
-            votes: voteMap.get(base.id) || base.votes,
-          }))
-        );
-      }
+      // Vote history records the user's clicks, including in saves that contained sample totals.
+      const castVotes = new Set(Array.isArray(parsed.votedKeys) ? parsed.votedKeys : []);
+      setSongs(HIGEDAN_SONGS.map(song => ({
+        ...song, votes: {
+          overall: Number(castVotes.has(song.id + ':overall')),
+          lyric: Number(castVotes.has(song.id + ':lyric')),
+          live: Number(castVotes.has(song.id + ':live')),
+          hiddenGem: Number(castVotes.has(song.id + ':hiddenGem')),
+        },
+      })));
 
       const safeSetlist = sanitizeSetlistEntries(parsed.setlist, validSongIds);
       if (safeSetlist) {
@@ -150,7 +142,7 @@ export default function App() {
       }
 
       if (typeof parsed.setlistTitle === 'string') {
-        const cleanTitle = sanitizeUserText(parsed.setlistTitle, 50);
+        const cleanTitle = sanitizeUserText(parsed.setlistTitle, 160);
         if (cleanTitle.length > 0) {
           setSetlistTitle(cleanTitle);
         }
@@ -183,7 +175,9 @@ export default function App() {
 
       const safeReviews = sanitizeReviewsList(parsed.reviews, validSongIds);
       if (safeReviews) {
-        setReviews(safeReviews);
+        setReviews(safeReviews.filter(r => !/^rev-[1-4]$/.test(r.id)).map(r => ({
+          ...r, likes: Number(Array.isArray(parsed.likedReviewIds) && parsed.likedReviewIds.includes(r.id))
+        })));
       }
 
       if (Array.isArray(parsed.likedReviewIds)) {
@@ -214,7 +208,7 @@ export default function App() {
       const stateToSave: PersistedState = {
         songs: songs.map(({id, votes}) => ({id, votes})),
         setlist,
-        setlistTitle: sanitizeUserText(setlistTitle, 50),
+        setlistTitle: sanitizeUserText(setlistTitle, 160),
         visitedSpotIds,
         attendedTourIds,
         votedKeys,
@@ -223,8 +217,9 @@ export default function App() {
         bestQuizScore,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
+      setStorageNotice('');
     } catch {
-      setStorageNotice("この端末に保存できません。セトリをコピーして残してください。");
+      setStorageNotice("この端末に保存できません。画面を閉じる前に記録を書き出してください。");
     }
   }, [
     storageReady,
@@ -261,9 +256,26 @@ export default function App() {
     }, 2600);
   };
 
+  useEffect(() => {
+    const restore = () => {
+      const {tab, songId} = readLocation();
+      setActiveFeatureTab(tab);
+      setSelectedModalSongId(songId);
+    };
+    window.addEventListener('hashchange', restore);
+    return () => window.removeEventListener('hashchange', restore);
+  }, []);
+
+  const selectSong = (id: string | null) => {
+    setSelectedModalSongId(id);
+    window.location.hash = activeFeatureTab + (id ? '/' + id : '');
+  };
+
   const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
     setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
+    setSelectedModalSongId(null);
+    window.location.hash = tab;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -320,14 +332,15 @@ export default function App() {
 
   const handleLoadPresetSetlist = (entries: SetlistEntry[], title: string) => {
     const validIds = new Set(songs.map((s) => s.id));
-    if (setlist.length && !window.confirm("現在のセトリをこの選曲に置き換えますか？")) return;
+    if (setlist.length && !window.confirm("現在のセトリをこの選曲に置き換えますか？")) return false;
     const safeEntries = sanitizeSetlistEntries(entries, validIds);
-    const safeTitle = sanitizeUserText(title, 50) || 'マイセットリスト';
+    const safeTitle = sanitizeUserText(title, 160) || 'マイセットリスト';
     if (safeEntries) {
       setSetlist(safeEntries);
     }
     setSetlistTitle(safeTitle);
     showToast(`「${safeTitle}」のセットリストを読み込みました！`);
+    return true;
   };
 
   const handleToggleVisitedSpot = (spotId: string) => {
@@ -393,7 +406,7 @@ export default function App() {
       title: sanitizeUserText(newReview.title, 60),
       comment: sanitizeUserText(newReview.comment, 400),
       postedAt: formatDateDot(),
-      likes: 1,
+      likes: 0,
     };
     setReviews((prev) => [created, ...prev]);
     showToast('この端末に感想を記録しました。');
@@ -414,7 +427,7 @@ export default function App() {
     setVisitedSpotIds([]);
     setAttendedTourIds([]);
     setVotedKeys([]);
-    setReviews(INITIAL_FAN_REVIEWS);
+    setReviews([]);
     setLikedReviewIds([]);
     setBestQuizScore(0);
     showToast('保存データを初期状態にリセットしました。');
@@ -443,7 +456,7 @@ export default function App() {
       subtitle: '今の気分から1曲を見つける',
       title: 'マイソング診断',
       description:
-        '今の気分・聴きたい場面・好みのサウンドを1問ずつ選ぶだけで、今のあなたに一番響く1曲を大型ジャケット写真とマッチ度グラフ付きで提案します。',
+        '今の気分・聴きたい場面・好みのサウンドを1問ずつ選ぶだけで、今のあなたに一番響く1曲を条件の一致度付きで提案します。',
       points: [
         '3つの質問に1問ずつ順番に答えるステップ遷移式',
         '診断結果のSNS風シェアカード生成＆理由解説付き',
@@ -463,7 +476,7 @@ export default function App() {
         '配信サービス掲載日・収録作品のCD発売日を出典付きで比較',
       ],
       ctaLabel: '楽曲ガイドを見る',
-      secondaryCtaLabel: '全曲の音域・発売日表へ',
+      secondaryCtaLabel: '掲載86曲の音域・発売日表へ',
     },
     {
       id: 'setlist',
@@ -490,7 +503,7 @@ export default function App() {
         '「歌詞が刺さる曲」「ライブで盛り上がる曲」など4部門の人気投票と、自分のブラウザに好きな曲やライブの感想を残すノート。',
       points: [
         '4つのテーマから1クリックで推し曲に投票',
-        '記入例を読み、自分の感想や思い出を書けるノート',
+        '自分の感想や思い出を書けるノート',
       ],
       ctaLabel: '人気曲投票を見る',
       secondaryCtaLabel: '感想・考察ノートへ',
@@ -515,7 +528,15 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917]">
       {/* Slim Header with Top-Right Vertical Content Menu */}
-      {storageNotice && <p role="alert" className="bg-amber-100 p-3 text-sm">{storageNotice}</p>}
+      {storageNotice && <p role="alert" className="bg-amber-100 p-3 text-sm">{storageNotice} <button className="underline" onClick={() => {
+        const data = {setlistTitle, setlist, reviews, votedKeys, likedReviewIds, visitedSpotIds, attendedTourIds, bestQuizScore};
+        const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'}));
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'higedanfan-records.json';
+        link.click();
+        window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }}>画面上の記録を書き出す</button></p>}
       <SiteHeader
         activeTab={activeFeatureTab}
         onSelectTab={(tab) => handleSelectTab(tab, 'all')}
@@ -571,7 +592,7 @@ export default function App() {
                         onClick={() => handleSelectTab('vocal_range')}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
                       >
-                        <span>全曲の音域・発売日表</span>
+                        <span>掲載86曲の音域・発売日表</span>
                       </button>
                     </div>
                   </div>
@@ -590,7 +611,7 @@ export default function App() {
                             {isSafeAssetUrl(art.src) && (
                               <GuideArtwork
                                 src={art.src}
-                                alt={`${art.label} ジャケットイメージ`}
+                                alt={`${art.label}  オリジナル図柄`}
                                 referrerPolicy="no-referrer"
                                 className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                               />
@@ -787,7 +808,7 @@ export default function App() {
                           <div className="mt-4 pt-3 border-t border-[#E6E1D6]">
                             <button
                               type="button"
-                              onClick={() => setSelectedModalSongId(sigSong.id)}
+                              onClick={() => selectSong(sigSong.id)}
                               className="w-full inline-flex items-center justify-between gap-2 text-xs font-bold text-[#1E3A5F] hover:text-[#C83E2B] transition-colors cursor-pointer"
                             >
                               <span className="inline-flex items-center gap-1.5 truncate">
@@ -863,7 +884,7 @@ export default function App() {
               {activeFeatureTab === 'mood' && (
                 <MoodFinderSection
                   songs={songs}
-                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  onSelectSong={(song) => selectSong(song.id)}
                   onAddToSetlist={(id) => handleAddToSetlist(id, false)}
                   setlistSongIds={setlistSongIds}
                 />
@@ -874,7 +895,7 @@ export default function App() {
                 activeFeatureTab === 'sacred_map') && (
                 <DiscographySection
                   songs={songs}
-                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  onSelectSong={(song) => selectSong(song.id)}
                   onAddToSetlist={(id) => handleAddToSetlist(id, false)}
                   setlistSongIds={setlistSongIds}
                   visitedSpotIds={visitedSpotIds}
@@ -906,7 +927,7 @@ export default function App() {
                   onLoadPresetSetlist={handleLoadPresetSetlist}
                   attendedTourIds={attendedTourIds}
                   onToggleAttendedTour={handleToggleAttendedTour}
-                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  onSelectSong={(song) => selectSong(song.id)}
                   initialSubTab={
                     activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
                   }
@@ -919,11 +940,16 @@ export default function App() {
                   songs={songs}
                   votedSongIds={votedKeys}
                   onVoteSong={handleVoteSong}
-                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  onSelectSong={(song) => selectSong(song.id)}
                   reviews={reviews}
                   likedReviewIds={likedReviewIds}
                   onLikeReview={handleLikeReview}
                   onSubmitReview={handleSubmitReview}
+                  onEditReview={(id, fields) => setReviews(prev => prev.map(r => r.id === id ? {...r, ...fields} : r))}
+                  onDeleteReview={id => {
+                    setReviews(prev => prev.filter(r => r.id !== id));
+                    setLikedReviewIds(prev => prev.filter(key => key !== id));
+                  }}
                   initialSubTab={
                     activeFeatureTab === 'fan_reviews' ? 'reviews' : 'ranking'
                   }
@@ -936,7 +962,7 @@ export default function App() {
                   bestScorePercentage={bestQuizScore}
                   onUpdateBestScore={handleUpdateBestQuizScore}
                   songs={songs}
-                  onSelectSong={(song) => setSelectedModalSongId(song.id)}
+                  onSelectSong={(song) => selectSong(song.id)}
                   initialTab={
                     activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
                   }
@@ -957,7 +983,7 @@ export default function App() {
             <p>
               <a href="https://katakatalab.com/" className="underline">KatakataLab トップ</a> ／ ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
             </p>
-            <p className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
+            <p className="flex items-center gap-1.5 text-[11px] text-[#57534E]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#15803D] shrink-0" />
               <span>
                 投票・マイセトリ・感想メモは、あなた専用のファンノートとしてお使いのブラウザ内に自動保存されます。
@@ -980,7 +1006,7 @@ export default function App() {
       {/* Song Liner Notes Modal */}
       <SongDetailModal
         song={modalSong}
-        onClose={() => setSelectedModalSongId(null)}
+        onClose={() => selectSong(null)}
         onAddToSetlist={(id) => handleAddToSetlist(id, false)}
         isInSetlist={modalSong ? setlistSongIds.includes(modalSong.id) : false}
         onVoteSong={handleVoteSong}

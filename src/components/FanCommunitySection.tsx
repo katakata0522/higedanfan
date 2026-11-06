@@ -13,7 +13,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { FanReview, SongItem } from '../data/higedanData';
-import { sanitizeUserText, validateReviewInput } from '../utils/fanLogic';
+import { validateReviewInput } from '../utils/fanLogic';
 
 export type VoteCategory = 'overall' | 'lyric' | 'live' | 'hiddenGem';
 
@@ -26,11 +26,13 @@ interface FanCommunitySectionProps {
   likedReviewIds: string[];
   onLikeReview: (reviewId: string) => void;
   onSubmitReview: (newReview: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => void;
+  onDeleteReview: (id: string) => void;
+  onEditReview: (id: string, fields: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => void;
   initialSubTab?: 'ranking' | 'reviews';
 }
 
 const RANK_CATEGORIES: { id: VoteCategory; label: string; desc: string }[] = [
-  { id: 'overall', label: '総合ベストソング', desc: 'ファンが選ぶ不動の代表曲ランキング' },
+  { id: 'overall', label: '総合ベストソング', desc: '自分が選んだ代表曲' },
   { id: 'lyric', label: '歌詞が刺さる曲', desc: '言葉の力に心を揺さぶられる名曲' },
   { id: 'live', label: 'ライブで盛り上がる曲', desc: '会場の一体感とアレンジが最高潮のナンバー' },
   { id: 'hiddenGem', label: '隠れた名曲・アルバム曲', desc: '通好みのアレンジや実験性が光る名曲' },
@@ -45,16 +47,18 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   likedReviewIds,
   onLikeReview,
   onSubmitReview,
+  onEditReview,
+  onDeleteReview,
   initialSubTab = 'ranking',
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'ranking' | 'reviews'>(initialSubTab);
+  const activeSubTab = initialSubTab;
   const [activeCategory, setActiveCategory] = useState<VoteCategory>('overall');
   const [pollSearchQuery, setPollSearchQuery] = useState<string>('');
   const [showAllRankedSongs, setShowAllRankedSongs] = useState<boolean>(false);
   const [reviewFilterCategory, setReviewFilterCategory] = useState<string>('all');
   const [isWritingReview, setIsWritingReview] = useState<boolean>(false);
 
-  // Review Form State
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [author, setAuthor] = useState('');
   const [fanTenure, setFanTenure] = useState('ファン歴 3〜5年');
   const [songId, setSongId] = useState(songs[0]?.id || 'pretender');
@@ -66,7 +70,6 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   const successTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
-    setActiveSubTab(initialSubTab);
     setIsWritingReview(false);
   }, [initialSubTab]);
 
@@ -128,14 +131,17 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
     }
 
     setFormError(null);
-    onSubmitReview({
+    const fields = {
       author: validation.sanitized.author,
       fanTenure,
       songId: validation.sanitized.songId,
       category: reviewCategory,
       title: validation.sanitized.title,
       comment: validation.sanitized.comment,
-    });
+    };
+    if (editingId) onEditReview(editingId, fields);
+    else onSubmitReview(fields);
+    setEditingId(null);
     setAuthor('');
     setTitle('');
     setComment('');
@@ -170,22 +176,22 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'reviews'
-                ? 'あらかじめ入っている感想は記入例です。自分で書いた感想はこの端末に保存されます。'
-                : '初期の票数は表示用のサンプルです。追加した票はこの端末だけに保存されます。'}
+                ? '自分で書いた感想はこの端末に保存されます。'
+                : '自分が投じた票を、この端末で部門別に確認できます。'}
             </p>
           </div>
 
           <div
-            role="tablist"
+            role="group"
             aria-label="人気投票と感想ノートの切り替え"
             className="grid grid-cols-2 sm:inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] w-full sm:w-auto shrink-0"
           >
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubTab === 'ranking'}
+
+              aria-pressed={activeSubTab === 'ranking'}
               onClick={() => {
-                setActiveSubTab('ranking');
+                (window.location.hash = 'community');
                 setIsWritingReview(false);
               }}
               className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
@@ -199,10 +205,10 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubTab === 'reviews'}
+
+              aria-pressed={activeSubTab === 'reviews'}
               onClick={() => {
-                setActiveSubTab('reviews');
+                (window.location.hash = 'fan_reviews');
                 setIsWritingReview(false);
               }}
               className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
@@ -260,7 +266,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                     type="text"
                     maxLength={50}
                     value={pollSearchQuery}
-                    onChange={(e) => setPollSearchQuery(sanitizeUserText(e.target.value, 50))}
+                    onChange={(e) => setPollSearchQuery(e.target.value.slice(0, 50))}
                     placeholder="全86曲から曲名・アルバム名で検索して投票..."
                     className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-8 py-2 text-xs text-[#1C1917] min-h-[38px]"
                   />
@@ -294,6 +300,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
             </div>
 
             <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {rankedSongs.length === 0 && <p>該当する曲がありません。 <button className="underline" onClick={() => setPollSearchQuery('')}>検索条件を解除</button></p>}
               {rankedSongs.map(({ song, rank }) => {
                 const count = song.votes[activeCategory];
                 const barWidth = Math.max(12, Math.round((count / maxVotes) * 100));
@@ -411,10 +418,10 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
               <div className="border-b border-[#E6E1D6] pb-3.5">
                 <h3 className="flex items-center gap-2 text-base sm:text-lg font-bold text-[#1C1917]">
                   <MessageSquarePlus className="h-4 w-4 text-[#C83E2B]" />
-                  推し曲の感想・考察を投稿する
+                  {editingId ? '感想を編集する' : '推し曲の感想を書く'}
                 </h3>
                 <p className="mt-1 text-xs text-[#57534E]">
-                  好きな歌詞フレーズやライブの思い出を自由にシェアできます。
+                  この端末に曲やライブの感想を保存します。
                 </p>
               </div>
 
@@ -567,7 +574,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                   value={comment}
                   onChange={(e) =>
                     setComment(
-                      e.target.value.replace(/[<>＜＞\u0000-\u001F]/g, '').slice(0, 400)
+                      e.target.value.slice(0, 400)
                     )
                   }
                   placeholder="好きな歌詞の解釈や、ライブ会場で聴いた時のエピソードを書いてください..."
@@ -634,15 +641,16 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
 
               <button
                 type="button"
-                onClick={() => setIsWritingReview(true)}
+                onClick={() => { setEditingId(null); setTitle(''); setComment(''); setFormError(null); setIsWritingReview(true); }}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#C83E2B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#A93020] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <MessageSquarePlus className="h-4 w-4" />
-                推し曲の感想・考察を投稿する
+                {editingId ? '感想を編集する' : '推し曲の感想を書く'}
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredReviews.length === 0 && <p>この分類にはまだ感想がありません。「感想を書く」から記録できます。</p>}
               {filteredReviews.map((rev) => {
                 const targetSong = songMap.get(rev.songId);
                 const liked = likedReviewIds.includes(rev.id);
@@ -667,11 +675,15 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                         <span className="font-mono-num">{rev.postedAt}</span>
                       </div>
 
+                      <div className="flex gap-4 text-sm">
+                        <button onClick={() => { setEditingId(rev.id); setAuthor(rev.author); setFanTenure(rev.fanTenure); setSongId(rev.songId); setReviewCategory(rev.category); setTitle(rev.title); setComment(rev.comment); setFormError(null); setIsWritingReview(true); }}>編集</button>
+                        <button onClick={() => { if (window.confirm('「' + rev.title + '」を削除しますか？')) onDeleteReview(rev.id); }}>この感想を削除</button>
+                      </div>
                       <h4 className="mt-2.5 text-sm sm:text-base font-bold text-[#1C1917]">
                         {rev.title}
                       </h4>
 
-                      <p className="mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
+                      <p className="whitespace-pre-wrap mt-1.5 text-xs sm:text-sm text-[#57534E] leading-relaxed">
                         {rev.comment}
                       </p>
                     </div>

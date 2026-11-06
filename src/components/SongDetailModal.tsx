@@ -206,7 +206,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         {/* Action Controls Footer */}
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-[#E6E1D6] pt-4">
           <div className="text-xs text-[#78716C]">
-            参考票を含む、この端末の投票表示： <strong className="text-[#1C1917]">{song.votes.overall}</strong> 票（歌詞部門: <strong className="text-[#1C1917]">{song.votes.lyric}</strong> 票）
+            この端末で投じた票： <strong className="text-[#1C1917]">{song.votes.overall}</strong> 票（歌詞部門: <strong className="text-[#1C1917]">{song.votes.lyric}</strong> 票）
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

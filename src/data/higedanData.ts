@@ -97,7 +97,7 @@ export const SAME_BLUE_IMAGE_PATH = '/images/album_art_same_blue_vibe_1793854124
 export const MATSUE_IMAGE_PATH = '/images/sacred_matsue_sunset_1793849698665.jpg';
 export const STADIUM_IMAGE_PATH = '/images/live_stadium_confetti_1793849699286.jpg';
 
-export const HIGEDAN_SONGS: SongItem[] = verifiedSongs;
+export const HIGEDAN_SONGS: SongItem[] = verifiedSongs.map(song => ({...song, votes: {overall: 0, lyric: 0, live: 0, hiddenGem: 0}}));
 
 export const SACRED_SPOTS: SacredSpot[] = [
   {
@@ -319,52 +319,7 @@ export const TOUR_ARCHIVES: TourArchive[] = [
   }
 ];
 
-export const INITIAL_FAN_REVIEWS: FanReview[] = [
-  {
-    id: 'rev-1',
-    author: 'マツエのピアノ弾き',
-    fanTenure: 'BROTHERS歴 7年',
-    songId: 'sharon',
-    category: '歌詞考察',
-    title: '「鮮やかな朝日に置いていかれそうになりながら」の救済力',
-    comment: '仕事で深夜に帰る日々の中、Sharonのこの一行で涙が止まらなくなりました。頑張れと背中を叩くのではなく、追いつけない夜があることをそのまま抱きしめてくれる聡くんの言葉選びが本当に大好きです。',
-    postedAt: '2026.10.28',
-    likes: 84,
-  },
-  {
-    id: 'rev-2',
-    author: '日産スタジアム東ゲート民',
-    fanTenure: 'BROTHERS歴 4年',
-    songId: 'stand-by-you',
-    category: 'ライブ体験',
-    title: '7万人のクラップが夜空に吸い込まれた瞬間を一生忘れない',
-    comment: 'LIVE at STADIUM 2025の日産スタジアムファイナル、アンコールのStand By Youで会場中のリストバンドが輝いて手拍子が重なった瞬間、「音楽ってこんなに人を繋げるんだ」と震えました！',
-    postedAt: '2026.10.19',
-    likes: 112,
-  },
-  {
-    id: 'rev-3',
-    author: '転調マニアック',
-    fanTenure: 'BROTHERS歴 5年',
-    songId: 'cry-baby',
-    category: '楽曲アレンジ',
-    title: '11回転調しているのに全員でシンガロングできる異常なポップセンス',
-    comment: '音楽理論的に見たら迷子になりそうな複雑な転調を繰り返しているのに、メロディの推進力が強すぎて初見のリスナーでもノれてしまうのがヒゲダンの凄み。ならちゃんのベースラインも最高にロック！',
-    postedAt: '2026.10.05',
-    likes: 67,
-  },
-  {
-    id: 'rev-4',
-    author: 'アオの青春箱',
-    fanTenure: 'BROTHERS歴 2年',
-    songId: 'same-blue',
-    category: '人生の支え',
-    title: '朝の通勤電車で聴くと視界が一気に晴れる魔法の変拍子',
-    comment: 'Same Blueのイントロが流れた瞬間、満員電車の重たい空気が一気に鮮やかなブルーに変わります。「青いままで枯れてゆけ」というフレーズは、大人になっても挑戦し続ける人への最高のエールだと思います。',
-    postedAt: '2026.09.22',
-    likes: 53,
-  },
-];
+
 
 // QUIZ_QUESTIONS is exported from ./quizData above.
 

@@ -111,9 +111,7 @@ test('scoreSongsByMood prioritizes songs matching mood, situation, and sound and
   });
   assert.ok(results.length > 0);
   assert.equal(results[0].matchScore, 99);
-  assert.ok(
-    results[0].song.id === 'mixed-nuts' || results[0].song.id === 'soulsoup'
-  );
+  assert.ok(results[0].song.moods.includes('euphoric_drive'));
   assert.equal(results[0].matchReasons.length, 3);
   assert.ok(results[0].moodMatchExplanation.includes('「最高に盛り上がりたい」今の気分に'));
   assert.ok(results[0].soundAnalysisReason.length > 10);
@@ -236,7 +234,7 @@ test('formatDiagnosisShareText formats song title, match score, mood reason, and
   const matches = scoreSongsByMood(HIGEDAN_SONGS, criteria);
   const shareText = formatDiagnosisShareText(matches[0], criteria);
   assert.ok(shareText.includes(`『${matches[0].song.title}』`));
-  assert.ok(shareText.includes(`マッチ度 ${matches[0].matchScore}%`));
+  assert.ok(shareText.includes(`選曲スコア ${matches[0].matchScore}点`));
   assert.ok(shareText.includes(matches[0].moodMatchExplanation));
   assert.ok(shareText.includes('#115万キロのファンノート'));
 });
@@ -355,7 +353,7 @@ test('filterAndSortDiscography supports all 86 verified songs, album/EP filterin
   assert.equal(getSongwriterCredit({ id: 'tabi-wa-michizure' }), '作詞・作曲：楢﨑誠');
   assert.equal(getSongwriterCredit({ id: 'midori-no-amayoke' }), '作詞・作曲：楢﨑誠');
   assert.equal(getSongwriterCredit({ id: 'choral-a-song' }), '作詞・作曲：楢﨑誠');
-  assert.equal(getSongwriterCredit({ id: 'kanousei-song' }), '作詞・作曲：藤原聡');
+  assert.equal(getSongwriterCredit({ id: 'kanousei-song' }), '作者情報未確認');
   assert.equal(getSongwriterCredit({ id: 'filament-song' }), '作詞・作曲：松浦匡希・藤原聡');
   assert.equal(getSongwriterCredit({ id: 'pretender' }), '作詞・作曲：藤原聡');
 
@@ -435,4 +433,22 @@ test('all 86 setlist entries and encore assignments survive validation', () => {
   assert.equal(songEvidence['anarchy-song'].low,'mid1F');
   assert.equal(songEvidence['stand-by-you'].falsetto,'hiD');
   assert.equal(songEvidence['sharon'].cd,'2024.07.31');
+});
+
+test('tour examples reference the exact names of existing recordings', () => {
+  const titles = new Set(HIGEDAN_SONGS.map(song => song.title));
+  for (const tour of TOUR_ARCHIVES) {
+    for (const title of [...tour.signatureSetlistIds, ...tour.encoreSetlistIds]) {
+      assert.ok(titles.has(title), tour.tourTitle + ': ' + title);
+    }
+  }
+});
+
+test('restores 51 journal entries with intact paragraphs', () => {
+  const songId = HIGEDAN_SONGS[0].id;
+  const entries = Array.from({length: 51}, (_,i) => ({
+    id: 'entry-' + i, songId, author: '聴き手', title: '私の感想', comment: '一行目の感想です\n二行目の感想です', category: '歌詞考察'
+  }));
+  const recovered = sanitizeReviewsList(entries, new Set([songId]));
+  assert.deepEqual(recovered?.map(r => [r.id, r.comment]), entries.map(r => [r.id, r.comment]));
 });
