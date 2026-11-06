@@ -82,7 +82,7 @@ export const HOME_FEATURE_CARDS: {
     id: 'community',
     secondaryId: 'fan_reviews',
     stepNum: '04',
-    subtitle: 'ファン投票＆歌詞考察シェア',
+    subtitle: '自分の推し曲投票と感想ノート',
     title: '人気曲ランキング投票・感想ノート',
     description:
       '「歌詞が刺さる曲」「ライブで盛り上がる曲」など4部門の人気投票と、自分のブラウザに好きな曲やライブの感想を残すノート。',

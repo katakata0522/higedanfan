@@ -1,5 +1,6 @@
 import { HIGEDAN_SONGS, SACRED_SPOTS, TOUR_ARCHIVES, type FanReview, type SongItem } from '../data/higedanData';
-import { sanitizeReviewsList, sanitizeSafeId, sanitizeSetlistEntries, sanitizeUserText, type SetlistEntry } from '../utils/fanLogic';
+import { sanitizeSetlistTitle } from '../utils/setlist';
+import { sanitizeReviewsList, sanitizeSafeId, sanitizeSetlistEntries, type SetlistEntry } from '../utils/fanLogic';
 
 export const STORAGE_KEY = 'higedan_fan_magazine_state_v1';
 
@@ -12,7 +13,9 @@ export interface PersistedState {
   votedKeys: string[];
   reviews: FanReview[];
   likedReviewIds: string[];
-  bestQuizScore: number;
+  bestQuizScore: number | null;
+  hasQuizAttempt?: boolean;
+  resetEpoch?: string;
 }
 
 function restoreIds(value: unknown, maxLength: number, validIds?: Set<string>) {
@@ -30,6 +33,12 @@ export function restoreFanRecords(raw: string) {
     throw new TypeError('Expected a v1 fan record object');
   }
   const parsed = value as Partial<PersistedState>;
+  if (Object.keys(parsed).length > 0 && ![
+    'songs', 'setlist', 'setlistTitle', 'reviews', 'likedReviewIds', 'visitedSpotIds',
+    'attendedTourIds', 'votedKeys', 'bestQuizScore', 'resetEpoch',
+  ].some(field => Object.hasOwn(parsed, field))) {
+    throw new TypeError('Unrecognized fan record format');
+  }
   const validSongIds = new Set(HIGEDAN_SONGS.map(song => song.id));
   const validSpotIds = new Set(SACRED_SPOTS.map(spot => spot.id));
   const validTourIds = new Set(TOUR_ARCHIVES.map(tour => tour.id));
@@ -54,13 +63,14 @@ export function restoreFanRecords(raw: string) {
     songs,
     reviews,
     setlist: sanitizeSetlistEntries(parsed.setlist, validSongIds),
-    setlistTitle: typeof parsed.setlistTitle === 'string' ? sanitizeUserText(parsed.setlistTitle, 160) : undefined,
+    setlistTitle: typeof parsed.setlistTitle === 'string' ? sanitizeSetlistTitle(parsed.setlistTitle) : undefined,
     visitedSpotIds: restoreIds(parsed.visitedSpotIds, 40, validSpotIds),
     attendedTourIds: restoreIds(parsed.attendedTourIds, 40, validTourIds),
     votedKeys: restoreIds(parsed.votedKeys, 60),
     likedReviewIds: restoreIds(parsed.likedReviewIds, 40),
-    bestQuizScore: typeof parsed.bestQuizScore === 'number' && !Number.isNaN(parsed.bestQuizScore)
-      ? Math.max(0, Math.min(100, Math.round(parsed.bestQuizScore)))
-      : undefined,
+    bestQuizScore: parsed.bestQuizScore === 0 && !parsed.hasQuizAttempt ? null :
+      typeof parsed.bestQuizScore === 'number' && Number.isFinite(parsed.bestQuizScore)
+        ? Math.max(0, Math.min(100, Math.round(parsed.bestQuizScore))) : undefined,
+    resetEpoch: typeof parsed.resetEpoch === 'string' ? parsed.resetEpoch : '',
   };
 }

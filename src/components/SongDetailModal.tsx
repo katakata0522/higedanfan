@@ -1,8 +1,9 @@
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
+import { songwriterInfo } from '../utils/songCatalog';
 import { formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
 import { playSongTempoPreview, stopTempoPreview } from '../utils/audioPreview';
 
@@ -25,41 +26,49 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
 }) => {
   const [isPlayingTempo, setIsPlayingTempo] = useState(false);
 
-  const panel = useRef<HTMLDivElement>(null);
-  const closeRef = useRef(onClose);
-  useEffect(() => { closeRef.current = onClose; }, [onClose]);
-  useEffect(() => {
+  const panel = useRef<HTMLDialogElement>(null);
+  useLayoutEffect(() => {
     setIsPlayingTempo(false);
     stopTempoPreview();
-    if (!song) return;
+    const dialog = panel.current;
+    if (!song || !dialog) return;
 
     const from = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
+    dialog.showModal();
+    dialog.querySelector<HTMLButtonElement>('button')?.focus();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Tab' && panel.current) {
-        const elems = panel.current.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),[tabindex="0"]');
+      if (e.key === 'Tab') {
+        const elems = dialog.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),[tabindex="0"]');
         const first = elems[0], last = elems[elems.length-1];
-        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        if (!dialog.contains(document.activeElement) || document.activeElement === dialog) {
+          e.preventDefault();
+          (e.shiftKey ? last : first)?.focus();
+        } else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
         else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
-      }
-      if (e.key === 'Escape') {
-        stopTempoPreview();
-        closeRef.current();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
-      from?.focus();
+      dialog.close();
+      if (from?.isConnected) from.focus({preventScroll: true});
       window.removeEventListener('keydown', handleKeyDown);
       stopTempoPreview();
     };
   }, [song?.id]);
 
+  useLayoutEffect(() => {
+    const dialog = panel.current;
+    if (dialog?.open && (!dialog.contains(document.activeElement) || document.activeElement?.matches(':disabled'))) {
+      dialog.querySelector<HTMLButtonElement>('button')?.focus({preventScroll: true});
+    }
+  }, [isInSetlist, hasVoted]);
+
   if (!song) return null;
+  const songwriter = songwriterInfo(song);
   const fact = songEvidence[song.id as keyof typeof songEvidence];
 
   const handleToggleTempo = () => {
@@ -75,12 +84,13 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   };
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[#1C1917]/60 p-3 sm:p-4 backdrop-blur-xs"
+    <dialog
+      className="fixed inset-0 m-0 h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-3 text-inherit open:flex sm:p-4 backdrop:bg-[#1C1917]/60 backdrop:backdrop-blur-xs"
       ref={panel}
       role="dialog"
       aria-modal="true"
       aria-labelledby="song-modal-title"
+      onCancel={(event) => { event.preventDefault(); onClose(); }}
       onClick={() => {
         stopTempoPreview();
         onClose();
@@ -190,13 +200,18 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             </dl>
             <p>掲載値の幅：{song.vocalRange.rangeSpanSemitones}半音。裏声欄の「記載なし」は、裏声を使わないという意味ではありません。</p>
             <a className="underline" href={fact.rangeSource} target="_blank" rel="noreferrer">採用した採譜：{fact.rangeLabel} ↗</a>
+            {song.id === 'mixed-nuts' && <p className="mt-2">ラストのフェイク（歌詞のない歌い回し）を含むと裏声最高はA#5、除くとC#5です。</p>}
             {fact.otherRange && <p className="mt-2">別の採譜（地声最低／地声最高／裏声最高）：
               {fact.otherRange.join(' ／ ')}。 <a className="underline" href={fact.otherSource} target="_blank" rel="noreferrer">音域調査 Wiki ↗</a></p>}
           </div>
           <div className="rounded-xl border border-[#E6E1D6] bg-white p-4 space-y-2">
             <h3 className="font-bold">収録音源と発売日</h3>
+            <p>{getSongwriterCredit(song)}{songwriter && <> <a className="underline" href={songwriter.source} target="_blank" rel="noreferrer">作詞・作曲の出典 ↗</a></>}</p>
             <p>{fact.recording} ／ {fact.album}：{formatDuration(fact.seconds)}。配信サービス掲載日：{fact.release}。
               <a className="underline" href={fact.apple} target="_blank" rel="noreferrer">Apple Music の楽曲情報 ↗</a></p>
+            {song.tieUps.length > 0 && <ul className="space-y-1" aria-label="タイアップと出典">
+              {song.tieUps.map(item => <li key={item.text}>タイアップ：{item.text}。 <a className="underline" href={item.source} target="_blank" rel="noreferrer">出典 ↗</a></li>)}
+            </ul>}
             {fact.cd && <p>この作品のCD発売日：{fact.cd}。 <a className="underline" href={fact.cdSource} target="_blank" rel="noreferrer">公式作品情報 ↗</a></p>}
             <p>テンポ：{fact.tempo} BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。
               <a className="underline" href={fact.tempoSource} target="_blank" rel="noreferrer">テンポの資料 ↗</a></p>
@@ -249,6 +264,6 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 };

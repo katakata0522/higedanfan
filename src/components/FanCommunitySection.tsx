@@ -1,3 +1,4 @@
+import { prepareSongSearch } from '../utils/songSearch';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Heart,
@@ -15,6 +16,7 @@ import {
 import { FanReview, SongItem } from '../data/higedanData';
 import { validateReviewInput } from '../utils/fanLogic';
 
+import type { SaveResult } from '../hooks/fanRecordStore';
 export type VoteCategory = 'overall' | 'lyric' | 'live' | 'hiddenGem';
 
 interface FanCommunitySectionProps {
@@ -25,9 +27,11 @@ interface FanCommunitySectionProps {
   reviews: FanReview[];
   likedReviewIds: string[];
   onLikeReview: (reviewId: string) => void;
-  onSubmitReview: (newReview: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => void;
+  onSubmitReview: (newReview: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => Promise<SaveResult>;
+  onExportRecords: () => void;
+  storageNotice: string;
   onDeleteReview: (id: string) => void;
-  onEditReview: (id: string, fields: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => void;
+  onEditReview: (original: FanReview, fields: Omit<FanReview, 'id' | 'postedAt' | 'likes'>) => Promise<SaveResult>;
   initialSubTab?: 'ranking' | 'reviews';
 }
 
@@ -47,6 +51,8 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   likedReviewIds,
   onLikeReview,
   onSubmitReview,
+  onExportRecords,
+  storageNotice,
   onEditReview,
   onDeleteReview,
   initialSubTab = 'ranking',
@@ -58,7 +64,8 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   const [reviewFilterCategory, setReviewFilterCategory] = useState<string>('all');
   const [isWritingReview, setIsWritingReview] = useState<boolean>(false);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [originalReview, setOriginalReview] = useState<FanReview | null>(null);
+  const editingId = originalReview?.id;
   const [author, setAuthor] = useState('');
   const [fanTenure, setFanTenure] = useState('ファン歴 3〜5年');
   const [songId, setSongId] = useState(songs[0]?.id || 'pretender');
@@ -66,7 +73,8 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   const [title, setTitle] = useState('');
   const [comment, setComment] = useState('');
   const [formError, setFormError] = useState<string | null>(null);
-  const [formSuccess, setFormSuccess] = useState<boolean>(false);
+  const [formResult, setFormResult] = useState<SaveResult | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const successTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -82,20 +90,20 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
   }, []);
 
   const allSortedSongsWithRank = useMemo(() => {
-    return [...songs]
-      .sort((a, b) => b.votes[activeCategory] - a.votes[activeCategory])
-      .map((song, idx) => ({ song, rank: idx + 1 }));
+    const sorted = [...songs].sort((a, b) => b.votes[activeCategory] - a.votes[activeCategory]);
+    let rank: number | null = null;
+    return sorted.map((song, idx) => {
+      const votes = song.votes[activeCategory];
+      if (!votes) rank = null;
+      else if (idx === 0 || sorted[idx - 1].votes[activeCategory] !== votes) rank = idx + 1;
+      return { song, rank };
+    });
   }, [songs, activeCategory]);
 
   const rankedSongs = useMemo(() => {
-    const q = pollSearchQuery.trim().toLowerCase();
-    if (q) {
-      return allSortedSongsWithRank.filter(
-        ({ song }) =>
-          song.title.toLowerCase().includes(q) ||
-          song.album.toLowerCase().includes(q) ||
-          song.tieUp.toLowerCase().includes(q)
-      );
+    const match = prepareSongSearch(pollSearchQuery);
+    if (match) {
+      return allSortedSongsWithRank.filter(({ song }) => match(song) !== undefined);
     }
     return showAllRankedSongs
       ? allSortedSongsWithRank
@@ -116,8 +124,9 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
     [reviews, reviewFilterCategory]
   );
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     const validation = validateReviewInput({
       author,
       songId,
@@ -126,7 +135,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
     });
     if (!validation.valid || !validation.sanitized) {
       setFormError(validation.error || '入力内容を確認してください。');
-      setFormSuccess(false);
+      setFormResult(null);
       return;
     }
 
@@ -139,21 +148,29 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
       title: validation.sanitized.title,
       comment: validation.sanitized.comment,
     };
-    if (editingId) onEditReview(editingId, fields);
-    else onSubmitReview(fields);
-    setEditingId(null);
+    setIsSubmitting(true);
+    const result = originalReview ? await onEditReview(originalReview, fields) : await onSubmitReview(fields);
+    setIsSubmitting(false);
+    if (result === 'conflict') {
+      setFormError('別のタブで記録が変更されました。入力をコピーしてから一覧で最新の内容を確認してください。');
+      return;
+    }
+    setFormResult(result);
+    setOriginalReview(null);
+    setReviewFilterCategory(current => current === 'all' ? current : reviewCategory);
     setAuthor('');
     setTitle('');
     setComment('');
-    setFormSuccess(true);
     setIsWritingReview(false);
     if (successTimerRef.current !== null) {
       window.clearTimeout(successTimerRef.current);
     }
-    successTimerRef.current = window.setTimeout(() => {
-      setFormSuccess(false);
-      successTimerRef.current = null;
-    }, 3500);
+    if (result === 'saved') {
+      successTimerRef.current = window.setTimeout(() => {
+        setFormResult(null);
+        successTimerRef.current = null;
+      }, 3500);
+    }
   };
 
   return (
@@ -303,7 +320,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
               {rankedSongs.length === 0 && <p>該当する曲がありません。 <button className="underline" onClick={() => setPollSearchQuery('')}>検索条件を解除</button></p>}
               {rankedSongs.map(({ song, rank }) => {
                 const count = song.votes[activeCategory];
-                const barWidth = Math.max(12, Math.round((count / maxVotes) * 100));
+                const barWidth = Math.round((count / maxVotes) * 100);
                 const voteKey = `${song.id}:${activeCategory}`;
                 const hasVoted = votedSongIds.includes(voteKey) || votedSongIds.includes(song.id);
 
@@ -326,7 +343,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                                 : 'text-[#78716C]'
                             }`}
                           >
-                            {rank}位
+                            {rank === null ? '未投票' : rank + '位'}
                           </span>
                           <h3 className="text-base sm:text-lg font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                             {song.title}
@@ -340,7 +357,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
 
                       <p className="mt-1 text-xs text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
                         {song.album}
-                        {song.trackNumber ? ` (M${song.trackNumber})` : ''} · {song.tieUp}
+                        {song.trackNumber ? ` (M${song.trackNumber})` : ''}{song.tieUp && ` · ${song.tieUp}`}
                       </p>
 
                       {/* Progress Bar */}
@@ -600,6 +617,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                 </button>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
                 >
                   {editingId ? '変更を保存する' : '感想ノートに保存する'}
@@ -610,12 +628,19 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
         ) : (
           /* Sub-Tab 2 (Default Screen: Clean Review Wall with Transition Button to Write Form) */
           <div className="mt-5 space-y-4">
-            {formSuccess && (
+              {formResult === 'unsaved' && storageNotice && (
+                <div role="alert" className="rounded-xl border border-amber-400 bg-amber-50 p-3 text-sm">
+                  感想は画面に残っていますが、ブラウザに保存できませんでした。閉じる前に
+                  <button type="button" className="underline" onClick={onExportRecords}>記録を書き出す</button>
+                  か、本文をコピーしてください。
+                </div>
+              )}
+              {formResult === 'saved' && !storageNotice && (
               <div
                 role="status"
                 className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-3 text-xs font-bold text-[#15803D]"
               >
-                感想ノートに掲載しました！ありがとうございます！
+                このブラウザに感想を保存しました。
               </div>
             )}
 
@@ -641,7 +666,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
 
               <button
                 type="button"
-                onClick={() => { setEditingId(null); setTitle(''); setComment(''); setFormError(null); setIsWritingReview(true); }}
+                onClick={() => { setOriginalReview(null); setTitle(''); setComment(''); setFormError(null); setFormResult(null); setIsWritingReview(true); }}
                 className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#C83E2B] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#A93020] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <MessageSquarePlus className="h-4 w-4" />
@@ -676,7 +701,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                       </div>
 
                       <div className="flex gap-4 text-sm">
-                        <button onClick={() => { setEditingId(rev.id); setAuthor(rev.author); setFanTenure(rev.fanTenure); setSongId(rev.songId); setReviewCategory(rev.category); setTitle(rev.title); setComment(rev.comment); setFormError(null); setIsWritingReview(true); }}>編集</button>
+                        <button onClick={() => { setOriginalReview(rev); setAuthor(rev.author); setFanTenure(rev.fanTenure); setSongId(rev.songId); setReviewCategory(rev.category); setTitle(rev.title); setComment(rev.comment); setFormError(null); setFormResult(null); setIsWritingReview(true); }}>編集</button>
                         <button onClick={() => { if (window.confirm('「' + rev.title + '」を削除しますか？')) onDeleteReview(rev.id); }}>この感想を削除</button>
                       </div>
                       <h4 className="mt-2.5 wrap-anywhere text-sm sm:text-base font-bold text-[#1C1917]">

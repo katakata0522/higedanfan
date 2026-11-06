@@ -1,5 +1,6 @@
 import type { SongItem, VocalRangeInfo } from './higedanData';
 import { catalogEntries } from './catalogEntries';
+import { songTieUps } from './songTieUps';
 import records from './songEvidence.json';
 
 export const songEvidence = records;
@@ -37,8 +38,11 @@ function vocalRange(fact: { low: string; chest: string; falsetto: string | null 
 
 export const verifiedSongs: SongItem[] = catalogEntries.map(entry => {
   const fact = records[entry.id];
+  const tieUps = songTieUps[entry.id] ?? [];
   return {
     ...entry,
+    tieUps,
+    tieUp: tieUps.map(item => item.text).join(' ／ '),
     trackNumber: entry.album.startsWith('Single /') ? undefined : entry.trackNumber,
     englishSub: fact.album,
     releaseDate: fact.release,

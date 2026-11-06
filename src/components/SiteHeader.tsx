@@ -83,13 +83,13 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'community',
     label: '人気曲ランキング投票',
-    shortDesc: '総合・歌詞・ライブ・隠れた名曲の4部門ファン投票',
+    shortDesc: 'このブラウザで推し曲に投票する4部門のランキング',
     icon: <Trophy className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'fan_reviews',
     label: '感想・考察ノート',
-    shortDesc: 'ファン同士で綴る歌詞考察・ライブの思い出シェア',
+    shortDesc: '好きな曲の感想やライブの思い出を、このブラウザに記録',
     icon: <MessageSquarePlus className="h-4 w-4 shrink-0" />,
   },
   {
@@ -116,6 +116,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   onSelectTab,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuButton = React.useRef<HTMLButtonElement>(null);
 
   // Close drawer when activeTab changes from any trigger
   useEffect(() => {
@@ -128,6 +129,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
+        menuButton.current?.focus();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -149,7 +151,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         <button
           type="button"
           onClick={() => handleNavigate('home')}
-          className="flex items-center gap-3 text-left min-w-0 group focus:outline-none cursor-pointer"
+          className="flex items-center gap-3 text-left min-w-0 group cursor-pointer"
         >
           <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-[#1C1917] text-[#FBF9F5] group-hover:bg-[#C83E2B] transition-colors">
             <Music4 className="h-4 w-4" />
@@ -174,6 +176,10 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           <button
             type="button"
             onClick={() => setIsMenuOpen((prev) => !prev)}
+            ref={menuButton}
+            onBlur={(event) => {
+              if (!event.relatedTarget?.closest('#global-nav-drawer')) setIsMenuOpen(false);
+            }}
             aria-expanded={isMenuOpen}
             aria-controls="global-nav-drawer"
             aria-label={isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
@@ -207,6 +213,11 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             />
             <nav
               id="global-nav-drawer"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== menuButton.current) {
+                  setIsMenuOpen(false);
+                }
+              }}
               aria-label="サイト内メニュー"
               className="fixed sm:absolute right-0 sm:right-6 lg:right-8 top-14 sm:top-16 z-40 w-full sm:w-[400px] max-h-[calc(100vh-4rem)] overflow-y-auto sm:rounded-b-2xl border-b sm:border border-[#D5CEC2] bg-[#FBF9F5] shadow-2xl"
             >
