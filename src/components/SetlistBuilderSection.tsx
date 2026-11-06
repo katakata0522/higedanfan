@@ -38,7 +38,7 @@ interface SetlistBuilderSectionProps {
   onRemoveSong: (index: number) => void;
   onMoveSong: (index: number, direction: 'up' | 'down' | 'top') => void;
   onToggleEncore: (index: number) => void;
-  onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => void;
+  onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => boolean;
   attendedTourIds: string[];
   onToggleAttendedTour: (tourId: string) => void;
   onSelectSong?: (song: SongItem) => void;
@@ -60,7 +60,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onSelectSong,
   initialSubTab = 'builder',
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'builder' | 'tours'>(initialSubTab);
+  const activeSubTab = initialSubTab;
   const [tourSortOrder, setTourSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [songSearchFilter, setSongSearchFilter] = useState<string>('');
   const [requestedSong, setSelectedSongToAdd] = useState<string>(
@@ -97,10 +97,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   }, [songs, songSearchFilter]);
 
   useEffect(() => {
-    setActiveSubTab(initialSubTab);
-  }, [initialSubTab]);
-
-  useEffect(() => {
     return () => {
       if (copyTimerRef.current !== null) {
         window.clearTimeout(copyTimerRef.current);
@@ -114,7 +110,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const visibleSongs = selectableSongsByAlbum.flatMap(([, group]) => group);
   const selectedSongToAdd = visibleSongs.find(s => s.id === requestedSong)?.id ?? visibleSongs.find(s => !setlistIdSet.has(s.id))?.id ?? visibleSongs[0]?.id ?? '';
   const isSelectedAlreadyInSetlist = !selectedSongToAdd || setlistIdSet.has(selectedSongToAdd);
-  const safeDisplayTitle = sanitizeUserText(setlistTitle, 50) || 'マイ・ドリームライブ';
+  const safeDisplayTitle = sanitizeUserText(setlistTitle, 160) || 'マイ・ドリームライブ';
 
   const handleAddSelectedSong = () => {
     if (isSelectedAlreadyInSetlist) return;
@@ -188,15 +184,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
 
           <div
-            role="tablist"
+            role="group"
             aria-label="セットリストとツアー記録の切り替え"
             className="grid grid-cols-2 sm:inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] w-full sm:w-auto shrink-0"
           >
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubTab === 'builder'}
-              onClick={() => setActiveSubTab('builder')}
+
+              aria-pressed={activeSubTab === 'builder'}
+              onClick={() => (window.location.hash = 'setlist')}
               className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
                 activeSubTab === 'builder'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -208,9 +204,9 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubTab === 'tours'}
-              onClick={() => setActiveSubTab('tours')}
+
+              aria-pressed={activeSubTab === 'tours'}
+              onClick={() => (window.location.hash = 'tour_archive')}
               className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
                 activeSubTab === 'tours'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -684,8 +680,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             .map((t) => titleToId.get(t))
                             .filter((id): id is string => Boolean(id))
                             .map((songId) => ({ songId, isEncore: true }));
-                          onLoadPresetSetlist([...mainEntries, ...encEntries], tour.tourTitle + "（選曲例）");
-                          setActiveSubTab('builder');
+                          if (!onLoadPresetSetlist([...mainEntries, ...encEntries], tour.tourTitle + "（選曲例）")) return;
+                          (window.location.hash = 'setlist');
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 min-h-[38px] cursor-pointer"
                       >

@@ -52,13 +52,13 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   },
   {
     id: 'discography',
-    label: '楽曲ガイド（全86曲）',
+    label: '楽曲ガイド（掲載86曲）',
     shortDesc: '曲調・BPM・長さを確認できる86曲のガイド',
     icon: <Disc className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'vocal_range',
-    label: '全曲の音域・発売日一覧',
+    label: '掲載86曲の音域・発売日一覧',
     shortDesc: '地声・裏声の採譜、配信掲載日とCD発売日',
     icon: <Mic2 className="h-4 w-4 shrink-0" />,
   },

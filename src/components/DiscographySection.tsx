@@ -103,7 +103,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   initialSubView = 'discography',
   initialEraFilter = 'all',
 }) => {
-  const [activeSubView, setActiveSubView] = useState<DiscographySubView>(initialSubView);
+  const activeSubView = initialSubView;
   const [eraFilter, setEraFilter] = useState<EraTag | 'all'>(initialEraFilter);
   const [albumFilter, setAlbumFilter] = useState<string>('all');
   const [soundFilter, setSoundFilter] = useState<SoundTag | 'all'>('all');
@@ -111,10 +111,6 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE_COUNT);
-
-  useEffect(() => {
-    setActiveSubView(initialSubView);
-  }, [initialSubView]);
 
   useEffect(() => {
     setEraFilter(initialEraFilter);
@@ -200,15 +196,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           </div>
 
           <div
-            role="tablist"
+            role="group"
             aria-label="楽曲ガイド・音域一覧・聖地マップの切り替え"
             className="grid grid-cols-3 items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] w-full lg:w-auto shrink-0"
           >
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubView === 'discography'}
-              onClick={() => setActiveSubView('discography')}
+
+              aria-pressed={activeSubView === 'discography'}
+              onClick={() => (window.location.hash = 'discography')}
               className={`inline-flex items-center justify-center gap-1 rounded-md px-2 sm:px-3.5 py-2 text-[11px] sm:text-xs font-bold transition-colors min-h-[40px] cursor-pointer min-w-0 ${
                 activeSubView === 'discography'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -220,9 +216,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubView === 'vocal_range'}
-              onClick={() => setActiveSubView('vocal_range')}
+
+              aria-pressed={activeSubView === 'vocal_range'}
+              onClick={() => (window.location.hash = 'vocal_range')}
               className={`inline-flex items-center justify-center gap-1 rounded-md px-2 sm:px-3.5 py-2 text-[11px] sm:text-xs font-bold transition-colors min-h-[40px] cursor-pointer min-w-0 ${
                 activeSubView === 'vocal_range'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
@@ -234,9 +230,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             </button>
             <button
               type="button"
-              role="tab"
-              aria-selected={activeSubView === 'sacred_map'}
-              onClick={() => setActiveSubView('sacred_map')}
+
+              aria-pressed={activeSubView === 'sacred_map'}
+              onClick={() => (window.location.hash = 'sacred_map')}
               className={`inline-flex items-center justify-center gap-1 rounded-md px-2 sm:px-3.5 py-2 text-[11px] sm:text-xs font-bold transition-colors min-h-[40px] cursor-pointer min-w-0 ${
                 activeSubView === 'sacred_map'
                   ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'

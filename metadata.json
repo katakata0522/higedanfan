@@ -1,6 +1,8 @@
 {
-  "name": "GOOD OLD MUSIC MAG. — Official髭男dism 非公式ファンマガジン",
+  "name": "115万キロのファンノート",
   "description": "Official髭男dismの楽曲考察、気分別おすすめ曲診断、理想のライブセットリスト作成、聖地マップ、ファン投票ランキング＆クイズを楽しめるカラフルなマガジン調ファンサイト。",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
