@@ -1,3 +1,4 @@
+import { GuideArtwork } from './components/GuideArtwork';
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -50,7 +51,7 @@ import { SongDetailModal } from './components/SongDetailModal';
 const STORAGE_KEY = 'higedan_fan_magazine_state_v1';
 
 interface PersistedState {
-  songs: SongItem[];
+  songs: Pick<SongItem, 'id' | 'votes'>[];
   setlist: SetlistEntry[];
   setlistTitle: string;
   visitedSpotIds: string[];
@@ -95,22 +96,24 @@ export default function App() {
   const [setlistTitle, setSetlistTitle] = useState<string>(
     '私が聴きたい！夢のスタジアムライブ'
   );
-  const [visitedSpotIds, setVisitedSpotIds] = useState<string[]>(['spot-shinji-lake']);
-  const [attendedTourIds, setAttendedTourIds] = useState<string[]>(['tour-stadium-2025']);
+  const [visitedSpotIds, setVisitedSpotIds] = useState<string[]>([]);
+  const [attendedTourIds, setAttendedTourIds] = useState<string[]>([]);
   const [votedKeys, setVotedKeys] = useState<string[]>([]);
   const [reviews, setReviews] = useState<FanReview[]>(INITIAL_FAN_REVIEWS);
   const [likedReviewIds, setLikedReviewIds] = useState<string[]>([]);
-  const [bestQuizScore, setBestQuizScore] = useState<number>(83);
+  const [bestQuizScore, setBestQuizScore] = useState<number>(0);
   const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<ActiveFeatureTab>('home');
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
 
+  const [storageReady, setStorageReady] = useState(false);
+  const [storageNotice, setStorageNotice] = useState('');
   // Load & schema-validate persisted state from localStorage with strict XSS/ID sanitization
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return;
+      if (!raw) { setStorageReady(true); return; }
       const parsed = JSON.parse(raw) as Partial<PersistedState>;
       const validSongIds = new Set(HIGEDAN_SONGS.map((s) => s.id));
       const validSpotIds = new Set(SACRED_SPOTS.map((s) => s.id));
@@ -174,7 +177,7 @@ export default function App() {
           parsed.votedKeys
             .map((k) => sanitizeSafeId(k, 60))
             .filter((k) => k.length > 0)
-            .slice(0, 100)
+
         );
       }
 
@@ -188,7 +191,7 @@ export default function App() {
           parsed.likedReviewIds
             .map((k) => sanitizeSafeId(k, 40))
             .filter((k) => k.length > 0)
-            .slice(0, 100)
+
         );
       }
 
@@ -198,16 +201,18 @@ export default function App() {
       ) {
         setBestQuizScore(Math.max(0, Math.min(100, Math.round(parsed.bestQuizScore))));
       }
+      setStorageReady(true);
     } catch {
-      // Ignore malformed storage data safely
+      setStorageNotice("保存データを読めませんでした。元の記録は上書きしません。");
     }
   }, []);
 
-  // Save state to localStorage
+  // Save only after restoring the original record.
   useEffect(() => {
+    if (!storageReady) return;
     try {
       const stateToSave: PersistedState = {
-        songs,
+        songs: songs.map(({id, votes}) => ({id, votes})),
         setlist,
         setlistTitle: sanitizeUserText(setlistTitle, 50),
         visitedSpotIds,
@@ -219,9 +224,10 @@ export default function App() {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(stateToSave));
     } catch {
-      // Ignore storage quota errors
+      setStorageNotice("この端末に保存できません。セトリをコピーして残してください。");
     }
   }, [
+    storageReady,
     songs,
     setlist,
     setlistTitle,
@@ -314,6 +320,7 @@ export default function App() {
 
   const handleLoadPresetSetlist = (entries: SetlistEntry[], title: string) => {
     const validIds = new Set(songs.map((s) => s.id));
+    if (setlist.length && !window.confirm("現在のセトリをこの選曲に置き換えますか？")) return;
     const safeEntries = sanitizeSetlistEntries(entries, validIds);
     const safeTitle = sanitizeUserText(title, 50) || 'マイセットリスト';
     if (safeEntries) {
@@ -389,7 +396,7 @@ export default function App() {
       likes: 1,
     };
     setReviews((prev) => [created, ...prev]);
-    showToast('あなたの感想・考察がノートに掲載されました！');
+    showToast('この端末に感想を記録しました。');
   };
 
   const handleUpdateBestQuizScore = (percentage: number) => {
@@ -397,16 +404,19 @@ export default function App() {
   };
 
   const handleResetAllUserData = () => {
-    localStorage.removeItem(STORAGE_KEY);
+    if (!window.confirm('この端末のセトリ・訪問記録・感想を初期状態に戻しますか？')) return;
+    try { localStorage.removeItem(STORAGE_KEY); } catch { setStorageNotice('保存データを初期化できませんでした。'); return; }
+    setStorageReady(true);
+    setStorageNotice('');
     setSongs(HIGEDAN_SONGS);
     setSetlist(DEFAULT_SETLIST);
     setSetlistTitle('私が聴きたい！夢のスタジアムライブ');
-    setVisitedSpotIds(['spot-shinji-lake']);
-    setAttendedTourIds(['tour-stadium-2025']);
+    setVisitedSpotIds([]);
+    setAttendedTourIds([]);
     setVotedKeys([]);
     setReviews(INITIAL_FAN_REVIEWS);
     setLikedReviewIds([]);
-    setBestQuizScore(83);
+    setBestQuizScore(0);
     showToast('保存データを初期状態にリセットしました。');
   };
 
@@ -438,7 +448,7 @@ export default function App() {
         '3つの質問に1問ずつ順番に答えるステップ遷移式',
         '診断結果のSNS風シェアカード生成＆理由解説付き',
       ],
-      ctaLabel: 'マイソング診断をはじめる',
+      ctaLabel: '86曲の楽曲ガイドを開く',
     },
     {
       id: 'discography',
@@ -447,10 +457,10 @@ export default function App() {
       subtitle: '発売順・ガイド順・音域分析・ゆかりの地',
       title: '楽曲ガイド・音域一覧・聖地マップ',
       description:
-        '全曲の最高音・最低音と登場パート（秒数）の分析表、発売順（古い順／新しい順）・楽曲ガイド順での並び替え、松江〜横浜の聖地巡礼マップを収録しています。',
+        '掲載86曲の曲調・長さと、地声・裏声の音域を、曲別の資料と一緒に読めます。松江・米子・横浜の地図もあります。',
       points: [
-        '地声最高音・裏声最高音・最低音の登場パート比較表',
-        '発売順・ガイド順ソート＆公式公開APIによる発売日照会',
+        '地声最高音・裏声最高音・最低音を採譜資料と比較',
+        '配信サービス掲載日・収録作品のCD発売日を出典付きで比較',
       ],
       ctaLabel: '楽曲ガイドを見る',
       secondaryCtaLabel: '全曲の音域・発売日表へ',
@@ -464,8 +474,8 @@ export default function App() {
       description:
         '自分がライブで聴きたい理想のセットリストを自由に組んで曲順やアンコールを編集したり、歴代ツアーの思い出を振り返ることができます。',
       points: [
-        '本編・アンコールの構成や合計演奏時間・転調数を自動計算',
-        '日産スタジアム公演など歴代ツアーのセトリ読込＆参戦記録',
+        '本編・アンコールの構成や収録音源の合計時間を自動計算',
+        '日産スタジアム公演など歴代ツアーの選曲例＆参戦記録',
       ],
       ctaLabel: 'マイセトリを作る',
       secondaryCtaLabel: '歴代ツアー記録へ',
@@ -477,10 +487,10 @@ export default function App() {
       subtitle: 'ファン投票＆歌詞考察シェア',
       title: '人気曲ランキング投票・感想ノート',
       description:
-        '「歌詞が刺さる曲」「ライブで盛り上がる曲」など4部門の人気投票と、ファン同士で好きな歌詞の解釈やライブ体験を綴る感想ノート。',
+        '「歌詞が刺さる曲」「ライブで盛り上がる曲」など4部門の人気投票と、自分のブラウザに好きな曲やライブの感想を残すノート。',
       points: [
         '4つのテーマから1クリックで推し曲に投票',
-        'みんなが綴った歌詞考察や思い出の閲覧・投稿画面',
+        '記入例を読み、自分の感想や思い出を書けるノート',
       ],
       ctaLabel: '人気曲投票を見る',
       secondaryCtaLabel: '感想・考察ノートへ',
@@ -492,10 +502,10 @@ export default function App() {
       subtitle: '各レベル20問（全60問）＆並び替え・データ検証クイズ',
       title: 'ヒゲダン検定クイズ・出典＆トリビア図鑑',
       description:
-        '初級20問・中級20問・上級20問の全60問！CDリリース順や演奏時間順の「1〜4番目並び替え問題」、五十音順の先頭・末尾、『エルダーフラワー』歌詞文字種検証、メンバーの好物まで計120本の出典資料付きで収録。',
+        '初級・中級・上級は各20問。答え合わせで作品情報・インタビュー・使用した音源を確認できます。',
       points: [
         '初級（20問）・中級（20問）・上級（20問）・並び替え特訓の多彩なモード',
-        '全60問の出典記事＆サイト内データ検証（120本）をキーワード・媒体別に検索可能',
+        '全60問の問題と出典をキーワード・媒体別に検索可能',
       ],
       ctaLabel: 'ヒゲダン検定に挑戦する',
       secondaryCtaLabel: '出典記事＆トリビア図鑑へ',
@@ -505,6 +515,7 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917]">
       {/* Slim Header with Top-Right Vertical Content Menu */}
+      {storageNotice && <p role="alert" className="bg-amber-100 p-3 text-sm">{storageNotice}</p>}
       <SiteHeader
         activeTab={activeFeatureTab}
         onSelectTab={(tab) => handleSelectTab(tab, 'all')}
@@ -538,21 +549,21 @@ export default function App() {
                     <div className="pt-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
                       <button
                         type="button"
-                        onClick={() => handleSelectTab('mood')}
+                        onClick={() => handleSelectTab('discography', 'all')}
                         className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#A93020] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         <Sparkles className="h-4 w-4" />
-                        <span>マイソング診断をはじめる</span>
+                        <span>86曲の楽曲ガイドを開く</span>
                         <ArrowRight className="h-4 w-4" />
                       </button>
 
                       <button
                         type="button"
-                        onClick={() => handleSelectTab('discography', 'all')}
+                        onClick={() => handleSelectTab('setlist')}
                         className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-5 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
                       >
                         <Compass className="h-4 w-4 text-[#1E3A5F]" />
-                        <span>楽曲ガイドを見る</span>
+                        <span>マイセトリを作る</span>
                       </button>
 
                       <button
@@ -577,7 +588,7 @@ export default function App() {
                             className="group relative aspect-square overflow-hidden rounded-lg bg-[#1C1917] ring-1 ring-black/10 shadow-xs text-left cursor-pointer"
                           >
                             {isSafeAssetUrl(art.src) && (
-                              <img
+                              <GuideArtwork
                                 src={art.src}
                                 alt={`${art.label} ジャケットイメージ`}
                                 referrerPolicy="no-referrer"
@@ -597,7 +608,7 @@ export default function App() {
                       </div>
                       <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#57534E] px-0.5">
                         <span>アルバム・年代別の収録曲を見る</span>
-                        <span className="font-bold text-[#1C1917]">ジャケットを選択 →</span>
+                        <span className="font-bold text-[#1C1917]">図柄を選択 →</span>
                       </div>
                     </div>
                   </div>
@@ -827,7 +838,7 @@ export default function App() {
                       { id: 'community', label: '人気曲投票' },
                       { id: 'fan_reviews', label: '感想ノート' },
                       { id: 'quiz', label: '検定クイズ(60問)' },
-                      { id: 'quiz_archive', label: '出典図鑑(120本)' },
+                      { id: 'quiz_archive', label: '出典図鑑' },
                     ] as { id: ActiveFeatureTab; label: string }[]
                   ).map((navItem) => {
                     const isCurrent = activeFeatureTab === navItem.id;
@@ -944,7 +955,7 @@ export default function App() {
               115万キロのファンノート — Official髭男dism 非公式ファンサイト
             </p>
             <p>
-              ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
+              <a href="https://katakatalab.com/" className="underline">KatakataLab トップ</a> ／ ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
             </p>
             <p className="flex items-center gap-1.5 text-[11px] text-[#78716C]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#15803D] shrink-0" />

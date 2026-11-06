@@ -1,3 +1,4 @@
+import { GuideArtwork } from './GuideArtwork';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
@@ -62,7 +63,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [activeSubTab, setActiveSubTab] = useState<'builder' | 'tours'>(initialSubTab);
   const [tourSortOrder, setTourSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [songSearchFilter, setSongSearchFilter] = useState<string>('');
-  const [selectedSongToAdd, setSelectedSongToAdd] = useState<string>(
+  const [requestedSong, setSelectedSongToAdd] = useState<string>(
     songs.find((s) => !setlist.some((item) => item.songId === s.id))?.id ||
       songs[0]?.id ||
       'pretender'
@@ -110,13 +111,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const stats = useMemo(() => calculateSetlistStats(setlist, songs), [setlist, songs]);
   const songMap = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
   const setlistIdSet = useMemo(() => new Set(setlist.map((s) => s.songId)), [setlist]);
-  const isSelectedAlreadyInSetlist = setlistIdSet.has(selectedSongToAdd);
+  const visibleSongs = selectableSongsByAlbum.flatMap(([, group]) => group);
+  const selectedSongToAdd = visibleSongs.find(s => s.id === requestedSong)?.id ?? visibleSongs.find(s => !setlistIdSet.has(s.id))?.id ?? visibleSongs[0]?.id ?? '';
+  const isSelectedAlreadyInSetlist = !selectedSongToAdd || setlistIdSet.has(selectedSongToAdd);
   const safeDisplayTitle = sanitizeUserText(setlistTitle, 50) || 'マイ・ドリームライブ';
 
   const handleAddSelectedSong = () => {
     if (isSelectedAlreadyInSetlist) return;
     onAddSong(selectedSongToAdd, addAsEncore);
-    const nextAvailable = songs.find(
+    const nextAvailable = visibleSongs.find(
       (s) => s.id !== selectedSongToAdd && !setlistIdSet.has(s.id)
     );
     if (nextAvailable) {
@@ -124,7 +127,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     }
   };
 
-  const handleCopySetlist = () => {
+  const handleCopySetlist = async () => {
     const lines = [
       `【${safeDisplayTitle}】`,
       `全${stats.totalSongs}曲（本編${stats.mainCount}曲 / アンコール${stats.encoreCount}曲）· 合計時間 ${stats.formattedDuration}`,
@@ -143,8 +146,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       '---',
       '#Official髭男dism #マイセットリスト',
     ];
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(lines.join('\n')).catch(() => {});
+    try {
+      await navigator.clipboard.writeText(lines.join('\n'));
+    } catch {
+      window.prompt('コピーできなかったため、以下を選択してコピーしてください。', lines.join('\n'));
+      return;
     }
     setCopiedFlyer(true);
     if (copyTimerRef.current !== null) {
@@ -176,7 +182,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
-                ? '歴代ツアーの主要セットリストをマイセトリに読み込んだり、参戦・視聴の記録を残せます。'
+                ? 'ツアーをイメージした編集部の選曲例をマイセトリに読み込んだり、参戦・視聴の記録を残せます。'
                 : '自分が聴きたい理想の曲順を組んで、合計演奏時間やライブの盛り上がり推移をシミュレーションできます。'}
             </p>
           </div>
@@ -289,7 +295,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       maxLength={40}
                       value={songSearchFilter}
                       onChange={(e) => {
-                        const val = sanitizeUserText(e.target.value, 40);
+                        const val = e.target.value.slice(0, 40);
                         setSongSearchFilter(val);
                         const q = val.trim().toLowerCase();
                         if (q) {
@@ -421,7 +427,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               </div>
                             )}
                             <div className="text-[11px] text-[#78716C] truncate">
-                              {song.album} · {formatDuration(song.durationSec)} · BPM {song.bpm} · 転調{song.keyChanges}回
+                              {song.album} · {formatDuration(song.durationSec)} · BPM {song.bpm}
                             </div>
                           </div>
                         </div>
@@ -493,7 +499,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <div className="rounded-xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] overflow-hidden">
                 <div className="relative h-32 w-full">
                   {isSafeAssetUrl(STADIUM_IMAGE_PATH) && (
-                    <img
+                    <GuideArtwork
                       src={STADIUM_IMAGE_PATH}
                       alt="スタジアムライブの風景"
                       referrerPolicy="no-referrer"
@@ -526,9 +532,9 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       </span>
                     </div>
                     <div>
-                      <span className="block text-[11px] text-white/60">合計転調回数</span>
+                      <span className="block text-[11px] text-white/60">本編の曲数</span>
                       <span className="mt-0.5 block text-xs sm:text-sm font-bold font-mono-num text-[#F5D0C9]">
-                        計 {stats.totalKeyChanges} 回
+                        {stats.mainCount} 曲
                       </span>
                     </div>
                   </div>
@@ -642,10 +648,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                         主要会場: {tour.venueHighlight}
                       </p>
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
-                        {tour.description}
+                        {tour.description} <a className="underline" href={tour.source} target="_blank" rel="noreferrer">公演資料 ↗</a>
                       </p>
                       <div className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
-                        <strong className="text-[#1C1917]">主な演奏曲：</strong>
+                        <strong className="text-[#1C1917]">このツアーをイメージした選曲例（実演順ではありません）：</strong>
                         {tour.signatureSetlistIds.join(' · ')} ／ [アンコール]{' '}
                         {tour.encoreSetlistIds.join(' · ')}
                       </div>
@@ -678,13 +684,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             .map((t) => titleToId.get(t))
                             .filter((id): id is string => Boolean(id))
                             .map((songId) => ({ songId, isEncore: true }));
-                          onLoadPresetSetlist([...mainEntries, ...encEntries], tour.tourTitle);
+                          onLoadPresetSetlist([...mainEntries, ...encEntries], tour.tourTitle + "（選曲例）");
                           setActiveSubTab('builder');
                         }}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 min-h-[38px] cursor-pointer"
                       >
                         <Music2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                        このツアー曲をマイセトリに読込
+                        選曲例をマイセトリへ
                       </button>
                     </div>
                   </article>

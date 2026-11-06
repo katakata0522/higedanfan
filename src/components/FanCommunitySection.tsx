@@ -170,8 +170,8 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'reviews'
-                ? '好きな歌詞の解釈やライブで聴いた時の思い出をファン同士で共有できるノートです。'
-                : '4つのテーマから、あなたの推し曲に1クリックで投票できます。'}
+                ? 'あらかじめ入っている感想は記入例です。自分で書いた感想はこの端末に保存されます。'
+                : '初期の票数は表示用のサンプルです。追加した票はこの端末だけに保存されます。'}
             </p>
           </div>
 

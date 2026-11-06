@@ -5,6 +5,9 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/higedanfan/',
+    publicDir: false as const,
+    build: { license: { fileName: 'third-party-licenses.txt' } },
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {

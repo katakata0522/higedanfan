@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { GuideArtwork } from './GuideArtwork';
+import { songEvidence } from '../data/fullCatalogSongs';
+import React, { useEffect, useRef, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
 import { formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
@@ -23,29 +25,42 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
 }) => {
   const [isPlayingTempo, setIsPlayingTempo] = useState(false);
 
+  const panel = useRef<HTMLDivElement>(null);
+  const closeRef = useRef(onClose);
+  useEffect(() => { closeRef.current = onClose; }, [onClose]);
   useEffect(() => {
     setIsPlayingTempo(false);
     stopTempoPreview();
     if (!song) return;
 
+    const from = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    panel.current?.querySelector<HTMLButtonElement>('button')?.focus();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Tab' && panel.current) {
+        const elems = panel.current.querySelectorAll<HTMLElement>('a[href],button:not(:disabled),[tabindex="0"]');
+        const first = elems[0], last = elems[elems.length-1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last?.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first?.focus(); }
+      }
       if (e.key === 'Escape') {
         stopTempoPreview();
-        onClose();
+        closeRef.current();
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       document.body.style.overflow = prevOverflow;
+      from?.focus();
       window.removeEventListener('keydown', handleKeyDown);
       stopTempoPreview();
     };
-  }, [song, onClose]);
+  }, [song?.id]);
 
   if (!song) return null;
+  const fact = songEvidence[song.id as keyof typeof songEvidence];
 
   const handleToggleTempo = () => {
     if (isPlayingTempo) {
@@ -62,6 +77,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-[#1C1917]/60 p-3 sm:p-4 backdrop-blur-xs"
+      ref={panel}
       role="dialog"
       aria-modal="true"
       aria-labelledby="song-modal-title"
@@ -78,9 +94,9 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
         <div className="flex items-start justify-between gap-4 border-b border-[#E6E1D6] pb-4">
           <div className="flex items-center gap-4 min-w-0">
             {isSafeAssetUrl(song.jacketImage) && (
-              <img
+              <GuideArtwork
                 src={song.jacketImage}
-                alt={`${song.title} ジャケット`}
+                alt={`${song.title} のイメージ画像`}
                 referrerPolicy="no-referrer"
                 className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-xl object-cover ring-1 ring-black/15 shadow-xs"
               />
@@ -97,7 +113,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
                 {song.title}
               </h2>
               <p className="mt-1 text-xs text-[#57534E]">
-                {getSongwriterCredit(song)} · {SOUND_LABELS[song.sound]} · {song.tieUp}
+                {fact.recording} · {fact.album}
               </p>
             </div>
           </div>
@@ -130,13 +146,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               </span>
             </div>
             <div>
-              <span className="block text-xs text-[#78716C]">曲中の転調回数</span>
-              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#C83E2B]">
-                計 {song.keyChanges} 回
-              </span>
-            </div>
-            <div>
-              <span className="block text-xs text-[#78716C]">ライブ熱量</span>
+              <span className="block text-xs text-[#78716C]">ライブ熱量（編集部の目安）</span>
               <span className="mt-0.5 block text-base font-bold font-mono-num text-[#1E3A5F]">
                 Lv.{song.energyLevel} / 10
               </span>
@@ -166,109 +176,37 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
           </button>
         </div>
 
-        {/* Vocal Range & High/Low Note Section Analysis */}
-        <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-4">
-          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#E6E1D6] pb-3">
-            <h3 className="text-sm font-bold text-[#1C1917]">
-              音域データ（最高音・最低音）＆登場パート分析
-            </h3>
-            <span className="text-xs font-mono-num text-[#78716C]">
-              音域幅：約 {song.vocalRange.rangeSpanSemitones} 半音
-            </span>
+        <section className="mt-5 space-y-4 text-sm" aria-label="楽曲データと出典">
+          <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
+            <h3 className="font-bold">曲調・聴きどころ</h3><p className="my-2">{fact.style}</p>
+            <a className="underline" href={fact.styleSource} target="_blank" rel="noreferrer">{fact.styleLabel}を読む ↗</a>
           </div>
-
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
-              <span className="block text-[11px] font-bold text-[#78716C]">地声最低音</span>
-              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#1E3A5F]">
-                {song.vocalRange.lowestNote}
-              </span>
-              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
-                {song.vocalRange.lowNoteSection}
-              </span>
-            </div>
-
-            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
-              <span className="block text-[11px] font-bold text-[#78716C]">地声最高音</span>
-              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#C83E2B]">
-                {song.vocalRange.highestChestNote}
-              </span>
-              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
-                {song.vocalRange.highNoteSection}
-              </span>
-            </div>
-
-            <div className="rounded-lg bg-[#FBF9F5] border border-[#E6E1D6] p-3">
-              <span className="block text-[11px] font-bold text-[#78716C]">裏声（ファルセット）最高音</span>
-              <span className="mt-0.5 block text-base font-bold font-mono-num text-[#B45309]">
-                {song.vocalRange.highestFalsettoNote}
-              </span>
-              <span className="mt-1 block text-[11px] text-[#57534E] leading-snug">
-                歌唱ポイント：{song.vocalRange.singingAdvice}
-              </span>
-            </div>
+          <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
+            <h3 className="font-bold">歌の音域（採譜者による分析）</h3>
+            <dl className="my-3 grid grid-cols-3 gap-2 text-xs">
+              <div><dt>地声最低</dt><dd className="font-bold">{song.vocalRange.lowestNote}</dd></div>
+              <div><dt>地声最高</dt><dd className="font-bold">{song.vocalRange.highestChestNote}</dd></div>
+              <div><dt>裏声最高</dt><dd className="font-bold">{song.vocalRange.highestFalsettoNote}</dd></div>
+            </dl>
+            <p>掲載値の幅：{song.vocalRange.rangeSpanSemitones}半音。裏声欄の「記載なし」は、裏声を使わないという意味ではありません。</p>
+            <a className="underline" href={fact.rangeSource} target="_blank" rel="noreferrer">採用した採譜：{fact.rangeLabel} ↗</a>
+            {fact.otherRange && <p className="mt-2">別の採譜（地声最低／地声最高／裏声最高）：
+              {fact.otherRange.join(' ／ ')}。 <a className="underline" href={fact.otherSource} target="_blank" rel="noreferrer">音域調査 Wiki ↗</a></p>}
           </div>
-        </div>
-
-        {/* Pull Quote Lyric */}
-        <blockquote className="my-5 border-y border-[#E6E1D6] bg-white py-4 px-4 sm:px-6 text-center">
-          <p className="font-editorial text-base sm:text-lg italic leading-relaxed text-[#1C1917] text-balance">
-            「{song.iconicLyricQuote}」
-          </p>
-          <footer className="mt-1.5 text-xs text-[#78716C]">
-            — {getSongwriterCredit(song)}（Official髭男dism『{song.title}』より）
-          </footer>
-        </blockquote>
-
-        {/* 2-Column Reading Layout */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-[#1C1917]">
-                <Disc className="h-4 w-4 text-[#C83E2B]" />
-                楽曲の背景・ライナーノーツ
-              </h3>
-              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
-                {song.linerNotes}
-              </p>
-            </div>
-            <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-[#1C1917]">
-                <Music className="h-4 w-4 text-[#1E3A5F]" />
-                サウンド＆アレンジの聴きどころ
-              </h3>
-              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
-                {song.musicalHighlight}
-              </p>
-            </div>
+          <div className="rounded-xl border border-[#E6E1D6] bg-white p-4 space-y-2">
+            <h3 className="font-bold">収録音源と発売日</h3>
+            <p>{fact.recording} ／ {fact.album}：{formatDuration(fact.seconds)}。配信サービス掲載日：{fact.release}。
+              <a className="underline" href={fact.apple} target="_blank" rel="noreferrer">Apple Music の楽曲情報 ↗</a></p>
+            {fact.cd && <p>この作品のCD発売日：{fact.cd}。 <a className="underline" href={fact.cdSource} target="_blank" rel="noreferrer">公式作品情報 ↗</a></p>}
+            <p>テンポ：{fact.tempo} BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。
+              <a className="underline" href={fact.tempoSource} target="_blank" rel="noreferrer">テンポの資料 ↗</a></p>
           </div>
-
-          <div className="space-y-4">
-            <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-[#1C1917]">
-                <Mic2 className="h-4 w-4 text-[#B45309]" />
-                歌詞の世界観・考察
-              </h3>
-              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
-                {song.lyricAnalysis}
-              </p>
-            </div>
-            <div className="rounded-xl border border-[#E6E1D6] bg-white p-4">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-[#1C1917]">
-                <Radio className="h-4 w-4 text-[#15803D]" />
-                ライブでの演出・アレンジ
-              </h3>
-              <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
-                {song.liveArrangementNote}
-              </p>
-            </div>
-          </div>
-        </div>
+        </section>
 
         {/* Action Controls Footer */}
         <div className="mt-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-[#E6E1D6] pt-4">
           <div className="text-xs text-[#78716C]">
-            現在の人気投票: <strong className="text-[#1C1917]">{song.votes.overall}</strong> 票（歌詞部門: <strong className="text-[#1C1917]">{song.votes.lyric}</strong> 票）
+            参考票を含む、この端末の投票表示： <strong className="text-[#1C1917]">{song.votes.overall}</strong> 票（歌詞部門: <strong className="text-[#1C1917]">{song.votes.lyric}</strong> 票）
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

@@ -53,13 +53,13 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'discography',
     label: '楽曲ガイド（全86曲）',
-    shortDesc: '発売順・ガイド順・転調回数で探せる全曲ライナーノーツ',
+    shortDesc: '曲調・BPM・長さを確認できる86曲のガイド',
     icon: <Disc className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'vocal_range',
     label: '全曲の音域・発売日一覧',
-    shortDesc: '最高音・最低音の登場パート分析と発売順・公式API照会',
+    shortDesc: '地声・裏声の採譜、配信掲載日とCD発売日',
     icon: <Mic2 className="h-4 w-4 shrink-0" />,
   },
   {
@@ -77,7 +77,7 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'tour_archive',
     label: '歴代ツアー記録',
-    shortDesc: '過去ツアーの代表セトリ読込とライブ参戦チェック',
+    shortDesc: 'ツアー別の選曲例とライブ参戦チェック',
     icon: <Ticket className="h-4 w-4 shrink-0" />,
   },
   {
@@ -100,8 +100,8 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   },
   {
     id: 'quiz_archive',
-    label: '出典記事＆トリビア図鑑（120資料）',
-    shortDesc: '全60問の記事ソース・50音順・歌詞文字種検証一覧',
+    label: '出典記事＆トリビア図鑑',
+    shortDesc: '解答の根拠になった作品情報・曲別資料',
     icon: <Newspaper className="h-4 w-4 shrink-0" />,
   },
 ];
