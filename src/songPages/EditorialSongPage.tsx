@@ -3,12 +3,13 @@ import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
 import { formatDuration } from '../utils/fanLogic';
+import type { EditorialSongPageData } from './EditorialSongPageData';
 
-const song = HIGEDAN_SONGS.find(item => item.id === 'mixed-nuts')!;
-const fact = songEvidence['mixed-nuts'];
 const base = import.meta.env.BASE_URL;
 
-export function MixedNutsPage() {
+export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
+  const song = HIGEDAN_SONGS.find(item => item.id === page.id)!;
+  const fact = songEvidence[page.id as keyof typeof songEvidence];
   const [toast, setToast] = useState<string | null>(null);
   const toastTimer = useRef<number | null>(null);
   const records = useFanRecords(message => {
@@ -40,15 +41,15 @@ export function MixedNutsPage() {
         <nav className="breadcrumb" aria-label="現在の場所">
           <a href={`${base}#discography`}>掲載86曲 楽曲ガイド</a>
           <span aria-hidden="true">／</span>
-          <span aria-current="page">ミックスナッツ</span>
+          <span aria-current="page">{song.title}</span>
         </nav>
 
         <article className="song-sheet" aria-labelledby="song-title">
           <header className="song-hero">
             <figure className="cover">
               <img
-                src={`${base}song-art/mixed-nuts-editorial.png`}
-                alt="ピアノ、トランペット、赤いランプを描いた当サイト制作のイメージ画像"
+                src={`${base}${page.artwork.path}`}
+                alt={page.artwork.alt}
                 width="250"
                 height="250"
               />
@@ -65,23 +66,22 @@ export function MixedNutsPage() {
                 <div className="fact-row fact-row-range">
                   <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
                   <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
-                  <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto}</dd></div>
+                  <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
                 </div>
               </dl>
             </div>
           </header>
 
           <div className="feature-line" aria-label="当サイトによる曲の紹介文">
-            <p className="feature-phrase">違いを抱えて、ひとつの家族になる。</p>
-            <p className="feature-credit">— 当サイト編集部による紹介文</p>
+            <p className="feature-phrase">{page.feature.text}</p>
+            <p className="feature-credit">{page.feature.credit}</p>
           </div>
 
           <section className="overview" aria-labelledby="overview-title">
             <h2 id="overview-title">この曲の概要</h2>
             <div className="overview-copy">
-              <p>「ミックスナッツ」は、TVアニメ『SPY×FAMILY』第1クールのオープニング主題歌として書き下ろされた。2022年4月15日に配信され、のちにアルバム『Rejoice』の3曲目にも収録された。</p>
-              <p>Official髭男dismは作品の公式サイトで、ピーナッツが見た目の似たナッツとは異なる種類だと知ったことを、曲名の着想として語っている。その発見を、正体を隠して家族を演じるフォージャー家の物語に重ねた。メンバーのコメントには、本物かどうかより、そこで得られる幸せや喜びを大切にする視点も示されている。</p>
-              <p className="range-note">※ 裏声最高音はラストのフェイクを含む採譜に基づきます。採譜方法によって値は異なります。</p>
+              {page.overview.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+              {page.rangeNote && <p className="range-note">{page.rangeNote}</p>}
             </div>
           </section>
 
@@ -90,19 +90,18 @@ export function MixedNutsPage() {
             <div className="sources-body">
               <dl className="source-facts">
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
-                <div><dt>収録作品</dt><dd>{fact.album}（3曲目）</dd></div>
+                <div><dt>収録作品</dt><dd>{fact.album}{page.albumTrack ? `（${page.albumTrack}曲目）` : ''}</dd></div>
                 <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}（掲載音源）</dd></div>
-                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto}</dd></div>
+                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '記載なし'}</dd></div>
               </dl>
               <ul className="source-list">
-                <li><a href="https://spy-family.net/tvseries/music/music_op.php" target="_blank" rel="noreferrer">アニメ『SPY×FAMILY』公式サイト</a>：タイアップとアーティストコメント</li>
-                <li><a href="https://higedan.com/discography/detail/20/" target="_blank" rel="noreferrer">Official髭男dism 公式作品情報</a>：配信日</li>
-                <li><a href={fact.cdSource} target="_blank" rel="noreferrer">Official髭男dism『Rejoice』収録情報</a>：収録順とアルバム発売日</li>
-                <li><a href={fact.apple} target="_blank" rel="noreferrer">Apple Music の掲載音源</a>：演奏時間</li>
-                <li><a href={fact.rangeSource} target="_blank" rel="noreferrer">{fact.rangeLabel}</a>：歌の音域と曲調</li>
-                <li><a href={fact.tempoSource} target="_blank" rel="noreferrer">テンポの参考資料</a>：BPM</li>
+                {page.sources.map((source, index) => (
+                  <li key={`${source.label}-${index}`}>
+                    <a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noreferrer">{source.label}</a>：{source.purpose}
+                  </li>
+                ))}
               </ul>
-              <p className="source-caveat">音域とテンポは採譜・計測方法で表記が異なる場合があります。ジャケットは公式の作品画像ではありません。</p>
+              <p className="source-caveat">{page.sourceCaveat}</p>
             </div>
           </details>
 

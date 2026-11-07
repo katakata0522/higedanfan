@@ -3,6 +3,7 @@ import { partialEpCoverage } from '../utils/songCatalog';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
+import { songPagePath } from '../songPages/publishedSongPageIds';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   BookOpen,
@@ -283,9 +284,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         </div>
 
                         <div className="mt-3.5 flex items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
-                          {song.id === 'mixed-nuts' ? (
+                          {songPagePath(song.id) ? (
                             <a
-                              href={`${import.meta.env.BASE_URL}songs/mixed-nuts/`}
+                              href={`${import.meta.env.BASE_URL}${songPagePath(song.id)}`}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
                             >
                               <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />

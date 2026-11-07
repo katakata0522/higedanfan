@@ -15,6 +15,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import { SongDetailModal } from './components/SongDetailModal';
 import type { QuizSession } from './components/quiz/quizSession';
+import { songPagePath } from './songPages/publishedSongPageIds';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -77,8 +78,9 @@ export default function App() {
   }, []);
 
   const selectSong = (id: string | null) => {
-    if (id === 'mixed-nuts') {
-      window.location.assign(`${import.meta.env.BASE_URL}songs/mixed-nuts/`);
+    const editorialPath = id ? songPagePath(id) : null;
+    if (editorialPath) {
+      window.location.assign(`${import.meta.env.BASE_URL}${editorialPath}`);
       return;
     }
     if (id === null) {
