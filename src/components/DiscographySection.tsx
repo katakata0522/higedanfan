@@ -4,7 +4,8 @@ import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import React, { useEffect, useMemo, useState } from 'react';
+import { saveGuideReturnState, takeGuideReturnState } from '../utils/guideReturnState';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
   MapPin,
@@ -55,21 +56,33 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   initialEraFilter = 'all',
 }) => {
   const activeSubView = initialSubView;
-  const [filters, setFilters] = useState({ ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
+  const [returnState] = useState(() => takeGuideReturnState(songs.length));
+  const restored = initialEraFilter === 'all' ? returnState : null;
+  const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery, sortBy } = filters;
   const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
-  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_VISIBLE_COUNT);
+  const [visibleCount, setVisibleCount] = useState<number>(() => restored?.visibleCount ?? INITIAL_VISIBLE_COUNT);
+  const skipInitialPaginationReset = useRef(Boolean(restored));
+  const previousEraPreset = useRef(initialEraFilter);
 
   useEffect(() => {
-    setFilters(current => current.era === initialEraFilter ? current : { ...current, era: initialEraFilter });
+    if (previousEraPreset.current === initialEraFilter) return;
+    previousEraPreset.current = initialEraFilter;
+    setFilters(current => ({ ...current, era: initialEraFilter, album: 'all' }));
   }, [initialEraFilter]);
 
   // Reset pagination whenever filters or sub-view change
   useEffect(() => {
+    if (skipInitialPaginationReset.current) {
+      skipInitialPaginationReset.current = false;
+      return;
+    }
     setVisibleCount(
       albumFilter !== 'all' || searchQuery.trim().length > 0 ? songs.length : INITIAL_VISIBLE_COUNT
     );
   }, [eraFilter, albumFilter, soundFilter, searchQuery, sortBy, activeSubView, songs.length]);
+
+  const rememberGuide = () => saveGuideReturnState({ filters, visibleCount, view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography' });
 
   const filteredSongs = useMemo(() => filterAndSortDiscography(songs, filters), [songs, filters]);
   const resultAlbum = albumFilter !== 'all' ? albumFilter : albumForSearch(searchQuery);
@@ -287,6 +300,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {songPagePath(song.id) ? (
                             <a
                               href={`${import.meta.env.BASE_URL}${songPagePath(song.id)}`}
+                              onClick={rememberGuide}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
                             >
                               <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
@@ -365,7 +379,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   {displayedSongs.map(song => {
                     const f = songEvidence[song.id as keyof typeof songEvidence];
                     return <article key={song.id} className="rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm">
-                      <button className="text-left font-bold underline" onClick={()=>onSelectSong(song)}>{song.title}</button>
+                      <button className="text-left font-bold underline" onClick={() => {
+                        if (songPagePath(song.id)) rememberGuide();
+                        onSelectSong(song);
+                      }}>{song.title}</button>
                       <p className="my-1 text-xs">{f.album} ／ {formatDuration(song.durationSec)}</p>
                       <p>地声 {song.vocalRange.lowestNote} ～ {song.vocalRange.highestChestNote} ／ 裏声最高 {song.vocalRange.highestFalsettoNote}</p>
                       <p>配信掲載日 <a className="underline" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a>
