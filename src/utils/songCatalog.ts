@@ -14,6 +14,7 @@ export const ALBUM_CHRONOLOGY_RANK: Record<string, number> = {
   'ミックスナッツ EP': 10,
   Rejoice: 11,
   'Single / 2024-2026 Collection': 12,
+  'スターダスト/エルダーフラワー': 13,
 };
 
 export const EP_TRACK_ORDER_MAP: Record<string, Record<string, number>> = {

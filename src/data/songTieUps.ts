@@ -113,4 +113,13 @@ export const songTieUps: Partial<Record<keyof typeof recordings, SongItem['tieUp
   'fifty-percent': [
     { text: "映画『はたらく細胞』主題歌", source: "https://www.warnerbros.co.jp/home_entertainment/hfozviq72ubt/" },
   ],
+  'make-me-wonder': [
+    { text: "TVアニメ『ダーウィン事変』主題歌", source: "https://higedan.com/news/detail/101536" },
+  ],
+  'elderflower': [
+    { text: "映画『人はなぜラブレターを書くのか』主題歌", source: "https://higedan.com/news/detail/101588" },
+  ],
+  'stardust': [
+    { text: "TBS系日曜劇場『GIFT』主題歌", source: "https://higedan.com/news/detail/101603" },
+  ],
 };

@@ -9,7 +9,7 @@ interface SourceGroup {
 const groups: SourceGroup[] = [
   {
     title: "歌の音域",
-    body: "86曲の音域を掲載するにあたり、69曲は「J-POP 音域の沼」、17曲は「音域データ！＠ウィキ」の採譜を参照しました。「ミックスナッツ」のように、最後のフェイク（歌詞のない歌い回し）を含めるかどうかで裏声の最高音が変わる曲もあります。",
+    body: "90曲の音域を掲載するにあたり、73曲は「J-POP 音域の沼」、17曲は「音域データ！＠ウィキ」の採譜を参照しました。「ミックスナッツ」のように、最後のフェイク（歌詞のない歌い回し）を含めるかどうかで裏声の最高音が変わる曲もあります。",
     links: [
       ["J-POP 音域の沼「ミックスナッツ」の採譜", "https://vocal-range.com/archives/post-6815.html"],
       ["音域データ！＠ウィキ「Official髭男dism」の採譜表", "https://w.atwiki.jp/saikouon_dokoda/pages/1008.html"],
@@ -17,7 +17,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "演奏時間・発売日・収録曲順",
-    body: "演奏時間と配信掲載日は、86曲それぞれの収録音源をApple Musicで確認しました。CDの発売日や曲順は、バンドとレーベルの公式作品情報に基づいています。",
+    body: "演奏時間と配信掲載日は、90曲それぞれの収録音源をApple Musicで確認しました。CDの発売日や曲順は、バンドとレーベルの公式作品情報に基づいています。",
     links: [
       ["Apple Music『Traveler』収録の「Pretender」", "https://music.apple.com/jp/album/pretender/1479397582?i=1479397873"],
       ["Official髭男dism『Rejoice』の作品情報", "https://higedan.com/news/detail/100958"],
@@ -27,7 +27,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "テンポと曲の聴きどころ",
-    body: "テンポの出典は、83曲がKHUFRUDAMO NOTES、「らしさ」と「50%」がKeyTube、「Anarchy (Rejoice ver.)」がSongBPMです。リズムやアレンジの解説には、採譜やコード譜、メンバーのインタビュー、楽曲レビューも参照しました。",
+    body: "テンポの出典は、83曲がKHUFRUDAMO NOTES、6曲がKeyTube、1曲がSongBPMです。リズムやアレンジの解説には、採譜やコード譜、メンバーのインタビュー、楽曲レビューも参照しました。",
     links: [
       ["KHUFRUDAMO NOTESのテンポ一覧", "https://khufrudamonotes.com/officialhigedism-data"],
       ["KeyTube「らしさ」", "https://keytube.net/song/detail/144873"],
@@ -46,7 +46,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "曲名の読み",
-    body: "曲名をかなでも探せるよう、79曲はUtaTenの「よみ」、7曲はJOYSOUNDのフリガナを使っています。「Anarchy (Rejoice ver.)」は、基本の曲名「あなーきー」で検索できます。",
+    body: "曲名をかなでも探せるよう、82曲はUtaTenの「よみ」、7曲はJOYSOUNDのフリガナを使っています。「Make Me Wonder」のかな表記は当サイトの検索補助です。「Anarchy (Rejoice ver.)」は基本の曲名「あなーきー」でも探せます。",
     links: [
       ["UtaTen「Pretender」", "https://utaten.com/lyric/qk19044046/"],
       ["JOYSOUND「I LOVE...」", "https://www.joysound.com/web/search/song/818051"],

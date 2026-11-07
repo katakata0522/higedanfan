@@ -6,6 +6,8 @@ UtaTenは各曲ページの「よみ」、JOYSOUNDは各曲ページの配信デ
 
 「Anarchy (Rejoice ver.)」の読みは基本曲名「Anarchy」の資料に基づきます。「可能性 (prod.Masayoshi Iimori)」も基本曲名部分を対象とし、版名や制作者名から読みを推定していません。表示タイトルと録音版は楽曲カタログの値を使います。
 
+「Make Me Wonder」は参照先の「よみ」も英字表記のため、かな検索用に当サイトで「めいくみーわんだー」を補助登録しました。
+
 | 曲名 | 検索用の読み | 確認先 |
 | --- | --- | --- |
 | Pretender | ぷりてんだー | [UtaTen](https://utaten.com/lyric/qk19044046/) |
@@ -94,3 +96,7 @@ UtaTenは各曲ページの「よみ」、JOYSOUNDは各曲ページの配信デ
 | Chessboard | ちぇすぼーど | [UtaTen](https://utaten.com/lyric/tt23052201/) |
 | B-Side Blues | びーさいどぶるーす | [JOYSOUND](https://www.joysound.com/web/search/song/1047949) |
 | 50% | ふぃふてぃーぱーせんと | [UtaTen](https://utaten.com/lyric/mi24112622/) |
+| Sanitizer | さにたいざー | [UtaTen](https://utaten.com/lyric/mi25111914/) |
+| Make Me Wonder | めいくみーわんだー | [UtaTen（原題を確認）](https://utaten.com/lyric/sz25121101/)／かなは当サイトの検索補助表記 |
+| エルダーフラワー | えるだーふらわー | [UtaTen](https://utaten.com/lyric/sz26021728/) |
+| スターダスト | すたーだすと | [UtaTen](https://utaten.com/lyric/sz26032305/) |

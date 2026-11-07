@@ -284,7 +284,7 @@ export const FanCommunitySection: React.FC<FanCommunitySectionProps> = ({
                     maxLength={50}
                     value={pollSearchQuery}
                     onChange={(e) => setPollSearchQuery(e.target.value.slice(0, 50))}
-                    placeholder="全86曲から曲名・アルバム名で検索して投票..."
+                    placeholder="全90曲から曲名・アルバム名で検索して投票..."
                     className="w-full rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-8 pr-8 py-2 text-xs text-[#1C1917] min-h-[38px]"
                   />
                   {pollSearchQuery.length > 0 && (

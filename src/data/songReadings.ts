@@ -86,4 +86,8 @@ export const songReadings: Readonly<Record<string, string>> = {
   "chessboard-song": "ちぇすぼーど",
   "b-side-blues": "びーさいどぶるーす",
   "fifty-percent": "ふぃふてぃーぱーせんと",
+  "sanitizer": "さにたいざー",
+  "make-me-wonder": "めいくみーわんだー",
+  "elderflower": "えるだーふらわー",
+  "stardust": "すたーだすと",
 };

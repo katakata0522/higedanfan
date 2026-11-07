@@ -16,16 +16,16 @@ export const DEFAULT_GUIDE_FILTERS: SongGuideFilterValues = {
 };
 
 const ERA_TABS: { id: EraTag | 'all'; label: string; shortLabel: string }[] = [
-  { id: 'all', label: 'すべて（全86曲）', shortLabel: '全86曲' },
+  { id: 'all', label: 'すべて（全90曲）', shortLabel: '全90曲' },
   { id: 'indies_escaparade', label: '初期〜エスカパレード', shortLabel: '初期〜エスカパレード' },
   { id: 'traveler', label: 'Traveler期', shortLabel: 'Traveler期' },
   { id: 'editorial', label: 'Editorial期', shortLabel: 'Editorial期' },
   { id: 'rejoice', label: 'Rejoice期', shortLabel: 'Rejoice期' },
-  { id: 'latest_2025_2026', label: '2024–2025 配信シングル', shortLabel: '2024–2025 配信' },
+  { id: 'latest_2025_2026', label: '2024–2026 新曲', shortLabel: '2024–2026 新曲' },
 ];
 
 const ALBUM_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'すべての収録アルバム・EP（全86曲）' },
+  { id: 'all', label: 'すべての収録アルバム・EP（全90曲）' },
   { id: 'ラブとピースは君の中', label: '1st Mini『ラブとピースは君の中』(2015・全8曲)' },
   { id: 'MAN IN THE MIRROR', label: '2nd Mini『MAN IN THE MIRROR』(2016・全6曲)' },
   { id: "What's Going On? EP", label: "1st EP『What's Going On?』(2016・全4曲)" },
@@ -37,7 +37,8 @@ const ALBUM_FILTERS: { id: string; label: string }[] = [
   { id: 'Editorial', label: 'Major 2nd『Editorial』(2021・全14曲)' },
   { id: 'ミックスナッツ EP', label: '4th EP『ミックスナッツ EP』(2022・掲載3曲／全4曲)' },
   { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・ボーカル15曲)' },
-  { id: 'Single / 2024-2026 Collection', label: '2024–2025 配信シングル（掲載3曲）' },
+  { id: 'Single / 2024-2026 Collection', label: '2024–2025 配信シングル（掲載5曲）' },
+  { id: 'スターダスト/エルダーフラワー', label: '2026 両A面シングル『スターダスト/エルダーフラワー』（掲載2曲）' },
 ];
 
 const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
