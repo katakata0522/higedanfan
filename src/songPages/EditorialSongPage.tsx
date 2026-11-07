@@ -41,17 +41,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
       </header>
 
       <main id="main" className="page-main">
-        <nav className="breadcrumb" aria-label="現在の場所">
-          <a href={`${base}#discography`}>掲載90曲 楽曲ガイド</a>
-          <span aria-hidden="true">／</span>
-          <span aria-current="page">{song.title}</span>
-        </nav>
-
         <article className="song-sheet" aria-labelledby="song-title">
           <header className="song-hero">
             <figure className="cover">
               {'path' in page.artwork ? (
-                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="192" height="192" />
+                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="220" height="220" />
               ) : (
                 <GuideArtwork src={page.artwork.theme} alt={page.artwork.alt} className="guide-artwork" />
               )}
@@ -128,11 +122,6 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           {toast && <p className="toast" role="status" aria-live="polite">{toast}</p>}
         </article>
       </main>
-
-      <footer className="site-footer">
-        <p>115万キロのファンノート — Official髭男dism 非公式ファンサイト</p>
-        <a href={`${base}#sources`}>参考資料・謝辞</a>
-      </footer>
     </div>
   );
 }
