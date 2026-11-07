@@ -104,7 +104,7 @@ a { color: inherit; }
 
 .cover { margin: 0; align-self: start; }
 
-.cover img {
+.cover img, .cover .guide-artwork {
   display: block;
   width: 250px;
   height: 250px;
@@ -114,6 +114,8 @@ a { color: inherit; }
   border-radius: 8px;
   box-shadow: 0 2px 9px #0002;
 }
+
+.cover .guide-artwork { display: block; }
 
 .hero-content { display: flex; min-width: 0; flex-direction: column; }
 
@@ -253,6 +255,9 @@ a { color: inherit; }
 
 .source-list a { color: #0757ad; text-underline-offset: 3px; }
 
+.vocal-variant { margin: 0 0 15px; padding: 9px 12px; border-left: 2px solid #c9b69d; background: #fffaf3b8; }
+.vocal-variant a { color: #0757ad; text-underline-offset: 3px; }
+
 .source-caveat { margin: 17px 0 0; color: #57534e; font-size: 12px; }
 
 .storage-notice { padding: 12px; border: 1px solid #b45309; border-radius: 6px; background: #fff4d8; font-size: 13px; }
@@ -297,7 +302,7 @@ a { color: inherit; }
 @media (max-width: 760px) {
   .song-sheet { padding: 27px 23px 30px; }
   .song-hero { grid-template-columns: 185px minmax(0, 1fr); gap: 18px; }
-  .cover img { width: 185px; height: 185px; }
+  .cover img, .cover .guide-artwork { width: 185px; height: 185px; }
   .hero-content h1 { font-size: clamp(28px, 5.2vw, 40px); }
   .recording { font-size: 14px; }
   .recording span { font-size: 15px; }
@@ -317,7 +322,7 @@ a { color: inherit; }
   .song-sheet { padding: 23px 18px 26px; }
   .song-hero { grid-template-columns: 1fr; gap: 17px; }
   .cover { width: min(60vw, 210px); justify-self: center; }
-  .cover img { width: 100%; height: auto; }
+  .cover img, .cover .guide-artwork { width: 100%; height: auto; }
   .hero-content h1 { margin-top: 0; font-size: clamp(32px, 8vw, 46px); }
   .recording { margin-bottom: 18px; }
   .song-facts { margin-top: 0; }

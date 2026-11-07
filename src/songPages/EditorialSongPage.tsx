@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { HIGEDAN_SONGS } from '../data/higedanData';
+import { GuideArtwork } from '../components/GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
 import { formatDuration } from '../utils/fanLogic';
@@ -39,7 +40,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
       <main id="main" className="page-main">
         <nav className="breadcrumb" aria-label="現在の場所">
-          <a href={`${base}#discography`}>掲載86曲 楽曲ガイド</a>
+          <a href={`${base}#discography`}>掲載90曲 楽曲ガイド</a>
           <span aria-hidden="true">／</span>
           <span aria-current="page">{song.title}</span>
         </nav>
@@ -47,12 +48,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
         <article className="song-sheet" aria-labelledby="song-title">
           <header className="song-hero">
             <figure className="cover">
-              <img
-                src={`${base}${page.artwork.path}`}
-                alt={page.artwork.alt}
-                width="250"
-                height="250"
-              />
+              {'path' in page.artwork ? (
+                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="250" height="250" />
+              ) : (
+                <GuideArtwork src={page.artwork.theme} alt={page.artwork.alt} className="guide-artwork" />
+              )}
             </figure>
             <div className="hero-content">
               <h1 id="song-title">{song.title}</h1>
@@ -94,6 +94,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}（掲載音源）</dd></div>
                 <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '記載なし'}</dd></div>
               </dl>
+              {page.vocalVariants?.map(variant => (
+                <p className="vocal-variant" key={variant.label}>
+                  <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noreferrer">{variant.sourceLabel}</a>の採譜）
+                </p>
+              ))}
               <ul className="source-list">
                 {page.sources.map((source, index) => (
                   <li key={`${source.label}-${index}`}>

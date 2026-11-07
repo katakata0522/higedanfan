@@ -159,7 +159,7 @@ export default function App() {
                   {(
                     [
                       { id: 'mood', label: 'マイソング診断' },
-                      { id: 'discography', label: '楽曲ガイド(86曲)' },
+                      { id: 'discography', label: '楽曲ガイド(90曲)' },
                       { id: 'vocal_range', label: '音域・発売日表' },
                       { id: 'sacred_map', label: '聖地マップ' },
                       { id: 'setlist', label: 'マイセトリ作成' },

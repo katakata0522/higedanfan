@@ -2,6 +2,7 @@ import { songEvidence, pitchNumber } from '../data/fullCatalogSongs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS, QUIZ_QUESTIONS, TOUR_ARCHIVES } from '../data/higedanData';
+import { publishedSongPageIds } from '../songPages/publishedSongPageIds';
 import {
   buildMoodMatchExplanation,
   calculateQuizResult,
@@ -239,8 +240,9 @@ test('formatDiagnosisShareText formats song title, match score, mood reason, and
   assert.ok(shareText.includes('#115万キロのファンノート'));
 });
 
-test('filterAndSortDiscography supports all 86 verified songs, album/EP filtering, album_track_order, guide_order, release_oldest, highest_note, vocal_span, and sortTourArchives orders tours chronologically', () => {
-  assert.equal(HIGEDAN_SONGS.length, 86);
+test('filterAndSortDiscography supports all 90 verified songs, album/EP filtering, album_track_order, guide_order, release_oldest, highest_note, vocal_span, and sortTourArchives orders tours chronologically', () => {
+  assert.equal(HIGEDAN_SONGS.length, 90);
+  assert.deepEqual(new Set(HIGEDAN_SONGS.map(song => song.id)), publishedSongPageIds);
 
   for (const song of HIGEDAN_SONGS) {
     assert.ok(song.vocalRange.lowestNote.length > 0);
@@ -425,14 +427,14 @@ test('filterAndSortDiscography supports all 86 verified songs, album/EP filterin
   }
 });
 
-test('all 86 setlist entries and encore assignments survive validation', () => {
+test('all 90 setlist entries and encore assignments survive validation', () => {
   const all = HIGEDAN_SONGS.map((s,i)=>({songId:s.id,isEncore:i>=70}));
   assert.deepEqual(sanitizeSetlistEntries(all,new Set(all.map(s=>s.songId))),all);
   assert.equal(pitchNumber('mid1A#'),46);
   assert.equal(pitchNumber('hiC'),72);
   assert.equal(songEvidence['anarchy-song'].low,'mid1F');
   assert.equal(songEvidence['stand-by-you'].falsetto,'hiD');
-  assert.equal(songEvidence['sharon'].cd,'2024.07.31');
+    assert.equal(songEvidence['sharon'].cd,'2024.07.24');
 });
 
 test('tour examples reference the exact names of existing recordings', () => {

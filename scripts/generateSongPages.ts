@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { catalogEntries } from '../src/data/catalogEntries';
+import { autoSongPage } from '../src/songPages/autoSongPage';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
 
 const root = join(import.meta.dirname, '..');
@@ -12,6 +13,7 @@ const evidence = JSON.parse(readFileSync(join(root, 'src/data/songEvidence.json'
   cdSource: string;
   rangeSource: string;
   tempoSource: string;
+  styleSource: string;
 }>;
 
 function escapeHtml(value: string): string {
@@ -67,29 +69,46 @@ ${paragraphs}
 }
 
 const filenames = readdirSync(dataDir).filter(name => /^[a-z0-9]+(?:-[a-z0-9]+)*\.ts$/.test(name)).sort();
-if (filenames.length === 0) throw new Error('公開する楽曲ページがありません');
+const catalogIds = new Set<string>(catalogEntries.map(song => song.id));
+if (catalogIds.size !== catalogEntries.length || catalogIds.size !== Object.keys(evidence).length
+    || Object.keys(evidence).some(id => !catalogIds.has(id))) {
+  throw new Error('楽曲カタログと検証済みデータのIDを一致させてください');
+}
+const customPages = new Map<string, EditorialSongPageData>();
+for (const filename of filenames) {
+  if (!catalogIds.has(filename.slice(0, -3))) {
+    throw new Error(`${filename}: 楽曲カタログにない個別ページです`);
+  }
+  const { default: page } = await import(pathToFileURL(join(dataDir, filename)).href) as { default: EditorialSongPageData };
+  customPages.set(filename.slice(0, -3), page);
+}
 
 const ids: string[] = [];
-for (const filename of filenames) {
-  const id = filename.slice(0, -3);
-  const { default: page } = await import(pathToFileURL(join(dataDir, filename)).href) as { default: EditorialSongPageData };
+for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrder)) {
+  const id = song.id;
+  const page = customPages.get(id) ?? autoSongPage(id);
   const fact = evidence[id];
-  if (!fact || page.id !== id || !fact.recording || !catalogEntries.some(song => song.id === id)) {
-    throw new Error(`${filename}: 楽曲IDと検証済みデータを確認してください`);
+  if (!fact || page.id !== id || !fact.recording) {
+    throw new Error(`${id}: 楽曲IDと検証済みデータを確認してください`);
   }
   if (!page.feature.text || !page.feature.credit || page.overview.length === 0 || page.overview.some(text => !text.trim())) {
-    throw new Error(`${filename}: 紹介文と概要を入力してください`);
+    throw new Error(`${id}: 紹介文と概要を入力してください`);
   }
-  if (!page.artwork.alt || !/^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.(png|jpe?g|webp|svg)$/i.test(page.artwork.path)
-      || !existsSync(join(root, 'brand', page.artwork.path))) {
-    throw new Error(`${filename}: 掲載する画像と代替テキストを確認してください`);
+  if (!page.artwork.alt || ('path' in page.artwork
+      ? !/^(?:[a-z0-9_-]+\/)*[a-z0-9_-]+\.(png|jpe?g|webp|svg)$/i.test(page.artwork.path)
+        || !existsSync(join(root, 'brand', page.artwork.path))
+      : !page.artwork.theme)) {
+    throw new Error(`${id}: 掲載する画像と代替テキストを確認してください`);
   }
   if (page.albumTrack !== undefined && (!Number.isInteger(page.albumTrack) || page.albumTrack < 1)) {
-    throw new Error(`${filename}: 収録順を確認してください`);
+    throw new Error(`${id}: 収録順を確認してください`);
   }
   if (page.sources.length === 0 || page.sources.some(source => !source.label || !source.purpose
       || !isHttpsUrl(source.evidence ? fact[source.evidence] : source.url!))) {
-    throw new Error(`${filename}: 出典のURLと説明を確認してください`);
+    throw new Error(`${id}: 出典のURLと説明を確認してください`);
+  }
+  if (page.vocalVariants?.some(variant => !variant.label || !variant.value || !variant.sourceLabel || !isHttpsUrl(variant.sourceUrl))) {
+    throw new Error(`${id}: 音域の採譜差と出典を確認してください`);
   }
   const outputDir = join(root, 'songs', id);
   mkdirSync(outputDir, { recursive: true });
@@ -100,6 +119,6 @@ for (const filename of filenames) {
 }
 
 const routesPath = join(root, 'src/songPages/publishedSongPageIds.ts');
-const routes = `// scripts/generateSongPages.ts から生成。公開する曲は data/ に追加する。\nexport const publishedSongPageIds = new Set<string>(${JSON.stringify(ids)});\n\nexport function songPagePath(id: string): string | null {\n  return publishedSongPageIds.has(id) ? \`songs/\${id}/\` : null;\n}\n`;
+const routes = `// scripts/generateSongPages.ts から生成。掲載曲は catalogEntries と songEvidence に追加する。\nexport const publishedSongPageIds = new Set<string>(${JSON.stringify(ids)});\n\nexport function songPagePath(id: string): string | null {\n  return publishedSongPageIds.has(id) ? \`songs/\${id}/\` : null;\n}\n`;
 if (!existsSync(routesPath) || readFileSync(routesPath, 'utf8') !== routes) writeFileSync(routesPath, routes);
 console.log(`楽曲ページ ${ids.length} 件のHTMLと導線を生成しました`);

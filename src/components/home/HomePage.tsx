@@ -41,7 +41,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                 className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#A93020] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Sparkles className="h-4 w-4" />
-                <span>86曲の楽曲ガイドを開く</span>
+                <span>90曲の楽曲ガイドを開く</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
 
@@ -59,7 +59,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                 onClick={() => onSelectTab('vocal_range')}
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
               >
-                <span>掲載86曲の音域・発売日表</span>
+                <span>掲載90曲の音域・発売日表</span>
               </button>
             </div>
           </div>
