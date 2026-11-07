@@ -31,7 +31,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
       <a className="skip-link" href="#main">本文へ移動</a>
       <header className="site-topbar">
         <a className="site-brand" href={base} aria-label="115万キロのファンノート トップへ">
-          <img src={`${base}hige-mark.svg`} alt="" width="40" height="40" />
+          <img src={`${base}hige-mark.svg?v=34b8cc7`} alt="" width="40" height="40" />
           <span>115万キロのファンノート</span>
         </a>
         <nav aria-label="サイト内の移動">
