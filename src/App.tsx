@@ -13,7 +13,6 @@ import { SiteHeader, ActiveFeatureTab, type SiteTab, SITE_NAV_ITEMS } from './co
 import { infoPages, isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
-import { SongDetailModal } from './components/SongDetailModal';
 import type { QuizSession } from './components/quiz/quizSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 
@@ -30,6 +29,9 @@ const QuizSection = React.lazy(() =>
   import('./components/QuizSection').then(module => ({default: module.QuizSection}))
 );
 const InfoPage = React.lazy(() => import('./components/info/InfoPage'));
+const SongDetailModal = React.lazy(() =>
+  import('./components/SongDetailModal').then(module => ({default: module.SongDetailModal}))
+);
 
 function readLocation() {
   const [feature, song] = window.location.hash.slice(1).split('/');
@@ -70,6 +72,11 @@ export default function App() {
   useEffect(() => {
     const restore = () => {
       const {tab, songId} = readLocation();
+      const pagePath = songId ? songPagePath(songId) : null;
+      if (pagePath) {
+        window.location.replace(`${import.meta.env.BASE_URL}${pagePath}`);
+        return;
+      }
       setActiveFeatureTab(tab);
       setSelectedModalSongId(songId);
     };
@@ -325,7 +332,7 @@ export default function App() {
       </footer>
 
       {/* Song Liner Notes Modal */}
-      <SongDetailModal
+      {modalSong && <React.Suspense fallback={null}><SongDetailModal
         song={modalSong}
         onClose={() => selectSong(null)}
         onAddToSetlist={records.addToSetlist}
@@ -334,7 +341,7 @@ export default function App() {
         hasVoted={
           modalSong ? votedKeys.includes(`${modalSong.id}:overall`) : false
         }
-      />
+      /></React.Suspense>}
 
       {/* Toast Notification */}
       {toastMessage && (

@@ -4,6 +4,7 @@ import { GuideArtwork } from '../components/GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
 import { formatDuration } from '../utils/fanLogic';
+import { guideReturnView } from '../utils/guideReturnState';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
 const base = import.meta.env.BASE_URL;
@@ -19,6 +20,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   });
   const inSetlist = records.setlist.some(item => item.songId === song.id);
+  const [returnView] = useState(guideReturnView);
 
   useEffect(() => () => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -86,7 +88,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           </section>
 
           <details className="sources">
-            <summary><strong>データと出典</strong><span>音域・発売日・参考資料を確認する <span aria-hidden="true">↗</span></span></summary>
+            <summary><strong>データと出典</strong><span>音域・発売日・参考資料を確認する <span aria-hidden="true">▼</span></span></summary>
             <div className="sources-body">
               <dl className="source-facts">
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
@@ -99,6 +101,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noreferrer">{variant.sourceLabel}</a>の採譜）
                 </p>
               ))}
+              {fact.otherRange && !page.vocalVariants?.length && (
+                <p className="vocal-variant">
+                  <strong>別の採譜：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noreferrer">音域調査 Wiki</a>の採譜）
+                </p>
+              )}
               <ul className="source-list">
                 {page.sources.map((source, index) => (
                   <li key={`${source.label}-${index}`}>
@@ -121,7 +128,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <span aria-hidden="true">+</span>マイセトリに追加
               </button>
             )}
-            <a className="back-button" href={`${base}#discography`}>曲一覧に戻る</a>
+            <a className="back-button" href={`${base}#${returnView}`}>{returnView === 'vocal_range' ? '音域一覧に戻る' : '曲一覧に戻る'}</a>
           </div>
           {toast && <p className="toast" role="status" aria-live="polite">{toast}</p>}
         </article>

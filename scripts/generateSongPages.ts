@@ -14,6 +14,8 @@ const evidence = JSON.parse(readFileSync(join(root, 'src/data/songEvidence.json'
   rangeSource: string;
   tempoSource: string;
   styleSource: string;
+  otherRange: string[] | null;
+  otherSource: string;
 }>;
 
 function escapeHtml(value: string): string {
@@ -109,6 +111,9 @@ for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrde
   }
   if (page.vocalVariants?.some(variant => !variant.label || !variant.value || !variant.sourceLabel || !isHttpsUrl(variant.sourceUrl))) {
     throw new Error(`${id}: 音域の採譜差と出典を確認してください`);
+  }
+  if (fact.otherRange && (fact.otherRange.length !== 3 || fact.otherRange.some(value => !value.trim()) || !isHttpsUrl(fact.otherSource))) {
+    throw new Error(`${id}: 別の採譜値と出典を確認してください`);
   }
   const outputDir = join(root, 'songs', id);
   mkdirSync(outputDir, { recursive: true });

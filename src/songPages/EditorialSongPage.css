@@ -240,6 +240,8 @@ a { color: inherit; }
 .sources summary span { color: #0757ad; font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif; font-size: 14px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
 
 .sources[open] summary { border-bottom: 1px solid #d8d0c6; }
+.sources summary span[aria-hidden="true"] { display: inline-block; transition: transform .15s ease; }
+.sources[open] summary span[aria-hidden="true"] { transform: rotate(180deg); }
 
 .sources-body { padding: 18px 14px 22px; font-size: 14px; line-height: 1.7; }
 
@@ -349,4 +351,5 @@ a { color: inherit; }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .add-button, .back-button { transition: none; }
+  .sources summary span[aria-hidden="true"] { transition: none; }
 }
