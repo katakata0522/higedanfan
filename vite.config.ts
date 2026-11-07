@@ -1,7 +1,8 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import evidence from './src/data/songEvidence.json';
+import evidence from './src/data/songEvidence.json' with { type: 'json' };
+import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
 const escape = (s: string) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function renderCatalog() {
   return Object.values(evidence).map(f => {
@@ -21,7 +22,9 @@ export default defineConfig(() => {
       rolldownOptions: {
         input: {
           main: path.resolve(import.meta.dirname, 'index.html'),
-          mixedNuts: path.resolve(import.meta.dirname, 'songs/mixed-nuts/index.html'),
+          ...Object.fromEntries([...publishedSongPageIds].map(id => [
+            `song-${id}`, path.resolve(import.meta.dirname, `songs/${id}/index.html`),
+          ])),
         },
       },
     },
