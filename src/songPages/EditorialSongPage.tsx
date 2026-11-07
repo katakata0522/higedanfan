@@ -51,7 +51,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           <header className="song-hero">
             <figure className="cover">
               {'path' in page.artwork ? (
-                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="250" height="250" />
+                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="192" height="192" />
               ) : (
                 <GuideArtwork src={page.artwork.theme} alt={page.artwork.alt} className="guide-artwork" />
               )}
@@ -61,23 +61,18 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               <p className="recording">収録作品：<span>{fact.album}</span></p>
 
               <dl className="song-facts">
-                <div className="fact-row fact-row-main">
-                  <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
-                  <div className="fact-item"><dt>テンポ</dt><dd>{fact.tempo} <small>BPM</small></dd></div>
-                </div>
-                <div className="fact-row fact-row-range">
-                  <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
-                  <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
-                  <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
-                </div>
+                <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
+                <div className="fact-item"><dt>テンポ</dt><dd>{fact.tempo} <small>BPM</small></dd></div>
+                <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
+                <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
+                <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
               </dl>
+              <div className="feature-line" aria-label="当サイトによる曲の紹介文">
+                <p className="feature-phrase">{page.feature.text}</p>
+                <p className="feature-credit">{page.feature.credit}</p>
+              </div>
             </div>
           </header>
-
-          <div className="feature-line" aria-label="当サイトによる曲の紹介文">
-            <p className="feature-phrase">{page.feature.text}</p>
-            <p className="feature-credit">{page.feature.credit}</p>
-          </div>
 
           <section className="overview" aria-labelledby="overview-title">
             <h2 id="overview-title">この曲の概要</h2>
