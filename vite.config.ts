@@ -16,7 +16,15 @@ export default defineConfig(() => {
   return {
     base: '/higedanfan/',
     publicDir: 'brand',
-    build: { license: { fileName: 'third-party-licenses.txt' } },
+    build: {
+      license: { fileName: 'third-party-licenses.txt' },
+      rolldownOptions: {
+        input: {
+          main: path.resolve(import.meta.dirname, 'index.html'),
+          mixedNuts: path.resolve(import.meta.dirname, 'songs/mixed-nuts/index.html'),
+        },
+      },
+    },
     plugins: [react(), tailwindcss(), { name:'static-song-guide', transformIndexHtml: html => html.replace('<!--verified-songs-->', renderCatalog()) }],
     resolve: {
       alias: {

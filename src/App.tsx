@@ -77,6 +77,10 @@ export default function App() {
   }, []);
 
   const selectSong = (id: string | null) => {
+    if (id === 'mixed-nuts') {
+      window.location.assign(`${import.meta.env.BASE_URL}songs/mixed-nuts/`);
+      return;
+    }
     if (id === null) {
       if (window.history.state?.songParent === activeFeatureTab) {
         window.history.back();
