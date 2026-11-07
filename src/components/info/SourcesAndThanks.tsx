@@ -146,6 +146,15 @@ export function SourcesAndThanks() {
       </div>
 
       <section className="mt-7 border-t border-[#D5CEC2] pt-5">
+        <h2 className="text-lg font-bold sm:text-xl">
+          サイト制作・編集　<a href="https://katakatalab.com/who-is-katakata.html" rel="author" className="text-[#1E3A5F] underline underline-offset-4">
+            かたかた<span className="sr-only">のプロフィール</span>
+          </a>
+        </h2>
+        <p className="mt-2 text-sm leading-7 text-[#44403C] sm:text-base">「Pretender」をきっかけに髭男のファンになりました。</p>
+      </section>
+
+      <section className="mt-7 border-t border-[#D5CEC2] pt-5">
         <h2 className="text-lg font-bold sm:text-xl">謝辞</h2>
         <p className="mt-2 text-sm leading-7 text-[#44403C] sm:text-base">一曲ずつ歌を聴き取り、採譜を公開してくださった「J-POP 音域の沼」の管理人の方と「音域データ！＠ウィキ」の編集者の皆さんに感謝します。作品や公演の記録を残してくださった皆さん、取材記事や会場案内の作成に携わった皆さんにもお礼を申し上げます。</p>
       </section>

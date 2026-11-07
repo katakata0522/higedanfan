@@ -281,6 +281,12 @@ export default function App() {
       <footer className="border-t border-[#E6E1D6] bg-[#F2EFE9] py-7 mt-10">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-[#57534E]">
           <div className="space-y-1.5">
+            <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
+              <span>サイト制作・編集</span>
+              <a href="https://katakatalab.com/who-is-katakata.html" rel="author" className="inline-block py-1 font-bold text-[#1C1917] underline underline-offset-4">
+                かたかた<span className="sr-only">のプロフィール</span>
+              </a>
+            </p>
             <nav aria-label="サイト情報" className="flex flex-wrap gap-x-4">
               {Object.entries(infoPages).map(([id, label]) => (
                 <a key={id} href={'#' + id} className="py-1 underline">{label}</a>

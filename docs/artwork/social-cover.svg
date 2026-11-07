@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" lang="ja">
+  <title>115万キロのファンノート — Official髭男dism 非公式ファンサイト</title>
+  <desc>生成りのレコードジャケットに、深緑のレコードとヒゲのマーク。</desc>
+  <defs>
+    <clipPath id="disc"><circle cx="1030" cy="315" r="323"/></clipPath>
+    <pattern id="spine" width="7" height="7" patternUnits="userSpaceOnUse">
+      <path d="M-2 2 2-2 M0 7 7 0 M5 9 9 5" fill="none" stroke="#D95B45" stroke-width="1.5"/>
+    </pattern>
+  </defs>
+
+  <!-- The edge and printed rules are part of the sleeve, outside the title's safe area. -->
+  <path fill="#FFF5DF" d="M0 0h1200v630H0z"/>
+  <path fill="url(#spine)" d="M0 0h16v630H0z"/>
+
+  <g clip-path="url(#disc)">
+    <circle cx="1030" cy="315" r="323" fill="#123E40"/>
+    <path d="M1030 315 705 197 841 28Z M1030 315 1353 434 1219 600Z" fill="#1A484A"/>
+    <g transform="translate(1030 315)" fill="none" stroke="#45706A" stroke-width="1">
+      <circle r="317"/><circle r="311"/><circle r="300"/><circle r="292"/>
+      <circle r="284"/><circle r="275"/><circle r="266"/><circle r="258"/>
+      <circle r="242"/><circle r="234"/><circle r="226"/><circle r="218"/>
+      <circle r="210"/><circle r="202"/><circle r="186"/><circle r="178"/>
+      <circle r="170"/><circle r="162"/><circle r="154"/><circle r="146"/>
+    </g>
+    <g transform="translate(1030 315)" fill="none" stroke="#8A9C82" stroke-width="1.5">
+      <circle r="250"/><circle r="194"/><circle r="137"/>
+    </g>
+    <circle cx="1030" cy="315" r="121" fill="#E9B85D"/>
+    <circle cx="1030" cy="315" r="110" fill="none" stroke="#123E40" stroke-width="1.5"/>
+    <circle cx="1030" cy="315" r="93" fill="#123E40"/>
+    <image href="../../brand/hige-mark.svg" x="955" y="240" width="150" height="150"/>
+  </g>
+
+  <g fill="#123E40">
+    <path d="M78 77h40" stroke="#D95B45" stroke-width="8"/>
+    <text x="136" y="85" font-family="'Noto Sans JP',sans-serif" font-size="25" font-weight="650">Official髭男dism 非公式ファンサイト</text>
+    <text x="70" y="313" fill="#B84634" font-family="Georgia,'Noto Serif JP',serif" font-size="206" letter-spacing="-13">115</text>
+    <text x="359" y="302" font-family="'Noto Serif JP',serif" font-size="73" font-weight="750" letter-spacing="-3">万キロの</text>
+    <text x="69" y="440" font-family="'Noto Serif JP',serif" font-size="104" font-weight="800" letter-spacing="-6">ファンノート</text>
+    <path d="M78 503h568" fill="none" stroke="#123E40" stroke-width="2"/>
+    <text x="77" y="554" font-family="'Noto Sans JP',sans-serif" font-size="27" font-weight="600">楽曲ガイド</text>
+    <circle cx="242" cy="545" r="4" fill="#D95B45"/>
+    <text x="266" y="554" font-family="'Noto Sans JP',sans-serif" font-size="27" font-weight="600">マイセトリ</text>
+    <circle cx="432" cy="545" r="4" fill="#D95B45"/>
+    <text x="456" y="554" font-family="'Noto Sans JP',sans-serif" font-size="27" font-weight="600">ヒゲダン検定</text>
+  </g>
+</svg>

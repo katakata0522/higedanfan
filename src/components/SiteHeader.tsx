@@ -13,7 +13,6 @@ import {
   MessageSquarePlus,
   HelpCircle,
   ChevronRight,
-  Music4,
   Mic2,
   Newspaper,
 } from 'lucide-react';
@@ -156,9 +155,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           onClick={() => handleNavigate('home')}
           className="flex items-center gap-3 text-left min-w-0 group cursor-pointer"
         >
-          <span className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg bg-[#1C1917] text-[#FBF9F5] group-hover:bg-[#C83E2B] transition-colors">
-            <Music4 className="h-4 w-4" />
-          </span>
+          <img src={import.meta.env.BASE_URL + 'hige-mark.svg'} alt="" width="36" height="36" className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
           <span className="min-w-0">
             <span className="block text-sm sm:text-base font-bold tracking-tight text-[#1C1917] group-hover:text-[#C83E2B] transition-colors min-w-0 wrap-anywhere whitespace-normal">
               115万キロのファンノート

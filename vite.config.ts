@@ -15,7 +15,7 @@ import {defineConfig} from 'vite';
 export default defineConfig(() => {
   return {
     base: '/higedanfan/',
-    publicDir: false as const,
+    publicDir: 'brand',
     build: { license: { fileName: 'third-party-licenses.txt' } },
     plugins: [react(), tailwindcss(), { name:'static-song-guide', transformIndexHtml: html => html.replace('<!--verified-songs-->', renderCatalog()) }],
     resolve: {
