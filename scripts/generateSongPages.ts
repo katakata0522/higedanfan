@@ -42,13 +42,13 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
     <title>${escapedTitle}｜楽曲ガイド｜115万キロのファンノート</title>
     <meta name="description" content="${escapeHtml(description)}" />
     <link rel="canonical" href="${url}" />
-    <link rel="icon" href="/higedanfan/hige-mark.svg" type="image/svg+xml" sizes="any" />
-    <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png" sizes="180x180" />
+    <link rel="icon" href="/higedanfan/hige-mark.svg?v=34b8cc7" type="image/svg+xml" sizes="any" />
+    <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png?v=cd4d0ca" sizes="180x180" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapedTitle}｜115万キロのファンノート" />
     <meta property="og:description" content="曲の概要、演奏時間、テンポ、音域と資料を読む。" />
     <meta property="og:url" content="${url}" />
-    <meta property="og:image" content="https://katakatalab.com/higedanfan/social-cover.png" />
+    <meta property="og:image" content="https://katakatalab.com/higedanfan/social-cover.png?v=8d2a973" />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>

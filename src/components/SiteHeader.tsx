@@ -155,7 +155,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           onClick={() => handleNavigate('home')}
           className="flex items-center gap-3 text-left min-w-0 group cursor-pointer"
         >
-          <img src={import.meta.env.BASE_URL + 'hige-mark.svg'} alt="" width="36" height="36" className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
+          <img src={import.meta.env.BASE_URL + 'hige-mark.svg?v=34b8cc7'} alt="" width="36" height="36" className="h-8 w-8 shrink-0 sm:h-9 sm:w-9" />
           <span className="min-w-0">
             <span className="block text-sm sm:text-base font-bold tracking-tight text-[#1C1917] group-hover:text-[#C83E2B] transition-colors min-w-0 wrap-anywhere whitespace-normal">
               115万キロのファンノート
