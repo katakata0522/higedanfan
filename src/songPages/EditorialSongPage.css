@@ -346,6 +346,8 @@ a { color: inherit; }
   .fact-row-range .fact-item dt { font-size: 10px; }
   .fact-row-range .fact-item dd { font-size: 15px; }
   .source-facts { grid-template-columns: 1fr; }
+  .sources summary { flex-direction: column; align-items: flex-start; gap: 5px; }
+  .sources summary > span { width: 100%; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {
