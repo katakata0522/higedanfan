@@ -150,6 +150,8 @@ async function verifyInteractions(browser) {
 
   await page.getByRole('button', { name: 'マイセトリに追加' }).click();
   await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  // 表示は先に更新されるため、保存完了の通知を待ってから再読み込みする。
+  await page.getByRole('status').filter({ hasText: 'マイセトリに追加しました' }).waitFor();
   await page.reload({ waitUntil: 'load' });
   await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
 
