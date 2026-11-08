@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { FanRecordStore } from './fanRecordStore';
-import { restoreFanRecords } from './fanRecordStorage';
+import { restoreFanRecords, STORAGE_KEY } from './fanRecordStorage';
 import type { FanReview } from '../data/higedanData';
 
 function browser(raw: string | null = null) {
@@ -100,4 +100,153 @@ test('another tab preserves a title mid-edit, including its trailing space and a
     assert.equal(editor.snapshot().records.setlistTitle, title);
     assert.equal(JSON.parse(data.raw!).setlistTitle, title);
   }
+});
+
+function memoryStorage(seed: Iterable<readonly [string, string]> = []) {
+  const values = new Map(seed);
+  return {
+    values,
+    get length() { return values.size; },
+    // 順序に依存せず、記録した順に復元されることも確かめる。
+    key: (index: number) => [...values.keys()].reverse()[index] ?? null,
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => { values.set(key, value); },
+    removeItem: (key: string) => { values.delete(key); },
+  };
+}
+
+const immediateLock = <T>(fn: () => T): Promise<T> => Promise.resolve().then(fn);
+const pendingLock = <T>(_fn: () => T): Promise<T> => new Promise(() => {});
+
+test('a reload during the lock wait restores queued additions in order', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  let waiting = false;
+  const lock = <T>(fn: () => T) => waiting ? pendingLock(fn) : immediateLock(fn);
+  const before = new FanRecordStore(() => local, lock, () => session);
+  await before.initialize();
+  waiting = true;
+  void before.addToSetlist('white-noise', false);
+  void before.addToSetlist('cry-baby', false);
+  assert.equal(session.length, 2);
+  assert.equal(JSON.parse(local.getItem(STORAGE_KEY)!).setlist.some((item: {songId: string}) => item.songId === 'white-noise'), false);
+
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  const saved = JSON.parse(local.getItem(STORAGE_KEY)!).setlist as {songId: string}[];
+  assert.ok(saved.findIndex(item => item.songId === 'white-noise') < saved.findIndex(item => item.songId === 'cry-baby'));
+  assert.equal(saved.filter(item => item.songId === 'white-noise').length, 1);
+  assert.equal(session.length, 0);
+});
+
+test('recovered additions merge with changes from another tab', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const before = new FanRecordStore(() => local, immediateLock, () => session);
+  await before.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+
+  const other = new FanRecordStore(() => local, immediateLock, () => memoryStorage());
+  await other.initialize();
+  await other.change(records => ({...records, setlistTitle: '別タブのタイトル', bestQuizScore: 78}));
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.equal(after.snapshot().records.setlistTitle, '別タブのタイトル');
+  assert.equal(after.snapshot().records.bestQuizScore, 78);
+  assert.ok(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'));
+});
+
+test('a copied pending addition cannot restore a song removed after it was saved', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const before = new FanRecordStore(() => local, immediateLock, () => session);
+  await before.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  const copiedSession = memoryStorage(session.values);
+
+  const recovered = new FanRecordStore(() => local, immediateLock, () => session);
+  await recovered.initialize();
+  await recovered.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  const stale = new FanRecordStore(() => local, immediateLock, () => copiedSession);
+  await stale.initialize();
+  assert.equal(stale.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+  assert.match(stale.snapshot().notice, /別のタブ/);
+  assert.equal(copiedSession.length, 0);
+});
+
+test('reset in another tab rejects a pending addition from before the reset', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  const other = new FanRecordStore(() => local, immediateLock, () => memoryStorage());
+  await other.initialize();
+  assert.equal(await other.reset(), true);
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.equal(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+  assert.match(after.snapshot().notice, /別のタブ/);
+});
+
+test('storage failures do not claim an addition was saved or replace unreadable data', async () => {
+  const local = memoryStorage([[STORAGE_KEY, '["unknown format"]']]), session = memoryStorage();
+  const corrupt = new FanRecordStore(() => local, immediateLock, () => session);
+  await corrupt.initialize();
+  assert.equal(await corrupt.addToSetlist('white-noise', false), 'unsaved');
+  assert.equal(local.getItem(STORAGE_KEY), '["unknown format"]');
+  assert.equal(session.length, 0);
+
+  const valid = memoryStorage(), denied = memoryStorage();
+  denied.setItem = () => { throw new Error('session storage blocked'); };
+  const blocked = new FanRecordStore(() => valid, immediateLock, () => denied);
+  await blocked.initialize();
+  assert.equal(await blocked.addToSetlist('white-noise', false), 'unsaved');
+  assert.equal(blocked.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+  assert.match(blocked.snapshot().notice, /一時保存できません/);
+});
+
+test('a failed primary write keeps the addition available for recovery', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  let denied = false;
+  const primary = { getItem: local.getItem, setItem: (key: string, value: string) => {
+    if (denied) throw new Error('local storage blocked');
+    local.setItem(key, value);
+  } };
+  const before = new FanRecordStore(() => primary, immediateLock, () => session);
+  await before.initialize();
+  denied = true;
+  assert.equal(await before.addToSetlist('white-noise', false), 'unsaved');
+  assert.equal(session.length, 1);
+  denied = false;
+  const after = new FanRecordStore(() => primary, immediateLock, () => session);
+  await after.initialize();
+  assert.ok(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'));
+  assert.equal(session.length, 0);
+});
+
+test('clearing the saved records rejects an older pending addition', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  local.removeItem(STORAGE_KEY);
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.equal(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+  assert.match(after.snapshot().notice, /別のタブ/);
+});
+
+test('an unreadable pending entry is preserved while valid additions still save', async () => {
+  const local = memoryStorage(), session = memoryStorage([['higedan_pending_setlist_add_v1:unknown', 'not-json']]);
+  const store = new FanRecordStore(() => local, immediateLock, () => session);
+  await store.initialize();
+  assert.match(store.snapshot().notice, /一部読めません/);
+  assert.equal(await store.addToSetlist('white-noise', false), 'saved');
+  assert.equal(session.getItem('higedan_pending_setlist_add_v1:unknown'), 'not-json');
+  assert.equal(session.length, 1);
 });

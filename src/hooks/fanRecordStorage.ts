@@ -16,6 +16,7 @@ export interface PersistedState {
   bestQuizScore: number | null;
   hasQuizAttempt?: boolean;
   resetEpoch?: string;
+  setlistMembershipVersions?: Record<string, number>;
 }
 
 function restoreIds(value: unknown, maxLength: number, validIds?: Set<string>) {
@@ -40,6 +41,10 @@ export function restoreFanRecords(raw: string) {
     throw new TypeError('Unrecognized fan record format');
   }
   const validSongIds = new Set(HIGEDAN_SONGS.map(song => song.id));
+  const versions = parsed.setlistMembershipVersions;
+  const setlistMembershipVersions = versions && typeof versions === 'object' && !Array.isArray(versions)
+    ? Object.fromEntries(Object.entries(versions).filter(([id, version]) => validSongIds.has(id) &&
+      typeof version === 'number' && Number.isSafeInteger(version) && version >= 0)) : {};
   const validSpotIds = new Set(SACRED_SPOTS.map(spot => spot.id));
   const validTourIds = new Set(TOUR_ARCHIVES.map(tour => tour.id));
   const castVotes = new Set(Array.isArray(parsed.votedKeys) ? parsed.votedKeys : []);
@@ -72,5 +77,6 @@ export function restoreFanRecords(raw: string) {
       typeof parsed.bestQuizScore === 'number' && Number.isFinite(parsed.bestQuizScore)
         ? Math.max(0, Math.min(100, Math.round(parsed.bestQuizScore))) : undefined,
     resetEpoch: typeof parsed.resetEpoch === 'string' ? parsed.resetEpoch : '',
+    setlistMembershipVersions,
   };
 }

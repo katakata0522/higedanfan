@@ -109,7 +109,12 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             </div>
           </details>
 
-          {records.storageNotice && <p className="storage-notice" role="alert">{records.storageNotice}</p>}
+          {records.storageNotice && (
+            <p className="storage-notice" role="alert">
+              {records.storageNotice}{' '}
+              <button type="button" onClick={records.downloadRecords}>画面上の記録を書き出す</button>
+            </p>
+          )}
           <div className="song-actions">
             {inSetlist ? (
               <a className="add-button add-button--saved" href={`${base}#setlist`}>
