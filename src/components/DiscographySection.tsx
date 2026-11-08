@@ -3,6 +3,7 @@ import { partialEpCoverage } from '../utils/songCatalog';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
+import { fitsVoiceRange } from '../utils/voiceRange';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveGuideReturnState, takeGuideReturnState } from '../utils/guideReturnState';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -45,6 +46,13 @@ interface DiscographySectionProps {
 }
 
 const INITIAL_VISIBLE_COUNT = 18;
+const PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const PITCH_JA = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ'];
+const VOICE_OPTIONS = Array.from({ length: 49 }, (_, index) => {
+  const midi = index + 36;
+  const octave = Math.floor(midi / 12) - 1;
+  return { value: String(midi), label: `${PITCH_NAMES[midi % 12]}${octave}（${PITCH_JA[midi % 12]}${octave}）` };
+});
 
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
   songs,
@@ -63,6 +71,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery, sortBy } = filters;
   const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
   const [visibleCount, setVisibleCount] = useState<number>(() => restored?.visibleCount ?? INITIAL_VISIBLE_COUNT);
+  const [voiceLow, setVoiceLow] = useState(() => restored?.voice?.low ?? '');
+  const [voiceHigh, setVoiceHigh] = useState(() => restored?.voice?.high ?? '');
+  const [keyShift, setKeyShift] = useState(() => restored?.voice?.keyShift ?? 0);
   const skipInitialPaginationReset = useRef(Boolean(restored));
   const previousEraPreset = useRef(initialEraFilter);
 
@@ -72,7 +83,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     setFilters(current => ({ ...current, era: initialEraFilter, album: 'all' }));
   }, [initialEraFilter]);
 
-  // Reset pagination whenever filters or sub-view change
+  // Keep the expanded list when only its ordering changes.
   useEffect(() => {
     if (skipInitialPaginationReset.current) {
       skipInitialPaginationReset.current = false;
@@ -81,11 +92,20 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     setVisibleCount(
       albumFilter !== 'all' || searchQuery.trim().length > 0 ? songs.length : INITIAL_VISIBLE_COUNT
     );
-  }, [eraFilter, albumFilter, soundFilter, searchQuery, sortBy, activeSubView, songs.length]);
+  }, [eraFilter, albumFilter, soundFilter, searchQuery, activeSubView, voiceLow, voiceHigh, keyShift, songs.length]);
 
-  const rememberGuide = () => saveGuideReturnState({ filters, visibleCount, view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography' });
+  const rememberGuide = () => saveGuideReturnState({ filters, visibleCount, view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography', voice: { low: voiceLow, high: voiceHigh, keyShift } });
 
-  const filteredSongs = useMemo(() => filterAndSortDiscography(songs, filters), [songs, filters]);
+  const voiceRangeInvalid = Boolean(voiceLow && voiceHigh && Number(voiceLow) > Number(voiceHigh));
+  const filteredSongs = useMemo(() => {
+    const matching = filterAndSortDiscography(songs, filters);
+    if (activeSubView !== 'vocal_range' || (!voiceLow && !voiceHigh)) return matching;
+    if (voiceRangeInvalid) return [];
+    return matching.filter(song => {
+      const fact = songEvidence[song.id as keyof typeof songEvidence];
+      return fitsVoiceRange(fact, voiceLow ? Number(voiceLow) : undefined, voiceHigh ? Number(voiceHigh) : undefined, keyShift);
+    });
+  }, [songs, filters, activeSubView, voiceLow, voiceHigh, keyShift, voiceRangeInvalid]);
   const resultAlbum = albumFilter !== 'all' ? albumFilter : albumForSearch(searchQuery);
   const epCoverage = resultAlbum ? partialEpCoverage[resultAlbum] : undefined;
   const globalMatchCount = useMemo(() => {
@@ -113,7 +133,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const emptyResults = (
     <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-5 text-center">
       <p className="text-sm font-bold text-[#1C1917]">条件に一致する楽曲が見つかりませんでした。</p>
-      {globalMatchCount > 0 ? (
+      {activeSubView === 'vocal_range' && (voiceLow || voiceHigh) ? (
+        <button type="button" onClick={() => { setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }}
+          className="mt-3 min-h-[44px] rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-bold text-white">
+          声の範囲をリセット
+        </button>
+      ) : globalMatchCount > 0 ? (
         <button type="button"
           onClick={() => setFilters({ ...DEFAULT_GUIDE_FILTERS, searchQuery })}
           className="mt-3 min-h-[44px] max-w-full wrap-anywhere rounded-lg bg-[#1C1917] px-4 py-2 text-sm font-bold text-white">
@@ -209,7 +234,34 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
         {activeSubView !== 'sacred_map' && (
           <SongGuideFilters values={filters} onChange={setFilters}
-            resultCount={filteredSongs.length} shownCount={displayedSongs.length} />
+            resultCount={filteredSongs.length} shownCount={displayedSongs.length}
+            showSort={activeSubView === 'vocal_range'} />
+        )}
+
+        {activeSubView === 'vocal_range' && (
+          <div className="mt-3 rounded-xl border border-[#D9CDBD] bg-[#FFFAF2] p-4">
+            <h3 className="text-sm font-bold text-[#1C1917]">自分の声の範囲で探す</h3>
+            <p className="mt-1 text-xs leading-relaxed text-[#57534E]">出せる低い音と高い音を選ぶと、地声の音域が範囲に収まる曲を探せます。裏声や息継ぎは含まない、選曲の目安です。表に表示する音域は原曲キーの値です。</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <label className="text-xs font-bold text-[#57534E]">出せる低い音
+                <select value={voiceLow} onChange={event => setVoiceLow(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-[#D5CEC2] bg-white px-3 text-sm text-[#1C1917]">
+                  <option value="">指定しない</option>{VOICE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-bold text-[#57534E]">出せる高い音
+                <select value={voiceHigh} onChange={event => setVoiceHigh(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-[#D5CEC2] bg-white px-3 text-sm text-[#1C1917]">
+                  <option value="">指定しない</option>{VOICE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </label>
+              <label className="text-xs font-bold text-[#57534E]">カラオケのキー
+                <select value={keyShift} onChange={event => setKeyShift(Number(event.target.value))} className="mt-1 min-h-11 w-full rounded-lg border border-[#D5CEC2] bg-white px-3 text-sm text-[#1C1917]">
+                  {Array.from({ length: 25 }, (_, index) => index - 12).map(value => <option key={value} value={value}>{value === 0 ? '原曲キー' : value > 0 ? `+${value}` : value}</option>)}
+                </select>
+              </label>
+            </div>
+            {voiceRangeInvalid && <p role="alert" className="mt-2 text-sm text-[#A3291C]">高い音には、低い音以上の高さを選んでください。</p>}
+            {(voiceLow || voiceHigh || keyShift !== 0) && <button type="button" onClick={() => { setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }} className="mt-3 min-h-10 text-xs font-bold text-[#A3291C] underline">声の範囲とキーをリセット</button>}
+          </div>
         )}
 
         {activeSubView !== 'sacred_map' && epCoverage && (
@@ -258,7 +310,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
                                 <span className="min-w-0 wrap-anywhere whitespace-normal">{albumBadgeText}</span>
-                                <span className="shrink-0">{song.releaseDate}</span>
+                                <span className="shrink-0">配信掲載 {song.releaseDate}</span>
                               </div>
                               <h3 className="mt-0.5 text-base sm:text-lg font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                                 {pagePath ? (
@@ -305,10 +357,6 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             <span>収録音源 {formatDuration(song.durationSec)}</span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono-num">BPM {formatSongBpm(song.id, song.bpm)}</span>
-                            <span aria-hidden="true">·</span>
-                            <span className="font-mono-num">
-                              配信サービス掲載日
-                            </span>
                           </div>
                         </div>
 
@@ -388,20 +436,65 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {/* Sub-View 2: Vocal Range & Release Date Comparison (Mobile Vertical Cards + Desktop Sticky Table) */}
         {activeSubView === 'vocal_range' && (
           <div className="mt-4 space-y-4">
-            <p className="rounded-xl bg-white p-4 text-sm">「配信掲載日」はApple Musicの楽曲欄の日付です。CD欄は表示中の収録作品の発売日です。裏声の「記載なし」は採譜資料に値がないことを示します。各曲名から資料間の違いも確認できます。</p>
+            <p className="rounded-xl bg-white p-4 text-sm">「配信掲載日」はApple Musicの楽曲欄の日付です。CD欄は表示中の収録作品の発売日です。裏声の「記載なし」は採譜資料に値がないことを示します。BPMは小数を四捨五入した目安です。各曲名から資料間の違いも確認できます。</p>
             {filteredSongs.length === 0 ? emptyResults : (
               <>
-                <div className="grid gap-2 sm:grid-cols-2">
+                <div className="hidden overflow-x-auto rounded-xl border border-[#E6E1D6] bg-white lg:block" role="region" aria-label="音域・発売日比較表" tabIndex={0}>
+                  <table className="w-full min-w-[960px] border-collapse text-left text-[13px] leading-5">
+                    <caption className="sr-only">音域・発売日比較表。日付と音域の出典は各行から開けます。</caption>
+                    <thead className="bg-[#F2EFE9] text-xs text-[#57534E]">
+                      <tr>
+                        <th scope="col" className="px-3 py-3">曲名</th>
+                        <th scope="col" className="px-3 py-3">収録作品</th>
+                        <th scope="col" className="px-2 py-3">時間</th>
+                        <th scope="col" className="px-2 py-3">BPM</th>
+                        <th scope="col" className="px-2 py-3">地声最低</th>
+                        <th scope="col" className="px-2 py-3">地声最高</th>
+                        <th scope="col" className="px-2 py-3">裏声最高</th>
+                        <th scope="col" className="px-2 py-3">配信掲載日</th>
+                        <th scope="col" className="px-2 py-3">収録作品CD</th>
+                        <th scope="col" className="px-3 py-3">音域出典</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E6E1D6]">
+                      {displayedSongs.map(song => {
+                        const f = songEvidence[song.id as keyof typeof songEvidence];
+                        return <tr key={song.id} className="align-top hover:bg-[#FBF9F5]">
+                          <th scope="row" className="min-w-[145px] px-3 py-3 font-bold">
+                            <button className="text-left underline underline-offset-2 hover:text-[#C83E2B]" onClick={() => {
+                              if (songPagePath(song.id)) rememberGuide();
+                              onSelectSong(song);
+                            }}>{song.title}</button>
+                          </th>
+                          <td className="min-w-[120px] px-3 py-3">{f.album}</td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
+                          <td className="px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
+                          <td className="px-2 py-3 font-mono-num">{song.vocalRange.highestChestNote}</td>
+                          <td className="px-2 py-3 font-mono-num">{song.vocalRange.highestFalsettoNote}</td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="underline underline-offset-2" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a></td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="underline underline-offset-2" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
+                          <td className="whitespace-nowrap px-3 py-3"><a className="underline underline-offset-2" href={f.rangeSource} target="_blank" rel="noreferrer" aria-label={`${song.title}の採譜：${f.rangeLabel}`}>採譜 ↗</a></td>
+                        </tr>;
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="grid gap-2 sm:grid-cols-2 lg:hidden">
                   {displayedSongs.map(song => {
                     const f = songEvidence[song.id as keyof typeof songEvidence];
-                    return <article key={song.id} className="rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm">
-                      <button className="text-left font-bold underline" onClick={() => {
+                    return <article key={song.id} className="rounded-xl border border-[#E6E1D6] bg-white p-3.5 text-sm">
+                      <button className="text-left font-bold underline underline-offset-2" onClick={() => {
                         if (songPagePath(song.id)) rememberGuide();
                         onSelectSong(song);
                       }}>{song.title}</button>
-                      <p className="my-1 text-xs">{f.album} ／ {formatDuration(song.durationSec)}</p>
-                      <p>地声 {song.vocalRange.lowestNote} ～ {song.vocalRange.highestChestNote} ／ 裏声最高 {song.vocalRange.highestFalsettoNote}</p>
-                      <p>配信掲載日 <a className="underline" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a>
+                      <p className="mt-1 text-xs text-[#57534E]">{f.album} ／ {formatDuration(song.durationSec)} ／ BPM {formatSongBpm(song.id, song.bpm)}</p>
+                      <dl className="mt-2 grid grid-cols-3 gap-1 border-y border-[#E6E1D6] py-2 text-xs">
+                        <div><dt className="text-[#57534E]">地声最低</dt><dd className="mt-0.5 font-mono-num font-bold">{song.vocalRange.lowestNote}</dd></div>
+                        <div><dt className="text-[#57534E]">地声最高</dt><dd className="mt-0.5 font-mono-num font-bold">{song.vocalRange.highestChestNote}</dd></div>
+                        <div><dt className="text-[#57534E]">裏声最高</dt><dd className="mt-0.5 font-mono-num font-bold">{song.vocalRange.highestFalsettoNote}</dd></div>
+                      </dl>
+                      <p className="mt-2 text-xs leading-5">配信掲載日 <a className="underline" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a>
                       {f.cd && <> ／ 収録作品CD <a className="underline" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a></>}</p>
                       <a className="text-xs underline" href={f.rangeSource} target="_blank" rel="noreferrer">採譜：{f.rangeLabel} ↗</a>
                     </article>})}

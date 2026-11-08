@@ -46,8 +46,8 @@ export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
     description:
       '今の気分や聴きたい場面、好みの音から、今日の1曲を探してみませんか。',
     points: [
-      '5つの質問に答えると、条件に合う曲を紹介',
-      '診断結果のSNS風シェアカード生成＆理由解説付き',
+      '5つの質問から、今のあなたに合う1曲へ',
+      '選ばれた理由を読んで、結果をカードでシェア',
     ],
     ctaLabel: 'マイソング診断をはじめる',
   },
@@ -55,13 +55,13 @@ export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
     id: 'discography',
     secondaryId: 'vocal_range',
     stepNum: '02',
-    subtitle: '発売順・ガイド順・音域分析・ゆかりの地',
+    subtitle: '曲の物語から、ゆかりの場所まで',
     title: '楽曲ガイド・音域一覧・聖地マップ',
     description:
-      '掲載90曲の曲調や長さ、地声・裏声の音域を資料と一緒にたどれます。松江・米子・横浜のゆかりの地も地図でどうぞ。',
+      '好きな曲の音や背景を知りたいときに。音域や発売日を比べたり、ゆかりの地を訪ねたりすることもできます。',
     points: [
-      '地声の最低音・最高音と裏声の最高音を採譜資料と一緒に',
-      '配信サービス掲載日と収録作品のCD発売日を出典付きで',
+      '曲の聴きどころや制作の話をたどる',
+      '音域や発売日を、出典と一緒に見比べる',
     ],
     ctaLabel: '楽曲ガイドを見る',
     secondaryCtaLabel: '掲載90曲の音域・発売日表へ',
@@ -70,13 +70,13 @@ export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
     id: 'setlist',
     secondaryId: 'tour_archive',
     stepNum: '03',
-    subtitle: 'ライブ曲順シミュレーション＆参戦記録',
+    subtitle: '夢のライブと、忘れられない公演',
     title: 'マイセトリ作成・歴代ツアー記録',
     description:
       'ライブで聴きたい曲を並べて、自分だけのセトリを作ろう。歴代ツアーをたどりながら、参戦や視聴の記録も残せます。',
     points: [
-      '本編・アンコールを編集して、収録音源の合計時間を確認',
-      '公演日・会場や掲載セトリの資料と、ツアーごとの参戦記録',
+      '本編もアンコールも、好きな曲順で',
+      '思い出の公演を資料と一緒に振り返る',
     ],
     ctaLabel: 'マイセトリを作る',
     secondaryCtaLabel: '歴代ツアー記録へ',
@@ -100,13 +100,13 @@ export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
     id: 'quiz',
     secondaryId: 'quiz_archive',
     stepNum: '04',
-    subtitle: '各レベル20問（全60問）＆並び替え・データ検証クイズ',
+    subtitle: '知っている曲から、新しい発見へ',
     title: 'ヒゲダン検定クイズ・出典＆トリビア図鑑',
     description:
       '初級・中級・上級は各20問。答え合わせのあとは、作品情報やインタビュー、使用した音源もたどれます。',
     points: [
-      '各20問の3コースと、並び替え特訓',
-      '全60問の問題と出典をキーワードや媒体から探せる',
+      '初級から上級、曲順の並び替えにも挑戦',
+      '気になる答えはインタビューや資料へ',
     ],
     ctaLabel: 'ヒゲダン検定に挑戦する',
     secondaryCtaLabel: '出典記事＆トリビア図鑑へ',

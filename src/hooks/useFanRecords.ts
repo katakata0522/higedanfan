@@ -4,6 +4,7 @@ import { formatDateDot, normalizeSetlistOrder, sanitizeSafeId, sanitizeSetlistEn
 import { createFanRecordStore, DEFAULT_SETLIST_TITLE, songsWithVotes, type Change } from './fanRecordStore';
 import { SETLIST_TITLE_LIMIT, sanitizeSetlistTitle } from '../utils/setlist';
 import { STORAGE_KEY } from './fanRecordStorage';
+import { createFanRecordBackup, parseFanRecordBackup } from './fanRecordBackup';
 
 type ReviewFields = Omit<FanReview, 'id' | 'postedAt' | 'likes'>;
 const songIds = new Set(HIGEDAN_SONGS.map(song => song.id));
@@ -126,15 +127,26 @@ export function useFanRecords(showToast: (message: string) => void) {
     if (await store.reset(records.resetEpoch)) showToast('保存データを初期状態にリセットしました。');
   };
   const downloadRecords = () => {
-    const url = URL.createObjectURL(new Blob([JSON.stringify(records, null, 2)], {type: 'application/json'}));
+    const url = URL.createObjectURL(new Blob([createFanRecordBackup(records)], {type: 'application/json'}));
     const link = document.createElement('a');
     link.href = url;
     link.download = 'higedanfan-records.json';
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   };
+  const importRecords = async (file: File) => {
+    try {
+      if (file.size > 2_000_000) throw new Error('記録ファイルが大きすぎます。');
+      const imported = parseFanRecordBackup(await file.text());
+      if (!window.confirm('このブラウザのマイセトリ、参戦・訪問、クイズなどの記録を、ファイルの内容に置き換えます。\n\n今の記録も残したい場合は、先に「記録を書き出す」を押してください。読み込みますか？')) return;
+      if (await store.importBackup(imported, records)) showToast('記録を読み込みました。');
+      else showToast('読み込めませんでした。別タブの変更や保存状態を確認してください。');
+    } catch {
+      showToast('記録ファイルを読み込めませんでした。元の記録は残っています。');
+    }
+  };
   return {
-    ...records, songs, storageNotice, downloadRecords, addToSetlist, removeFromSetlist, moveSetlistSong, toggleEncore,
+    ...records, songs, storageNotice, downloadRecords, importRecords, addToSetlist, removeFromSetlist, moveSetlistSong, toggleEncore,
     changeTitle, loadPresetSetlist, toggleVisitedSpot: (id: string) => toggleMark('visitedSpotIds', id),
     toggleAttendedTour: (id: string) => toggleMark('attendedTourIds', id), voteSong, likeReview,
     submitReview, editReview, deleteReview, updateBestQuizScore, resetAllUserData,

@@ -54,10 +54,7 @@ async function inspectAllPages(browser, scenario) {
       try {
         const response = await page.goto(`${root}songs/${id}/`, { waitUntil: 'load' });
         assert.equal(response?.status(), 200, '楽曲ページに到達できません');
-        await page.locator('.song-sheet').waitFor();
-        if (!scenario.mobile) {
-          await page.waitForFunction(() => Boolean(document.querySelector('.sheet-frame')?.style.width));
-        }
+        await page.locator('.overview-copy p').first().waitFor();
         if (scenario.readable) {
           await page.getByRole('button', { name: '大きな文字で読む' }).click();
           await page.locator('.sheet-frame--readable').waitFor();
@@ -109,9 +106,10 @@ async function inspectAllPages(browser, scenario) {
           assert.ok(result.coverBottom <= result.contentTop + 1, 'スマホで画像欄と曲名が重なっています');
         } else {
           assert.ok(result.coverRight <= result.contentLeft + 1, '画像欄と曲名が重なっています');
-          if (scenario.readable) assert.ok(result.overviewFont >= 16, '大きな文字で読む表示が小さすぎます');
-          else assert.ok(result.height <= result.viewportHeight, '通常表示が1画面に収まりません');
+          if (scenario.readable) assert.ok(result.overviewFont >= 20, '大きな文字で読む表示が小さすぎます');
+          else assert.ok(result.overviewFont >= 18, '本文の文字が小さすぎます');
         }
+        if (scenario.mobile) assert.ok(result.overviewFont >= 16, 'スマホの本文が小さすぎます');
       } catch (error) {
         failures.push(`${id}: ${error.message}`);
       }
@@ -240,27 +238,26 @@ async function verifyInteractions(browser) {
   const context = await browser.newContext({ viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 });
   const page = await context.newPage();
   await page.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
-  await page.locator('.song-sheet').waitFor();
-  await page.waitForFunction(() => Boolean(document.querySelector('.sheet-frame')?.style.width));
+  await page.locator('.overview-copy p').first().waitFor();
 
-  const initialScale = await page.locator('.song-sheet').evaluate(element => getComputedStyle(element).transform);
+  const initialFont = await page.locator('.overview-copy p').first().evaluate(element => parseFloat(getComputedStyle(element).fontSize));
   await page.locator('.sources summary').click();
   await page.waitForFunction(() => document.querySelector('.sources')?.open && document.documentElement.scrollHeight > innerHeight);
-  assert.equal(await page.locator('.song-sheet').evaluate(element => getComputedStyle(element).transform), initialScale, '出典の展開で紙面がさらに縮小されました');
+  assert.equal(await page.locator('.overview-copy p').first().evaluate(element => parseFloat(getComputedStyle(element).fontSize)), initialFont, '出典の展開で本文が縮小されました');
   assert.equal(await page.locator('.source-list a').first().isVisible(), true);
   await page.locator('.sources summary').click();
-  await page.waitForFunction(() => !document.querySelector('.sources')?.open && document.documentElement.scrollHeight <= innerHeight);
+  await page.waitForFunction(() => !document.querySelector('.sources')?.open);
 
   await page.getByRole('button', { name: '大きな文字で読む' }).click();
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform === 'none');
+  await page.locator('.sheet-frame--readable').waitFor();
   const readable = await page.evaluate(() => ({
     width: document.documentElement.scrollWidth, viewport: innerWidth,
     height: document.documentElement.scrollHeight, viewportHeight: innerHeight,
     fontSize: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
   }));
-  assert.ok(readable.width <= readable.viewport && readable.height > readable.viewportHeight && readable.fontSize >= 16, '大きな文字で読む表示が正しくありません');
-  await page.getByRole('button', { name: '1画面に戻す' }).click();
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform !== 'none' && document.documentElement.scrollHeight <= innerHeight);
+  assert.ok(readable.width <= readable.viewport && readable.height > readable.viewportHeight && readable.fontSize > initialFont, '大きな文字で読む表示が正しくありません');
+  await page.getByRole('button', { name: '標準の文字に戻す' }).click();
+  await page.waitForFunction(() => !document.querySelector('.sheet-frame--readable'));
 
   await page.getByRole('button', { name: 'マイセトリに追加' }).click();
   await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
@@ -270,10 +267,10 @@ async function verifyInteractions(browser) {
   await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform === 'none' && !document.querySelector('.sheet-frame').style.width);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform === 'none');
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '画面幅変更後に横にはみ出しています');
   await page.setViewportSize({ width: 615, height: 604 });
-  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform !== 'none' && document.documentElement.scrollHeight <= innerHeight);
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform === 'none');
 
   await page.goto(`${root}songs/pretender/`, { waitUntil: 'load' });
   await page.locator('.song-sheet').waitFor();
@@ -285,18 +282,110 @@ async function verifyInteractions(browser) {
   console.log('出典の開閉・別のテンポ表記・拡大表示・マイセトリ保存・画面幅変更を確認');
 }
 
+async function verifyGuideAndSetlistUsability(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  await context.addInitScript(() => {
+    const key = 'higedan_fan_magazine_state_v1';
+    if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ setlist: [], setlistTitle: '確認用セトリ' }));
+  });
+  const page = await context.newPage();
+  await page.goto(root, { waitUntil: 'load' });
+  await page.getByRole('button', { name: '今日の1曲を探す' }).waitFor();
+  assert.equal(await page.getByText('図柄を選択', { exact: false }).count(), 0);
+  await page.getByRole('button', { name: '「Pretender」の「世界線」、アニメとのつながりを読む →' }).click();
+  await page.getByRole('heading', { name: 'Pretender', exact: true }).waitFor();
+  assert.match(await page.locator('.overview-copy').innerText(), /STEINS;GATE/);
+
+  await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
+  const table = page.getByRole('table', { name: /音域・発売日比較表/ });
+  await table.waitFor();
+  assert.equal(await table.locator('tbody tr').count(), 18);
+  await page.getByRole('button', { name: /全 90 曲をすべて表示/ }).click();
+  assert.equal(await table.locator('tbody tr').count(), 90, 'PCで全曲を縦に比較できません');
+  await page.getByLabel('並び替え', { exact: true }).selectOption('highest_note');
+  assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/, '地声最高音順に並びません');
+  assert.equal(await table.locator('tbody tr').count(), 90, '並び替えた後に表示曲数が減っています');
+  const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
+  assert.match(await subtitle.innerText(), /記載なし/, '採譜にない値を誤表示しています');
+  assert.equal(await subtitle.getByRole('link', { name: /Subtitleの採譜/ }).count(), 1);
+
+  await page.goto(`${root}#discography`, { waitUntil: 'load' });
+  await page.getByLabel('曲名・読み・音域・タイアップで検索').fill('Pretender');
+  const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
+  assert.match(await pretender.innerText(), /配信掲載\s*2019\.04\.17/);
+  assert.doesNotMatch(await pretender.innerText(), /BPM[^\n]*配信サービス掲載日/);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(`${root}#quiz`, { waitUntil: 'load' });
+  await page.waitForFunction(() => {
+    const nav = document.querySelector('nav[aria-label="コーナー切り替えナビゲーション"]');
+    const current = nav?.querySelector('[aria-current="page"]');
+    const home = nav?.querySelector('[data-feature-home]');
+    if (!nav || !current || !home) return false;
+    const box = nav.getBoundingClientRect(), item = current.getBoundingClientRect();
+    const homeBox = home.getBoundingClientRect();
+    return homeBox.left >= box.left && homeBox.right <= box.right && item.left >= homeBox.right && item.right <= box.right && current.textContent.includes('検定クイズ');
+  });
+  await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
+  await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
+  assert.equal(await table.isVisible(), false, 'スマホに幅広いPC向けの表が表示されています');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホの音域一覧が横にはみ出しています');
+
+  await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+  const search = page.getByLabel('曲を探して追加');
+  await search.fill('ぷりてんだー');
+  await page.getByRole('button', { name: 'Pretenderを本編に追加' }).click();
+  await page.getByRole('button', { name: 'Pretender', exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Pretenderは追加済み' }).isDisabled(), true);
+  await search.fill('さぶたいとる');
+  await page.getByLabel('アンコール枠で追加').check();
+  await page.getByRole('button', { name: 'Subtitleをアンコールに追加' }).click();
+  await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
+  await page.getByLabel('Subtitleのその他の操作').click();
+  const subtitleActions = page.locator('details').filter({ has: page.getByLabel('Subtitleのその他の操作') });
+  assert.match(await subtitleActions.innerText(), /収録：Rejoice/);
+  assert.match(await subtitleActions.innerText(), /BPM\s*約65/);
+  await page.getByRole('button', { name: 'Subtitleを本編へ移動' }).click();
+  await page.getByLabel('Subtitleのその他の操作').click();
+  await page.getByRole('button', { name: 'Subtitleをアンコールへ移動' }).click();
+  await search.fill('cry baby');
+  await page.getByLabel('アンコール枠で追加').uncheck();
+  await page.getByRole('button', { name: 'Cry Babyを本編に追加' }).click();
+  await page.getByRole('button', { name: 'Cry Baby', exact: true }).waitFor();
+  await page.getByRole('button', { name: 'Pretenderを1つ下へ移動' }).click();
+  await page.waitForFunction(() => {
+    const value = localStorage.getItem('higedan_fan_magazine_state_v1');
+    if (!value) return false;
+    const items = JSON.parse(value).setlist;
+    return items?.length === 3 && items[0].songId === 'cry-baby' && items[1].songId === 'pretender' && items[2].songId === 'subtitle' && items[2].isEncore;
+  });
+  await page.reload({ waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホのセトリ画面が横にはみ出しています');
+  await page.setViewportSize({ width: 320, height: 844 });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxのセトリ画面が横にはみ出しています');
+  await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
+  await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxの音域一覧が横にはみ出しています');
+  await context.close();
+  console.log('PC比較表・出典・スマホの現在地表示・検索からの追加と曲順・保存を確認');
+}
+
 let browser;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
-  await verifyImmediateReload(browser);
-  await verifyStorageFailures(browser);
-  await inspectAllPages(browser, { name: 'PC 1280×720', context: { viewport: { width: 1280, height: 720 } } });
-  await inspectAllPages(browser, { name: 'PC 615×604', context: { viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 } });
-  await inspectAllPages(browser, { name: 'スマホ 320px', mobile: true, context: { viewport: { width: 320, height: 844 }, isMobile: true, hasTouch: true } });
-  await inspectAllPages(browser, { name: 'スマホ 390px', mobile: true, context: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } });
-  await inspectAllPages(browser, { name: 'PC 大きな文字 521px', readable: true, context: { viewport: { width: 521, height: 844 } } });
-  await verifyInteractions(browser);
+  await verifyGuideAndSetlistUsability(browser);
+  if (!process.argv.includes('--ux-only')) {
+    await verifyImmediateReload(browser);
+    await verifyStorageFailures(browser);
+    await inspectAllPages(browser, { name: 'PC 1280×720', context: { viewport: { width: 1280, height: 720 } } });
+    await inspectAllPages(browser, { name: 'PC 615×604', context: { viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 } });
+    await inspectAllPages(browser, { name: 'スマホ 320px', mobile: true, context: { viewport: { width: 320, height: 844 }, isMobile: true, hasTouch: true } });
+    await inspectAllPages(browser, { name: 'スマホ 390px', mobile: true, context: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } });
+    await inspectAllPages(browser, { name: 'PC 大きな文字 521px', readable: true, context: { viewport: { width: 521, height: 844 } } });
+    await verifyInteractions(browser);
+  }
 } finally {
   await browser?.close();
   server.kill();

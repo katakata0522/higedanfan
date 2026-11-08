@@ -274,6 +274,33 @@ export class FanRecordStore {
     } catch { this.publish(this.view.records, '保存データを初期化できませんでした。'); return false; }
     finally { this.resetting = false; }
   }
+  async importBackup(imported: FanRecords, expected: FanRecords): Promise<boolean> {
+    if (this.resetting || this.pending.length) return false;
+    this.resetting = true;
+    try {
+      return await this.exclusive(() => {
+        this.read();
+        if (this.pending.length || JSON.stringify(this.base) !== JSON.stringify(expected)) {
+          this.refresh();
+          return false;
+        }
+        // A new generation prevents stale tabs and journals from reviving old records.
+        const next = { ...imported, resetEpoch: crypto.randomUUID(), setlistMembershipVersions: {} };
+        const raw = encode(next);
+        this.storage().setItem(STORAGE_KEY, raw);
+        this.raw = raw;
+        this.base = next;
+        this.pendingConflict = false;
+        this.publish(next, '');
+        return true;
+      });
+    } catch {
+      this.publish(this.view.records, '記録を読み込めませんでした。元の記録は残っています。');
+      return false;
+    } finally {
+      this.resetting = false;
+    }
+  }
 }
 
 export function createFanRecordStore() {
