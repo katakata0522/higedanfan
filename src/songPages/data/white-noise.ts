@@ -21,7 +21,7 @@ const page = {
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
     { label: 'レーベルのMVメイキング記事', purpose: 'カーアクションとバイクスタント', url: 'https://news.ponycanyon.co.jp/2023/01/80632' },
   ],
-  sourceCaveat: '音域とテンポは採譜・計測方法で表記が異なる場合があります。図柄は当サイト制作で、公式ジャケットではありません。',
+  sourceCaveat: '音域とテンポは採譜・計測方法で表記が異なる場合があります。',
 } satisfies EditorialSongPageData;
 
 export default page;

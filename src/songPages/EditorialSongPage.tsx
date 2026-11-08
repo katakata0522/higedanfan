@@ -6,8 +6,10 @@ import { useFanRecords } from '../hooks/useFanRecords';
 import { formatDuration } from '../utils/fanLogic';
 import { guideReturnView } from '../utils/guideReturnState';
 import type { EditorialSongPageData } from './EditorialSongPageData';
+import { appleMusicEmbedUrl } from './appleMusicEmbed';
 
 const base = import.meta.env.BASE_URL;
+const separateDigitalSingles = new Set(['elderflower', 'stardust']);
 
 export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const song = HIGEDAN_SONGS.find(item => item.id === page.id)!;
@@ -21,6 +23,9 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   });
   const inSetlist = records.setlist.some(item => item.songId === song.id);
   const [returnView] = useState(guideReturnView);
+  const [useFallbackArt, setUseFallbackArt] = useState(false);
+  const embedUrl = appleMusicEmbedUrl(page.id, fact.apple);
+  const showPlayer = Boolean(embedUrl) && !useFallbackArt;
 
   useEffect(() => () => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -42,17 +47,33 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
       <main id="main" className="page-main">
         <article className="song-sheet" aria-labelledby="song-title">
-          <header className="song-hero">
-            <figure className="cover">
-              {'path' in page.artwork ? (
+          <header className={`song-hero${embedUrl ? ' song-hero--player' : ''}`}>
+            <figure className={`cover${embedUrl ? ' cover--player' : ''}`}>
+              {showPlayer ? (
+                <iframe
+                  title={`${song.title}のApple Musicプレーヤー`}
+                  src={embedUrl!}
+                  allow="autoplay *; encrypted-media *; clipboard-write"
+                  sandbox="allow-forms allow-popups allow-same-origin allow-scripts allow-top-navigation-by-user-activation"
+                  referrerPolicy="no-referrer"
+                />
+              ) : 'path' in page.artwork ? (
                 <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="220" height="220" />
               ) : (
                 <GuideArtwork src={page.artwork.theme} alt={page.artwork.alt} className="guide-artwork" />
               )}
+              <figcaption>
+                {showPlayer ? 'Apple Music 配信版のプレーヤー' : '当サイト制作のイメージ画像'}
+                {embedUrl && (
+                  <button type="button" onClick={() => setUseFallbackArt(value => !value)}>
+                    {showPlayer ? '表示できない場合' : 'プレーヤーを再表示'}
+                  </button>
+                )}
+              </figcaption>
             </figure>
             <div className="hero-content">
               <h1 id="song-title">{song.title}</h1>
-              <p className="recording">収録作品：<span>{fact.album}</span></p>
+              <p className="recording">収録作品：<span>{fact.album}</span>{separateDigitalSingles.has(page.id) && '（CD）'}</p>
 
               <dl className="song-facts">
                 <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
@@ -102,7 +123,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   </li>
                 ))}
               </ul>
-              <p className="source-caveat">{page.sourceCaveat}</p>
+              <p className="source-caveat">{page.sourceCaveat}{!showPlayer && '表示中の画像は当サイト制作で、公式ジャケットではありません。'}</p>
             </div>
           </details>
 
