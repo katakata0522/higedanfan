@@ -4,7 +4,7 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
 import { songwriterInfo } from '../utils/songCatalog';
-import { formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
+import { formatApproxBpm, formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
 import { playSongTempoPreview, stopTempoPreview } from '../utils/audioPreview';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
 
@@ -153,7 +153,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             <div>
               <span className="block text-xs text-[#78716C]">テンポ (BPM)</span>
               <span className="mt-0.5 block text-base font-bold font-mono-num text-[#1C1917]">
-                {song.bpm} BPM
+                {formatApproxBpm(song.bpm)} BPM
               </span>
             </div>
             <div>
@@ -176,12 +176,12 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             {isPlayingTempo ? (
               <>
                 <Square className="h-3.5 w-3.5 fill-current" />
-                メトロノーム停止 (BPM {song.bpm})
+                メトロノーム停止 (BPM {formatApproxBpm(song.bpm)})
               </>
             ) : (
               <>
                 <Volume2 className="h-4 w-4 text-[#C83E2B]" />
-                BPM {song.bpm} のテンポ確認（メトロノーム音）
+                BPM {formatApproxBpm(song.bpm)} のテンポ確認（メトロノーム音）
               </>
             )}
           </button>}
@@ -214,7 +214,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               {song.tieUps.map(item => <li key={item.text}>タイアップ：{item.text}。 <a className="underline" href={item.source} target="_blank" rel="noreferrer">出典 ↗</a></li>)}
             </ul>}
             {fact.cd && <p>この作品のCD発売日：{fact.cd}。 <a className="underline" href={fact.cdSource} target="_blank" rel="noreferrer">公式作品情報 ↗</a></p>}
-            <p>テンポ：{fact.tempo} BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。
+            <p>テンポ：{formatApproxBpm(fact.tempo)} BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。
               <a className="underline" href={fact.tempoSource} target="_blank" rel="noreferrer">テンポの資料 ↗</a></p>
           </div>
         </section>

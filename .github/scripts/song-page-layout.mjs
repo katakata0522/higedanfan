@@ -89,6 +89,7 @@ async function inspectAllPages(browser, scenario) {
             badges: [...document.querySelectorAll('a')].filter(link => /iTunes Store/i.test(`${link.textContent} ${link.querySelector('img')?.alt || ''}`)).length
               + document.querySelectorAll('iframe[src*="music.apple.com"]').length,
             overviewFont: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
+            tempoText: document.querySelectorAll('.fact-item')[1].querySelector('dd').textContent,
             facts,
           };
         });
@@ -96,6 +97,7 @@ async function inspectAllPages(browser, scenario) {
         assert.equal(result.placeholders, 1, '正方形の仮枠がありません');
         assert.equal(result.coverImages, 0, '仮枠に画像が残っています');
         assert.equal(result.badges, 0, 'ストアのバッジやプレーヤーが残っています');
+        assert.match(result.tempoText, /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポが目安として表示されていません');
         assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, '仮枠が正方形ではありません');
         assert.ok(result.width <= result.viewport, '横にはみ出しています');
         assert.ok(result.titleWidth <= result.titleClient + 1, '曲名がはみ出しています');
@@ -272,8 +274,14 @@ async function verifyInteractions(browser) {
   await page.setViewportSize({ width: 615, height: 604 });
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform !== 'none' && document.documentElement.scrollHeight <= innerHeight);
 
+  await page.goto(`${root}songs/pretender/`, { waitUntil: 'load' });
+  await page.locator('.song-sheet').waitFor();
+  assert.match(await page.locator('.fact-item').nth(1).innerText(), /約92\s+BPM/, '選んだテンポが表示されていません');
+  await page.locator('.sources summary').click();
+  await page.getByRole('link', { name: '約184 BPM' }).waitFor();
+
   await context.close();
-  console.log('出典の開閉・拡大表示・マイセトリ保存・画面幅変更を確認');
+  console.log('出典の開閉・別のテンポ表記・拡大表示・マイセトリ保存・画面幅変更を確認');
 }
 
 let browser;

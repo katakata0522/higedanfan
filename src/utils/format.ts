@@ -11,3 +11,8 @@ export function formatDuration(seconds: number): string {
   const secs = safeSec % 60;
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
+
+// BPM は資料や拍の数え方によって変わるため、画面上では目安として示す。
+export function formatApproxBpm(bpm: number): string {
+  return `約${bpm}`;
+}
