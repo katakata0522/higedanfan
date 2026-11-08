@@ -16,7 +16,7 @@ export function autoSongPage(id: string): EditorialSongPageData {
   const overview = [
     id === 'anarchy-song'
       ? `『${fact.album}』に収録された「${fact.recording}」は${release}に配信されています。`
-      : `「${fact.recording}」は${release}に配信された楽曲です。このページでは『${fact.album}』収録の音源を取り上げています。`,
+      : `「${fact.recording}」は${release}に配信されました。このページでは『${fact.album}』に収録された音源を紹介します。`,
     ...tieUps.map(item => {
       if (id === 'anarchy-song') {
         return `${item.text.replace('（シングル版）', '')}に起用されたのはシングル版です。掲載音源とは別の録音です。`;

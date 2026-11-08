@@ -30,8 +30,9 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
             </div>
 
             <p className="text-xs sm:text-base text-[#57534E] leading-relaxed max-w-2xl">
-              Official髭男dismの楽曲を、収録作品・発売日・演奏時間・音域などの資料と一緒にたどれるファンサイトです。
-              今日の気分から選ぶ1曲を探す「マイソング診断」をはじめ、楽曲ガイド、聖地巡礼マップ、マイセトリ作成、歴代ツアーの公演記録、検定クイズから選べます。
+              好きな曲のことをもっと知りたい日も、今日の1曲を探したい日も。
+              Official髭男dismの楽曲を、収録作品や発売日、演奏時間、音域などの資料と一緒にたどれるファンサイトです。
+              マイソング診断、楽曲ガイド、聖地巡礼マップ、マイセトリ、歴代ツアーの公演記録、検定クイズを用意しました。
             </p>
 
             <div className="pt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
@@ -107,7 +108,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
       <div className="space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1 border-b border-[#E6E1D6] pb-3.5">
           <h2 className="text-lg sm:text-xl font-bold text-[#1C1917]">
-            コンテンツ一覧（気になる項目を選んで進んでください）
+            今日はどこから楽しむ？
           </h2>
           <span className="text-xs text-[#78716C]">
             右上の「メニュー」からも全項目を縦一覧で開けます

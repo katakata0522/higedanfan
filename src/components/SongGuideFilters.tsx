@@ -122,12 +122,12 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
       </div>
 
       <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
-        onClick={() => setExpanded(!expanded)}
-        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] sm:hidden">
-        <span>年代・曲調・並び順{secondaryChoices.length > 0 && <span className="block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
+        onClick={() => setExpanded(current => !current)}
+        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
+        <span>詳しく絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
       </button>
-      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid sm:grid-cols-2`}>
+      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid-cols-2`}>
         <div role="group" aria-label="年代で絞り込み" className="flex flex-wrap items-center gap-1 sm:col-span-2">
           {ERA_TABS.map(tab => {
             const active = era === tab.id && album === 'all';

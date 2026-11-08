@@ -2,8 +2,9 @@ import { BookOpen, ExternalLink, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { QUIZ_QUESTIONS } from '../../data/quizData';
 import type { SongItem } from '../../data/higedanData';
-import { formatOrderingSequence } from '../../utils/fanLogic';
 import { DIFFICULTY_LABEL, type CourseDifficulty } from './quizCourses';
+import { prepareQuizArchiveSearch, quizArchiveAnswer } from './quizArchiveSearch';
+import { visibleQuizSourceSummary } from './quizSourceSummary';
 
 const publisherNames = QUIZ_QUESTIONS.flatMap(question => question.sources.map(source => source.publisher));
 const PUBLISHERS = [
@@ -25,26 +26,16 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
 
   const archiveQuestions = useMemo(() => {
     if (!visible) return [];
-    const qLower = archiveSearchQuery.trim().toLowerCase();
+    const matchesSearch = prepareQuizArchiveSearch(archiveSearchQuery, songs);
     return QUIZ_QUESTIONS.filter((q) => {
       if (archiveDifficulty !== 'all' && q.difficulty !== archiveDifficulty) {
         return false;
       }
       if (publisherFilter !== 'all' && !q.sources.some(s => s.publisher === publisherFilter)) return false;
-      if (!qLower) return true;
-      const inPrompt = q.prompt.toLowerCase().includes(qLower);
-      const inExplanation = q.explanation.toLowerCase().includes(qLower);
-      const inCategory = q.category.toLowerCase().includes(qLower);
-      const inOptions = q.options.some((opt) => opt.toLowerCase().includes(qLower));
-      const inSources = q.sources.some(
-        (s) =>
-          s.title.toLowerCase().includes(qLower) ||
-          s.publisher.toLowerCase().includes(qLower) ||
-          s.summary.toLowerCase().includes(qLower)
-      );
-      return inPrompt || inExplanation || inCategory || inOptions || inSources;
+      const relatedSong = onSelectSong && q.relatedSongId ? songsById.get(q.relatedSongId) : undefined;
+      return matchesSearch(q, relatedSong);
     });
-  }, [visible, archiveDifficulty, publisherFilter, archiveSearchQuery]);
+  }, [visible, archiveDifficulty, publisherFilter, archiveSearchQuery, songs, songsById, onSelectSong]);
 
   if (!visible) return null;
   return (
@@ -57,7 +48,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
               全60問のトリビア解説 ＆ 出典インタビュー・データ検証図鑑
             </h3>
             <p className="mt-0.5 text-xs text-[#57534E]">
-              作品情報・本人インタビュー・収録音源を、難易度やキーワードで検索できます。
+              曲名や言葉、難易度から、作品情報や本人インタビュー、収録音源の出典をたどれます。
             </p>
           </div>
           <span className="text-xs font-mono-num font-bold text-[#C83E2B] shrink-0">
@@ -154,10 +145,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
             const matchedSong = q.relatedSongId
               ? songsById.get(q.relatedSongId)
               : null;
-            const answerDisplay =
-              q.questionType === 'ordering' && q.correctOrder
-                ? formatOrderingSequence(q.options, q.correctOrder)
-                : q.options[q.correctIndex];
+            const answerDisplay = quizArchiveAnswer(q);
 
             return (
               <article
@@ -196,40 +184,41 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
 
                 {/* Sources Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  {q.sources.map((src, sIdx) => (
-                    <div
-                      key={`${q.id}-archive-src-${sIdx}`}
-                      className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3.5 flex flex-col justify-between gap-2"
-                    >
-                      <div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-bold text-[#C83E2B]">
-                            {src.publisher}
-                          </span>
-                          <span className="text-[11px] text-[#78716C]">
-                            {src.publishedNote}
-                          </span>
+                  {q.sources.map((src, sIdx) => {
+                    const summary = visibleQuizSourceSummary(src);
+                    return (
+                      <div
+                        key={`${q.id}-archive-src-${sIdx}`}
+                        className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3.5 flex flex-col justify-between gap-2"
+                      >
+                        <div>
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-[11px] font-bold text-[#C83E2B]">
+                              {src.publisher}
+                            </span>
+                            <span className="text-[11px] text-[#78716C]">
+                              {src.publishedNote}
+                            </span>
+                          </div>
+                          <div className="mt-1 text-xs font-bold text-[#1C1917] leading-snug">
+                            {src.title}
+                          </div>
+                          {summary && <p className="mt-1.5 text-xs text-[#57534E] leading-relaxed">{summary}</p>}
                         </div>
-                        <div className="mt-1 text-xs font-bold text-[#1C1917] leading-snug">
-                          {src.title}
+                        <div className="pt-1 flex justify-end">
+                          <a
+                            href={src.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E3A5F] hover:underline"
+                          >
+                            出典メディアを見る
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
                         </div>
-                        <p className="mt-1.5 text-xs text-[#57534E] leading-relaxed">
-                          {src.summary}
-                        </p>
                       </div>
-                      <div className="pt-1 flex justify-end">
-                        <a
-                          href={src.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E3A5F] hover:underline"
-                        >
-                          出典メディアを見る
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {matchedSong && onSelectSong && (

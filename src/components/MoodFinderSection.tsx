@@ -1,15 +1,35 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState, type RefObject } from 'react';
 import { RotateCcw } from 'lucide-react';
-import type { MoodCriteria } from '../utils/fanLogic';
 import { MoodQuestionnaire } from './mood/MoodQuestionnaire';
 import { MoodResults, type MoodLibraryProps } from './mood/MoodResults';
 import type { ShareTheme } from './mood/MoodShareCard';
+import {
+  cancelMoodEdit, editMoodAnswer, isCompleteMoodCriteria, newMoodSession,
+  previousMoodStep, restoreMoodSession, saveMoodSession, selectMoodAnswer,
+  type MoodSession,
+} from './mood/moodSession';
 
-export function MoodFinderSection(props: MoodLibraryProps) {
-  const [criteria, setCriteria] = useState<MoodCriteria | null>(null);
+interface MoodFinderSectionProps extends MoodLibraryProps {
+  resetEpoch: string;
+  sessionRef: RefObject<MoodSession | null>;
+}
+
+export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFinderSectionProps) {
+  const [session, setSession] = useState<MoodSession>(() => sessionRef.current ?? restoreMoodSession());
+  const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
+  useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
   // Keep the chosen card theme when the listener starts another diagnosis.
   const [theme, setTheme] = useState<ShareTheme>('dark');
-  const restart = () => setCriteria(null);
+  const updateSession = (next: MoodSession) => {
+    sessionRef.current = next;
+    setSessionSaveUnavailable(!saveMoodSession(next, resetEpoch));
+    setSession(next);
+  };
+  const restart = () => {
+    const next = newMoodSession();
+    updateSession(next);
+  };
+  const criteria = session.completed && isCompleteMoodCriteria(session.answers) ? session.answers : null;
 
   return (
     <section
@@ -28,7 +48,7 @@ export function MoodFinderSection(props: MoodLibraryProps) {
               マイソング診断
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              気分・場面・曲調を選ぶと、当サイトの分類から合う曲を探せます。
+              ５つの質問から、今のあなたに聴いてほしい曲を探します。
             </p>
           </div>
 
@@ -44,10 +64,21 @@ export function MoodFinderSection(props: MoodLibraryProps) {
           )}
         </div>
 
+        {sessionSaveUnavailable && (
+          <p role="status" className="mt-4 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs leading-relaxed text-[#57534E]">
+            診断結果をブラウザに保存できませんでした。ページを移動したり再読み込みしたりすると、回答が消える場合があります。
+          </p>
+        )}
+
         {criteria ? (
-          <MoodResults {...props} criteria={criteria} onRestart={restart} theme={theme} onSelectTheme={setTheme} />
+          <MoodResults {...props} criteria={criteria} onEditAnswer={step => updateSession(editMoodAnswer(session, step))} theme={theme} onSelectTheme={setTheme} />
         ) : (
-          <MoodQuestionnaire onComplete={setCriteria} />
+          <MoodQuestionnaire
+            session={session}
+            onChoose={answer => updateSession(selectMoodAnswer(session, answer))}
+            onBack={() => updateSession(previousMoodStep(session))}
+            onCancelEdit={() => updateSession(cancelMoodEdit(session))}
+          />
         )}
       </div>
     </section>

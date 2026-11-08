@@ -4,7 +4,9 @@ import { GuideArtwork } from '../GuideArtwork';
 import {
   formatSongBpm,
   formatDiagnosisShareText,
+  ERA_PREFERENCE_LABELS,
   isSafeAssetUrl,
+  LENGTH_PREFERENCE_LABELS,
   MOOD_LABELS,
   SITUATION_LABELS,
   SOUND_LABELS,
@@ -231,6 +233,8 @@ export function MoodShareCard({
               >
                 {MOOD_LABELS[criteria.mood]} ／ {SITUATION_LABELS[criteria.situation]} ／{' '}
                 {SOUND_LABELS[criteria.sound]}
+                {criteria.era && <> ／ {ERA_PREFERENCE_LABELS[criteria.era]}</>}
+                {criteria.length && <> ／ {LENGTH_PREFERENCE_LABELS[criteria.length]}</>}
               </div>
             </div>
 

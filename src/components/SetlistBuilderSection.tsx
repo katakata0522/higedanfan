@@ -167,8 +167,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
-                ? '公演日・会場と掲載セトリの資料を確認し、参戦・視聴をツアー単位で記録できます。'
-                : '自分が聴きたい理想の曲順を組んで、合計演奏時間や曲順で見る熱量の目安をシミュレーションできます。'}
+                ? '公演日や会場、セトリの資料をたどりながら、参戦・視聴をツアーごとに記録できます。'
+                : 'ライブで聴きたい曲を好きな順に並べよう。合計演奏時間や曲順に沿った熱量の目安も見られます。'}
             </p>
           </div>
 
@@ -368,7 +368,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <div className="mt-4 divide-y divide-[#E6E1D6] border-y border-[#E6E1D6]">
                 {setlist.length === 0 ? (
                   <div className="p-6 text-center text-xs text-[#57534E]">
-                    セットリストが空です。上の曲選択メニューから好きな曲を追加してください。
+                    まだ曲がありません。上のメニューから、まずは好きな1曲を追加してみよう。
                   </div>
                 ) : (
                   setlist.map((entry, idx) => {

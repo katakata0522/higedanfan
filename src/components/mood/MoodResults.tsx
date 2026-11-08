@@ -1,19 +1,21 @@
-import { useMemo, useState } from 'react';
-import { BookOpen, Check, Disc, Plus, Share2, Sparkles } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { BookOpen, Check, Disc, Pencil, Plus, Share2, Sparkles } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
 import {
   formatSongBpm,
   formatDuration,
+  ERA_PREFERENCE_LABELS,
   isSafeAssetUrl,
+  LENGTH_PREFERENCE_LABELS,
   MOOD_LABELS,
   scoreSongsByMood,
   SITUATION_LABELS,
   SOUND_LABELS,
-  type MoodCriteria,
 } from '../../utils/fanLogic';
 import { GuideArtwork } from '../GuideArtwork';
 import { MoodMatchBreakdown } from './MoodMatchBreakdown';
 import { MoodShareCard, type ShareTheme } from './MoodShareCard';
+import type { CompleteMoodCriteria, MoodStep } from './moodSession';
 
 export interface MoodLibraryProps {
   songs: SongItem[];
@@ -23,20 +25,31 @@ export interface MoodLibraryProps {
 }
 
 interface MoodResultsProps extends MoodLibraryProps {
-  criteria: MoodCriteria;
-  onRestart: () => void;
+  criteria: CompleteMoodCriteria;
+  onEditAnswer: (step: MoodStep) => void;
   theme: ShareTheme;
   onSelectTheme: (theme: ShareTheme) => void;
 }
 
 export function MoodResults({
   songs, onSelectSong, onAddToSetlist, setlistSongIds,
-  criteria, onRestart, theme, onSelectTheme,
+  criteria, onEditAnswer, theme, onSelectTheme,
 }: MoodResultsProps) {
   const [shareRank, setShareRank] = useState<number | null>(null);
+  const resultHeadingRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    resultHeadingRef.current?.focus();
+  }, []);
 
   const matches = useMemo(() => scoreSongsByMood(songs, criteria).slice(0, 3), [songs, criteria]);
   const [bestMatch, ...subMatches] = matches;
+  const answers: { step: MoodStep; name: string; value: string }[] = [
+    { step: 1, name: '気分', value: MOOD_LABELS[criteria.mood] },
+    { step: 2, name: '場面', value: SITUATION_LABELS[criteria.situation] },
+    { step: 3, name: '曲調', value: SOUND_LABELS[criteria.sound] },
+    { step: 4, name: '時期', value: ERA_PREFERENCE_LABELS[criteria.era] },
+    { step: 5, name: '長さ', value: LENGTH_PREFERENCE_LABELS[criteria.length] },
+  ];
 
   const handleOpenSongDetail = (song: SongItem) => {
     onSelectSong(song);
@@ -45,32 +58,23 @@ export function MoodResults({
   return (
     <div className="mt-6 space-y-6">
       {/* Selected Answers Summary Bar */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] px-4 py-3 text-xs text-[#57534E]">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-[#1C1917]">診断条件：</span>
-          <span className="font-medium text-[#1C1917]">
-            {MOOD_LABELS[criteria.mood]}
-          </span>
-          <span aria-hidden="true" className="text-[#78716C]">
-            /
-          </span>
-          <span className="font-medium text-[#1C1917]">
-            {SITUATION_LABELS[criteria.situation]}
-          </span>
-          <span aria-hidden="true" className="text-[#78716C]">
-            /
-          </span>
-          <span className="font-medium text-[#1C1917]">
-            {SOUND_LABELS[criteria.sound]}
-          </span>
+      <div className="rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] px-4 py-3 text-xs text-[#57534E]">
+        <p ref={resultHeadingRef} tabIndex={-1} className="font-bold text-[#1C1917] focus:outline-none">選んだ答え <span className="font-normal text-[#57534E]">・押すとその答えだけ変えられます</span></p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {answers.map(answer => (
+            <button
+              key={answer.step}
+              type="button"
+              onClick={() => onEditAnswer(answer.step)}
+              aria-label={answer.name + '「' + answer.value + '」を変更'}
+              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-left font-medium text-[#1C1917] hover:border-[#C83E2B] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+            >
+              <span className="text-[#78716C]">{answer.name}</span> {answer.value}
+              <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
+            </button>
+          ))}
         </div>
-        <button
-          type="button"
-          onClick={onRestart}
-          className="text-xs font-bold text-[#C83E2B] hover:underline whitespace-nowrap cursor-pointer"
-        >
-          条件を選び直す
-        </button>
+        <p className="mt-2 leading-relaxed">すべての条件に一致しない曲も、近い候補として紹介することがあります。</p>
       </div>
 
       {/* #1 Diagnosed Song Card with Large Jacket Artwork + Visualized Breakdown + 1-2 Sentence Reason */}
