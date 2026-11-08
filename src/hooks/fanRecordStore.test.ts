@@ -205,6 +205,38 @@ test('replacing the setlist cancels only pending additions that were removed', a
   assert.ok(after.snapshot().records.setlist.some(item => item.songId === 'cry-baby'));
 });
 
+test('adding a song again after a pending removal survives reload', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  void waiting.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  void waiting.addToSetlist('white-noise', true);
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.ok(after.snapshot().records.setlist.some(item => item.songId === 'white-noise' && item.isEncore));
+});
+
+test('adding a song again after a pending removal also saves without reload', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  let holding = false;
+  const callbacks: (() => void)[] = [];
+  const lock = <T>(fn: () => T): Promise<T> => holding
+    ? new Promise<T>(resolve => { callbacks.push(() => resolve(fn())); }) : immediateLock(fn);
+  const store = new FanRecordStore(() => local, lock, () => session);
+  await store.initialize();
+  holding = true;
+  void store.addToSetlist('white-noise', false);
+  void store.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  const finalAdd = store.addToSetlist('white-noise', true);
+  callbacks.forEach(callback => callback());
+  assert.equal(await finalAdd, 'saved');
+  const saved = JSON.parse(local.getItem(STORAGE_KEY)!).setlist as {songId: string; isEncore: boolean}[];
+  assert.ok(saved.some(item => item.songId === 'white-noise' && item.isEncore));
+});
+
 test('failure to cancel a pending addition is visible instead of silently ignored', async () => {
   const local = memoryStorage(), session = memoryStorage();
   const first = new FanRecordStore(() => local, immediateLock, () => session);

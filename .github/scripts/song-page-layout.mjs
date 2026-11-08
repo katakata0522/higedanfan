@@ -176,6 +176,20 @@ async function verifyImmediateReload(browser) {
   await releaseLock();
   await lockPage.evaluate(() => navigator.locks.request('higedan_fan_magazine_state_v1', () => true));
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk')), false);
+
+  // 同じ曲を追加・削除・再追加した直後も、最後の選択を復元する。
+  await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
+  await holdLock();
+  await page.getByRole('button', { name: '曲を追加', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
+  await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
+  await page.getByLabel('アンコール枠で追加').check();
+  await page.getByRole('button', { name: '曲を追加', exact: true }).click();
+  await page.reload({ waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).waitFor();
+  await releaseLock();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk' && item.isEncore));
   await context.close();
   console.log('楽曲ページとセトリ作成画面で、保存待ち中の再読み込みから曲とアンコール設定を復元');
 }
