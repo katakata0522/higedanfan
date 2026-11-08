@@ -225,7 +225,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
         </div>
       </div>
 
-      {/* Newly Added Essential Fan Section: 4 Band Members Profile & Musical Highlights */}
+      {/* メンバー本人の取材からたどる紹介 */}
       <section
         aria-labelledby="members-heading"
         className="space-y-4 pt-2"
@@ -245,16 +245,16 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
           {HIGEDAN_MEMBERS.map((member) => {
             const sigSong = songs.find((s) => s.id === member.signatureSongId);
             return (
               <article
                 key={member.id}
-                className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5"
+                className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5 sm:p-6"
               >
                 <div>
-                  <div className="flex items-center justify-between gap-2 text-xs text-[#78716C]">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs text-[#78716C]">
                     <span className="font-bold text-[#C83E2B]">{member.role}</span>
                     <span>{member.birthplace}</span>
                   </div>
@@ -266,9 +266,28 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                       （{member.nickname}）
                     </span>
                   </div>
-                  <p className="mt-2.5 text-xs text-[#57534E] leading-relaxed">
-                    {member.playStyleSummary}
+                  <p className="mt-3 text-base font-bold leading-relaxed text-[#1C1917]">
+                    {member.headline}
                   </p>
+                  <p className="mt-3 text-sm leading-7 text-[#57534E]">{member.biography}</p>
+                  <div className="mt-4 border-l-2 border-[#C83E2B] bg-[#FBF9F5] px-3 py-2.5">
+                    <p className="text-[11px] font-bold tracking-wide text-[#9A341F]">こんな話も</p>
+                    <p className="mt-1 text-sm leading-6 text-[#44403C]">{member.extra}</p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#78716C]">
+                    <span>取材・出典</span>
+                    {member.sourceLinks.map((source) => (
+                      <a
+                        key={source.url}
+                        href={source.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline underline-offset-2 hover:text-[#C83E2B]"
+                      >
+                        {source.label}
+                      </a>
+                    ))}
+                  </div>
                 </div>
 
                 {sigSong && (
@@ -281,7 +300,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                       <span className="inline-flex items-center gap-1.5 min-w-0">
                         <BookOpen className="h-3.5 w-3.5 shrink-0" />
                         <span className="min-w-0 wrap-anywhere whitespace-normal">
-                          聴きどころ曲：『{member.signatureSongTitle}』
+                          この話から聴く1曲：『{member.signatureSongTitle}』
                         </span>
                       </span>
                       <ArrowRight className="h-3.5 w-3.5 shrink-0" />
