@@ -50,16 +50,23 @@ export interface SongItem {
   isHiddenGem?: boolean;
 }
 
+export type SacredSpotCategory = 'MVロケ地' | 'メンバーの思い出' | 'ライブ会場' | '街とヒゲダン';
+
 export interface SacredSpot {
   id: string;
   name: string;
-  area: '島根・松江' | '鳥取・米子' | '東京・MV聖地' | '横浜・スタジアム';
+  area: string;
+  categories: SacredSpotCategory[];
+  // areaは広域の目安、noneは地図での訪問案内をしない場所。
+  mapScope?: 'area' | 'none';
   relatedSong: string;
+  relatedSongLabel?: string;
   addressHint: string;
   description: string;
   fanTip: string;
   source: string;
   historySource?: string;
+  additionalSources?: { label: string; url: string }[];
 }
 
 export interface TourArchive {
@@ -107,17 +114,19 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "id": "spot-shinji-lake",
     "name": "宍道湖夕日スポット（とるぱ）",
     "area": "島根・松江",
+    "categories": ["メンバーの思い出"],
     "relatedSong": "夕暮れ沿い / 115万キロのフィルム",
     "addressHint": "島根県松江市袖師町",
-    "description": "松江観光協会が紹介する夕日の観賞場所。バンド結成の地を訪れる際の立ち寄り先です。",
-    "fanTip": "湖畔の歩道とテラスから嫁ヶ島を望めます。",
+    "description": "藤原聡は、松江のライブハウス近くから眺めた宍道湖の夕日を思い出として語っています。ここは松江観光協会が紹介する湖畔の夕日スポットです。",
+    "fanTip": "湖畔の歩道とテラスから嫁ヶ島を望めます。ここが当時眺めた場所そのものかどうかは確認できていません。",
     "source": "https://www.kankou-matsue.jp/omoshiro/sunset/264",
-    "historySource": ""
+    "historySource": "https://www.diskgarage.com/digaonline/pleasure/55307"
   },
   {
     "id": "spot-matsue-canova",
     "name": "松江 AZTiC canova",
     "area": "島根・松江",
+    "categories": ["メンバーの思い出", "ライブ会場"],
     "relatedSong": "愛なんだが… / 恋の前ならえ",
     "addressHint": "島根県松江市嫁島町13-25",
     "description": "藤原聡が地元での活動拠点として挙げたライブハウス。リハーサルを終えて外に出ると、宍道湖に沈む夕日が見えたと振り返っています。",
@@ -129,28 +138,33 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "id": "spot-shimane-univ",
     "name": "島根大学 松江キャンパス",
     "area": "島根・松江",
+    "categories": ["メンバーの思い出"],
     "relatedSong": "異端なスター / 犬かキャットかで死ぬまで喧嘩しよう！",
     "addressHint": "島根県松江市西川津町1060",
     "description": "島根大学の軽音楽部は結成のきっかけの一つ。メンバー全員が同じ大学の出身というわけではありません。",
-    "fanTip": "訪問前に大学の交通案内を確認できます。",
+    "fanTip": "授業や研究が行われる場所です。訪問や見学の際は事前に大学の最新案内を確認し、大学の方々の活動に配慮しましょう。",
     "source": "https://www.shimane-u.ac.jp/campus_maps/map_matsue.html",
-    "historySource": "https://guide.line.me/ja/features-and-columns/interview001.html"
+    "historySource": "https://guide.line.me/ja/features-and-columns/interview001.html",
+    "additionalSources": [{"label": "学外者向けの案内（2022年）", "url": "https://www.shimane-u.ac.jp/docs/2020080500038/"}]
   },
   {
     "id": "spot-yonago-laughs",
     "name": "米子 AZTiC laughs",
     "area": "鳥取・米子",
+    "categories": ["メンバーの思い出", "ライブ会場"],
     "relatedSong": "日曜日のラブレター / コーヒーとシロップ",
     "addressHint": "鳥取県米子市道笑町1丁目3 BMEビル1階",
-    "description": "松江canovaと同じAZTiCが運営する山陰のライブハウス。米子で音楽に触れられる立ち寄り先です。",
+    "description": "藤原聡が中学生の頃、初めてライブハウスで音楽を観た場所。後にヒゲダンもツアーでこのステージに立ちました。",
     "fanTip": "ライブのある日は会場のスケジュールを確認してください。",
     "source": "https://aztic.net/laughs/",
-    "historySource": ""
+    "historySource": "https://www.diskgarage.com/digaonline/pleasure/53833",
+    "additionalSources": [{"label": "2018年のツアー日程", "url": "https://www.lastrum.co.jp/news/10842/"}]
   },
   {
     "id": "spot-nissan-stadium",
     "name": "日産スタジアム",
     "area": "横浜・スタジアム",
+    "categories": ["ライブ会場"],
     "relatedSong": "Sharon / SOULSOUP / Pretender",
     "addressHint": "神奈川県横浜市港北区小机町3300",
     "description": "LIVE at STADIUM 2025の横浜会場。2025年5月31日と6月1日に公演が組まれました。",
@@ -162,12 +176,168 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "id": "spot-k-arena",
     "name": "Kアリーナ横浜",
     "area": "横浜・スタジアム",
+    "categories": ["ライブ会場"],
     "relatedSong": "Subtitle / Same Blue / ミックスナッツ",
     "addressHint": "神奈川県横浜市西区みなとみらい6-2-14",
     "description": "2026年7月25日・26日のone-man tour 2026の会場です。",
     "fanTip": "公演日の入退場ルートは施設公式サイトに掲載されています。",
     "source": "https://k-arena.com/access/",
     "historySource": "https://event.higedan.com/feature/zepp2025_hall2026"
+  },
+  {
+    "id": "spot-matsue-castle",
+    "name": "松江城",
+    "area": "島根・松江",
+    "categories": ["メンバーの思い出"],
+    "relatedSong": "",
+    "addressHint": "島根県松江市殿町1-5",
+    "description": "藤原聡が、リハーサルの後にメンバーと散歩した思い出を語った場所。四季の景色とともに、バンドの絆を深めた場所として紹介しています。",
+    "fanTip": "天守の入場時間や料金は、訪問前に公式案内をご確認ください。",
+    "source": "https://www.matsue-castle.jp/",
+    "historySource": "https://www.diskgarage.com/digaonline/pleasure/55307"
+  },
+  {
+    "id": "spot-yonago-sanpou",
+    "name": "とり料理 さんぽう",
+    "area": "鳥取・米子",
+    "categories": ["メンバーの思い出"],
+    "relatedSong": "",
+    "addressHint": "鳥取県米子市角盤町1-72",
+    "description": "山陰放送が店主に取材し、松浦匡希が訪れた思い出の店として紹介。本人が投稿したドライカレーの話も伝えられています。",
+    "fanTip": "通常の飲食店です。営業日や利用方法はお店の案内をご確認ください。",
+    "source": "https://tori-sanpou.co.jp/",
+    "historySource": "https://newsdig.tbs.co.jp/articles/bss/38780?display=1"
+  },
+  {
+    "id": "spot-yonago-station",
+    "name": "JR米子駅",
+    "area": "鳥取・米子",
+    "categories": ["街とヒゲダン"],
+    "relatedSong": "Pretender",
+    "relatedSongLabel": "発車メロディに選ばれた曲",
+    "addressHint": "鳥取県米子市弥生町",
+    "description": "米子市は2024年、地元ゆかりのヒゲダンの「Pretender」を駅の発車メロディに採用したと発表しました。",
+    "fanTip": "当初の放送予定は3年間。現在の放送状況やタイミングは、最新の案内をご確認ください。",
+    "source": "https://www.city.yonago.lg.jp/42479.htm"
+  },
+  {
+    "id": "spot-earth-dream",
+    "name": "アースドリーム角山農場",
+    "area": "北海道・江別",
+    "categories": ["MVロケ地"],
+    "relatedSong": "Sanitizer",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "北海道江別市角山584-1",
+    "description": "「Sanitizer」のMVが撮影された場所の一つ。農場の運営者が撮影を公表し、映像に出演した馬も紹介しています。",
+    "fanTip": "季節や天候で営業日・公開エリアが変わるため、お出かけ前に施設の案内をご確認ください。",
+    "source": "https://www.tondenfarm.co.jp/earth-dream-kakuyama/",
+    "historySource": "https://www.tondenfarm.co.jp/information/earthdream/"
+  },
+  {
+    "id": "spot-kawana-hotel",
+    "name": "川奈ホテル",
+    "area": "静岡・伊東",
+    "categories": ["MVロケ地"],
+    "relatedSong": "ミックスナッツ",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "静岡県伊東市川奈1459",
+    "description": "「ミックスナッツ」のMV撮影地として、ロケ地専門誌が紹介したホテル。館内のどこを利用・見学できるかは施設の案内に従ってください。",
+    "fanTip": "宿泊・食事などの施設利用に合わせて訪問し、見学や撮影はスタッフにご確認ください。",
+    "source": "https://www.princehotels.co.jp/kawana/access/",
+    "historySource": "https://locationjapan.net/newss/roke-hotel2026-kawana/"
+  },
+  {
+    "id": "spot-dogashima-area",
+    "name": "堂ヶ島エリア",
+    "area": "静岡・西伊豆",
+    "categories": ["MVロケ地"],
+    "mapScope": "area",
+    "relatedSong": "らしさ",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "静岡県賀茂郡西伊豆町",
+    "description": "西伊豆町の広報は「らしさ」のMVが堂ヶ島エリアで撮影されたと紹介しています。具体的な撮影地点までは特定していません。",
+    "fanTip": "地図はエリアの目安です。散策は一般に開放された場所で楽しみましょう。",
+    "source": "https://www.town.nishiizu.shizuoka.jp/pdf/kouho/2025/nishi202601.pdf"
+  },
+  {
+    "id": "spot-pretender-taipei",
+    "name": "台北",
+    "area": "台湾・台北",
+    "categories": ["MVロケ地"],
+    "mapScope": "area",
+    "relatedSong": "Pretender",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "台湾 台北市",
+    "description": "「Pretender」のMVについて、藤原聡が台北での撮影を振り返っています。街の中の個別の建物や屋上は特定していません。",
+    "fanTip": "地図は台北の位置を示すもので、撮影地点を示すものではありません。",
+    "source": "https://www.cna.com.tw/news/amov/202608300178.aspx",
+    "historySource": "https://news.ponycanyon.co.jp/2019/04/31698"
+  },
+  {
+    "id": "spot-tattoo-guam",
+    "name": "グアム",
+    "area": "グアム",
+    "categories": ["MVロケ地"],
+    "mapScope": "area",
+    "relatedSong": "TATTOO",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "グアム",
+    "description": "「TATTOO」のMVはグアムで撮影されました。海や街の空気を感じながら、映像を見返してみるのも楽しそうです。",
+    "fanTip": "地図はグアムの位置の目安です。個別の撮影場所や施設を示すものではありません。",
+    "source": "https://realsound.jp/2023/04/post-1309393.html",
+    "historySource": "https://irorirecords.com/news-entry/1424"
+  },
+  {
+    "id": "spot-mv-los-angeles",
+    "name": "ロサンゼルス",
+    "area": "アメリカ・ロサンゼルス",
+    "categories": ["MVロケ地"],
+    "mapScope": "area",
+    "relatedSong": "Stand By You / FIRE GROUND",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "アメリカ合衆国 カリフォルニア州 ロサンゼルス",
+    "description": "「Stand By You」と「FIRE GROUND」は、それぞれロサンゼルスで撮影されたと紹介されています。同じ場所での撮影とは限りません。",
+    "fanTip": "地図は都市の位置の目安で、撮影地点を示すものではありません。",
+    "source": "https://realsound.jp/2021/08/post-830911_2.html",
+    "historySource": "https://popscene.jp/news/041374"
+  },
+  {
+    "id": "spot-chessboard-film-location",
+    "name": "入笠牧場 約束の丘",
+    "area": "長野・伊那",
+    "categories": ["MVロケ地"],
+    "mapScope": "none",
+    "relatedSong": "Chessboard",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "長野県伊那市（撮影地の紹介）",
+    "description": "伊那市が「Chessboard」のMV撮影地として紹介している場所。広がる風景と楽曲を結ぶ、映像の舞台です。",
+    "fanTip": "撮影地の情報として紹介しています。高原内への立ち入りは原則禁止で事前許可が必要と案内されているため、訪問先としての地図や経路案内は掲載していません。",
+    "source": "https://www.inacity.jp/kankojoho/kanko_news/filmcommission/shiensakuhinjoho/jisseki.html",
+    "historySource": "https://shinshu-film.net/location/5648/"
+  },
+  {
+    "id": "spot-yanmar-stadium",
+    "name": "ヤンマースタジアム長居",
+    "area": "大阪・長居",
+    "categories": ["ライブ会場"],
+    "relatedSong": "",
+    "addressHint": "大阪府大阪市東住吉区長居公園1-1",
+    "description": "「LIVE at STADIUM 2025」の大阪公演が行われた会場。日産スタジアムとともに、初のスタジアムライブを彩りました。",
+    "fanTip": "施設への入場や見学は、イベント・施設の案内をご確認ください。",
+    "source": "https://www.nagai-park.jp/",
+    "historySource": "https://event.higedan.com/feature/stadium_2025"
+  },
+  {
+    "id": "spot-toyota-arena",
+    "name": "TOYOTA ARENA TOKYO",
+    "area": "東京・青海",
+    "categories": ["ライブ会場"],
+    "relatedSong": "",
+    "addressHint": "東京都江東区青海1-3-1",
+    "description": "2025年10月、ヒゲダンが音楽ライブのこけら落とし公演を行ったアリーナ。2日間のワンマンライブが開催されました。",
+    "fanTip": "施設への入場や見学は、イベント・施設の案内をご確認ください。",
+    "source": "https://www.toyota-arena-tokyo.jp/access/",
+    "historySource": "https://fc.higedan.com/feature/onemanlive_2025"
   }
 ];
 import tourArchiveRecords from './tourArchiveRecords.json';

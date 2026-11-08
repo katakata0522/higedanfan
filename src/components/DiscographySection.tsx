@@ -20,7 +20,7 @@ import {
 import {
   EraTag,
   SACRED_SPOTS,
-  SacredSpot,
+  SacredSpotCategory,
   SongItem,
   MATSUE_IMAGE_PATH,
 } from '../data/higedanData';
@@ -46,6 +46,9 @@ interface DiscographySectionProps {
 }
 
 const INITIAL_VISIBLE_COUNT = 18;
+const SPOT_CATEGORIES: (SacredSpotCategory | 'all')[] = [
+  'all', 'MVロケ地', 'メンバーの思い出', 'ライブ会場', '街とヒゲダン',
+];
 const PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const PITCH_JA = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ'];
 const VOICE_OPTIONS = Array.from({ length: 49 }, (_, index) => {
@@ -69,7 +72,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const restored = initialEraFilter === 'all' ? returnState : null;
   const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery, sortBy } = filters;
-  const [selectedArea, setSelectedArea] = useState<SacredSpot['area'] | 'all'>('all');
+  const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>('all');
   const [visibleCount, setVisibleCount] = useState<number>(() => restored?.visibleCount ?? INITIAL_VISIBLE_COUNT);
   const [voiceLow, setVoiceLow] = useState(() => restored?.voice?.low ?? '');
   const [voiceHigh, setVoiceHigh] = useState(() => restored?.voice?.high ?? '');
@@ -121,15 +124,16 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
   const filteredSpots = useMemo(
     () =>
-      selectedArea === 'all'
+      selectedSpotCategory === 'all'
         ? SACRED_SPOTS
-        : SACRED_SPOTS.filter((s) => s.area === selectedArea),
-    [selectedArea]
+        : SACRED_SPOTS.filter((s) => s.categories.includes(selectedSpotCategory)),
+    [selectedSpotCategory]
   );
 
   const [mapSpotId, setMapSpotId] = useState('');
-  const mapSpot = filteredSpots.find(s => s.id === mapSpotId) ?? filteredSpots[0];
-  const mapQuery = encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint);
+  const mapSpots = filteredSpots.filter(s => s.mapScope !== 'none');
+  const mapSpot = mapSpots.find(s => s.id === mapSpotId) ?? mapSpots[0];
+  const mapQuery = mapSpot ? encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint) : '';
   const emptyResults = (
     <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-5 text-center">
       <p className="text-sm font-bold text-[#1C1917]">条件に一致する楽曲が見つかりませんでした。</p>
@@ -168,14 +172,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               className="text-lg sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
               {activeSubView === 'sacred_map'
-                ? '聖地巡礼マップ（松江・米子・横浜）'
+                ? '聖地巡礼マップ'
                 : activeSubView === 'vocal_range'
                 ? '掲載90曲の音域・発売日一覧'
                 : '掲載90曲 楽曲ガイド（収録曲順・音域・曲調）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubView === 'sacred_map'
-                ? '結成の地・山陰（松江・米子）からスタジアム会場まで、ゆかりの場所をたどります。'
+                ? 'メンバーの思い出やライブ会場、MVに登場した景色をたどります。'
                 : activeSubView === 'vocal_range'
                 ? '地声・裏声は曲別の採譜による値です。配信サービス掲載日と収録作品のCD発売日は別々に表示します。'
                 : '2015年から2026年4月「スターダスト」までに発表された楽曲から90曲を紹介。インスト曲と同じ曲の別バージョンは掲載対象を絞っています。'}
@@ -539,42 +543,44 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 )}
                 <div>
                   <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">
-                    山陰（松江・米子）から横浜のライブ会場まで
+                    ヒゲダンとつながる場所へ
                   </h3>
                   <p className="mt-0.5 text-xs text-[#57534E]">
-                    バンド結成の地やライブ会場をたどってみよう。行ったことのある場所にはチェックを残せます。
+                    思い出の街から、あのMVの景色まで。訪れた場所にはチェックを残せます。
                   </p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-1.5 shrink-0">
-                {(['all', '島根・松江', '鳥取・米子', '横浜・スタジアム'] as const).map(
-                  (area) => (
+              <div className="flex flex-wrap gap-1.5 lg:justify-end" role="group" aria-label="場所とのつながりで絞り込む">
+                {SPOT_CATEGORIES.map(
+                  (category) => (
                     <button
-                      key={area}
+                      key={category}
                       type="button"
-                      onClick={() => setSelectedArea(area)}
-                      className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                        selectedArea === area
+                      aria-pressed={selectedSpotCategory === category}
+                      onClick={() => setSelectedSpotCategory(category)}
+                      className={`min-h-[44px] rounded-lg px-3 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                        selectedSpotCategory === category
                           ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
                           : 'border-[#E6E1D6] bg-[#FBF9F5] text-[#57534E] hover:text-[#1C1917] hover:bg-[#F2EFE9]'
                       }`}
                     >
-                      {area === 'all' ? 'すべてのエリア' : area}
+                      {category === 'all' ? 'すべて' : category}
                     </button>
                   )
                 )}
               </div>
             </div>
 
-            <section className="rounded-xl border bg-white p-4">
+            {mapSpot && <section className="rounded-xl border bg-white p-4">
               <label className="font-bold" htmlFor="map-place">地図で見る場所</label>
-              <select id="map-place" className="mx-2 max-w-full border p-2" value={mapSpot.id} onChange={e=>setMapSpotId(e.target.value)}>
-                {filteredSpots.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+              <select id="map-place" className="mx-2 min-h-[44px] max-w-full border p-2" value={mapSpot.id} onChange={e=>setMapSpotId(e.target.value)}>
+                {mapSpots.map(s=><option key={s.id} value={s.id}>{s.name}{s.mapScope === 'area' ? '（エリアの目安）' : ''}</option>)}
               </select>
+              {mapSpot.mapScope === 'area' && <p className="mt-2 text-xs leading-relaxed text-[#57534E]">地図は周辺エリアの目安で、具体的な撮影地点を示すものではありません。</p>}
               <iframe className="mt-3 w-full rounded-xl border" height="280" title={mapSpot.name+'の地図'} loading="lazy" src={'https://maps.google.com/maps?output=embed&q='+mapQuery}></iframe>
               <a className="underline text-sm" href={'https://www.google.com/maps/search/?api=1&query='+mapQuery} target="_blank" rel="noreferrer">Google マップで開く・経路検索 ↗</a>
-            </section>
+            </section>}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredSpots.map((spot) => {
                 const visited = visitedSpotIds.includes(spot.id);
@@ -588,11 +594,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">
                           {spot.area}
                         </span>
-                        <span className="min-w-0 wrap-anywhere whitespace-normal">散策のお供に（作成者の選曲）: {spot.relatedSong}</span>
+                        {spot.relatedSong && <span className="min-w-0 wrap-anywhere whitespace-normal">{spot.relatedSongLabel ?? '散策のお供に（作成者の選曲）'}: {spot.relatedSong}</span>}
                       </div>
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}
                       </h4>
+                      <p className="mt-1 text-xs font-bold text-[#1E3A5F]">{spot.categories.join(' / ')}</p>
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
                         {spot.description}
                       </p>
@@ -600,9 +607,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <strong className="text-[#1C1917]">スポットメモ：</strong>
                         {spot.fanTip}
                         <div className="mt-2 flex flex-wrap gap-3">
-                          <button className="underline" onClick={()=>{setMapSpotId(spot.id); document.getElementById('map-place')?.focus();}}>地図で見る</button>
-                          <a className="underline" href={spot.source} target="_blank" rel="noreferrer">施設・観光案内 ↗</a>
-                          {spot.historySource && <a className="underline" href={spot.historySource} target="_blank" rel="noreferrer">公演・結成の資料 ↗</a>}
+                          {spot.mapScope !== 'none' && <button type="button" className="underline" onClick={()=>{setMapSpotId(spot.id); document.getElementById('map-place')?.focus();}}>{spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}</button>}
+                          <a className="underline" href={spot.source} target="_blank" rel="noreferrer">場所・作品の情報 ↗</a>
+                          {spot.historySource && <a className="underline" href={spot.historySource} target="_blank" rel="noreferrer">つながりの出典 ↗</a>}
+                          {spot.additionalSources?.map(source => <a key={source.url} className="underline" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}
                         </div>
                       </div>
                     </div>
@@ -611,7 +619,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       <span className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
                         {spot.addressHint}
                       </span>
-                      <button
+                      {spot.mapScope !== 'none' && <button
                         type="button"
                         onClick={() => onToggleVisitedSpot(spot.id)}
                         aria-pressed={visited}
@@ -622,8 +630,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         }`}
                       >
                         <MapPin className="h-3.5 w-3.5" />
-                        {visited ? '訪問済み' : '行った！を記録'}
-                      </button>
+                        {visited ? '訪問済み' : spot.mapScope === 'area' ? 'エリアに行った！' : '行った！を記録'}
+                      </button>}
                     </div>
                   </article>
                 );
