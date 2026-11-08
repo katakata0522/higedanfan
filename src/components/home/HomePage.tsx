@@ -30,8 +30,8 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
             </div>
 
             <p className="text-xs sm:text-base text-[#57534E] leading-relaxed max-w-2xl">
-              グッドメロディと緻密な転調、心に寄り添う歌詞の世界をもっと深く味わうためのファンノートです。
-              今の気分から1曲を見つける「マイソング診断」をはじめ、楽曲ガイド、聖地巡礼マップ、マイセトリ作成、人気投票、検定クイズまで、気になる項目から選んで進めます。
+              Official髭男dismの楽曲を、収録作品・発売日・演奏時間・音域などの資料と一緒にたどれるファンサイトです。
+              今日の気分から選ぶ1曲を探す「マイソング診断」をはじめ、楽曲ガイド、聖地巡礼マップ、マイセトリ作成、歴代ツアーの公演記録、検定クイズから選べます。
             </p>
 
             <div className="pt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">

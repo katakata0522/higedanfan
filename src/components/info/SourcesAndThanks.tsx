@@ -27,9 +27,10 @@ const groups: SourceGroup[] = [
   },
   {
     title: "テンポと曲の聴きどころ",
-    body: "テンポの出典は、83曲がKHUFRUDAMO NOTES、6曲がKeyTube、1曲がSongBPMです。リズムやアレンジの解説には、採譜やコード譜、メンバーのインタビュー、楽曲レビューも参照しました。",
+    body: "テンポの出典は、82曲がKHUFRUDAMO NOTES、6曲がKeyTube、1曲がSongBPM、1曲がPiascoreのドラム譜です。115万キロのフィルムは97 BPMを採用し、倍取りの194 BPMも併記しました。リズムやアレンジの解説には、採譜やコード譜、メンバーのインタビュー、楽曲レビューも参照しました。",
     links: [
       ["KHUFRUDAMO NOTESのテンポ一覧", "https://khufrudamonotes.com/officialhigedism-data"],
+      ["Piascore「115万キロのフィルム」ドラム譜", "https://store.piascore.com/scores/287235"],
       ["KeyTube「らしさ」", "https://keytube.net/song/detail/144873"],
       ["SongBPM「Anarchy (Rejoice ver.)」", "https://songbpm.com/%40official-hige-dandism/anarchy-rejoice-ver-rqmur"],
       ["KeyTube「50%」", "https://keytube.net/song/detail/116949"],
@@ -69,6 +70,7 @@ const groups: SourceGroup[] = [
       ["TVアニメ『東京リベンジャーズ』の主題歌発表", "https://tokyo-revengers-anime.com/news/archives/103"],
       ["TVアニメ『アオのハコ』のオープニング主題歌", "https://aonohako-anime.com/music/opening.html"],
       ["映画『ひゃくえむ。』の主題歌発表", "https://hyakuemu-anime.com/info/91/"],
+      ["Official髭男dism「破顔」JR東日本CM起用の発表", "https://higedan.com/news/detail/101743"],
       ["ワーナー・ブラザース『はたらく細胞』", "https://www.warnerbros.co.jp/home_entertainment/hfozviq72ubt/"],
     ],
   },
@@ -88,7 +90,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "聖地巡礼マップ・ツアーの記録",
-    body: "地図に載せた場所の住所と行き方は、施設や観光協会の案内で確認しました。公演の日付と会場は、公式の日程と映像作品の収録情報に基づいています。松江での活動については、藤原聡が当時を振り返ったインタビューを参照しました。",
+    body: "地図に載せた場所の住所と行き方は、施設や観光協会の案内で確認しました。公演日・会場はLiveRepoの公開記録とヒゲダンセトリの公演一覧を照合し、2016年の3公演は公式告知とも照合しました。個別公演のセトリはリンク先の掲載情報を案内しています。松江での活動については、藤原聡が当時を振り返ったインタビューを参照しました。",
     links: [
       ["松江観光協会の宍道湖夕日スポット案内", "https://www.kankou-matsue.jp/omoshiro/sunset/264"],
       ["DISK GARAGEの藤原聡インタビュー", "https://www.diskgarage.com/digaonline/pleasure/55307"],
@@ -101,6 +103,8 @@ const groups: SourceGroup[] = [
       ["『HELLO EP』収録のHall Travelers横浜公演", "https://hello-ep.jp/"],
       ["ポニーキャニオン「Editorial」さいたまスーパーアリーナ公演", "https://editorial-saitamasuperarena.ponycanyon.co.jp/"],
       ["Official髭男dism「one-man tour 2026」", "https://event.higedan.com/feature/zepp2025_hall2026"],
+      ["LiveRepo 公演記録", "https://liverepo.katakatalab.com/"],
+      ["ヒゲダンセトリ 公演一覧", "https://higedan-setlist.net/"],
     ],
   },
 ];

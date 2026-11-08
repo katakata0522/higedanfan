@@ -64,15 +64,18 @@ export interface SacredSpot {
 
 export interface TourArchive {
   id: string;
-  startDate: string; // YYYY.MM for chronological sorting
-  source: string;
+  startDate: string; // YYYY-MM-DD
+  endDate: string;
   tourTitle: string;
-  period: string;
-  scale: string;
-  venueHighlight: string;
-  description: string;
-  signatureSetlistIds: string[];
-  encoreSetlistIds: string[];
+  crossCheckUrl: string;
+  officialSourceUrl?: string;
+  events: {
+    date: string;
+    venue: string;
+    liveRepoUrl: string;
+    liveRepoHasSetlist: boolean;
+    crossCheckSetlistUrl?: string;
+  }[];
 }
 
 export interface FanReview {
@@ -167,159 +170,10 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "historySource": "https://event.higedan.com/feature/zepp2025_hall2026"
   }
 ];
-export const TOUR_ARCHIVES: TourArchive[] = [
-  {
-    "id": "tour-hall-travelers-2019",
-    "startDate": "2019.10",
-    "tourTitle": "Official髭男dism Tour 19/20 - Hall Travelers -",
-    "period": "2019.10 — 2020.02",
-    "scale": "ホール",
-    "venueHighlight": "パシフィコ横浜 国立大ホール",
-    "description": "2020年2月10日の横浜公演は『HELLO EP』初回限定盤の映像にも収録されています。",
-    "signatureSetlistIds": [
-      "ノーダウト",
-      "宿命",
-      "115万キロのフィルム",
-      "Pretender"
-    ],
-    "encoreSetlistIds": [
-      "I LOVE...",
-      "Stand By You"
-    ],
-    "source": "https://hello-ep.jp/"
-  },
-  {
-    "id": "tour-editorial-2021",
-    "startDate": "2021.09",
-    "tourTitle": "Official髭男dism one - man tour 2021-2022 - Editorial -",
-    "period": "2021 — 2022",
-    "scale": "アリーナ",
-    "venueHighlight": "さいたまスーパーアリーナ",
-    "description": "さいたま公演の公式映像作品には、当日の収録曲順が掲載されています。",
-    "signatureSetlistIds": [
-      "アポトーシス",
-      "I LOVE...",
-      "115万キロのフィルム",
-      "Cry Baby",
-      "Pretender"
-    ],
-    "encoreSetlistIds": [
-      "ミックスナッツ",
-      "Stand By You"
-    ],
-    "source": "https://editorial-saitamasuperarena.ponycanyon.co.jp/"
-  },
-  {
-    "id": "tour-shocking-nuts-2022",
-    "startDate": "2022.09",
-    "tourTitle": "Official髭男dism SHOCKING NUTS TOUR",
-    "period": "2022.09 — 2023.02",
-    "scale": "ホール・日本武道館",
-    "venueHighlight": "日本武道館、大阪フェスティバルホール",
-    "description": "東京・大阪に振替公演があり、武道館には追加公演も設けられました。",
-    "signatureSetlistIds": [
-      "ミックスナッツ",
-      "Cry Baby",
-      "Subtitle",
-      "ホワイトノイズ",
-      "Pretender"
-    ],
-    "encoreSetlistIds": [
-      "宿命",
-      "Stand By You"
-    ],
-    "source": "https://event.higedan.com/feature/halltour_2022"
-  },
-  {
-    "id": "tour-rejoice-2024",
-    "startDate": "2024.09",
-    "tourTitle": "Official髭男dism Arena Tour 2024 - Rejoice -",
-    "period": "2024.09 — 2024.11",
-    "scale": "アリーナ",
-    "venueHighlight": "マリンメッセ福岡、大阪城ホール、Kアリーナ横浜 ほか",
-    "description": "アルバム『Rejoice』の国内アリーナツアー。日程・会場は公式特設サイトに掲載されています。",
-    "signatureSetlistIds": [
-      "Sharon",
-      "ミックスナッツ",
-      "TATTOO",
-      "Subtitle",
-      "SOULSOUP",
-      "Pretender"
-    ],
-    "encoreSetlistIds": [
-      "Same Blue",
-      "Stand By You"
-    ],
-    "source": "https://event.higedan.com/feature/live_2024?page=tour"
-  },
-  {
-    "id": "tour-stadium-2025",
-    "startDate": "2025.05",
-    "tourTitle": "OFFICIAL HIGE DANDISM LIVE at STADIUM 2025",
-    "period": "2025.05 — 2025.06",
-    "scale": "スタジアム",
-    "venueHighlight": "ヤンマースタジアム長居、日産スタジアム",
-    "description": "大阪・神奈川の2会場で、それぞれ2日間の公演が組まれました。",
-    "signatureSetlistIds": [
-      "Pretender",
-      "115万キロのフィルム",
-      "Cry Baby",
-      "ミックスナッツ",
-      "Sharon",
-      "SOULSOUP"
-    ],
-    "encoreSetlistIds": [
-      "Subtitle",
-      "Stand By You"
-    ],
-    "source": "https://event.higedan.com/feature/stadium_2025"
-  },
-  {
-    "id": "tour-four-reism-2025",
-    "startDate": "2025.12",
-    "tourTitle": "OFFICIAL HIGE DANDISM one-man tour FOUR-RE:ISM",
-    "period": "2025.12.10 — 2026.01.22",
-    "scale": "ライブハウス",
-    "venueHighlight": "全国のZepp会場",
-    "description": "メンバー4人によるツアー。翌春の全国ツアーと共通の特設サイトで各公演を確認できます。",
-    "signatureSetlistIds": [
-      "らしさ",
-      "Same Blue",
-      "Cry Baby",
-      "TATTOO",
-      "アポトーシス"
-    ],
-    "encoreSetlistIds": [
-      "115万キロのフィルム",
-      "Stand By You"
-    ],
-    "source": "https://event.higedan.com/feature/zepp2025_hall2026"
-  },
-  {
-    "id": "tour-oneman-2026",
-    "startDate": "2026.04",
-    "tourTitle": "OFFICIAL HIGE DANDISM one-man tour 2026",
-    "period": "2026.04 — 2026.07",
-    "scale": "ホール・アリーナ",
-    "venueHighlight": "大阪城ホール、Kアリーナ横浜 ほか",
-    "description": "7月25日・26日の神奈川公演はKアリーナ横浜で開催されました。",
-    "signatureSetlistIds": [
-      "らしさ",
-      "Same Blue",
-      "ミックスナッツ",
-      "Sharon",
-      "Subtitle",
-      "SOULSOUP"
-    ],
-    "encoreSetlistIds": [
-      "Pretender",
-      "Stand By You"
-    ],
-    "source": "https://event.higedan.com/feature/zepp2025_hall2026"
-  }
-];
+import tourArchiveRecords from './tourArchiveRecords.json';
 
-
+// 日付と会場を公開資料で照合したスナップショット（2026-11-08）。
+export const TOUR_ARCHIVES: TourArchive[] = tourArchiveRecords;
 
 // QUIZ_QUESTIONS is exported from ./quizData above.
 

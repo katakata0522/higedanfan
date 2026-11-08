@@ -2,15 +2,15 @@ export function PrivacyPolicy() {
   return (
     <article aria-labelledby="privacy-title" className="space-y-4 text-base leading-7 text-[#292524] [&_a]:text-[#1E3A5F] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold">
       <h1 id="privacy-title" className="text-2xl font-bold sm:text-3xl">プライバシーポリシー</h1>
-      <p>KatakataLabが運営する「115万キロのファンノート」では、マイセトリや感想を、お使いのブラウザに保存します。感想を書いても、その内容やニックネームが一般に公開されることはありません。</p>
+      <p>KatakataLabが運営する「115万キロのファンノート」では、マイセトリなどの記録を、お使いのブラウザに保存します。人気投票と感想ノートは現在非公開です。過去に保存した投票・感想は、非公開にしただけでは消えません。</p>
 
       <h2>ブラウザに保存する記録</h2>
       <p>次に開いたときも続きから使えるよう、以下の記録をブラウザの保存領域（ローカルストレージ）に残します。</p>
       <ul className="list-disc space-y-1 pl-6">
         <li>マイセトリの名前、曲順、本編とアンコールの区別</li>
-        <li>投票した曲と部門、感想に付けた「共感」</li>
-        <li>感想のニックネーム、ファン歴、選んだ曲、分類、タイトル、本文、記録日</li>
-        <li>訪問した聖地、参戦した公演、検定の最高正答率</li>
+        <li>過去の投票で選んだ曲と部門、感想に付けた「共感」</li>
+        <li>過去に保存した感想のニックネーム、ファン歴、選んだ曲、分類、タイトル、本文、記録日</li>
+        <li>訪問した聖地、参戦・視聴したツアー、検定の最高正答率</li>
       </ul>
       <p>ファンノートはこれらの記録を運営者のサーバーに送りません。同じ端末でブラウザのプロフィールを共用している人は、記録を閲覧できます。</p>
 
@@ -21,7 +21,7 @@ export function PrivacyPolicy() {
 
       <h2>ページの配信とアクセス解析</h2>
       <p>ページを表示すると、配信元のエックスサーバーがIPアドレスや要求されたページ・ファイルのパスを受け取ります。アクセス日時やブラウザの種類とともに、サーバーのアクセスログに記録される場合があります。<a href="https://www.xserver.ne.jp/manual/man_server_log.php">エックスサーバーのアクセスログについて</a></p>
-      <p>KatakataLabの一部のページではGoogle アナリティクスを使っています。このファンサイトでは、ブラウザに指定した通信設定によってGoogleの計測タグの読み込みをブロックしています。</p>
+      <p>KatakataLabの一部のページではGoogle アナリティクスを使っています。このファンサイトのページには、Google アナリティクスなどのアクセス解析タグを組み込んでいません。</p>
 
       <h2>聖地巡礼マップと外部リンク</h2>
       <p>聖地巡礼マップで地図が読み込まれると、ブラウザは表示地点の名前と所在地をGoogleに送ります。地図を操作する前にも、この通信は発生します。GoogleはIPアドレスやブラウザの情報を受け取り、設定に応じてCookieなどの識別子も利用します。地図を使わずに、ほかのコーナーを利用できます。<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a></p>
@@ -30,7 +30,7 @@ export function PrivacyPolicy() {
       <h2>お問い合わせ</h2>
       <p>ファンノートでの情報の取り扱いについては、KatakataLabの窓口で受け付けています。フォームやメールでお知らせいただいた内容と連絡先は、お問い合わせに回答するために使います。<a href="https://katakatalab.com/contact.html">KatakataLabのお問い合わせ窓口</a></p>
       <p><a href="https://katakatalab.com/privacy.html">KatakataLab全体のプライバシーポリシー</a></p>
-      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-07">2026年11月7日制定</time></p>
+      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-08">2026年11月8日更新</time></p>
     </article>
   );
 }

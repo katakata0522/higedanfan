@@ -479,7 +479,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">
                           {spot.area}
                         </span>
-                        <span className="min-w-0 wrap-anywhere whitespace-normal">散策のお供に（編集部選曲）: {spot.relatedSong}</span>
+                        <span className="min-w-0 wrap-anywhere whitespace-normal">散策のお供に（作成者の選曲）: {spot.relatedSong}</span>
                       </div>
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}

@@ -56,7 +56,6 @@ const SORT_OPTIONS: { id: DiscographySortOption; label: string }[] = [
   { id: 'newest', label: '並び順：配信掲載日が新しい順（最新曲〜）' },
   { id: 'highest_note', label: '並び順：地声最高音が高い順' },
   { id: 'vocal_span', label: '並び順：音域が広い順（半音幅）' },
-  { id: 'popular', label: '並び順：人気投票順' },
   { id: 'bpm', label: '並び順：テンポ（BPM）が速い順' },
 ];
 
@@ -143,7 +142,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
           })}
         </div>
         <div>
-          <label className="sr-only" htmlFor="sound-filter-select">おすすめ分類（編集部）</label>
+          <label className="sr-only" htmlFor="sound-filter-select">おすすめ分類（作成者）</label>
           <select id="sound-filter-select" className={selectClass} value={sound}
             onChange={e => onChange({ ...values, sound: e.target.value as SongGuideFilterValues['sound'] })}>
             {SOUND_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}

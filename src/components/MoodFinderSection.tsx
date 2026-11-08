@@ -28,7 +28,7 @@ export function MoodFinderSection(props: MoodLibraryProps) {
               マイソング診断
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              3つの質問に順番に答えるだけで、今のあなたに最もマッチする1曲を診断します。
+              気分・場面・曲調を選ぶと、当サイトの分類から合う曲を探せます。
             </p>
           </div>
 
