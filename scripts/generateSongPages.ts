@@ -3,6 +3,9 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { catalogEntries } from '../src/data/catalogEntries';
 import { autoSongPage } from '../src/songPages/autoSongPage';
+import { applySongEditorial } from '../src/songPages/applySongEditorial';
+import { editorialArticles } from '../src/songPages/editorialArticles';
+import { officialVideos, relatedSongs } from '../src/songPages/songConnections';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
 
 const root = join(import.meta.dirname, '..');
@@ -33,6 +36,11 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   const url = `https://katakatalab.com/higedanfan/songs/${page.id}/`;
   const description = `Official髭男dism『${title}』の収録作品、演奏時間、テンポ、歌の音域、曲の概要と出典をまとめた非公式ファンサイトの楽曲ガイド。`;
   const paragraphs = page.overview.map(paragraph => `            <p>${escapeHtml(paragraph)}</p>`).join('\n');
+  const listening = `<a href="${escapeHtml(evidence[page.id].apple)}" target="_blank" rel="noreferrer">Apple Musicで聴く</a>`;
+  const video = officialVideos[page.id]
+    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noreferrer">公式MVを見る</a>` : '';
+  const related = relatedSongs(page.id).map(item =>
+    `<li><a href="/higedanfan/songs/${escapeHtml(item.id)}/">${escapeHtml(item.title)}</a>：${escapeHtml(item.reason)}</li>`).join('');
   return `<!doctype html>
 <html lang="ja">
   <head>
@@ -57,9 +65,11 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
         <article class="song-sheet" aria-labelledby="song-title">
           <h1 id="song-title">${escapedTitle}</h1>
           <section class="overview" aria-labelledby="overview-title">
-            <h2 id="overview-title">この曲の概要</h2>
+            <h2 id="overview-title">この曲について</h2>
 ${paragraphs}
           </section>
+          <section aria-label="この曲を聴く">${listening}${video}</section>
+          ${related ? `<section aria-label="次に聴きたい曲"><ul>${related}</ul></section>` : ''}
           <p><a href="/higedanfan/#discography">楽曲ガイドに戻る</a></p>
         </article>
       </main>
@@ -76,6 +86,11 @@ if (catalogIds.size !== catalogEntries.length || catalogIds.size !== Object.keys
     || Object.keys(evidence).some(id => !catalogIds.has(id))) {
   throw new Error('楽曲カタログと検証済みデータのIDを一致させてください');
 }
+if (catalogIds.size !== Object.keys(editorialArticles).length
+    || Object.keys(editorialArticles).some(id => !catalogIds.has(id))
+    || Object.values(editorialArticles).some(article => article.paragraphs.length < 2 || !article.feature)) {
+  throw new Error('全曲に個別の解説と見出しを用意してください');
+}
 const customPages = new Map<string, EditorialSongPageData>();
 for (const filename of filenames) {
   if (!catalogIds.has(filename.slice(0, -3))) {
@@ -88,7 +103,7 @@ for (const filename of filenames) {
 const ids: string[] = [];
 for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrder)) {
   const id = song.id;
-  const page = customPages.get(id) ?? autoSongPage(id);
+  const page = applySongEditorial(customPages.get(id) ?? autoSongPage(id));
   const fact = evidence[id];
   if (!fact || page.id !== id || !fact.recording) {
     throw new Error(`${id}: 楽曲IDと検証済みデータを確認してください`);

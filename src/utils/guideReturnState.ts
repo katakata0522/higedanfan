@@ -8,7 +8,12 @@ const sorts = new Set(['guide_order', 'album_track_order', 'popular', 'newest', 
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 export type GuideReturnView = 'discography' | 'vocal_range';
-export type GuideReturnState = { filters: SongGuideFilterValues; visibleCount: number; view: GuideReturnView };
+export type GuideReturnState = {
+  filters: SongGuideFilterValues;
+  visibleCount: number;
+  view: GuideReturnView;
+  voice?: { low: string; high: string; keyShift: number };
+};
 
 function browserStore(): Store | null {
   try { return window.sessionStorage; } catch { return null; }
@@ -33,13 +38,18 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     if (!raw) return null;
     const value: unknown = JSON.parse(raw);
     if (!value || typeof value !== 'object') return null;
-    const { filters, visibleCount, view } = value as Partial<GuideReturnState>;
+    const { filters, visibleCount, view, voice } = value as Partial<GuideReturnState>;
     if (!filters || typeof filters !== 'object' ||
         (view !== 'discography' && view !== 'vocal_range') ||
         !eras.has(filters.era) || !sounds.has(filters.sound) || !sorts.has(filters.sortBy) ||
         (filters.album !== 'all' && !Object.hasOwn(ALBUM_CHRONOLOGY_RANK, filters.album)) ||
         typeof filters.searchQuery !== 'string' || filters.searchQuery.length > 60 ||
         !Number.isInteger(visibleCount) || visibleCount! < 1 || visibleCount! > songCount) return null;
+    if (voice !== undefined) {
+      const pitchValid = (pitch: unknown) => typeof pitch === 'string' && (pitch === '' || (/^\d+$/.test(pitch) && Number(pitch) >= 36 && Number(pitch) <= 84));
+      if (!voice || !pitchValid(voice.low) || !pitchValid(voice.high) || !Number.isInteger(voice.keyShift) || voice.keyShift < -12 || voice.keyShift > 12) return null;
+      return { filters, visibleCount: visibleCount!, view, voice };
+    }
     return { filters, visibleCount: visibleCount!, view };
   } catch { return null; }
 }

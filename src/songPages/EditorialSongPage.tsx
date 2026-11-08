@@ -6,8 +6,8 @@ import { formatSongBpm, formatDuration } from '../utils/fanLogic';
 import { tempoAlternatives } from '../data/tempoAlternatives';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { guideReturnView } from '../utils/guideReturnState';
+import { officialVideos, relatedSongs } from './songConnections';
 import type { EditorialSongPageData } from './EditorialSongPageData';
-import { useEditorialSheetFit } from './useEditorialSheetFit';
 
 const base = import.meta.env.BASE_URL;
 
@@ -16,8 +16,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const fact = songEvidence[page.id as keyof typeof songEvidence];
   const otherTempos = tempoAlternatives[page.id];
   const tempoUnderReview = isTempoUnderReview(page.id);
+  const related = relatedSongs(page.id);
+  const video = officialVideos[page.id];
   const [toast, setToast] = useState<string | null>(null);
   const [readable, setReadable] = useState(false);
+  const sourcesRef = useRef<HTMLDetailsElement>(null);
   const toastTimer = useRef<number | null>(null);
   const records = useFanRecords(message => {
     setToast(message);
@@ -26,7 +29,6 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   });
   const inSetlist = records.setlist.some(item => item.songId === song.id);
   const [returnView] = useState(guideReturnView);
-  const { frameRef, sheetRef, frameStyle, sheetStyle } = useEditorialSheetFit(page.id, readable);
 
   useEffect(() => () => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -43,13 +45,13 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
         <nav aria-label="サイト内の移動">
           <a href={`${base}#discography`}>楽曲ガイド</a>
           <a href={`${base}#setlist`}>マイセトリ</a>
-          <button className="reading-toggle" type="button" aria-pressed={readable} onClick={() => setReadable(value => !value)}>{readable ? '1画面に戻す' : '大きな文字で読む'}</button>
+          <button className="reading-toggle" type="button" aria-pressed={readable} onClick={() => setReadable(value => !value)}>{readable ? '標準の文字に戻す' : '大きな文字で読む'}</button>
         </nav>
       </header>
 
       <main id="main" className="page-main">
-        <div ref={frameRef} className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`} style={frameStyle}>
-        <article ref={sheetRef} className="song-sheet" aria-labelledby="song-title" style={sheetStyle}>
+        <div className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`}>
+        <article className="song-sheet" aria-labelledby="song-title">
           <a className="sheet-close" href={`${base}#${returnView}`} aria-label={returnView === 'vocal_range' ? '音域一覧に戻る' : '曲一覧に戻る'}>×</a>
           <header className="song-hero">
             <figure className="cover">
@@ -67,6 +69,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
                 <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
               </dl>
+              {tempoUnderReview && <p className="tempo-explanation">テンポは資料によって値が異なるため、確認中です。</p>}
             </div>
           </header>
 
@@ -76,15 +79,40 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           </div>
 
           <section className="overview" aria-labelledby="overview-title">
-            <h2 id="overview-title">この曲の概要</h2>
+            <h2 id="overview-title">この曲について</h2>
             <div className="overview-copy">
               {page.overview.map((paragraph, index) => <p key={index}>{paragraph}</p>)}
               {page.rangeNote && <p className="range-note">{page.rangeNote}</p>}
             </div>
+            <p className="overview-sources">参考にした資料：{' '}
+              {page.sources.slice(0, 2).map((source, index) => (
+                <span key={`${source.label}-${index}`}>{index > 0 && '、'}<a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noreferrer">{source.label}</a></span>
+              ))}
+              {' '}<a href="#song-sources" onClick={() => { if (sourcesRef.current) sourcesRef.current.open = true; }}>ほかの資料を見る</a>
+            </p>
           </section>
 
-          <details className="sources">
-            <summary><strong>データと出典</strong><span>音域・発売日・参考資料を確認する <span aria-hidden="true">▼</span></span></summary>
+          <section className="listen-section" aria-labelledby="listen-title">
+            <div>
+              <h2 id="listen-title">この曲を聴く</h2>
+              <p>紹介した音源を、もう一度聴いてみませんか。</p>
+            </div>
+            <div className="listen-links">
+              <a href={fact.apple} target="_blank" rel="noreferrer">Apple Musicで聴く <span aria-hidden="true">↗</span></a>
+              {video && <a href={video} target="_blank" rel="noreferrer">公式MVを見る <span aria-hidden="true">↗</span></a>}
+            </div>
+          </section>
+
+          {related.length > 0 && <section className="related-section" aria-labelledby="related-title">
+            <h2 id="related-title">次に聴きたい曲</h2>
+            <ul>{related.map(item => <li key={item.id}>
+              <a href={`${base}songs/${item.id}/`}><span>{item.title}</span><span aria-hidden="true">→</span></a>
+              <p>{item.reason}</p>
+            </li>)}</ul>
+          </section>}
+
+          <details ref={sourcesRef} id="song-sources" className="sources">
+            <summary><strong>データと出典</strong><span>楽曲データ・参考資料を確認する <span aria-hidden="true">▼</span></span></summary>
             <div className="sources-body">
               <dl className="source-facts">
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
@@ -116,6 +144,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 ))}との表記もあります。拍の数え方や計測方法などによって数値が異なる場合があります。</p>
               )}
               <p className="source-caveat">{page.sourceCaveat}</p>
+              <p className="source-caveat">BPMは資料の小数を四捨五入して表示しています。</p>
             </div>
           </details>
 

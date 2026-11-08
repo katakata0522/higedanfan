@@ -236,7 +236,7 @@ a { color: inherit; }
 
 .overview-copy { padding: 0 18px; }
 
-.overview-copy p { margin: 12px 0 0; font-size: 19px; font-weight: 500; letter-spacing: .015em; line-height: 1.5; }
+.overview-copy p { margin: 16px 0 0; font-size: 18px; font-weight: 500; letter-spacing: .015em; line-height: 1.85; }
 
 .overview-copy .range-note { margin-top: 12px; color: #57534e; font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif; font-size: 13px; line-height: 1.45; }
 
@@ -284,6 +284,20 @@ a { color: inherit; }
 
 .source-caveat { margin: 17px 0 0; color: #57534e; font-size: 12px; }
 
+.tempo-explanation { margin: 7px 0 0; color: #57534e; font-size: 12px; line-height: 1.5; }
+.overview-sources { margin: 18px 5px 0; color: #57534e; font-size: 12px; line-height: 1.8; }
+.overview-sources a { color: #0757ad; text-underline-offset: 3px; }
+.listen-section, .related-section { margin-top: 28px; padding: 20px; border: 1px solid #ded4c7; border-radius: 10px; background: #fffaf2; }
+.listen-section h2, .related-section h2 { margin: 0; color: #292621; font-size: 19px; }
+.listen-section p { margin: 6px 0 0; color: #57534e; font-size: 13px; line-height: 1.65; }
+.listen-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+.listen-links a { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 7px; background: #a92b38; color: white; font-size: 14px; font-weight: 700; text-decoration: none; }
+.listen-links a + a { border: 1px solid #a92b38; background: transparent; color: #8d1f2a; }
+.related-section ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
+.related-section li { padding: 12px 14px; border-radius: 7px; background: white; }
+.related-section a { display: flex; min-height: 32px; justify-content: space-between; gap: 12px; color: #203f4b; font-size: 15px; font-weight: 700; text-underline-offset: 3px; }
+.related-section li p { margin: 4px 0 0; color: #57534e; font-size: 12px; line-height: 1.6; }
+
 .storage-notice { padding: 12px; border: 1px solid #b45309; border-radius: 6px; background: #fff4d8; font-size: 13px; }
 .storage-notice button { padding: 4px; border: 0; background: transparent; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
@@ -322,31 +336,22 @@ a { color: inherit; }
 
 @media (min-width: 761px), (min-width: 521px) and (hover: hover) and (pointer: fine) {
   .reading-toggle { display: inline-flex; align-items: center; }
-  .sheet-frame:not(.sheet-frame--readable) { position: relative; max-width: none; }
-  .sheet-frame:not(.sheet-frame--readable) .song-sheet {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 980px;
-    transform-origin: top left;
-  }
-
-  .sheet-frame--readable .song-sheet { min-height: 0; padding: 26px 22px; }
-  .sheet-frame--readable .sheet-close { top: 14px; right: 16px; }
-  .sheet-frame--readable .song-hero { grid-template-columns: minmax(120px, 26%) minmax(0, 1fr); gap: 16px; }
-  .sheet-frame--readable .cover img, .sheet-frame--readable .cover-placeholder { width: 100%; height: auto; }
-  .sheet-frame--readable .hero-content h1 { font-size: clamp(30px, 5.5vw, 50px); }
-  .sheet-frame--readable .recording { margin: 8px 0; font-size: 16px; }
-  .sheet-frame--readable .recording span { font-size: 18px; }
-  .sheet-frame--readable .song-facts { margin-top: 8px; }
-  .sheet-frame--readable .fact-item { min-height: 48px; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px; }
-  .sheet-frame--readable .fact-item dt { font-size: 12px; }
-  .sheet-frame--readable .fact-item dd { font-size: 20px; }
-  .sheet-frame--readable .fact-item dd small { font-size: 12px; }
-  .sheet-frame--readable .feature-line { min-height: 90px; }
-  .sheet-frame--readable .feature-phrase { font-size: clamp(23px, 3.5vw, 34px); }
-  .sheet-frame--readable .feature-phrase::before, .sheet-frame--readable .feature-phrase::after { display: none; }
-  .sheet-frame--readable .overview-copy p { font-size: 17px; }
+  .song-sheet { min-height: 0; padding: 30px 32px; }
+  .sheet-close { top: 14px; right: 16px; }
+  .song-hero { grid-template-columns: minmax(120px, 26%) minmax(0, 1fr); gap: 16px; }
+  .cover img, .cover-placeholder { width: 100%; height: auto; }
+  .hero-content h1 { font-size: clamp(30px, 5.5vw, 50px); }
+  .recording { margin: 8px 0; font-size: 16px; }
+  .recording span { font-size: 18px; }
+  .song-facts { margin-top: 8px; }
+  .fact-item { min-height: 48px; flex-direction: column; align-items: center; gap: 3px; padding: 5px 2px; }
+  .fact-item dt { font-size: 12px; }
+  .fact-item dd { font-size: 20px; }
+  .fact-item dd small { font-size: 12px; }
+  .feature-line { min-height: 90px; }
+  .feature-phrase { font-size: clamp(23px, 3.5vw, 34px); }
+  .feature-phrase::before, .feature-phrase::after { display: none; }
+  .sheet-frame--readable .overview-copy p { font-size: 21px; }
 }
 
 @media (min-width: 521px) and (max-width: 760px) and (hover: hover) and (pointer: fine) {

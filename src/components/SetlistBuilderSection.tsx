@@ -1,5 +1,4 @@
 import { prepareSongSearch } from '../utils/songSearch';
-import { GuideArtwork } from './GuideArtwork';
 import { TourArchiveSection } from './TourArchiveSection';
 import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
@@ -17,16 +16,12 @@ import {
   BookOpen,
   Search,
 } from 'lucide-react';
-import {
-  SongItem,
-  STADIUM_IMAGE_PATH,
-} from '../data/higedanData';
+import { SongItem } from '../data/higedanData';
 import {
   calculateSetlistStats,
   formatApproxBpm,
   formatSongBpm,
   formatDuration,
-  isSafeAssetUrl,
   sanitizeUserText,
   SetlistEntry,
 } from '../utils/fanLogic';
@@ -43,6 +38,8 @@ interface SetlistBuilderSectionProps {
   onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => boolean;
   attendedTourIds: string[];
   onToggleAttendedTour: (tourId: string) => void;
+  onExportRecords: () => void;
+  onImportRecords: (file: File) => Promise<void>;
   onSelectSong?: (song: SongItem) => void;
   initialSubTab?: 'builder' | 'tours';
 }
@@ -59,6 +56,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onLoadPresetSetlist,
   attendedTourIds,
   onToggleAttendedTour,
+  onExportRecords,
+  onImportRecords,
   onSelectSong,
   initialSubTab = 'builder',
 }) => {
@@ -70,12 +69,18 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       'pretender'
   );
   const [addAsEncore, setAddAsEncore] = useState<boolean>(false);
+  const [showAllSongMatches, setShowAllSongMatches] = useState(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const copyTimerRef = useRef<number | null>(null);
 
   const selectableSongsByAlbum = useMemo(() => {
     const match = prepareSongSearch(songSearchFilter);
-    const matching = match ? songs.filter(song => match(song) !== undefined) : songs;
+    const matching = match
+      ? songs.map(song => ({ song, rank: match(song) }))
+        .filter((item): item is { song: SongItem; rank: number } => item.rank !== undefined)
+        .sort((a, b) => a.rank - b.rank || a.song.guideOrder - b.song.guideOrder)
+        .map(item => item.song)
+      : songs;
     const groups = new Map<string, SongItem[]>();
     for (const s of matching) {
       const list = groups.get(s.album) || [];
@@ -208,6 +213,22 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
         </div>
 
+        <details className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm">
+          <summary className="cursor-pointer font-bold text-[#1C1917]">記録の保存・引き継ぎ</summary>
+          <p className="mt-2 leading-relaxed text-[#57534E]">マイセトリや参戦・訪問の記録はこのブラウザに保存されます。機種変更やブラウザのデータ削除に備えて、ファイルに保存できます。</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <button type="button" onClick={onExportRecords} className="min-h-11 rounded-lg border border-[#1C1917] px-4 font-bold text-[#1C1917]">記録を書き出す</button>
+            <label className="font-bold text-[#1C1917]">ファイルから記録を戻す
+              <input type="file" accept=".json,application/json" className="mt-1 block max-w-full text-xs font-normal" onChange={event => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
+                if (file) void onImportRecords(file);
+              }} />
+            </label>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-[#57534E]">読み込み時は、このブラウザの記録をファイルの内容に置き換えるか確認します。診断やクイズの途中経過は含みません。</p>
+        </details>
+
         {activeSubTab === 'builder' ? (
           /* Main 12-Col Layout: Left Builder (7 cols), Right Energy Analytics & Flyer Preview (5 cols) */
           <div className="mt-5 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
@@ -266,100 +287,88 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 </button>
               </div>
 
-              {/* Song Adder Row with Quick Filter & Album Grouping */}
-              <div className="mt-4 space-y-2.5 rounded-lg bg-[#F2EFE9] p-3 border border-[#E6E1D6]">
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
-                  <div className="relative sm:col-span-5">
-                    <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78716C]" />
-                    <label htmlFor="setlist-song-filter" className="sr-only">
-                      追加したい曲名を検索
-                    </label>
+              {/* Search results can be added directly; the album selector remains available. */}
+              <div className="mt-4 space-y-3 rounded-lg bg-[#F2EFE9] p-3 border border-[#E6E1D6]">
+                <div>
+                  <label htmlFor="setlist-song-filter" className="mb-1 block text-xs font-bold text-[#1C1917]">曲を探して追加</label>
+                  <div className="relative">
+                    <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
                     <input
                       id="setlist-song-filter"
-                      type="text"
+                      type="search"
                       maxLength={40}
                       value={songSearchFilter}
                       onChange={(e) => {
                         const val = e.target.value.slice(0, 40);
                         setSongSearchFilter(val);
-                        const q = val.trim().toLowerCase();
-                        if (q) {
-                          const firstHit = songs.find(
-                            (s) =>
-                              s.title.toLowerCase().includes(q) ||
-                              s.album.toLowerCase().includes(q)
-                          );
-                          if (firstHit) {
-                            setSelectedSongToAdd(firstHit.id);
-                          }
+                        setShowAllSongMatches(false);
+                        const match = prepareSongSearch(val);
+                        if (match) {
+                          const firstHit = songs.map(song => ({ song, rank: match(song) }))
+                            .filter((item): item is { song: SongItem; rank: number } => item.rank !== undefined && !setlistIdSet.has(item.song.id))
+                            .sort((a, b) => a.rank - b.rank || a.song.guideOrder - b.song.guideOrder)[0];
+                          if (firstHit) setSelectedSongToAdd(firstHit.song.id);
                         }
                       }}
-                      placeholder="曲名・アルバム名で絞り込み..."
-                      className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-3 py-2 text-xs text-[#1C1917] min-h-[38px]"
+                      placeholder="曲名・読み・アルバム名"
+                      className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-9 pr-3 py-2 text-base sm:text-sm text-[#1C1917] min-h-[44px]"
                     />
                   </div>
+                </div>
 
-                  <div className="sm:col-span-7 min-w-0">
-                    <label htmlFor="add-song-select" className="sr-only">
-                      追加する曲を選択
-                    </label>
-                    <select
-                      id="add-song-select"
-                      value={selectedSongToAdd}
-                      onChange={(e) => setSelectedSongToAdd(e.target.value)}
-                      className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] min-h-[38px]"
-                    >
+                <label className="inline-flex min-h-[36px] items-center gap-2 text-xs font-medium text-[#1C1917] cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={addAsEncore}
+                    onChange={(e) => setAddAsEncore(e.target.checked)}
+                    className="h-4 w-4 rounded border-[#D5CEC2] text-[#C83E2B]"
+                  />
+                  アンコール枠で追加
+                </label>
+
+                {songSearchFilter.trim() && (
+                  <div className="rounded-lg border border-[#E6E1D6] bg-white p-2" aria-label="曲の検索結果">
+                    <p className="px-2 py-1 text-xs font-bold text-[#57534E]" role="status">
+                      {visibleSongs.length ? `${visibleSongs.length}曲見つかりました。曲を押して追加できます。` : '曲が見つかりませんでした。'}
+                    </p>
+                    {visibleSongs.length > 0 && <div className="max-h-80 overflow-y-auto">
+                      {visibleSongs.slice(0, showAllSongMatches ? undefined : 6).map(song => {
+                        const alreadyIn = setlistIdSet.has(song.id);
+                        return <button key={song.id} type="button" disabled={alreadyIn}
+                          aria-label={alreadyIn ? `${song.title}は追加済み` : `${song.title}を${addAsEncore ? 'アンコール' : '本編'}に追加`}
+                          onClick={() => onAddSong(song.id, addAsEncore)}
+                          className="flex min-h-[44px] w-full items-center justify-between gap-3 rounded-md px-2 py-2 text-left hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-[#1C1917] disabled:opacity-55">
+                          <span className="min-w-0"><span className="block text-sm font-bold wrap-anywhere">{song.title}</span><span className="block text-xs text-[#57534E]">{song.album}</span></span>
+                          <span className="shrink-0 text-xs font-bold text-[#9B3021]">{alreadyIn ? '追加済み' : '＋ 追加'}</span>
+                        </button>;
+                      })}
+                    </div>}
+                    {visibleSongs.length > 6 && <button type="button" onClick={() => setShowAllSongMatches(value => !value)}
+                      className="min-h-[40px] px-2 text-xs font-bold text-[#1E3A5F] underline underline-offset-2">
+                      {showAllSongMatches ? '候補を閉じる' : `ほかの${visibleSongs.length - 6}曲も見る`}
+                    </button>}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-end gap-2">
+                  <div className="min-w-0 flex-1 basis-48">
+                    <label htmlFor="add-song-select" className="mb-1 block text-xs font-bold text-[#57534E]">追加する曲を選択</label>
+                    <select id="add-song-select" value={selectedSongToAdd} onChange={(e) => setSelectedSongToAdd(e.target.value)}
+                      className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] min-h-[44px]">
                       {selectableSongsByAlbum.map(([albumName, groupSongs]) => (
                         <optgroup key={albumName} label={`収録：${albumName}`}>
-                          {groupSongs.map((s) => {
-                            const alreadyIn = setlistIdSet.has(s.id);
-                            return (
-                              <option key={s.id} value={s.id}>
-                                {s.title}
-                                {alreadyIn
-                                  ? '（追加済み）'
-                                  : `（BPM ${formatSongBpm(s.id, s.bpm)} · ${formatDuration(s.durationSec)}）`}
-                              </option>
-                            );
-                          })}
+                          {groupSongs.map(s => <option key={s.id} value={s.id}>
+                            {s.title}{setlistIdSet.has(s.id) ? '（追加済み）' : `（BPM ${formatSongBpm(s.id, s.bpm)} · ${formatDuration(s.durationSec)}）`}
+                          </option>)}
                         </optgroup>
                       ))}
                     </select>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between sm:justify-end gap-3 pt-1">
-                  <label className="inline-flex items-center gap-1.5 text-xs font-medium text-[#1C1917] cursor-pointer whitespace-nowrap shrink-0">
-                    <input
-                      type="checkbox"
-                      checked={addAsEncore}
-                      onChange={(e) => setAddAsEncore(e.target.checked)}
-                      className="h-4 w-4 rounded border-[#D5CEC2] text-[#C83E2B]"
-                    />
-                    アンコール枠で追加
-                  </label>
-
-                  <button
-                    type="button"
-                    disabled={isSelectedAlreadyInSetlist}
-                    onClick={handleAddSelectedSong}
-                    className={`inline-flex items-center justify-center gap-1 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 min-h-[38px] ${
-                      isSelectedAlreadyInSetlist
-                        ? 'bg-[#E6E1D6] text-[#78716C] cursor-not-allowed'
-                        : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
-                    }`}
-                  >
-                    {isSelectedAlreadyInSetlist ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" />
-                        追加済み
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-3.5 w-3.5" />
-                        曲を追加
-                      </>
-                    )}
+                  <button type="button" disabled={isSelectedAlreadyInSetlist} onClick={handleAddSelectedSong}
+                    className={`inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${isSelectedAlreadyInSetlist
+                      ? 'bg-[#E6E1D6] text-[#78716C] cursor-not-allowed'
+                      : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'}`}>
+                    {isSelectedAlreadyInSetlist ? <><Check className="h-3.5 w-3.5" />追加済み</> : <><Plus className="h-3.5 w-3.5" />曲を追加</>}
                   </button>
                 </div>
               </div>
@@ -384,11 +393,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     return (
                       <div
                         key={`${entry.songId}-${idx}`}
-                        className={`flex flex-col md:flex-row md:items-center justify-between gap-2 py-2.5 px-2 transition-colors ${
+                        className={`flex items-center justify-between gap-2 py-2.5 px-2 transition-colors ${
                           entry.isEncore ? 'bg-[#FEF8EC]/70' : 'bg-white'
                         }`}
                       >
-                        <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex flex-1 items-center gap-3 min-w-0">
                           <span
                             className={`font-mono-num text-xs font-bold w-8 shrink-0 ${
                               entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'
@@ -412,16 +421,16 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               </div>
                             )}
                             <div className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
-                              {song.album} · {formatDuration(song.durationSec)} · BPM {formatSongBpm(song.id, song.bpm)}
+                              <span className="hidden sm:inline">{song.album} · </span>{formatDuration(song.durationSec)}<span className="hidden sm:inline"> · BPM {formatSongBpm(song.id, song.bpm)}</span>
                             </div>
                           </div>
                         </div>
 
-                        <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5 shrink-0 pt-1 sm:pt-0">
+                        <div className="hidden max-w-full flex-wrap items-center justify-end gap-1 shrink-0 md:flex">
                           <button
                             type="button"
                             onClick={() => onToggleEncore(idx)}
-                            className="rounded border border-[#D5CEC2] bg-[#FBF9F5] px-2 py-1 text-[11px] font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] whitespace-nowrap shrink-0 cursor-pointer"
+                            className="min-h-[40px] rounded border border-[#D5CEC2] bg-[#FBF9F5] px-2 py-1 text-[11px] font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] whitespace-nowrap shrink-0 cursor-pointer"
                           >
                             {entry.isEncore ? '本編へ' : 'アンコールへ'}
                           </button>
@@ -434,7 +443,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             }
                             title="1曲目（先頭）へ移動"
                             aria-label={`${song.title}を先頭へ移動`}
-                            className="inline-flex items-center gap-0.5 rounded border border-[#D5CEC2] px-1.5 py-1 text-[11px] font-bold text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
+                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center gap-0.5 rounded border border-[#D5CEC2] px-1.5 py-1 text-[11px] font-bold text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
                           >
                             <ChevronsUp className="h-3 w-3" />
                             <span className="hidden sm:inline">先頭</span>
@@ -447,7 +456,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               setlist[idx - 1]?.isEncore !== entry.isEncore
                             }
                             aria-label={`${song.title}を1つ上へ移動`}
-                            className="rounded border border-[#D5CEC2] p-1 text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
+                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] p-1 text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
                           >
                             <ArrowUp className="h-3.5 w-3.5" />
                           </button>
@@ -459,7 +468,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               setlist[idx + 1]?.isEncore !== entry.isEncore
                             }
                             aria-label={`${song.title}を1つ下へ移動`}
-                            className="rounded border border-[#D5CEC2] p-1 text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
+                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] p-1 text-[#1C1917] disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[#F2EFE9] cursor-pointer"
                           >
                             <ArrowDown className="h-3.5 w-3.5" />
                           </button>
@@ -467,11 +476,50 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             type="button"
                             onClick={() => onRemoveSong(song.id)}
                             aria-label={`${song.title}をセットリストから外す`}
-                            className="ml-2 inline-flex min-h-[44px] items-center gap-1 rounded border border-[#D5CEC2] px-2 text-xs font-bold text-[#9B3021] hover:bg-[#FDF3F1] cursor-pointer"
+                            className="inline-flex min-h-[40px] items-center gap-1 rounded border border-[#D5CEC2] px-2 text-xs font-bold text-[#9B3021] hover:bg-[#FDF3F1] cursor-pointer"
                           >
                             <Trash2 aria-hidden="true" className="h-3.5 w-3.5" />
                             外す
                           </button>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1 md:hidden">
+                          <button type="button" onClick={() => onMoveSong(idx, 'up')}
+                            disabled={idx === 0 || setlist[idx - 1]?.isEncore !== entry.isEncore}
+                            aria-label={`${song.title}を1つ上へ移動`}
+                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
+                            <ArrowUp aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                          <button type="button" onClick={() => onMoveSong(idx, 'down')}
+                            disabled={idx === setlist.length - 1 || setlist[idx + 1]?.isEncore !== entry.isEncore}
+                            aria-label={`${song.title}を1つ下へ移動`}
+                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
+                            <ArrowDown aria-hidden="true" className="h-3.5 w-3.5" />
+                          </button>
+                          <details className="relative">
+                            <summary aria-label={`${song.title}のその他の操作`}
+                              className="flex min-h-[40px] min-w-[44px] cursor-pointer list-none items-center justify-center rounded border border-[#D5CEC2] bg-[#FBF9F5] px-1.5 text-xs font-bold [&::-webkit-details-marker]:hidden">
+                              操作
+                            </summary>
+                            <div className="absolute right-0 z-20 mt-1 min-w-36 rounded-lg border border-[#D5CEC2] bg-white p-1 shadow-lg">
+                              <p className="border-b border-[#E6E1D6] px-3 py-2 text-[11px] leading-4 text-[#57534E]">収録：{song.album}<br />BPM {formatSongBpm(song.id, song.bpm)}</p>
+                              <button type="button" aria-label={`${song.title}を${entry.isEncore ? '本編' : 'アンコール'}へ移動`}
+                                onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); onToggleEncore(idx); }}
+                                className="block min-h-[44px] w-full rounded px-3 text-left text-xs font-bold hover:bg-[#F2EFE9]">
+                                {entry.isEncore ? '本編へ' : 'アンコールへ'}
+                              </button>
+                              <button type="button" aria-label={`${song.title}を先頭へ移動`}
+                                disabled={idx === 0 || setlist[idx - 1]?.isEncore !== entry.isEncore}
+                                onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); onMoveSong(idx, 'top'); }}
+                                className="block min-h-[44px] w-full rounded px-3 text-left text-xs font-bold hover:bg-[#F2EFE9] disabled:opacity-40">
+                                先頭へ
+                              </button>
+                              <button type="button" aria-label={`${song.title}をセットリストから外す`}
+                                onClick={event => { event.currentTarget.closest('details')?.removeAttribute('open'); onRemoveSong(song.id); }}
+                                className="block min-h-[44px] w-full rounded px-3 text-left text-xs font-bold text-[#9B3021] hover:bg-[#FDF3F1]">
+                                セトリから外す
+                              </button>
+                            </div>
+                          </details>
                         </div>
                       </div>
                     );
@@ -484,14 +532,16 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             <div className="lg:col-span-5">
               <div className="rounded-xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] overflow-hidden">
                 <div className="relative h-32 w-full">
-                  {isSafeAssetUrl(STADIUM_IMAGE_PATH) && (
-                    <GuideArtwork
-                      src={STADIUM_IMAGE_PATH}
-                      alt="スタジアムライブの風景"
-                      referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover opacity-75"
-                    />
-                  )}
+                  <svg aria-hidden="true" className="absolute inset-0 h-full w-full" viewBox="0 0 480 128" preserveAspectRatio="xMidYMid slice">
+                    <defs><linearGradient id="setlist-banner" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#355B55" /><stop offset="1" stopColor="#1C1917" /></linearGradient></defs>
+                    <rect width="480" height="128" fill="url(#setlist-banner)" />
+                    <g fill="none" stroke="#E7C68A" strokeOpacity=".3" strokeWidth="1">
+                      <path d="M-20 76 C70 30 150 30 240 76 S410 122 500 76" />
+                      <path d="M-20 90 C70 44 150 44 240 90 S410 136 500 90" />
+                      <path d="M-20 104 C70 58 150 58 240 104 S410 150 500 104" />
+                    </g>
+                    <g fill="#E7C68A" fillOpacity=".8"><circle cx="362" cy="29" r="3" /><circle cx="383" cy="22" r="2" /><circle cx="404" cy="30" r="3" /></g>
+                  </svg>
                   <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917] via-[#1C1917]/40 to-transparent flex flex-col justify-end p-4">
                     <span className="text-[11px] font-bold text-[#F5D0C9]">
                       セットリスト構成データ

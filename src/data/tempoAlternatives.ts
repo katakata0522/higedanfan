@@ -3,6 +3,9 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
   "pretender": [
     { value: 184, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Pretender" },
   ],
+  "shukumei": [
+    { value: 164, url: "https://www.music8.com/upload/save_image/00000088132_sample_pdf.pdf" },
+  ],
   "subtitle": [
     { value: 130, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Subtitle" },
   ],
@@ -35,6 +38,7 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
   ],
   "laughter-song": [
     { value: 160, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Laughter" },
+    { value: 148, url: "https://keytube.net/song/detail/26901" },
   ],
   "universe-song": [
     { value: 186, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Universe" },
@@ -63,16 +67,16 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
     { value: 130, url: "https://ja.chordwiki.org/wiki/%E6%81%8B%E3%81%AE%E5%89%8D%E3%81%AA%E3%82%89%E3%81%88" },
   ],
   "yuugure-zoi": [
-    { value: 96, url: "https://bpm-database.tokyo/artist/E2r0aK9Z" },
+    { value: 192, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E5%A4%95%E6%9A%AE%E3%82%8C%E6%B2%BF%E3%81%84" },
   ],
   "parade-indies": [
     { value: 204.1, url: "https://bpm-database.tokyo/artist/E2r0aK9Z" },
   ],
   "darling-indies": [
-    { value: 96, url: "https://bpm-database.tokyo/artist/E2r0aK9Z" },
+    { value: 192, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E3%83%80%E3%83%BC%E3%83%AA%E3%83%B3%E3%80%82" },
   ],
   "zero-no-mamade": [
-    { value: 76, url: "https://www.chord-rinne.jp/scode.php?id=4827" },
+    { value: 152, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E3%82%BC%E3%83%AD%E3%81%AE%E3%81%BE%E3%81%BE%E3%81%A7%E3%81%84%E3%82%89%E3%82%8C%E3%81%9F%E3%82%89" },
   ],
   "knit-no-boushi": [
     { value: 70, url: "https://ja.chordwiki.org/wiki/%E3%83%8B%E3%83%83%E3%83%88%E3%81%AE%E5%B8%BD%E5%AD%90" },
@@ -82,13 +86,14 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
     { value: 170, url: "https://ja.chordwiki.org/wiki/Rolling%2B%28Official%E9%AB%AD%E7%94%B7dism%29" },
   ],
   "equal-song": [
-    { value: 70, url: "https://ja.chordwiki.org/wiki/%E3%82%A4%E3%82%B3%E3%83%BC%E3%83%AB" },
+    { value: 140, url: "https://bpm-database.tokyo/music/MBvsomcP" },
   ],
   "trailer-song": [
-    { value: 79.8, url: "https://bpm-database.tokyo/artist/E2r0aK9Z" },
+    { value: 159.5, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Trailer" },
+    { value: 80, url: "https://keytube.net/song/detail/23326" },
   ],
   "saredo-hibi-wa": [
-    { value: 79, url: "https://bpm-database.tokyo/artist/E2r0aK9Z" },
+    { value: 158, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E3%81%95%E3%82%8C%E3%81%A9%E6%97%A5%E3%80%85%E3%81%AF" },
   ],
   "lady-song": [
     { value: 120, url: "https://www.chord-rinne.jp/scode.php?id=4821" },
@@ -121,9 +126,9 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
     { value: 62, url: "https://12notez.in/song/artist/official-hige-dandism" },
   ],
   "midori-no-amayoke": [
-    { value: 96, url: "https://keytube.net/song/detail/57889" },
+    { value: 192, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E3%81%BF%E3%81%A9%E3%82%8A%E3%81%AE%E9%9B%A8%E9%81%BF%E3%81%91" },
   ],
   "hagan-song": [
-    { value: 88, url: "https://keytube.net/song/detail/81917" },
+    { value: 176, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=%E7%A0%B4%E9%A1%94" },
   ],
 };

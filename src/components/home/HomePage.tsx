@@ -30,37 +30,44 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
             </div>
 
             <p className="text-xs sm:text-base text-[#57534E] leading-relaxed max-w-2xl">
-              好きな曲のことをもっと知りたい日も、今日の1曲を探したい日も。
-              Official髭男dismの楽曲を、収録作品や発売日、演奏時間、音域などの資料と一緒にたどれるファンサイトです。
-              マイソング診断、楽曲ガイド、聖地巡礼マップ、マイセトリ、歴代ツアーの公演記録、検定クイズを用意しました。
+              いつもの一曲に、まだ知らない話があるかもしれない。
+              曲の背景をたどったり、今日の気分に合う音を探したり。
+              ヒゲダンを好きな時間を、ここでゆっくり楽しんでください。
             </p>
 
-            <div className="pt-1 flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3">
+            <div className="pt-1 grid grid-cols-2 sm:flex sm:flex-wrap items-stretch sm:items-center gap-3">
               <button
                 type="button"
                 onClick={() => onSelectTab('discography', 'all')}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#A93020] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
+                className="col-span-2 inline-flex items-center justify-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-3 text-xs sm:text-sm font-bold text-white hover:bg-[#A93020] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Sparkles className="h-4 w-4" />
-                <span>90曲の楽曲ガイドを開く</span>
+                <span>90曲の物語をたどる</span>
                 <ArrowRight className="h-4 w-4" />
               </button>
 
               <button
                 type="button"
-                onClick={() => onSelectTab('setlist')}
+                onClick={() => onSelectTab('mood')}
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-5 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
               >
                 <Compass className="h-4 w-4 text-[#1E3A5F]" />
-                <span>マイセトリを作る</span>
+                <span>今日の1曲を探す</span>
               </button>
 
               <button
                 type="button"
-                onClick={() => onSelectTab('vocal_range')}
+                onClick={() => onSelectTab('setlist')}
                 className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-3 text-xs sm:text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors min-h-[44px] whitespace-nowrap shrink-0 cursor-pointer"
               >
-                <span>掲載90曲の音域・発売日表</span>
+                <span>マイセトリを作る</span>
+              </button>
+            </div>
+            <div className="border-l-2 border-[#C83E2B] pl-3">
+              <p className="text-[11px] font-bold text-[#78716C]">曲の小さな裏話</p>
+              <button type="button" onClick={() => onSelectSong('pretender')}
+                className="mt-1 text-left text-xs sm:text-sm font-bold leading-relaxed text-[#1E3A5F] underline decoration-[#B9AEA0] underline-offset-4 hover:text-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
+                「Pretender」の「世界線」、アニメとのつながりを読む →
               </button>
             </div>
           </div>
@@ -74,6 +81,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                     key={art.label}
                     type="button"
                     onClick={() => onSelectTab('discography', art.era)}
+                    aria-label={`${art.label}の時代から曲を探す`}
                     className="group relative aspect-square overflow-hidden rounded-lg bg-[#1C1917] ring-1 ring-black/10 shadow-xs text-left cursor-pointer"
                   >
                     {isSafeAssetUrl(art.src) && (
@@ -96,8 +104,8 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                 ))}
               </div>
               <div className="mt-2.5 flex items-center justify-between text-[11px] text-[#57534E] px-0.5">
-                <span>アルバム・年代別の収録曲を見る</span>
-                <span className="font-bold text-[#1C1917]">図柄を選択 →</span>
+                <span>好きな時期から曲を探す</span>
+                <span className="font-bold text-[#1C1917]">選んで見る →</span>
               </div>
             </div>
           </div>
@@ -110,9 +118,6 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
           <h2 className="text-lg sm:text-xl font-bold text-[#1C1917]">
             今日はどこから楽しむ？
           </h2>
-          <span className="text-xs text-[#78716C]">
-            右上の「メニュー」からも全項目を縦一覧で開けます
-          </span>
         </div>
 
         {/* Featured Lead Card: 01 My Song Diagnosis */}

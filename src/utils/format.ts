@@ -14,9 +14,9 @@ export function formatDuration(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
-// BPM は資料や拍の数え方によって変わるため、画面上では目安として示す。
+// 資料の数値は保持し、比較しやすいよう表示だけ整数の目安にする。
 export function formatApproxBpm(bpm: number): string {
-  return `約${bpm}`;
+  return `約${Math.round(bpm)}`;
 }
 
 export function formatSongBpm(songId: string, bpm: number): string {

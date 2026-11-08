@@ -64,11 +64,12 @@ interface Props {
   onChange: (values: SongGuideFilterValues) => void;
   resultCount: number;
   shownCount: number;
+  showSort?: boolean;
 }
 
 const selectClass = 'w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-2 text-xs font-medium text-[#1C1917] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]';
 
-export function SongGuideFilters({ values, onChange, resultCount, shownCount }: Props) {
+export function SongGuideFilters({ values, onChange, resultCount, shownCount, showSort = false }: Props) {
   const [expanded, setExpanded] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultStatus = useRef<HTMLSpanElement>(null);
@@ -79,10 +80,18 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
     sortBy !== 'guide_order' && SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', ''),
   ].filter(Boolean);
   const hasActiveFilter = album !== 'all' || Boolean(searchQuery.trim()) || secondaryChoices.length > 0;
+  const sortSelect = (
+    <select id="discography-sort-select" className={selectClass} value={sortBy}
+      onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption })}>
+      {SORT_OPTIONS.map(option => <option key={option.id} value={option.id}>
+        {option.id === 'guide_order' && searchQuery.trim() ? '並び順：曲名・読みの一致を優先' : option.label}
+      </option>)}
+    </select>
+  );
 
   return (
     <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E1D6] bg-white p-3 sm:p-4">
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className={`grid gap-2 ${showSort ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2'}`}>
         <div>
           <label htmlFor="discography-search" className="mb-1 block text-xs font-bold text-[#57534E]">曲名・読み・音域・タイアップで検索</label>
           <div className="relative">
@@ -119,12 +128,16 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
             {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
+        {showSort && <div>
+          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="discography-sort-select">並び替え</label>
+          {sortSelect}
+        </div>}
       </div>
 
       <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
         onClick={() => setExpanded(current => !current)}
         className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
-        <span>詳しく絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
+        <span>{showSort ? '年代・曲調で絞る' : '詳しく絞る・並べ替える'}{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
       </button>
       <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid-cols-2`}>
@@ -148,15 +161,10 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
             {SOUND_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
-        <div>
+        {!showSort && <div>
           <label className="sr-only" htmlFor="discography-sort-select">楽曲の並び替え</label>
-          <select id="discography-sort-select" className={selectClass} value={sortBy}
-            onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption })}>
-            {SORT_OPTIONS.map(option => <option key={option.id} value={option.id}>
-              {option.id === 'guide_order' && searchQuery.trim() ? '並び順：曲名・読みの一致を優先' : option.label}
-            </option>)}
-          </select>
-        </div>
+          {sortSelect}
+        </div>}
       </div>
       {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E]">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-2 text-xs">

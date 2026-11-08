@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Ticket } from 'lucide-react';
 import { TOUR_ARCHIVES } from '../data/higedanData';
 import { sortTourArchives } from '../utils/fanLogic';
+import { createTourArchiveSearch } from '../utils/tourArchiveSearch';
 
 interface TourArchiveSectionProps {
   attendedTourIds: string[];
@@ -9,18 +10,14 @@ interface TourArchiveSectionProps {
 }
 
 const displayDate = (date: string) => date.replaceAll('-', '.');
+const concertCount = TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0);
 
 export function TourArchiveSection({ attendedTourIds, onToggleAttendedTour }: TourArchiveSectionProps) {
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [query, setQuery] = useState('');
   const tours = useMemo(() => sortTourArchives(TOUR_ARCHIVES, sortOrder), [sortOrder]);
-  const matchingTours = tours.map(tour => ({
-    tour,
-    events: tour.events.filter(event =>
-      `${tour.tourTitle} ${event.date} ${event.venue}`.toLocaleLowerCase('ja').includes(query.trim().toLocaleLowerCase('ja'))
-    ),
-  })).filter(({ events }) => events.length > 0);
-  const concertCount = TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0);
+  const searchTours = useMemo(() => createTourArchiveSearch(tours), [tours]);
+  const matchingTours = useMemo(() => searchTours(query), [searchTours, query]);
 
   return (
     <div className="mt-5 space-y-4">

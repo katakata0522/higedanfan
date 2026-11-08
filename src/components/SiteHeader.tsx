@@ -48,7 +48,7 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
   {
     id: 'mood',
     label: 'マイソング診断',
-    shortDesc: '3つの質問で今の気分に合う1曲を診断＆SNSシェアカード生成',
+    shortDesc: '5つの質問から、今の気分に合う1曲を探す',
     icon: <Sparkles className="h-4 w-4 shrink-0" />,
   },
   {

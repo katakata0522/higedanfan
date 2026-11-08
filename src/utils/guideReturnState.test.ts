@@ -18,6 +18,7 @@ test('楽曲ページから戻ると検索条件と表示件数を一度だけ�
     filters: { ...DEFAULT_GUIDE_FILTERS, era: 'traveler' as const, searchQuery: 'ぷりてんだー' },
     visibleCount: 42,
     view: 'vocal_range' as const,
+    voice: { low: '48', high: '72', keyShift: -2 },
   };
   saveGuideReturnState(state, store);
   assert.equal(guideReturnView(store), 'vocal_range');
@@ -31,5 +32,7 @@ test('古い件数や不正な検索条件を復元しない', () => {
   saveGuideReturnState({ filters: DEFAULT_GUIDE_FILTERS, visibleCount: 91, view: 'discography' }, store);
   assert.equal(takeGuideReturnState(90, store), null);
   saveGuideReturnState({ filters: { ...DEFAULT_GUIDE_FILTERS, searchQuery: 'a'.repeat(61) }, visibleCount: 18, view: 'discography' }, store);
+  assert.equal(takeGuideReturnState(90, store), null);
+  saveGuideReturnState({ filters: DEFAULT_GUIDE_FILTERS, visibleCount: 18, view: 'vocal_range', voice: { low: '100', high: '72', keyShift: 0 } }, store);
   assert.equal(takeGuideReturnState(90, store), null);
 });
