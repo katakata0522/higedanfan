@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { HIGEDAN_SONGS } from '../data/higedanData';
-import { GuideArtwork } from '../components/GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
 import { formatDuration } from '../utils/fanLogic';
 import { guideReturnView } from '../utils/guideReturnState';
 import type { EditorialSongPageData } from './EditorialSongPageData';
+import { useEditorialSheetFit } from './useEditorialSheetFit';
 
 const base = import.meta.env.BASE_URL;
 
@@ -13,6 +13,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const song = HIGEDAN_SONGS.find(item => item.id === page.id)!;
   const fact = songEvidence[page.id as keyof typeof songEvidence];
   const [toast, setToast] = useState<string | null>(null);
+  const [readable, setReadable] = useState(false);
   const toastTimer = useRef<number | null>(null);
   const records = useFanRecords(message => {
     setToast(message);
@@ -21,6 +22,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   });
   const inSetlist = records.setlist.some(item => item.songId === song.id);
   const [returnView] = useState(guideReturnView);
+  const { frameRef, sheetRef, frameStyle, sheetStyle } = useEditorialSheetFit(page.id, readable);
 
   useEffect(() => () => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -37,18 +39,18 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
         <nav aria-label="サイト内の移動">
           <a href={`${base}#discography`}>楽曲ガイド</a>
           <a href={`${base}#setlist`}>マイセトリ</a>
+          <button className="reading-toggle" type="button" aria-pressed={readable} onClick={() => setReadable(value => !value)}>{readable ? '1画面に戻す' : '大きな文字で読む'}</button>
         </nav>
       </header>
 
       <main id="main" className="page-main">
-        <article className="song-sheet" aria-labelledby="song-title">
+        <div ref={frameRef} className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`} style={frameStyle}>
+        <article ref={sheetRef} className="song-sheet" aria-labelledby="song-title" style={sheetStyle}>
+          <a className="sheet-close" href={`${base}#${returnView}`} aria-label={returnView === 'vocal_range' ? '音域一覧に戻る' : '曲一覧に戻る'}>×</a>
           <header className="song-hero">
             <figure className="cover">
-              {'path' in page.artwork ? (
-                <img src={`${base}${page.artwork.path}`} alt={page.artwork.alt} width="220" height="220" />
-              ) : (
-                <GuideArtwork src={page.artwork.theme} alt={page.artwork.alt} className="guide-artwork" />
-              )}
+              {/* 将来ジャケットを使う場合も、この正方形と同じサイズに収める。 */}
+              <div className="cover-placeholder" role="img" aria-label="ジャケット画像の仮枠" />
             </figure>
             <div className="hero-content">
               <h1 id="song-title">{song.title}</h1>
@@ -61,12 +63,13 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
                 <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
               </dl>
-              <div className="feature-line" aria-label="当サイトによる曲の紹介文">
-                <p className="feature-phrase">{page.feature.text}</p>
-                <p className="feature-credit">{page.feature.credit}</p>
-              </div>
             </div>
           </header>
+
+          <div className="feature-line" aria-label="当サイトによる曲の紹介文">
+            <p className="feature-phrase">{page.feature.text}</p>
+            <p className="feature-credit">{page.feature.credit}</p>
+          </div>
 
           <section className="overview" aria-labelledby="overview-title">
             <h2 id="overview-title">この曲の概要</h2>
@@ -121,6 +124,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           </div>
           {toast && <p className="toast" role="status" aria-live="polite">{toast}</p>}
         </article>
+        </div>
       </main>
     </div>
   );
