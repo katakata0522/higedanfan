@@ -27,7 +27,7 @@ const page = {
     { label: 'J-POP 音域の沼', purpose: '歌の音域と曲調', evidence: 'rangeSource' },
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
   ],
-  sourceCaveat: '音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+  sourceCaveat: '音域とテンポは採譜・計測方法で表記が異なる場合があります。ジャケットは公式の作品画像ではありません。',
 } satisfies EditorialSongPageData;
 
 export default page;
