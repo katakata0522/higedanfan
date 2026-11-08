@@ -8,10 +8,12 @@ import { QuizResultCard } from './quiz/QuizResultCard';
 import { QuizSourceArchive } from './quiz/QuizSourceArchive';
 import { getCourseLabel, getCourseQuestions, type CourseDifficulty } from './quiz/quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
+import { readQuizSession, saveQuizSession } from './quiz/quizSessionStorage';
 
 interface QuizSectionProps {
   bestScorePercentage: number | null;
   sessionRef: RefObject<QuizSession | null>;
+  resetEpoch: string;
   onUpdateBestScore: (percentage: number) => void;
   songs?: SongItem[];
   onSelectSong?: (song: SongItem) => void;
@@ -19,25 +21,34 @@ interface QuizSectionProps {
 }
 
 export function QuizSection({
-  bestScorePercentage, sessionRef, onUpdateBestScore, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
+  bestScorePercentage, sessionRef, resetEpoch, onUpdateBestScore, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
 }: QuizSectionProps) {
-  const [session, setSession] = useState(() => sessionRef.current ?? INITIAL_SESSION);
+  const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
+  const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
   const { stage: quizStage, difficulty, scope, currentIndex, correctBefore, answer } = session;
   const questions = useMemo(() => getCourseQuestions(difficulty, scope), [difficulty, scope]);
   const question = questions[currentIndex];
   const score = correctBefore + Number(quizStage === 'playing' && isAnswerCorrect(question, answer));
 
+  function updateSession(next: QuizSession) {
+    sessionRef.current = next;
+    // Persist before navigation, so immediately opening a related song cannot
+    // discard the answer that was just selected.
+    setSessionSaveUnavailable(!saveQuizSession(next, resetEpoch));
+    setSession(next);
+  }
+
   function startCourse(course: CourseDifficulty) {
-    setSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope });
+    updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope });
     window.location.hash = 'quiz';
   }
 
   function nextQuestion() {
     if (currentIndex + 1 < questions.length) {
-      setSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER });
+      updateSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER });
     } else {
-      setSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER });
+      updateSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER });
       onUpdateBestScore(calculateQuizResult(score, questions).percentage);
     }
   }
@@ -47,7 +58,7 @@ export function QuizSection({
     if (quizStage === 'playing' && (currentIndex > 0 || hasAnswerInput)) {
       if (!window.confirm('今回の検定を終了して、コース選択に戻りますか？\nもう一度挑戦すると、第1問から始まります。')) return;
     }
-    setSession({ ...INITIAL_SESSION, scope });
+    updateSession({ ...INITIAL_SESSION, scope });
   }
 
   return (
@@ -64,10 +75,10 @@ export function QuizSection({
               id="quiz-heading"
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              並び替え＆データ検証で深掘りする「ヒゲダン検定クイズ（全60問）」
+              ヒゲダン検定クイズ（全60問）
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              初級・中級・上級は各20問。答え合わせで作品情報・インタビュー・使用した音源を確認できます。
+              初級・中級・上級は各20問。答え合わせのあとは、作品情報やインタビュー、使用した音源もたどれます。
             </p>
           </div>
 
@@ -82,6 +93,12 @@ export function QuizSection({
             </button>
           )}
         </div>
+
+        {sessionSaveUnavailable && (
+          <p role="status" className="mt-4 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] p-3 text-xs text-[#57534E]">
+            このブラウザでは途中経過を一時保存できません。画面を移動すると回答が消える場合があります。
+          </p>
+        )}
 
         {/* Sub-navigation Tabs: Quiz Mode vs Source Archive Mode */}
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -126,7 +143,7 @@ export function QuizSection({
         </div>
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker scopeFilter={scope} onScopeChange={next => setSession({ ...session, scope: next })} onStart={startCourse} />
+          <QuizCoursePicker scopeFilter={scope} onScopeChange={next => updateSession({ ...session, scope: next })} onStart={startCourse} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
@@ -138,7 +155,7 @@ export function QuizSection({
             questionCount={questions.length}
             score={score}
             answer={answer}
-            onAnswerChange={next => setSession({ ...session, answer: next })}
+            onAnswerChange={next => updateSession({ ...session, answer: next })}
             relatedSong={songs.find(song => song.id === question.relatedSongId)}
             onSelectSong={onSelectSong}
             onNext={nextQuestion}

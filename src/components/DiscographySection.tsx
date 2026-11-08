@@ -150,10 +150,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubView === 'sacred_map'
-                ? '結成の地・山陰（松江・米子）から記念すべきスタジアム会場まで、ゆかりの聖地スポット案内です。'
+                ? '結成の地・山陰（松江・米子）からスタジアム会場まで、ゆかりの場所をたどります。'
                 : activeSubView === 'vocal_range'
                 ? '地声・裏声は曲別の採譜による値です。配信サービス掲載日と収録作品のCD発売日は別々に表示します。'
-                : '2015年から2026年4月「スターダスト」までに発表された楽曲から90曲を掲載。インスト曲と同じ曲の別バージョンは掲載対象を絞っています。'}
+                : '2015年から2026年4月「スターダスト」までに発表された楽曲から90曲を紹介。インスト曲と同じ曲の別バージョンは掲載対象を絞っています。'}
             </p>
           </div>
 
@@ -226,6 +226,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {displayedSongs.map((song) => {
                     const inSetlist = setlistSongIds.includes(song.id);
+                    const pagePath = songPagePath(song.id);
                     const albumBadgeText = resultAlbum && EP_TRACK_ORDER_MAP[resultAlbum]?.[song.id]
                       ? `${resultAlbum} (M${EP_TRACK_ORDER_MAP[resultAlbum][song.id]})`
                       : `${song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
@@ -238,12 +239,21 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <div>
                           <div className="flex items-start gap-3">
                             {isSafeAssetUrl(song.jacketImage) && (
-                              <GuideArtwork
-                                src={song.jacketImage}
-                                alt={`${song.title} のイメージ画像`}
-                                referrerPolicy="no-referrer"
-                                className="h-14 w-14 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
-                              />
+                              pagePath ? (
+                                <a href={`${import.meta.env.BASE_URL}${pagePath}`} onClick={rememberGuide}
+                                  aria-label={`${song.title}のページを見る`}
+                                  className="shrink-0 rounded-lg hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
+                                  <GuideArtwork src={song.jacketImage} alt="" referrerPolicy="no-referrer"
+                                    className="h-14 w-14 rounded-lg object-cover ring-1 ring-black/10" />
+                                </a>
+                              ) : (
+                                <button type="button" onClick={() => onSelectSong(song)}
+                                  aria-label={`${song.title}の音域・解説を見る`}
+                                  className="shrink-0 rounded-lg hover:opacity-85 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
+                                  <GuideArtwork src={song.jacketImage} alt="" referrerPolicy="no-referrer"
+                                    className="h-14 w-14 rounded-lg object-cover ring-1 ring-black/10" />
+                                </button>
+                              )
                             )}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
@@ -251,7 +261,13 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 <span className="shrink-0">{song.releaseDate}</span>
                               </div>
                               <h3 className="mt-0.5 text-base sm:text-lg font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
-                                {song.title}
+                                {pagePath ? (
+                                  <a href={`${import.meta.env.BASE_URL}${pagePath}`} onClick={rememberGuide}
+                                    className="rounded-sm underline decoration-[#B9AEA0] underline-offset-4 hover:decoration-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">{song.title}</a>
+                                ) : (
+                                  <button type="button" onClick={() => onSelectSong(song)}
+                                    className="rounded-sm text-left underline decoration-[#B9AEA0] underline-offset-4 hover:decoration-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">{song.title}</button>
+                                )}
                               </h3>
                               <p className="text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
                                 掲載音源：{songEvidence[song.id as keyof typeof songEvidence].album}
@@ -282,7 +298,6 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 裏声 <strong className="text-[#B45309]">{song.vocalRange.highestFalsettoNote}</strong>
                               </span>
                             </div>
-                            <a className="mt-1 block underline" target="_blank" rel="noreferrer" href={songEvidence[song.id as keyof typeof songEvidence].rangeSource}>この曲の採譜を見る ↗</a>
                           </div>
 
                           {/* Clean Unboxed Metadata Line */}
@@ -298,9 +313,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         </div>
 
                         <div className="mt-3.5 flex items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
-                          {songPagePath(song.id) ? (
+                          {pagePath ? (
                             <a
-                              href={`${import.meta.env.BASE_URL}${songPagePath(song.id)}`}
+                              href={`${import.meta.env.BASE_URL}${pagePath}`}
                               onClick={rememberGuide}
                               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
                             >
@@ -335,7 +350,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             ) : (
                               <>
                                 <Plus className="h-3.5 w-3.5" />
-                                セトリへ
+                                セトリに追加
                               </>
                             )}
                           </button>
@@ -434,7 +449,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     山陰（松江・米子）から横浜のライブ会場まで
                   </h3>
                   <p className="mt-0.5 text-xs text-[#57534E]">
-                    バンド結成の地や聖地ライブ会場のガイドです。行ったことのある場所にチェックを残せます。
+                    バンド結成の地やライブ会場をたどってみよう。行ったことのある場所にはチェックを残せます。
                   </p>
                 </div>
               </div>

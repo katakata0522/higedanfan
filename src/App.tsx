@@ -14,6 +14,7 @@ import { infoPages, isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import type { QuizSession } from './components/quiz/quizSession';
+import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
 
@@ -123,7 +124,15 @@ export default function App() {
 
   const records = useFanRecords(showToast);
   const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
+  const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist, votedKeys } = records;
+
+  useEffect(() => {
+    if (!records.resetEpoch) return;
+    const epoch = records.resetEpoch;
+    void import('./components/quiz/quizSessionStorage').then(({ clearStaleQuizSession }) => clearStaleQuizSession(epoch));
+    void import('./components/mood/moodSession').then(({ clearStaleMoodSession }) => clearStaleMoodSession(epoch));
+  }, [records.resetEpoch]);
 
   const modalSong = selectedModalSongId
     ? songs.find((s) => s.id === selectedModalSongId) || null
@@ -210,6 +219,9 @@ export default function App() {
               <React.Suspense fallback={<p role="status" className="p-5">読み込み中…</p>}>
                 {activeFeatureTab === 'mood' && (
                   <MoodFinderSection
+                    key={records.resetEpoch}
+                    resetEpoch={records.resetEpoch}
+                    sessionRef={moodSession}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
                     onAddToSetlist={records.addToSetlist}
@@ -285,6 +297,7 @@ export default function App() {
                   activeFeatureTab === 'quiz_archive') && (
                   <QuizSection
                     key={records.resetEpoch}
+                    resetEpoch={records.resetEpoch}
                     sessionRef={quizSession}
                     bestScorePercentage={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}

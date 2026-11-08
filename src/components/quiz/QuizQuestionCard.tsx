@@ -4,6 +4,7 @@ import type { QuizQuestion, SongItem } from '../../data/higedanData';
 import { formatOrderingSequence } from '../../utils/fanLogic';
 import { isAnswerCorrect, type QuizAnswer } from './quizSession';
 import { DIFFICULTY_LABEL } from './quizCourses';
+import { visibleQuizSourceSummary } from './quizSourceSummary';
 
 interface Props {
   visible: boolean;
@@ -300,33 +301,34 @@ export function QuizQuestionCard({
                 <span>出典・関連インタビュー記事＆サイト内検証データ</span>
               </div>
               <div className="mt-2.5 grid grid-cols-1 gap-2.5">
-                {question.sources.map((src, sIdx) => (
-                  <div
-                    key={`${question.id}-src-${sIdx}`}
-                    className="rounded-lg border border-[#F0ECE1] bg-[#FBF9F5] p-3 text-left"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[11px] font-bold text-[#C83E2B]">
-                        {src.publisher} · {src.publishedNote}
-                      </span>
-                      <a
-                        href={src.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E3A5F] hover:underline"
-                      >
-                        記事・公式情報を開く
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                {question.sources.map((src, sIdx) => {
+                  const summary = visibleQuizSourceSummary(src);
+                  return (
+                    <div
+                      key={`${question.id}-src-${sIdx}`}
+                      className="rounded-lg border border-[#F0ECE1] bg-[#FBF9F5] p-3 text-left"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-[11px] font-bold text-[#C83E2B]">
+                          {src.publisher} · {src.publishedNote}
+                        </span>
+                        <a
+                          href={src.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E3A5F] hover:underline"
+                        >
+                          記事・公式情報を開く
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                      <div className="mt-1 text-xs sm:text-sm font-bold text-[#1C1917]">
+                        {src.title}
+                      </div>
+                      {summary && <p className="mt-1 text-xs text-[#57534E] leading-relaxed">{summary}</p>}
                     </div>
-                    <div className="mt-1 text-xs sm:text-sm font-bold text-[#1C1917]">
-                      {src.title}
-                    </div>
-                    <p className="mt-1 text-xs text-[#57534E] leading-relaxed">
-                      {src.summary}
-                    </p>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

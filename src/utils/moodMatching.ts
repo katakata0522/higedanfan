@@ -1,10 +1,48 @@
-import type { MoodTag, SituationTag, SongItem, SoundTag } from '../data/higedanData';
-import { MOOD_LABELS, SITUATION_LABELS, SOUND_LABELS } from './songLabels';
+import type { EraTag, MoodTag, SituationTag, SongItem, SoundTag } from '../data/higedanData';
+import { ERA_SHORT_LABELS, MOOD_LABELS, SITUATION_LABELS, SOUND_LABELS } from './songLabels';
+
+export type EraPreference = EraTag | 'any';
+export type LengthPreference = 'any' | 'under4' | 'fourToFive' | 'fivePlus';
+
+export const ERA_PREFERENCE_LABELS: Record<EraPreference, string> = {
+  any: '時期はこだわらない',
+  ...ERA_SHORT_LABELS,
+};
+
+export const LENGTH_PREFERENCE_LABELS: Record<LengthPreference, string> = {
+  any: '長さはこだわらない',
+  under4: '４分未満',
+  fourToFive: '４分以上５分未満',
+  fivePlus: '５分以上',
+};
 
 export interface MoodCriteria {
   mood: MoodTag;
   situation: SituationTag;
   sound: SoundTag;
+  // Optional for callers using the original three-question diagnosis.
+  era?: EraPreference;
+  length?: LengthPreference;
+}
+
+export function matchesLength(durationSec: number, preference: LengthPreference): boolean {
+  if (!Number.isFinite(durationSec) || durationSec <= 0) return false;
+  if (preference === 'under4') return durationSec < 240;
+  if (preference === 'fourToFive') return durationSec >= 240 && durationSec < 300;
+  if (preference === 'fivePlus') return durationSec >= 300;
+  return true;
+}
+
+function matchedCriteria(song: SongItem, criteria: MoodCriteria): string[] {
+  return [
+    song.moods.includes(criteria.mood) ? `気分「${MOOD_LABELS[criteria.mood]}」` : null,
+    song.situations.includes(criteria.situation) ? `場面「${SITUATION_LABELS[criteria.situation]}」` : null,
+    song.sound === criteria.sound ? `曲調「${SOUND_LABELS[criteria.sound]}」` : null,
+    criteria.era && criteria.era !== 'any' && song.era === criteria.era
+      ? `時期「${ERA_PREFERENCE_LABELS[criteria.era]}」` : null,
+    criteria.length && criteria.length !== 'any' && matchesLength(song.durationSec, criteria.length)
+      ? `長さ「${LENGTH_PREFERENCE_LABELS[criteria.length]}」` : null,
+  ].filter((item): item is string => Boolean(item));
 }
 
 export interface MatchBreakdown {
@@ -30,15 +68,11 @@ export function buildMoodMatchExplanation(
   song: SongItem,
   criteria: MoodCriteria
 ): string {
-  const matched = [
-    song.moods.includes(criteria.mood) ? `気分「${MOOD_LABELS[criteria.mood]}」` : null,
-    song.situations.includes(criteria.situation) ? `場面「${SITUATION_LABELS[criteria.situation]}」` : null,
-    song.sound === criteria.sound ? `曲調「${SOUND_LABELS[criteria.sound]}」` : null,
-  ].filter((item): item is string => Boolean(item));
+  const matched = matchedCriteria(song, criteria);
   const reason = matched.length
-    ? `当サイトの分類では、${matched.join('・')}が選んだ条件と一致します。`
-    : '選んだ条件に近い候補として表示しています。';
-  return `${reason}曲調資料では「${song.musicalHighlight}」と紹介されています。`;
+    ? `${matched.join('・')}が選んだ条件と一致します。`
+    : '選んだ条件に一致する項目はありませんが、候補として紹介します。';
+  return `${reason}この曲の聴きどころは「${song.musicalHighlight}」。`;
 }
 
 export function buildMatchBreakdown(
@@ -88,24 +122,20 @@ export function scoreSongsByMood(
 ): ScoredSongMatch[] {
   const scored = songs.map((song) => {
     let rawPoints = 60;
-    const reasons: string[] = [];
+    const reasons = matchedCriteria(song, criteria);
 
     if (song.moods.includes(criteria.mood)) {
       rawPoints += 18;
-      reasons.push(`気分「${MOOD_LABELS[criteria.mood]}」`);
     }
     if (song.situations.includes(criteria.situation)) {
       rawPoints += 11;
-      reasons.push(`場面「${SITUATION_LABELS[criteria.situation]}」`);
     }
     if (song.sound === criteria.sound) {
       rawPoints += 10;
-      reasons.push(`曲調「${SOUND_LABELS[criteria.sound]}」`);
     }
 
-    if (reasons.length === 0) {
-      reasons.push(`曲調資料「${song.musicalHighlight}」`);
-    }
+    if (criteria.era && criteria.era !== 'any' && song.era === criteria.era) rawPoints += 8;
+    if (criteria.length && criteria.length !== 'any' && matchesLength(song.durationSec, criteria.length)) rawPoints += 6;
 
     const matchScore = Math.min(99, rawPoints);
     const moodMatchExplanation = buildMoodMatchExplanation(song, criteria);
@@ -119,15 +149,16 @@ export function scoreSongsByMood(
       moodMatchExplanation,
       soundAnalysisReason,
       matchBreakdown,
+      rawPoints,
     };
   });
 
   return scored.sort((a, b) => {
-    if (b.matchScore !== a.matchScore) {
-      return b.matchScore - a.matchScore;
+    if (b.rawPoints !== a.rawPoints) {
+      return b.rawPoints - a.rawPoints;
     }
     return a.song.guideOrder - b.song.guideOrder || a.song.title.localeCompare(b.song.title, 'ja');
-  });
+  }).map(({rawPoints: _rawPoints, ...match}) => match);
 }
 
 export function formatDiagnosisShareText(
@@ -136,7 +167,11 @@ export function formatDiagnosisShareText(
 ): string {
   return [
     `【マイソング診断結果：『${match.song.title}』】`,
-    `診断条件：${MOOD_LABELS[criteria.mood]} ／ ${SITUATION_LABELS[criteria.situation]} ／ ${SOUND_LABELS[criteria.sound]}`,
+    `診断条件：${[
+      MOOD_LABELS[criteria.mood], SITUATION_LABELS[criteria.situation], SOUND_LABELS[criteria.sound],
+      criteria.era && ERA_PREFERENCE_LABELS[criteria.era],
+      criteria.length && LENGTH_PREFERENCE_LABELS[criteria.length],
+    ].filter(Boolean).join(' ／ ')}`,
     `理由：${match.moodMatchExplanation}`,
     `曲調：${match.song.musicalHighlight}`,
     '#115万キロのファンノート #Official髭男dism #マイソング診断',

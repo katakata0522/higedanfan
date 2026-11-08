@@ -15,7 +15,7 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
             <h3 className="text-sm font-bold text-[#1C1917]">
-              1. 出題範囲・バリエーションモードを選択
+              1. 出題範囲を選ぼう
             </h3>
             <p className="text-xs text-[#57534E]">
               出題範囲を選ぶと、下の各コースに今回の問題数が表示されます。
@@ -28,12 +28,12 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
             [
               {
                 id: 'full',
-                title: '全問フル出題',
+                title: 'すべての問題',
                 sub: '各コース20問（総合60問）',
               },
               {
                 id: 'new_variation',
-                title: '新設バリエーション編',
+                title: '追加バリエーション編',
                 sub: '作品情報・曲順・演奏時間',
               },
               {
@@ -75,7 +75,7 @@ export function QuizCoursePicker({scopeFilter, onScopeChange, onStart}: Props) {
       {/* Course Cards */}
       <div>
         <h3 className="mb-3 text-sm sm:text-base font-bold text-[#1C1917]">
-          2. 挑戦する難易度コースを選択してスタート
+          2. コースを選んで挑戦
         </h3>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
