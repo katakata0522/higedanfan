@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS, QUIZ_QUESTIONS, TOUR_ARCHIVES } from '../data/higedanData';
 import { publishedSongPageIds } from '../songPages/publishedSongPageIds';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import {
   buildMoodMatchExplanation,
   calculateQuizResult,
@@ -167,6 +168,25 @@ test('calculateSetlistStats computes duration, BPM, key changes, and encore coun
   assert.equal(stats.encoreCount, 1);
   assert.equal(stats.totalDurationSec, 327 + 242 + 256);
   assert.equal(stats.energyCurve.length, 3);
+});
+
+test('調査中のテンポは曲一覧の末尾に置き、マイセトリの平均から除く', () => {
+  const pendingIds = ['same-blue', 'lady-song', 'travelers-outro', 'editorial-title-track', 'natsumoyou-no-neko', 'knit-no-boushi', 'elderflower'];
+  assert.deepEqual(HIGEDAN_SONGS.filter(song => isTempoUnderReview(song.id)).map(song => song.id).sort(), [...pendingIds].sort());
+  const sorted = filterAndSortDiscography(HIGEDAN_SONGS, { era: 'all', sound: 'all', searchQuery: '', sortBy: 'bpm' });
+  assert.ok(sorted.slice(0, -pendingIds.length).every(song => !isTempoUnderReview(song.id)));
+  assert.ok(sorted.slice(-pendingIds.length).every(song => isTempoUnderReview(song.id)));
+
+  const mixed = calculateSetlistStats([
+    { songId: 'same-blue', isEncore: false },
+    { songId: 'pretender', isEncore: false },
+  ], HIGEDAN_SONGS);
+  assert.equal(mixed.avgBpm, HIGEDAN_SONGS.find(song => song.id === 'pretender')!.bpm);
+  assert.equal(mixed.unconfirmedBpmCount, 1);
+  const pendingOnly = calculateSetlistStats([{ songId: 'same-blue', isEncore: false }], HIGEDAN_SONGS);
+  assert.equal(pendingOnly.avgBpm, null);
+  assert.equal(pendingOnly.unconfirmedBpmCount, 1);
+  assert.equal(calculateSetlistStats([], HIGEDAN_SONGS).avgBpm, null);
 });
 
 test('validateReviewInput enforces non-empty requirements and sanitizes HTML', () => {

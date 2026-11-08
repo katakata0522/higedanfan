@@ -1,4 +1,5 @@
 import type { EraTag, SongItem, SoundTag, TourArchive } from '../data/higedanData';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { albumForSearch, prepareSongSearch } from './songSearch';
 import { ALBUM_CHRONOLOGY_RANK, songAlbums } from './songCatalog';
 export { EP_TRACK_ORDER_MAP, getSongwriterCredit } from './songCatalog';
@@ -98,8 +99,13 @@ export function filterAndSortDiscography(
           b.vocalRange.chestSemitoneScore - a.vocalRange.chestSemitoneScore ||
           a.guideOrder - b.guideOrder
         );
-      case 'bpm':
+      case 'bpm': {
+        const aPending = isTempoUnderReview(a.id);
+        const bPending = isTempoUnderReview(b.id);
+        if (aPending !== bPending) return aPending ? 1 : -1;
+        if (aPending) return a.guideOrder - b.guideOrder;
         return b.bpm - a.bpm || b.votes.overall - a.votes.overall;
+      }
       default:
         return 0;
     }

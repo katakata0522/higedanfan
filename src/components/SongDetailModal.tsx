@@ -4,7 +4,8 @@ import React, { useLayoutEffect, useRef, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
 import { songwriterInfo } from '../utils/songCatalog';
-import { formatApproxBpm, formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
+import { formatApproxBpm, formatSongBpm, formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { playSongTempoPreview, stopTempoPreview } from '../utils/audioPreview';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
 
@@ -153,7 +154,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             <div>
               <span className="block text-xs text-[#78716C]">テンポ (BPM)</span>
               <span className="mt-0.5 block text-base font-bold font-mono-num text-[#1C1917]">
-                {formatApproxBpm(song.bpm)} BPM
+                {formatSongBpm(song.id, song.bpm)}{!isTempoUnderReview(song.id) && ' BPM'}
               </span>
             </div>
             <div>
@@ -164,7 +165,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
             </div>
           </div>
 
-          {PUBLIC_FEATURES.tempoPreview && <button
+          {PUBLIC_FEATURES.tempoPreview && !isTempoUnderReview(song.id) && <button
             type="button"
             onClick={handleToggleTempo}
             className={`inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
@@ -214,7 +215,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               {song.tieUps.map(item => <li key={item.text}>タイアップ：{item.text}。 <a className="underline" href={item.source} target="_blank" rel="noreferrer">出典 ↗</a></li>)}
             </ul>}
             {fact.cd && <p>この作品のCD発売日：{fact.cd}。 <a className="underline" href={fact.cdSource} target="_blank" rel="noreferrer">公式作品情報 ↗</a></p>}
-            <p>テンポ：{formatApproxBpm(fact.tempo)} BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。
+            <p>テンポ：{formatSongBpm(song.id, fact.tempo)}{isTempoUnderReview(song.id) ? '。資料によって数値が異なるため確認しています。' : ' BPM。拍をどう数えるかで、倍・半分の表記になる曲があります。'}
               <a className="underline" href={fact.tempoSource} target="_blank" rel="noreferrer">テンポの資料 ↗</a></p>
           </div>
         </section>

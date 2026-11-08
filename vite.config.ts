@@ -2,12 +2,13 @@ import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
 import evidence from './src/data/songEvidence.json' with { type: 'json' };
+import { isTempoUnderReview } from './src/data/tempoReviewStatus.ts';
 import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
 const escape = (s: string) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 function renderCatalog() {
-  return Object.values(evidence).map(f => {
+  return Object.entries(evidence).map(([id, f]) => {
     const duration = Math.floor(f.seconds/60) + ':' + String(f.seconds%60).padStart(2,'0');
-    return '<li><strong>'+escape(f.recording)+'</strong> ／ '+escape(f.style)+' ／ '+duration+' ／ 約'+f.tempo+' BPM ／ 地声 '+f.low+'～'+f.chest+' ／ 裏声最高 '+(f.falsetto || '記載なし')+
+    return '<li><strong>'+escape(f.recording)+'</strong> ／ '+escape(f.style)+' ／ '+duration+' ／ '+(isTempoUnderReview(id) ? 'テンポ：調査中' : '約'+f.tempo+' BPM')+' ／ 地声 '+f.low+'～'+f.chest+' ／ 裏声最高 '+(f.falsetto || '記載なし')+
       ' ／ 配信掲載日 '+f.release+' <a href="'+escape(f.apple)+'">音源</a> · <a href="'+escape(f.rangeSource)+'">採譜</a> · <a href="'+escape(f.styleSource)+'">曲調</a> · <a href="'+escape(f.tempoSource)+'">テンポ</a></li>';
   }).join('\n');
 }

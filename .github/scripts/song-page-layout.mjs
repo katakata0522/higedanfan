@@ -6,6 +6,7 @@ import path from 'node:path';
 import { chromium } from 'playwright';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
+import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
 const ids = [...publishedSongPageIds].sort();
@@ -97,7 +98,7 @@ async function inspectAllPages(browser, scenario) {
         assert.equal(result.placeholders, 1, '正方形の仮枠がありません');
         assert.equal(result.coverImages, 0, '仮枠に画像が残っています');
         assert.equal(result.badges, 0, 'ストアのバッジやプレーヤーが残っています');
-        assert.match(result.tempoText, /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポが目安として表示されていません');
+        assert.match(result.tempoText, isTempoUnderReview(id) ? /^調査中$/ : /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポの表示が調査状況と一致しません');
         assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, '仮枠が正方形ではありません');
         assert.ok(result.width <= result.viewport, '横にはみ出しています');
         assert.ok(result.titleWidth <= result.titleClient + 1, '曲名がはみ出しています');

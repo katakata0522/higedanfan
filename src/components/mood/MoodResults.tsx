@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { BookOpen, Check, Disc, Plus, Share2, Sparkles } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
 import {
-  formatApproxBpm,
+  formatSongBpm,
   formatDuration,
   isSafeAssetUrl,
   MOOD_LABELS,
@@ -114,7 +114,7 @@ export function MoodResults({
                     今日の気分から選ぶ1曲
                   </span>
                   <span className="font-mono-num">
-                    {formatDuration(bestMatch.song.durationSec)} · BPM {formatApproxBpm(bestMatch.song.bpm)}
+                    {formatDuration(bestMatch.song.durationSec)} · BPM {formatSongBpm(bestMatch.song.id, bestMatch.song.bpm)}
                   </span>
                 </div>
 
@@ -234,7 +234,7 @@ export function MoodResults({
                           <span className="font-bold text-[#1E3A5F] font-mono-num">
                             候補 {idx + 2}
                           </span>
-                          <span className="font-mono-num">BPM {formatApproxBpm(song.bpm)}</span>
+                          <span className="font-mono-num">BPM {formatSongBpm(song.id, song.bpm)}</span>
                         </div>
                         <h5 className="mt-0.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                           {song.title}
