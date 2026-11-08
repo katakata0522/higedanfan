@@ -24,6 +24,7 @@ import {
 import {
   calculateSetlistStats,
   formatApproxBpm,
+  formatSongBpm,
   formatDuration,
   isSafeAssetUrl,
   sanitizeUserText,
@@ -317,7 +318,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                                 {s.title}
                                 {alreadyIn
                                   ? '（追加済み）'
-                                  : `（BPM ${formatApproxBpm(s.bpm)} · ${formatDuration(s.durationSec)}）`}
+                                  : `（BPM ${formatSongBpm(s.id, s.bpm)} · ${formatDuration(s.durationSec)}）`}
                               </option>
                             );
                           })}
@@ -411,7 +412,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                               </div>
                             )}
                             <div className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
-                              {song.album} · {formatDuration(song.durationSec)} · BPM {formatApproxBpm(song.bpm)}
+                              {song.album} · {formatDuration(song.durationSec)} · BPM {formatSongBpm(song.id, song.bpm)}
                             </div>
                           </div>
                         </div>
@@ -513,7 +514,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     <div>
                       <span className="block text-[11px] text-white/60">平均テンポ</span>
                       <span className="mt-0.5 block text-xs sm:text-sm font-bold font-mono-num text-[#FDE68A]">
-                        {stats.totalSongs ? `BPM ${formatApproxBpm(stats.avgBpm)}` : '—'}
+                        {stats.avgBpm !== null ? `BPM ${formatApproxBpm(stats.avgBpm)}` : stats.totalSongs ? '調査中' : '—'}
                       </span>
                     </div>
                     <div>
@@ -525,6 +526,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   </div>
 
                   <p className="mt-2 text-[11px] leading-relaxed text-white/70">BPMは目安です。資料や拍の数え方によって異なる場合があります。</p>
+                  {stats.unconfirmedBpmCount > 0 && <p className="mt-2 text-[11px] leading-relaxed text-white/70">{stats.avgBpm === null ? 'テンポが調査中の曲のみのため、平均は表示していません。' : `調査中の${stats.unconfirmedBpmCount}曲を除いて平均しています。`}</p>}
 
                   {/* Live Energy Curve Bars */}
                   <div>

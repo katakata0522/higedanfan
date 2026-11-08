@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
-import { formatApproxBpm, formatDuration } from '../utils/fanLogic';
+import { formatSongBpm, formatDuration } from '../utils/fanLogic';
 import { tempoAlternatives } from '../data/tempoAlternatives';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { guideReturnView } from '../utils/guideReturnState';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 import { useEditorialSheetFit } from './useEditorialSheetFit';
@@ -14,6 +15,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const song = HIGEDAN_SONGS.find(item => item.id === page.id)!;
   const fact = songEvidence[page.id as keyof typeof songEvidence];
   const otherTempos = tempoAlternatives[page.id];
+  const tempoUnderReview = isTempoUnderReview(page.id);
   const [toast, setToast] = useState<string | null>(null);
   const [readable, setReadable] = useState(false);
   const toastTimer = useRef<number | null>(null);
@@ -60,7 +62,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
               <dl className="song-facts">
                 <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
-                <div className="fact-item"><dt>テンポ</dt><dd>{formatApproxBpm(fact.tempo)} <small>BPM</small></dd></div>
+                <div className="fact-item"><dt>テンポ</dt><dd>{formatSongBpm(page.id, fact.tempo)}{!tempoUnderReview && <> <small>BPM</small></>}</dd></div>
                 <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
                 <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
@@ -107,6 +109,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   </li>
                 ))}
               </ul>
+              {tempoUnderReview && <p className="source-caveat">資料によって数値が異なるため、テンポは調査中です。参考資料には<a href={fact.tempoSource} target="_blank" rel="noreferrer">約{fact.tempo} BPM</a>との表記があります。</p>}
               {otherTempos && (
                 <p className="source-caveat">別の資料では{otherTempos.map((tempo, index) => (
                   <span key={`${tempo.url}-${tempo.value}`}>{index > 0 && '、'}<a href={tempo.url} target="_blank" rel="noreferrer">約{tempo.value} BPM</a></span>

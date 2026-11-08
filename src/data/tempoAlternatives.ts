@@ -108,9 +108,14 @@ export const tempoAlternatives: Readonly<Record<string, readonly { value: number
   ],
   "same-blue": [
     { value: 92, url: "https://12notez.in/song/artist/official-hige-dandism" },
+    { value: 123, url: "https://keytube.net/song/detail/128785" },
   ],
   "editorial-title-track": [
     { value: 76, url: "https://12notez.in/song/artist/official-hige-dandism" },
+    { value: 139, url: "https://keytube.net/song/detail/58203" },
+  ],
+  "travelers-outro": [
+    { value: 157, url: "https://keytube.net/song/detail/27614" },
   ],
   "b-side-blues": [
     { value: 62, url: "https://12notez.in/song/artist/official-hige-dandism" },

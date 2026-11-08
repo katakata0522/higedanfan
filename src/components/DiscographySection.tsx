@@ -26,7 +26,7 @@ import {
 import {
   EP_TRACK_ORDER_MAP,
   filterAndSortDiscography,
-  formatApproxBpm,
+  formatSongBpm,
   formatDuration,
   isSafeAssetUrl,
 } from '../utils/fanLogic';
@@ -289,7 +289,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#78716C]">
                             <span>収録音源 {formatDuration(song.durationSec)}</span>
                             <span aria-hidden="true">·</span>
-                            <span className="font-mono-num">BPM {formatApproxBpm(song.bpm)}</span>
+                            <span className="font-mono-num">BPM {formatSongBpm(song.id, song.bpm)}</span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono-num">
                               配信サービス掲載日

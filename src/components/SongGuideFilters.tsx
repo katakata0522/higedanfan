@@ -158,7 +158,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount }: 
           </select>
         </div>
       </div>
-      {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E]">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。</p>}
+      {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E]">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-2 text-xs">
         <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
           className="scroll-mt-20 font-bold text-[#1C1917]">

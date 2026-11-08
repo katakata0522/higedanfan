@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, X } from 'lucide-react';
 import { GuideArtwork } from '../GuideArtwork';
 import {
-  formatApproxBpm,
+  formatSongBpm,
   formatDiagnosisShareText,
   isSafeAssetUrl,
   MOOD_LABELS,
@@ -279,7 +279,7 @@ export function MoodShareCard({
         >
           <span>#115万キロのファンノート #Official髭男dism #マイソング診断</span>
           <span className="font-mono-num">
-            BPM {formatApproxBpm(match.song.bpm)} · 最高音{' '}
+            BPM {formatSongBpm(match.song.id, match.song.bpm)} · 最高音{' '}
             {match.song.vocalRange.highestChestNote}
           </span>
         </div>

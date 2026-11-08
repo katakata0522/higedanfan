@@ -1,4 +1,5 @@
 import type { SongItem } from '../data/higedanData';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { sanitizeSafeId, sanitizeUserText } from './userInput';
 
 export const SETLIST_TITLE_LIMIT = 160;
@@ -19,7 +20,8 @@ export interface SetlistStats {
   encoreCount: number;
   totalDurationSec: number;
   formattedDuration: string;
-  avgBpm: number;
+  avgBpm: number | null;
+  unconfirmedBpmCount: number;
   energyCurve: { index: number; title: string; energy: number; bpm: number; isEncore: boolean }[];
   vibeTitle: string;
   vibeDescription: string;
@@ -95,7 +97,8 @@ export function calculateSetlistStats(
       encoreCount: 0,
       totalDurationSec: 0,
       formattedDuration: '0分00秒',
-      avgBpm: 0,
+      avgBpm: null,
+      unconfirmedBpmCount: 0,
       energyCurve: [],
       vibeTitle: 'セットリスト未編成',
       vibeDescription: '楽曲を追加すると、ライブ全体の盛り上がり波形と総演奏時間を自動算出します。',
@@ -105,9 +108,10 @@ export function calculateSetlistStats(
   const totalDurationSec = resolved.reduce((acc, item) => acc + item.song.durationSec, 0);
   const totalMinutes = Math.floor(totalDurationSec / 60);
   const remainSeconds = totalDurationSec % 60;
-  const avgBpm = Math.round(
-    resolved.reduce((acc, item) => acc + item.song.bpm, 0) / resolved.length
-  );
+  const confirmedTempos = resolved.filter(item => !isTempoUnderReview(item.song.id));
+  const avgBpm = confirmedTempos.length
+    ? Math.round(confirmedTempos.reduce((acc, item) => acc + item.song.bpm, 0) / confirmedTempos.length)
+    : null;
   const avgEnergy =
     resolved.reduce((acc, item) => acc + item.song.energyLevel, 0) / resolved.length;
 
@@ -124,6 +128,7 @@ export function calculateSetlistStats(
     totalDurationSec,
     formattedDuration: `${totalMinutes}分${remainSeconds.toString().padStart(2, '0')}秒`,
     avgBpm,
+    unconfirmedBpmCount: resolved.length - confirmedTempos.length,
     energyCurve: resolved.map((r) => ({
       index: r.index,
       title: r.song.title,
