@@ -27,9 +27,11 @@ const groups: SourceGroup[] = [
   },
   {
     title: "テンポと曲の聴きどころ",
-    body: "テンポの出典は、82曲がKHUFRUDAMO NOTES、6曲がKeyTube、1曲がSongBPM、1曲がPiascoreのドラム譜です。115万キロのフィルムは97 BPMを採用し、倍取りの194 BPMも併記しました。リズムやアレンジの解説には、採譜やコード譜、メンバーのインタビュー、楽曲レビューも参照しました。",
+    body: "テンポは楽譜やコード譜、各種の楽曲データを参考にした目安です。拍の数え方によって倍・半分の表記があり、資料によって数値も異なるため、曲ごとに採用した出典と主な別表記を示しています。リズムやアレンジの解説には、採譜やメンバーのインタビュー、楽曲レビューも参照しました。",
     links: [
       ["KHUFRUDAMO NOTESのテンポ一覧", "https://khufrudamonotes.com/officialhigedism-data"],
+      ["リンネのコードブック「Official髭男dism」の曲一覧", "https://www.chord-rinne.jp/artist_song_list.php?art_id=Official%E9%AB%AD%E7%94%B7dism"],
+      ["ミュージックエイト「Pretender」の楽譜", "https://www.music8.com/upload/save_image/00000118480_sample_pdf.pdf"],
       ["Piascore「115万キロのフィルム」ドラム譜", "https://store.piascore.com/scores/287235"],
       ["KeyTube「らしさ」", "https://keytube.net/song/detail/144873"],
       ["SongBPM「Anarchy (Rejoice ver.)」", "https://songbpm.com/%40official-hige-dandism/anarchy-rejoice-ver-rqmur"],

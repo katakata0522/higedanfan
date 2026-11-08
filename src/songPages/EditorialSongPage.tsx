@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
-import { formatDuration } from '../utils/fanLogic';
+import { formatApproxBpm, formatDuration } from '../utils/fanLogic';
+import { tempoAlternatives } from '../data/tempoAlternatives';
 import { guideReturnView } from '../utils/guideReturnState';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 import { useEditorialSheetFit } from './useEditorialSheetFit';
@@ -12,6 +13,7 @@ const base = import.meta.env.BASE_URL;
 export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const song = HIGEDAN_SONGS.find(item => item.id === page.id)!;
   const fact = songEvidence[page.id as keyof typeof songEvidence];
+  const otherTempos = tempoAlternatives[page.id];
   const [toast, setToast] = useState<string | null>(null);
   const [readable, setReadable] = useState(false);
   const toastTimer = useRef<number | null>(null);
@@ -58,7 +60,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
               <dl className="song-facts">
                 <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
-                <div className="fact-item"><dt>テンポ</dt><dd>{fact.tempo} <small>BPM</small></dd></div>
+                <div className="fact-item"><dt>テンポ</dt><dd>{formatApproxBpm(fact.tempo)} <small>BPM</small></dd></div>
                 <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
                 <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
@@ -105,6 +107,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   </li>
                 ))}
               </ul>
+              {otherTempos && (
+                <p className="source-caveat">別の資料では{otherTempos.map((tempo, index) => (
+                  <span key={`${tempo.url}-${tempo.value}`}>{index > 0 && '、'}<a href={tempo.url} target="_blank" rel="noreferrer">約{tempo.value} BPM</a></span>
+                ))}との表記もあります。拍の数え方や計測方法などによって数値が異なる場合があります。</p>
+              )}
               <p className="source-caveat">{page.sourceCaveat}</p>
             </div>
           </details>
