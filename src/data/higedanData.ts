@@ -183,7 +183,10 @@ export interface BandMemberProfile {
   nickname: string;
   role: string;
   birthplace: string;
-  playStyleSummary: string;
+  headline: string;
+  biography: string;
+  extra: string;
+  sourceLinks: { label: string; url: string }[];
   signatureSongId: string;
   signatureSongTitle: string;
 }
@@ -195,10 +198,16 @@ export const HIGEDAN_MEMBERS: BandMemberProfile[] = [
     nickname: 'さとっちゃん',
     role: 'Vocal / Piano',
     birthplace: '鳥取県米子市出身',
-    playStyleSummary:
-      'ほとんどの楽曲の作詞・作曲を手がけるフロントマン。ブラックミュージックやジャズをルーツに持つ躍動的なピアノリフと、ハイトーンまで突き抜ける表現力豊かな歌声が特徴。',
-    signatureSongId: 'subtitle',
-    signatureSongTitle: 'Subtitle',
+    headline: '歌とピアノの人。その出発点にはドラムもある。',
+    biography:
+      '幼稚園のピアノ教室は、上手に弾くとゲームを買ってもらえるのが楽しみだったそう。小学校の鼓笛隊でドラムに出会い、地元のライブハウスで聴いたバスドラムの響きから、バンドを組みたいと思うようになった。会社員時代は音楽をする時間が減ることが一番つらく、音楽をする人生を選んで上京したと本人は語っている。',
+    extra: '「イエスタデイ」のピアノソロでは、X JAPANのYOSHIKIの演奏を意識したという。',
+    sourceLinks: [
+      { label: 'Rock oNの本人取材', url: 'https://www.miroc.co.jp/creator/people-of-sound_official-hige-dandism_fujiwara/' },
+      { label: '公式インタビュー', url: 'https://hello-ep.jp/interview/' },
+    ],
+    signatureSongId: 'yesterday-song',
+    signatureSongTitle: 'イエスタデイ',
   },
   {
     id: 'daisuke',
@@ -206,10 +215,16 @@ export const HIGEDAN_MEMBERS: BandMemberProfile[] = [
     nickname: '大ちゃん',
     role: 'Guitar / Chorus',
     birthplace: '島根県松江市出身',
-    playStyleSummary:
-      '繊細なアルペジオからハードロック直系のエモーショナルなギターソロまで自在に操るギタリスト。『115万キロのフィルム』の間奏やライブアレンジでのギターソロは必見。',
-    signatureSongId: 'pretender',
-    signatureSongTitle: 'Pretender',
+    headline: 'パンクに夢中だった少年が、ヒゲダンでポップスを弾く。',
+    biography:
+      '兄が買ってきたギターとメロコアの音源に衝撃を受け、中学1年から弾き始めた。ヒゲダン以前はパンクやメロコアを演奏。「Rowan」では作詞・作曲を担い、藤原の低めのミックスボイスまで想定して制作した。',
+    extra: '「Pretender」の録音で弾いたギターはジャズマスター。本人が機材の取材で明かしている。',
+    sourceLinks: [
+      { label: 'Fenderの本人取材', url: 'https://fendernews.jp/cover-oct-19-higedan-2/' },
+      { label: '公式インタビュー', url: 'https://officialhigedandism.ponycanyon.co.jp/interview/index.html' },
+    ],
+    signatureSongId: 'rowan-song',
+    signatureSongTitle: 'Rowan',
   },
   {
     id: 'makoto',
@@ -217,10 +232,17 @@ export const HIGEDAN_MEMBERS: BandMemberProfile[] = [
     nickname: 'ならちゃん',
     role: 'Bass / Sax / Synth Bass',
     birthplace: '広島県福山市出身',
-    playStyleSummary:
-      'エレキベース・ウッドベース・シンセベースに加え、バリトン＆ソプラノサックスまで演奏するマルチプレイヤー。楽曲のファンクネスと温かみを支える要。',
-    signatureSongId: 'editorial-song',
-    signatureSongTitle: 'アポトーシス',
+    headline: 'ベースもサックスも、作詞・作曲も。',
+    biography:
+      '高校時代、友人とバンドを組むときにベースを選んだ。警察音楽隊でサックスを演奏した経験もある。「旅は道連れ」は自ら作詞・作曲し、仲間と作る現場の空気や少し隙のある感じを入れたと語っている。',
+    extra: '音楽隊での経験が縁になり、映画「異動辞令は音楽隊！」の主題歌「Choral A」を担当した。',
+    sourceLinks: [
+      { label: 'Fenderの本人取材', url: 'https://fendernews.jp/cover-oct-19-higedan-2/' },
+      { label: '公式インタビュー', url: 'https://officialhigedandism.ponycanyon.co.jp/interview/index.html' },
+      { label: '映画の本人取材', url: 'https://press.moviewalker.jp/news/article/1098780/' },
+    ],
+    signatureSongId: 'tabi-wa-michizure',
+    signatureSongTitle: '旅は道連れ',
   },
   {
     id: 'masaki',
@@ -228,9 +250,15 @@ export const HIGEDAN_MEMBERS: BandMemberProfile[] = [
     nickname: 'ちゃんまつ',
     role: 'Drums / Percussion',
     birthplace: '鳥取県米子市出身',
-    playStyleSummary:
-      'ジャズ・フュージョン的な細かいゴーストノートからスタジアムを揺らすパワフルなビートまで叩き分けるドラマー。複雑な変拍子や11回転調を自然に聴かせるリズムの心臓部。',
-    signatureSongId: 'mixed-nuts',
-    signatureSongTitle: 'ミックスナッツ',
+    headline: '1 BPMの違いまで、バンドで確かめる。',
+    biography:
+      '録音の始めにテンポを1 BPMずつ上下させて試すことがあるという。「HELLO」のシャッフルには苦労したそうだが、Bメロのドラムとギターの掛け合いを聴いてほしいと語っている。',
+    extra: '「フィラメント」はサンプリング音源のループから作り始め、藤原と初めて共作した曲。',
+    sourceLinks: [
+      { label: 'ドラム・マガジンの本人取材', url: 'https://drumsmagazine.jp/player/interview-masaki-matsuura/' },
+      { label: '公式インタビュー', url: 'https://editorial.ponycanyon.co.jp/interview/' },
+    ],
+    signatureSongId: 'filament-song',
+    signatureSongTitle: 'フィラメント',
   },
 ];
