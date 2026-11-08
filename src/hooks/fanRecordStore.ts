@@ -9,6 +9,7 @@ const WRITE_ERROR = 'この端末に保存できません。画面を閉じる�
 const CONFLICT = '別のタブで記録が変わりました。最新の内容を確認してください。';
 const JOURNAL_ERROR = '曲の追加を一時保存できませんでした。端末の保存設定を確認して、もう一度お試しください。';
 const JOURNAL_READ_ERROR = '保存待ちの曲の情報を一部読めませんでした。元の記録は消去しません。';
+const JOURNAL_CANCEL_ERROR = '曲の削除を一時保存に反映できませんでした。画面を閉じる前に記録を書き出してください。';
 const songIds = new Set(HIGEDAN_SONGS.map(song => song.id));
 
 export interface FanRecords {
@@ -80,7 +81,7 @@ function encode(record: FanRecords) {
 
 export type SaveResult = 'saved' | 'unsaved' | 'conflict';
 export type Change = (latest: FanRecords) => FanRecords | null;
-type Intent = { change: Change; epoch: string; journalKey?: string; result?: SaveResult };
+type Intent = { change: Change; epoch: string; journalKey?: string; journalSongId?: string; result?: SaveResult };
 type Snapshot = { records: FanRecords; notice: string };
 
 // Each intent describes only the user's action. Under an origin-wide lock, apply it to
@@ -109,8 +110,9 @@ export class FanRecordStore {
     this.listeners.forEach(fn => fn());
   }
   private removeJournal(key?: string) {
-    if (!key || !this.journalStorage) return;
-    try { this.journalStorage().removeItem(key); } catch { /* 記録済みの内容は消さず、次回照合する */ }
+    if (!key || !this.journalStorage) return true;
+    try { this.journalStorage().removeItem(key); return true; }
+    catch { return false; }
   }
   private pendingAdd(add: PendingSetlistAdd): Change {
     return records => {
@@ -128,7 +130,7 @@ export class FanRecordStore {
       if (unreadable) this.journalNotice = JOURNAL_READ_ERROR;
       for (const { key, add } of entries) {
         this.journalOrder = Math.max(this.journalOrder, add.order);
-        this.pending.push({ change: this.pendingAdd(add), epoch: add.resetEpoch, journalKey: key });
+        this.pending.push({ change: this.pendingAdd(add), epoch: add.resetEpoch, journalKey: key, journalSongId: add.songId });
       }
     } catch { this.journalNotice = JOURNAL_READ_ERROR; }
   }
@@ -191,14 +193,23 @@ export class FanRecordStore {
   change(change: Change, expectedEpoch = this.view.records.resetEpoch): Promise<SaveResult> {
     return this.enqueue(change, expectedEpoch);
   }
-  private async enqueue(change: Change, expectedEpoch: string, journalKey?: string): Promise<SaveResult> {
-    if (this.resetting || expectedEpoch !== this.view.records.resetEpoch) { this.removeJournal(journalKey); return 'conflict'; }
+  private async enqueue(change: Change, expectedEpoch: string, journal?: {key: string; songId: string}): Promise<SaveResult> {
+    if (this.resetting || expectedEpoch !== this.view.records.resetEpoch) { this.removeJournal(journal?.key); return 'conflict'; }
     const current = this.view.records;
     const next = change(current);
-    if (next === null) { this.removeJournal(journalKey); this.publish(current, CONFLICT); return 'conflict'; }
-    const intent: Intent = {change, epoch: current.resetEpoch, journalKey};
+    if (next === null) { this.removeJournal(journal?.key); this.publish(current, CONFLICT); return 'conflict'; }
+    const removed = new Set(current.setlist.filter(item => !next.setlist.some(entry => entry.songId === item.songId)).map(item => item.songId));
+    let cancellationFailed = false;
+    for (const pending of this.pending) {
+      if (!pending.journalKey || !pending.journalSongId || !removed.has(pending.journalSongId)) continue;
+      if (this.removeJournal(pending.journalKey)) {
+        pending.journalKey = undefined;
+        pending.journalSongId = undefined;
+      } else cancellationFailed = true;
+    }
+    const intent: Intent = {change, epoch: current.resetEpoch, journalKey: journal?.key, journalSongId: journal?.songId};
     this.pending.push(intent);
-    const notice = this.pendingConflict ? this.journalNotice : this.view.notice;
+    const notice = cancellationFailed ? JOURNAL_CANCEL_ERROR : this.pendingConflict ? this.journalNotice : this.view.notice;
     this.pendingConflict = false;
     this.publish(withMembershipVersions(current, next), notice);
     try { await this.exclusive(() => { if (!intent.result) this.flush(); }); }
@@ -222,7 +233,7 @@ export class FanRecordStore {
     let key: string;
     try { key = writePendingSetlistAdd(this.journalStorage(), add); }
     catch { this.publish(current, JOURNAL_ERROR); return Promise.resolve('unsaved'); }
-    return this.enqueue(this.pendingAdd(add), expectedEpoch, key);
+    return this.enqueue(this.pendingAdd(add), expectedEpoch, {key, songId});
   }
   async reset(expectedEpoch = this.view.records.resetEpoch): Promise<boolean> {
     if (this.resetting) return false;

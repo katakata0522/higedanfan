@@ -175,6 +175,49 @@ test('a copied pending addition cannot restore a song removed after it was saved
   assert.equal(copiedSession.length, 0);
 });
 
+test('removing a still-pending addition before reload does not restore it', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  assert.equal(session.length, 1);
+  void waiting.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.equal(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+});
+
+test('replacing the setlist cancels only pending additions that were removed', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  void waiting.addToSetlist('cry-baby', false);
+  void waiting.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  assert.equal(session.length, 1);
+  const after = new FanRecordStore(() => local, immediateLock, () => session);
+  await after.initialize();
+  assert.equal(after.snapshot().records.setlist.some(item => item.songId === 'white-noise'), false);
+  assert.ok(after.snapshot().records.setlist.some(item => item.songId === 'cry-baby'));
+});
+
+test('failure to cancel a pending addition is visible instead of silently ignored', async () => {
+  const local = memoryStorage(), session = memoryStorage();
+  const first = new FanRecordStore(() => local, immediateLock, () => session);
+  await first.initialize();
+  const waiting = new FanRecordStore(() => local, pendingLock, () => session);
+  void waiting.initialize();
+  void waiting.addToSetlist('white-noise', false);
+  session.removeItem = () => { throw new Error('session storage blocked'); };
+  void waiting.change(records => ({...records, setlist: records.setlist.filter(item => item.songId !== 'white-noise')}));
+  assert.match(waiting.snapshot().notice, /削除を一時保存に反映できません/);
+  assert.equal(session.length, 1);
+});
+
 test('reset in another tab rejects a pending addition from before the reset', async () => {
   const local = memoryStorage(), session = memoryStorage();
   const first = new FanRecordStore(() => local, immediateLock, () => session);
