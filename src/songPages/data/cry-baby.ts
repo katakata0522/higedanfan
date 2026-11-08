@@ -24,7 +24,7 @@ const page = {
     { label: 'J-POP 音域の沼', purpose: '歌の音域と曲調', evidence: 'rangeSource' },
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
   ],
-  sourceCaveat: '演奏時間はApple Musicの掲載音源に基づきます。音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+  sourceCaveat: '演奏時間はApple Musicの掲載音源に基づきます。音域とテンポは採譜・計測方法で表記が異なる場合があります。左の挿絵は公式ジャケットではありません。',
 } satisfies EditorialSongPageData;
 
 export default page;
