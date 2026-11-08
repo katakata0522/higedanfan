@@ -1,0 +1,1661 @@
+[
+  {
+    "id": "tour-oneman-2016",
+    "startDate": "2016-11-20",
+    "endDate": "2016-11-26",
+    "tourTitle": "Official髭男dism one-man tour 2016",
+    "crossCheckUrl": "https://higedan.com/news/list/3/6/?page=46",
+    "events": [
+      {
+        "date": "2016-11-20",
+        "venue": "ell.SIZE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2016-one-man-nagoya",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2016-11-23",
+        "venue": "阿倍野ROCKTOWN",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2016-one-man-osaka",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2016-11-26",
+        "venue": "代官山LOOP",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2016-one-man-tokyo",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2016-11-26/"
+      }
+    ],
+    "officialSourceUrl": "https://higedan.com/news/list/3/6/?page=46"
+  },
+  {
+    "id": "tour-oneman-2017",
+    "startDate": "2017-06-09",
+    "endDate": "2017-07-14",
+    "tourTitle": "Official髭男dism one-man tour 2017",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_2017/",
+    "events": [
+      {
+        "date": "2017-06-09",
+        "venue": "横浜BAYSIS",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-tour-yokohama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-06-16",
+        "venue": "渋谷CLUB QUATTRO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-tour-shibuya",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2017-06-16/"
+      },
+      {
+        "date": "2017-06-24",
+        "venue": "名古屋SPADE BOX",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-tour-nagoya",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2017-06-24/"
+      },
+      {
+        "date": "2017-06-25",
+        "venue": "広島CLUB QUATTRO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-tour-hiroshima",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-07-14",
+        "venue": "umeda AKASO（現 umeda TRAD）",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-tour-osaka",
+        "liveRepoHasSetlist": false
+      }
+    ]
+  },
+  {
+    "id": "tour-oneman-winter-2017",
+    "startDate": "2017-11-03",
+    "endDate": "2017-12-08",
+    "tourTitle": "Official髭男dism one-man tour 2017 -winter-",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_2017_-winter-/",
+    "events": [
+      {
+        "date": "2017-11-03",
+        "venue": "島根県民会館 中ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-shimane",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2017-11-03/"
+      },
+      {
+        "date": "2017-11-11",
+        "venue": "mito LIGHT HOUSE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-mito",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-11-12",
+        "venue": "仙台Space Zero",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-sendai",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-11-23",
+        "venue": "天神Queblick",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-fukuoka",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-11-26",
+        "venue": "梅田CLUB QUATTRO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-osaka",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2017-12-01",
+        "venue": "神戸VARIT.",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-kobe",
+        "liveRepoHasSetlist": true
+      },
+      {
+        "date": "2017-12-02",
+        "venue": "THE BOTTOM LINE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-nagoya",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2017-12-02/"
+      },
+      {
+        "date": "2017-12-08",
+        "venue": "マイナビBLITZ赤坂",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2017-one-man-winter-akasaka",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2017-12-08/"
+      }
+    ]
+  },
+  {
+    "id": "tour-oneman-2018",
+    "startDate": "2018-05-02",
+    "endDate": "2018-07-05",
+    "tourTitle": "Official髭男dism one-man tour 2018",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_2018/",
+    "events": [
+      {
+        "date": "2018-05-02",
+        "venue": "横浜BAYSIS",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-yokohama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-05-03",
+        "venue": "仙台darwin",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-sendai",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-05-12",
+        "venue": "熊本B.9 V2",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-kumamoto",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-05-13",
+        "venue": "福岡DRUM Be-1",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-fukuoka",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-05-25",
+        "venue": "BLUE LIVE HIROSHIMA",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-hiroshima",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2018-05-25/"
+      },
+      {
+        "date": "2018-05-26",
+        "venue": "サンケイホールブリーゼ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-osaka-1",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-02",
+        "venue": "mito LIGHT HOUSE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-mito",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-09",
+        "venue": "DIAMOND HALL",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-nagoya",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-16",
+        "venue": "岡山IMAGE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-okayama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-17",
+        "venue": "米子AZTiC laughs",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-yonago",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-19",
+        "venue": "サンケイホールブリーゼ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-osaka-2",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-24",
+        "venue": "柏PALOOZA",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-kashiwa",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-06-29",
+        "venue": "金沢vanvan V4",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-kanazawa",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-07-05",
+        "venue": "中野サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-tour-nakano",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2018-07-05/"
+      }
+    ]
+  },
+  {
+    "id": "tour-oneman-1819",
+    "startDate": "2018-11-07",
+    "endDate": "2019-02-02",
+    "tourTitle": "Official髭男dism one-man tour 18/19",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_1819/",
+    "events": [
+      {
+        "date": "2018-11-07",
+        "venue": "横浜ベイホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-yokohama",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2018-11-07/"
+      },
+      {
+        "date": "2018-11-09",
+        "venue": "cube garden",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-sapporo-1",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-11-10",
+        "venue": "cube garden",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-sapporo-2",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-11-17",
+        "venue": "高松DIME",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-takamatsu",
+        "liveRepoHasSetlist": true
+      },
+      {
+        "date": "2018-11-18",
+        "venue": "松山SALONKITTY",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-matsuyama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-11-22",
+        "venue": "松江AZTiC canova",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-matsue",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-11-24",
+        "venue": "米子AZTiC laughs",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-yonago",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-11-25",
+        "venue": "広島CLUB QUATTRO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-hiroshima",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2018-11-25/"
+      },
+      {
+        "date": "2018-11-28",
+        "venue": "HEAVEN’S ROCK さいたま新都心 VJ-3",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-saitama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-12-01",
+        "venue": "仙台PIT",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-sendai",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2018-12-01/"
+      },
+      {
+        "date": "2018-12-02",
+        "venue": "郡山CLUB #9",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-koriyama",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-12-09",
+        "venue": "mito LIGHT HOUSE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-mito",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-12-15",
+        "venue": "新潟GOLDEN PIGS RED STAGE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-niigata",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2018-12-16",
+        "venue": "NAGANO CLUB JUNK BOX",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2018-one-man-18-19-nagano",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-11",
+        "venue": "NHK大阪ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-osaka-1",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-12",
+        "venue": "米子市文化ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-yonago",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-16",
+        "venue": "日本特殊陶業市民会館 ビレッジホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-nagoya-1",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-18",
+        "venue": "LiveHouse 浜松 窓枠",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-hamamatsu",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-19",
+        "venue": "日本特殊陶業市民会館 ビレッジホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-nagoya-2",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-01-19/"
+      },
+      {
+        "date": "2019-01-24",
+        "venue": "NHKホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-nhk-tokyo",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-01-24/"
+      },
+      {
+        "date": "2019-01-26",
+        "venue": "福岡DRUM LOGOS",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-fukuoka",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-27",
+        "venue": "鹿児島SR HALL",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-kagoshima",
+        "liveRepoHasSetlist": false
+      },
+      {
+        "date": "2019-01-31",
+        "venue": "NHK大阪ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-01-31/"
+      },
+      {
+        "date": "2019-02-02",
+        "venue": "島根県民会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-18-19-shimane",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-02-02/"
+      }
+    ]
+  },
+  {
+    "id": "tour-oneman-2019",
+    "startDate": "2019-06-22",
+    "endDate": "2019-07-22",
+    "tourTitle": "Official髭男dism one-man tour 2019",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_2019/",
+    "events": [
+      {
+        "date": "2019-06-22",
+        "venue": "SENDAI GIGS",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-sendai",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-06-22/"
+      },
+      {
+        "date": "2019-06-30",
+        "venue": "Zepp Fukuoka",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-fukuoka",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-06-30/"
+      },
+      {
+        "date": "2019-07-05",
+        "venue": "Zepp Sapporo",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-sapporo",
+        "liveRepoHasSetlist": true
+      },
+      {
+        "date": "2019-07-08",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-budokan",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-07-08/"
+      },
+      {
+        "date": "2019-07-13",
+        "venue": "Zepp Namba",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-osaka",
+        "liveRepoHasSetlist": true
+      },
+      {
+        "date": "2019-07-14",
+        "venue": "Zepp Nagoya",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-nagoya",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-07-14/"
+      },
+      {
+        "date": "2019-07-21",
+        "venue": "Zepp DiverCity (TOKYO)",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-tokyo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-07-21/"
+      },
+      {
+        "date": "2019-07-22",
+        "venue": "Zepp DiverCity (TOKYO)",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-one-man-tour-tokyo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-07-22/"
+      }
+    ]
+  },
+  {
+    "id": "tour-hall-travelers-2019",
+    "startDate": "2019-10-26",
+    "endDate": "2020-02-22",
+    "tourTitle": "Official髭男dism Tour 19/20 - Hall Travelers -",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_Tour_1920_-_Hall_Travelers_-/",
+    "events": [
+      {
+        "date": "2019-10-26",
+        "venue": "市川市文化会館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-ichikawa",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-10-26/"
+      },
+      {
+        "date": "2019-10-30",
+        "venue": "なら100年会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-nara",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-10-30/"
+      },
+      {
+        "date": "2019-11-01",
+        "venue": "グランキューブ大阪（大阪府立国際会議場）",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-01/"
+      },
+      {
+        "date": "2019-11-02",
+        "venue": "グランキューブ大阪（大阪府立国際会議場）",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-02/"
+      },
+      {
+        "date": "2019-11-07",
+        "venue": "大宮ソニックシティ 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-omiya",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-07/"
+      },
+      {
+        "date": "2019-11-10",
+        "venue": "本多の森ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-ishikawa",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-10/"
+      },
+      {
+        "date": "2019-11-15",
+        "venue": "小樽市民会館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-otaru",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-15/"
+      },
+      {
+        "date": "2019-11-17",
+        "venue": "札幌文化芸術劇場 hitaru",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-sapporo",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-17/"
+      },
+      {
+        "date": "2019-11-23",
+        "venue": "サンポートホール高松 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-takamatsu",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-23/"
+      },
+      {
+        "date": "2019-11-24",
+        "venue": "神戸国際会館 こくさいホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-kobe",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-24/"
+      },
+      {
+        "date": "2019-11-29",
+        "venue": "愛知県芸術劇場 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-aichi",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-29/"
+      },
+      {
+        "date": "2019-11-30",
+        "venue": "オリンパスホール八王子",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-hachioji",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-11-30/"
+      },
+      {
+        "date": "2019-12-07",
+        "venue": "長良川国際会議場 メインホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-gifu",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-07/"
+      },
+      {
+        "date": "2019-12-08",
+        "venue": "日本特殊陶業市民会館 フォレストホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-nagoya",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-08/"
+      },
+      {
+        "date": "2019-12-13",
+        "venue": "広島文化学園HBGホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-hiroshima",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-13/"
+      },
+      {
+        "date": "2019-12-15",
+        "venue": "島根県民会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-shimane",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-15/"
+      },
+      {
+        "date": "2019-12-20",
+        "venue": "仙台サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-sendai",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-20/"
+      },
+      {
+        "date": "2019-12-22",
+        "venue": "いわき芸術文化交流館アリオス 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2019-hall-travelers-iwaki",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2019-12-22/"
+      },
+      {
+        "date": "2020-01-04",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-04/"
+      },
+      {
+        "date": "2020-01-05",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-05/"
+      },
+      {
+        "date": "2020-01-12",
+        "venue": "パシフィコ横浜 国立大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-yokohama-1",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-12/"
+      },
+      {
+        "date": "2020-01-13",
+        "venue": "パシフィコ横浜 国立大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-yokohama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-13/"
+      },
+      {
+        "date": "2020-01-26",
+        "venue": "新潟テルサ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-niigata",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-26/"
+      },
+      {
+        "date": "2020-01-31",
+        "venue": "宝山ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-kagoshima",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-01-31/"
+      },
+      {
+        "date": "2020-02-02",
+        "venue": "熊本県立劇場 演劇ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-kumamoto",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-02-02/"
+      },
+      {
+        "date": "2020-02-10",
+        "venue": "パシフィコ横浜 国立大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-yokohama-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-02-10/"
+      },
+      {
+        "date": "2020-02-11",
+        "venue": "パシフィコ横浜 国立大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-yokohama-4",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-02-11/"
+      },
+      {
+        "date": "2020-02-21",
+        "venue": "倉敷市民会館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-kurashiki",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-02-21/"
+      },
+      {
+        "date": "2020-02-22",
+        "venue": "米子市公会堂",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2020-hall-travelers-yonago",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2020-02-22/"
+      }
+    ],
+    "officialSourceUrl": "https://hello-ep.jp/"
+  },
+  {
+    "id": "tour-editorial-2021",
+    "startDate": "2021-09-04",
+    "endDate": "2022-04-17",
+    "tourTitle": "Official髭男dism one-man tour 2021-2022 -Editorial-",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_tour_2021-2022_-Editorial-/",
+    "events": [
+      {
+        "date": "2021-09-04",
+        "venue": "ぴあアリーナMM",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-pia-mm-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-09-04/"
+      },
+      {
+        "date": "2021-09-05",
+        "venue": "ぴあアリーナMM",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-pia-mm-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-09-05/"
+      },
+      {
+        "date": "2021-10-02",
+        "venue": "長野ビッグハット",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-nagano-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-02/"
+      },
+      {
+        "date": "2021-10-03",
+        "venue": "長野ビッグハット",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-nagano-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-03/"
+      },
+      {
+        "date": "2021-10-08",
+        "venue": "朱鷺メッセ 新潟コンベンションセンター",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-niigata-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-08/"
+      },
+      {
+        "date": "2021-10-09",
+        "venue": "朱鷺メッセ 新潟コンベンションセンター",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-niigata-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-09/"
+      },
+      {
+        "date": "2021-10-10",
+        "venue": "朱鷺メッセ 新潟コンベンションセンター",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-niigata-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-10/"
+      },
+      {
+        "date": "2021-10-15",
+        "venue": "広島グリーンアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-hiroshima-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-15/"
+      },
+      {
+        "date": "2021-10-16",
+        "venue": "広島グリーンアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-hiroshima-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-16/"
+      },
+      {
+        "date": "2021-10-17",
+        "venue": "広島グリーンアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-hiroshima-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-17/"
+      },
+      {
+        "date": "2021-10-27",
+        "venue": "神戸ワールド記念ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-kobe-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-27/"
+      },
+      {
+        "date": "2021-10-28",
+        "venue": "神戸ワールド記念ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-kobe-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-10-28/"
+      },
+      {
+        "date": "2021-11-02",
+        "venue": "横浜アリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-yokohama-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-02/"
+      },
+      {
+        "date": "2021-11-03",
+        "venue": "横浜アリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-yokohama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-03/"
+      },
+      {
+        "date": "2021-11-12",
+        "venue": "アスティとくしま",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-tokushima-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-12/"
+      },
+      {
+        "date": "2021-11-13",
+        "venue": "アスティとくしま",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-tokushima-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-13/"
+      },
+      {
+        "date": "2021-11-14",
+        "venue": "アスティとくしま",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-tokushima-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-14/"
+      },
+      {
+        "date": "2021-11-20",
+        "venue": "サンドーム福井",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-fukui-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-20/"
+      },
+      {
+        "date": "2021-11-21",
+        "venue": "サンドーム福井",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-fukui-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-21/"
+      },
+      {
+        "date": "2021-11-30",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-11-30/"
+      },
+      {
+        "date": "2021-12-01",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-12-01/"
+      },
+      {
+        "date": "2021-12-02",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-osaka-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-12-02/"
+      },
+      {
+        "date": "2021-12-17",
+        "venue": "宮城・セキスイハイムスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-miyagi-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-12-17/"
+      },
+      {
+        "date": "2021-12-18",
+        "venue": "宮城・セキスイハイムスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-miyagi-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-12-18/"
+      },
+      {
+        "date": "2021-12-19",
+        "venue": "宮城・セキスイハイムスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2021-editorial-miyagi-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2021-12-19/"
+      },
+      {
+        "date": "2022-01-04",
+        "venue": "マリンメッセ福岡",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-04/"
+      },
+      {
+        "date": "2022-01-05",
+        "venue": "マリンメッセ福岡",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-05/"
+      },
+      {
+        "date": "2022-01-06",
+        "venue": "マリンメッセ福岡",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-fukuoka-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-06/"
+      },
+      {
+        "date": "2022-01-15",
+        "venue": "Aichi Sky Expo（愛知県国際展示場）ホールA",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-aichi-skyexpo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-15/"
+      },
+      {
+        "date": "2022-01-16",
+        "venue": "Aichi Sky Expo（愛知県国際展示場）ホールA",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-aichi-skyexpo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-16/"
+      },
+      {
+        "date": "2022-01-22",
+        "venue": "国立代々木競技場第一体育館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-yoyogi-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-22/"
+      },
+      {
+        "date": "2022-01-23",
+        "venue": "国立代々木競技場第一体育館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-yoyogi-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-01-23/"
+      },
+      {
+        "date": "2022-02-15",
+        "venue": "東京ガーデンシアター（有明）",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-ariake-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-02-15/"
+      },
+      {
+        "date": "2022-02-16",
+        "venue": "東京ガーデンシアター（有明）",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-ariake-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-02-16/"
+      },
+      {
+        "date": "2022-02-26",
+        "venue": "沖縄コンベンションセンター展示棟",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-okinawa-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-02-26/"
+      },
+      {
+        "date": "2022-02-27",
+        "venue": "沖縄コンベンションセンター展示棟",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-okinawa-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-02-27/"
+      },
+      {
+        "date": "2022-03-19",
+        "venue": "さいたまスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-saitama-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-19/"
+      },
+      {
+        "date": "2022-03-20",
+        "venue": "さいたまスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-saitama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-20/"
+      },
+      {
+        "date": "2022-03-21",
+        "venue": "さいたまスーパーアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-saitama-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-21/"
+      },
+      {
+        "date": "2022-03-24",
+        "venue": "日本ガイシホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-nagoya-gaishi-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-24/"
+      },
+      {
+        "date": "2022-03-25",
+        "venue": "日本ガイシホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-nagoya-gaishi-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-25/"
+      },
+      {
+        "date": "2022-03-26",
+        "venue": "日本ガイシホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-nagoya-gaishi-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-03-26/"
+      },
+      {
+        "date": "2022-04-01",
+        "venue": "真駒内セキスイハイムアイスアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-sapporo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-01/"
+      },
+      {
+        "date": "2022-04-02",
+        "venue": "真駒内セキスイハイムアイスアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-sapporo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-02/"
+      },
+      {
+        "date": "2022-04-03",
+        "venue": "真駒内セキスイハイムアイスアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-sapporo-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-03/"
+      },
+      {
+        "date": "2022-04-15",
+        "venue": "松江市総合体育館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-shimane-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-15/"
+      },
+      {
+        "date": "2022-04-16",
+        "venue": "松江市総合体育館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-shimane-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-16/"
+      },
+      {
+        "date": "2022-04-17",
+        "venue": "松江市総合体育館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-editorial-shimane-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-04-17/"
+      }
+    ],
+    "officialSourceUrl": "https://editorial-saitamasuperarena.ponycanyon.co.jp/"
+  },
+  {
+    "id": "tour-shocking-nuts-2022",
+    "startDate": "2022-09-28",
+    "endDate": "2023-02-16",
+    "tourTitle": "Official髭男dism SHOCKING NUTS TOUR",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_SHOCKING_NUTS_TOUR/",
+    "events": [
+      {
+        "date": "2022-09-28",
+        "venue": "リンクステーションホール青森",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-aomori-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-09-28/"
+      },
+      {
+        "date": "2022-09-29",
+        "venue": "リンクステーションホール青森",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-aomori-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-09-29/"
+      },
+      {
+        "date": "2022-10-13",
+        "venue": "名古屋国際会議場センチュリーホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-nagoya-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-10-13/"
+      },
+      {
+        "date": "2022-10-14",
+        "venue": "名古屋国際会議場センチュリーホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-nagoya-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-10-14/"
+      },
+      {
+        "date": "2022-10-25",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-budokan-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-10-25/"
+      },
+      {
+        "date": "2022-10-26",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-budokan-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-10-26/"
+      },
+      {
+        "date": "2022-10-29",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-budokan-3",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-10-29/"
+      },
+      {
+        "date": "2022-11-16",
+        "venue": "旭川市民文化会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-asahikawa",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-11-16/"
+      },
+      {
+        "date": "2022-11-17",
+        "venue": "札幌文化芸術劇場 hitaru",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-sapporo",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-11-17/"
+      },
+      {
+        "date": "2022-11-28",
+        "venue": "ふくやま芸術文化ホール リーデンローズ 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-fukuyama-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-11-28/"
+      },
+      {
+        "date": "2022-11-29",
+        "venue": "ふくやま芸術文化ホール リーデンローズ 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-fukuyama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-11-29/"
+      },
+      {
+        "date": "2022-12-06",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-06/"
+      },
+      {
+        "date": "2022-12-07",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-07/"
+      },
+      {
+        "date": "2022-12-13",
+        "venue": "オーバード・ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-toyama-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-13/"
+      },
+      {
+        "date": "2022-12-14",
+        "venue": "オーバード・ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-toyama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-14/"
+      },
+      {
+        "date": "2022-12-21",
+        "venue": "仙台サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-sendai-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-21/"
+      },
+      {
+        "date": "2022-12-22",
+        "venue": "仙台サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2022-shocking-nuts-sendai-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2022-12-22/"
+      },
+      {
+        "date": "2023-01-30",
+        "venue": "フェスティバルホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2023-shocking-nuts-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2023-01-30/"
+      },
+      {
+        "date": "2023-01-31",
+        "venue": "フェスティバルホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2023-shocking-nuts-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2023-01-31/"
+      },
+      {
+        "date": "2023-02-15",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2023-shocking-nuts-budokan-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2023-02-15/"
+      },
+      {
+        "date": "2023-02-16",
+        "venue": "日本武道館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2023-shocking-nuts-budokan-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2023-02-16/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/halltour_2022"
+  },
+  {
+    "id": "tour-rejoice-2024",
+    "startDate": "2024-09-20",
+    "endDate": "2024-11-20",
+    "tourTitle": "Official髭男dism Arena Tour 2024 -Rejoice-",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_Arena_Tour_2024_-_Rejoice_-/",
+    "events": [
+      {
+        "date": "2024-09-20",
+        "venue": "マリンメッセ福岡A館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-09-20/"
+      },
+      {
+        "date": "2024-09-21",
+        "venue": "マリンメッセ福岡A館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-09-21/"
+      },
+      {
+        "date": "2024-09-28",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-09-28/"
+      },
+      {
+        "date": "2024-09-29",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-09-29/"
+      },
+      {
+        "date": "2024-10-18",
+        "venue": "ポートメッセなごや 第1展示館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-aichi-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-10-18/"
+      },
+      {
+        "date": "2024-10-19",
+        "venue": "ポートメッセなごや 第1展示館",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-aichi-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-10-19/"
+      },
+      {
+        "date": "2024-11-12",
+        "venue": "Kアリーナ横浜",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-yokohama-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-11-12/"
+      },
+      {
+        "date": "2024-11-13",
+        "venue": "Kアリーナ横浜",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-yokohama-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-11-13/"
+      },
+      {
+        "date": "2024-11-19",
+        "venue": "真駒内セキスイハイムアイスアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-sapporo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-11-19/"
+      },
+      {
+        "date": "2024-11-20",
+        "venue": "真駒内セキスイハイムアイスアリーナ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-sapporo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-11-20/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/live_2024?page=tour"
+  },
+  {
+    "id": "tour-rejoice-asia-2024",
+    "startDate": "2024-11-30",
+    "endDate": "2024-12-15",
+    "tourTitle": "Official髭男dism Arena Tour 2024 -Rejoice- ASIA TOUR",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/OFFICIAL_HIGE_DANDISM_ASIA_TOUR_2024_-_Rejoice_-/",
+    "events": [
+      {
+        "date": "2024-11-30",
+        "venue": "KINTEX Hall 5",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-seoul-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-11-30/"
+      },
+      {
+        "date": "2024-12-01",
+        "venue": "KINTEX Hall 5",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-seoul-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-12-01/"
+      },
+      {
+        "date": "2024-12-15",
+        "venue": "Taipei Arena",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2024-rejoice-taipei",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2024-12-15/"
+      }
+    ]
+  },
+  {
+    "id": "tour-stadium-2025",
+    "startDate": "2025-05-17",
+    "endDate": "2025-06-01",
+    "tourTitle": "OFFICIAL HIGE DANDISM LIVE at STADIUM 2025",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/OFFICIAL_HIGE_DANDISM_LIVE_at_STADIUM_2025/",
+    "events": [
+      {
+        "date": "2025-05-17",
+        "venue": "ヤンマースタジアム長居",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-stadium-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-05-17/"
+      },
+      {
+        "date": "2025-05-18",
+        "venue": "ヤンマースタジアム長居",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-stadium-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-05-18/"
+      },
+      {
+        "date": "2025-05-31",
+        "venue": "日産スタジアム",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-stadium-kanagawa-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-05-31/"
+      },
+      {
+        "date": "2025-06-01",
+        "venue": "日産スタジアム",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-stadium-kanagawa-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-06-01/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/stadium_2025"
+  },
+  {
+    "id": "tour-toyota-arena-2025",
+    "startDate": "2025-10-11",
+    "endDate": "2025-10-12",
+    "tourTitle": "Official髭男dism one-man live in TOYOTA ARENA TOKYO",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/Official髭男dism_one-man_live_in_TOYOTA_ARENA_TOKYO/",
+    "events": [
+      {
+        "date": "2025-10-11",
+        "venue": "TOYOTA ARENA TOKYO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-toyota-arena-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-10-11/"
+      },
+      {
+        "date": "2025-10-12",
+        "venue": "TOYOTA ARENA TOKYO",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-toyota-arena-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-10-12/"
+      }
+    ]
+  },
+  {
+    "id": "tour-four-reism-2025",
+    "startDate": "2025-12-10",
+    "endDate": "2026-01-22",
+    "tourTitle": "OFFICIAL HIGE DANDISM one-man tour FOUR-RE:ISM",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/OFFICIAL_HIGE_DANDISM_one-man_tour_FOUR-REISM/",
+    "events": [
+      {
+        "date": "2025-12-10",
+        "venue": "Zepp Fukuoka",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-10/"
+      },
+      {
+        "date": "2025-12-11",
+        "venue": "Zepp Fukuoka",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-11/"
+      },
+      {
+        "date": "2025-12-15",
+        "venue": "Zepp Osaka Bayside",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-15/"
+      },
+      {
+        "date": "2025-12-16",
+        "venue": "Zepp Osaka Bayside",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-16/"
+      },
+      {
+        "date": "2025-12-22",
+        "venue": "Zepp DiverCity(TOKYO)",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-tokyo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-22/"
+      },
+      {
+        "date": "2025-12-23",
+        "venue": "Zepp DiverCity(TOKYO)",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2025-four-re-ism-tokyo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2025-12-23/"
+      },
+      {
+        "date": "2026-01-13",
+        "venue": "Zepp Sapporo",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-four-re-ism-sapporo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-01-13/"
+      },
+      {
+        "date": "2026-01-14",
+        "venue": "Zepp Sapporo",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-four-re-ism-sapporo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-01-14/"
+      },
+      {
+        "date": "2026-01-21",
+        "venue": "Zepp Nagoya",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-four-re-ism-nagoya-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-01-21/"
+      },
+      {
+        "date": "2026-01-22",
+        "venue": "Zepp Nagoya",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-four-re-ism-nagoya-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-01-22/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/zepp2025_hall2026"
+  },
+  {
+    "id": "tour-oneman-2026",
+    "startDate": "2026-04-04",
+    "endDate": "2026-07-26",
+    "tourTitle": "OFFICIAL HIGE DANDISM one-man tour 2026",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/OFFICIAL_HIGE_DANDISM_one-man_tour_2026/",
+    "events": [
+      {
+        "date": "2026-04-04",
+        "venue": "仙台サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-sendai-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-04/"
+      },
+      {
+        "date": "2026-04-05",
+        "venue": "仙台サンプラザホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-sendai-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-05/"
+      },
+      {
+        "date": "2026-04-17",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-fukuoka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-17/"
+      },
+      {
+        "date": "2026-04-18",
+        "venue": "福岡サンパレス",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-fukuoka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-18/"
+      },
+      {
+        "date": "2026-04-25",
+        "venue": "高知県立県民文化ホール オレンジホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-kochi",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-25/"
+      },
+      {
+        "date": "2026-04-27",
+        "venue": "愛媛県県民文化会館 メインホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-ehime",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-04-27/"
+      },
+      {
+        "date": "2026-05-03",
+        "venue": "新潟県民会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-niigata-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-03/"
+      },
+      {
+        "date": "2026-05-04",
+        "venue": "新潟県民会館 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-niigata-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-04/"
+      },
+      {
+        "date": "2026-05-10",
+        "venue": "iichikoグランシアタ",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-oita",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-10/"
+      },
+      {
+        "date": "2026-05-12",
+        "venue": "アルカスSASEBO 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-sasebo",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-12/"
+      },
+      {
+        "date": "2026-05-21",
+        "venue": "やまぎん県民ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-yamagata",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-21/"
+      },
+      {
+        "date": "2026-05-23",
+        "venue": "あきた芸術劇場ミルハス 大ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-akita",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-23/"
+      },
+      {
+        "date": "2026-05-30",
+        "venue": "広島文化学園HBGホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-hiroshima-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-30/"
+      },
+      {
+        "date": "2026-05-31",
+        "venue": "広島文化学園HBGホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-hiroshima-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-05-31/"
+      },
+      {
+        "date": "2026-06-11",
+        "venue": "帯広市民文化ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-obihiro",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-06-11/"
+      },
+      {
+        "date": "2026-06-13",
+        "venue": "コーチャンフォー釧路文化ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-kushiro",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-06-13/"
+      },
+      {
+        "date": "2026-06-20",
+        "venue": "札幌文化芸術劇場 hitaru",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-sapporo-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-06-20/"
+      },
+      {
+        "date": "2026-06-21",
+        "venue": "札幌文化芸術劇場 hitaru",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-sapporo-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-06-21/"
+      },
+      {
+        "date": "2026-07-03",
+        "venue": "Niterra日本特殊陶業市民会館 フォレストホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-nagoya-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-03/"
+      },
+      {
+        "date": "2026-07-04",
+        "venue": "Niterra日本特殊陶業市民会館 フォレストホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-nagoya-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-04/"
+      },
+      {
+        "date": "2026-07-11",
+        "venue": "SGC HALL ARIAKE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-ariake-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-11/"
+      },
+      {
+        "date": "2026-07-12",
+        "venue": "SGC HALL ARIAKE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-ariake-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-12/"
+      },
+      {
+        "date": "2026-07-18",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-osaka-1",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-18/"
+      },
+      {
+        "date": "2026-07-19",
+        "venue": "大阪城ホール",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-osaka-2",
+        "liveRepoHasSetlist": true,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-19/"
+      },
+      {
+        "date": "2026-07-25",
+        "venue": "Kアリーナ横浜",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-yokohama-1",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-25/"
+      },
+      {
+        "date": "2026-07-26",
+        "venue": "Kアリーナ横浜",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-one-man-yokohama-2",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-07-26/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/zepp2025_hall2026"
+  },
+  {
+    "id": "tour-asia-2026",
+    "startDate": "2026-08-08",
+    "endDate": "2026-09-06",
+    "tourTitle": "OFFICIAL HIGE DANDISM ASIA TOUR 2026",
+    "crossCheckUrl": "https://higedan-setlist.net/tour/OFFICIAL_HIGE_DANDISM_ASIA_TOUR_2026/",
+    "events": [
+      {
+        "date": "2026-08-08",
+        "venue": "KSPO DOME",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-seoul-1",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-08-08/"
+      },
+      {
+        "date": "2026-08-09",
+        "venue": "KSPO DOME",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-seoul-2",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-08-09/"
+      },
+      {
+        "date": "2026-08-21",
+        "venue": "The Star Theatre",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-singapore",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-08-21/"
+      },
+      {
+        "date": "2026-08-29",
+        "venue": "Taipei Arena",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-taipei-1",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-08-29/"
+      },
+      {
+        "date": "2026-08-30",
+        "venue": "Taipei Arena",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-taipei-2",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-08-30/"
+      },
+      {
+        "date": "2026-09-06",
+        "venue": "UOB LIVE",
+        "liveRepoUrl": "https://liverepo.katakatalab.com/events/live-2026-asia-tour-bangkok",
+        "liveRepoHasSetlist": false,
+        "crossCheckSetlistUrl": "https://higedan-setlist.net/live/2026-09-06/"
+      }
+    ],
+    "officialSourceUrl": "https://event.higedan.com/feature/asiatour2026"
+  }
+]

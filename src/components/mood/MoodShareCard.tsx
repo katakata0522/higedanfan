@@ -118,7 +118,7 @@ export function MoodShareCard({
                   : 'border border-[#D5CEC2] bg-white text-[#1C1917] hover:bg-[#F2EFE9]'
               }`}
             >
-              {idx + 1}位：{m.song.title} ({m.matchScore}点)
+              候補{idx + 1}：{m.song.title}
             </button>
           ))}
         </div>
@@ -180,7 +180,7 @@ export function MoodShareCard({
               theme === 'dark' ? 'text-white' : 'text-[#1C1917]'
             }`}
           >
-            選曲スコア {match.matchScore}点
+            今日の気分から選ぶ1曲
           </span>
         </div>
 
@@ -214,7 +214,7 @@ export function MoodShareCard({
                   theme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
                 }`}
               >
-                今のあなたに響くおすすめの1曲（おすすめ第{rankIndex + 1}位）
+                選んだ条件に合う候補{rankIndex + 1}
               </div>
               <div
                 className={`mt-0.5 text-xl sm:text-2xl font-bold tracking-tight ${

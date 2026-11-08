@@ -124,7 +124,7 @@ export function useFanRecords(showToast: (message: string) => void) {
     void change(r => ({...r, bestQuizScore: Math.max(r.bestQuizScore ?? 0, score)}));
   };
   const resetAllUserData = async () => {
-    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nマイセトリの名前と曲順は初期の見本に戻ります。感想・共感・投票、聖地の訪問、公演の参戦、検定の最高正答率の記録は消去されます。')) return;
+    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nマイセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率の記録は消去されます。')) return;
     if (await store.reset(records.resetEpoch)) showToast('保存データを初期状態にリセットしました。');
   };
   const downloadRecords = () => {

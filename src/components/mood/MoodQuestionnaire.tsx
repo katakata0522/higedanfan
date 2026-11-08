@@ -127,7 +127,7 @@ export function MoodQuestionnaire({onComplete}: {onComplete: (criteria: MoodCrit
       {step === 2 && (
         <Question
           title="Q2. どんな場面・時間帯に聴きたいですか？"
-          description="選んだシーンに合うテンポ感（BPM）の楽曲を絞り込みます。"
+          description="選んだ場面と、曲ごとの分類を照らし合わせます。"
           options={SITUATION_OPTIONS}
           onChoose={answer => {
             setSituation(answer);

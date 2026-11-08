@@ -40,8 +40,14 @@ export function autoSongPage(id: string): EditorialSongPageData {
       { label: '曲調の参考資料', purpose: '紙面上の曲調表現', evidence: 'styleSource' },
       { label: '歌の音域の参考資料', purpose: '地声・裏声の音域', evidence: 'rangeSource' },
       { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
+      ...(id === '115man-kilo' ? [
+        { label: '別のテンポ表記', purpose: '194 BPM（倍取り）', url: 'https://khufrudamonotes.com/officialhigedism-data' },
+        { label: 'コード譜のテンポ表記', purpose: '97 BPM', url: 'https://ja.chordwiki.org/wiki/115%E4%B8%87%E3%82%AD%E3%83%AD%E3%81%AE%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0' },
+      ] : []),
       ...tieUps.map(item => ({ label: 'タイアップの発表', purpose: item.text, url: item.source })),
     ],
-    sourceCaveat: '曲調は参考資料からの要約です。音域とテンポは採譜・計測方法で表記が異なる場合があります。図柄は当サイト制作で、公式ジャケットではありません。',
+    sourceCaveat: id === '115man-kilo'
+      ? 'テンポは四分音符を97 BPMとするドラム譜・コード譜に合わせました。194 BPMは倍取りの表記です。これは当サイトが採用した数え方で、公式の指定テンポではありません。音域も採譜によって異なる場合があります。図柄は当サイト制作で、公式ジャケットではありません。'
+      : '曲調は参考資料からの要約です。音域とテンポは採譜・計測方法で表記が異なる場合があります。図柄は当サイト制作で、公式ジャケットではありません。',
   };
 }

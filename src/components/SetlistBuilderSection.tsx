@@ -1,5 +1,6 @@
 import { prepareSongSearch } from '../utils/songSearch';
 import { GuideArtwork } from './GuideArtwork';
+import { TourArchiveSection } from './TourArchiveSection';
 import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -11,7 +12,6 @@ import {
   Copy,
   Check,
   Ticket,
-  Music2,
   RotateCcw,
   ListMusic,
   BookOpen,
@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import {
   SongItem,
-  TOUR_ARCHIVES,
   STADIUM_IMAGE_PATH,
 } from '../data/higedanData';
 import {
@@ -28,7 +27,6 @@ import {
   isSafeAssetUrl,
   sanitizeUserText,
   SetlistEntry,
-  sortTourArchives,
 } from '../utils/fanLogic';
 
 interface SetlistBuilderSectionProps {
@@ -63,7 +61,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   initialSubTab = 'builder',
 }) => {
   const activeSubTab = initialSubTab;
-  const [tourSortOrder, setTourSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [songSearchFilter, setSongSearchFilter] = useState<string>('');
   const [requestedSong, setSelectedSongToAdd] = useState<string>(
     songs.find((s) => !setlist.some((item) => item.songId === s.id))?.id ||
@@ -73,11 +70,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [addAsEncore, setAddAsEncore] = useState<boolean>(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const copyTimerRef = useRef<number | null>(null);
-
-  const sortedTours = useMemo(
-    () => sortTourArchives(TOUR_ARCHIVES, tourSortOrder),
-    [tourSortOrder]
-  );
 
   const selectableSongsByAlbum = useMemo(() => {
     const match = prepareSongSearch(songSearchFilter);
@@ -168,12 +160,12 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
               {activeSubTab === 'tours'
-                ? '歴代ツアー記録 ＆ セットリスト読込'
+                ? '歴代ツアー・公演記録'
                 : 'マイセットリスト作成'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
-                ? 'ツアーをイメージした編集部の選曲例をマイセトリに読み込んだり、参戦・視聴の記録を残せます。'
+                ? '公演日・会場と掲載セトリの資料を確認し、参戦・視聴をツアー単位で記録できます。'
                 : '自分が聴きたい理想の曲順を組んで、合計演奏時間や曲順で見る熱量の目安をシミュレーションできます。'}
             </p>
           </div>
@@ -587,109 +579,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </div>
           </div>
         ) : (
-          /* Sub-Tab 2: Tour Archive & Participation Log */
-          <div className="mt-5 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-[#E6E1D6] bg-white px-4 py-3">
-              <div className="text-xs text-[#57534E]">
-                <strong className="text-[#1C1917]">2019年『Hall Travelers』〜 2026年全国ツアー（全{sortedTours.length}公演シリーズ）：</strong>
-                開催時期で並べ替えたり、編集部の選曲例をマイセトリに読み込めます。
-              </div>
-              <div className="inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setTourSortOrder('newest')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                    tourSortOrder === 'newest'
-                      ? 'bg-[#1C1917] text-white'
-                      : 'text-[#57534E] hover:text-[#1C1917]'
-                  }`}
-                >
-                  開催が新しい順 (2026→2019)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTourSortOrder('oldest')}
-                  className={`rounded-md px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer ${
-                    tourSortOrder === 'oldest'
-                      ? 'bg-[#1C1917] text-white'
-                      : 'text-[#57534E] hover:text-[#1C1917]'
-                  }`}
-                >
-                  開催が古い順 (2019→2026)
-                </button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedTours.map((tour) => {
-                const attended = attendedTourIds.includes(tour.id);
-                return (
-                  <article
-                    key={tour.id}
-                    className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5"
-                  >
-                    <div>
-                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
-                        <span className="font-mono-num font-bold text-[#C83E2B]">{tour.period}</span>
-                        <span>{tour.scale}</span>
-                      </div>
-                      <h3 className="mt-1.5 text-base sm:text-lg font-bold text-[#1C1917]">
-                        {tour.tourTitle}
-                      </h3>
-                      <p className="mt-1 text-xs text-[#1E3A5F] font-medium">
-                        主要会場: {tour.venueHighlight}
-                      </p>
-                      <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
-                        {tour.description} <a className="inline-block underline" href={tour.source} target="_blank" rel="noreferrer">公演資料 ↗</a>
-                      </p>
-                      <div className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
-                        <strong className="text-[#1C1917]">このツアーをイメージした選曲例（実演順ではありません）：</strong>
-                        {tour.signatureSetlistIds.join(' · ')} ／ [アンコール]{' '}
-                        {tour.encoreSetlistIds.join(' · ')}
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
-                      <button
-                        type="button"
-                        onClick={() => onToggleAttendedTour(tour.id)}
-                        aria-pressed={attended}
-                        className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 min-h-[38px] cursor-pointer ${
-                          attended
-                            ? 'bg-[#15803D] text-white'
-                            : 'border border-[#D5CEC2] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
-                        }`}
-                      >
-                        <Ticket className="h-3.5 w-3.5" />
-                        {attended ? '参戦・視聴済み！' : '参戦・視聴を記録'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const titleToId = new Map(songs.map((s) => [s.title, s.id]));
-                          const mainEntries: SetlistEntry[] = tour.signatureSetlistIds
-                            .map((t) => titleToId.get(t))
-                            .filter((id): id is string => Boolean(id))
-                            .map((songId) => ({ songId, isEncore: false }));
-                          const encEntries: SetlistEntry[] = tour.encoreSetlistIds
-                            .map((t) => titleToId.get(t))
-                            .filter((id): id is string => Boolean(id))
-                            .map((songId) => ({ songId, isEncore: true }));
-                          if (!onLoadPresetSetlist([...mainEntries, ...encEntries], tour.tourTitle + "（選曲例）")) return;
-                          (window.location.hash = 'setlist');
-                        }}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 min-h-[38px] cursor-pointer"
-                      >
-                        <Music2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                        選曲例をマイセトリへ
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
+          <TourArchiveSection attendedTourIds={attendedTourIds} onToggleAttendedTour={onToggleAttendedTour} />
         )}
       </div>
     </section>

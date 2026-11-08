@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PUBLIC_FEATURES } from '../config/publicFeatures';
 import { infoPages, isInfoPage, type InfoPageId } from './info/infoPages';
 import {
   Menu,
@@ -37,7 +38,7 @@ export interface NavMenuItem {
   icon: React.ReactNode;
 }
 
-export const SITE_NAV_ITEMS: NavMenuItem[] = [
+export const SITE_NAV_ITEMS: NavMenuItem[] = ([
   {
     id: 'home',
     label: 'トップページ',
@@ -77,7 +78,7 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
   {
     id: 'tour_archive',
     label: '歴代ツアー記録',
-    shortDesc: 'ツアー別の選曲例とライブ参戦チェック',
+    shortDesc: '公演日・会場と掲載セトリ資料、ツアー別の参戦メモ',
     icon: <Ticket className="h-4 w-4 shrink-0" />,
   },
   {
@@ -104,7 +105,10 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = [
     shortDesc: '解答の根拠になった作品情報・曲別資料',
     icon: <Newspaper className="h-4 w-4 shrink-0" />,
   },
-];
+] satisfies NavMenuItem[]).filter(item =>
+  (item.id !== 'community' || PUBLIC_FEATURES.ranking) &&
+  (item.id !== 'fan_reviews' || PUBLIC_FEATURES.reviews)
+);
 
 export type SiteTab = ActiveFeatureTab | InfoPageId;
 

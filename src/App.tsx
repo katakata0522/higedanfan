@@ -15,6 +15,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import type { QuizSession } from './components/quiz/quizSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
+import { PUBLIC_FEATURES } from './config/publicFeatures';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -33,8 +34,14 @@ const SongDetailModal = React.lazy(() =>
   import('./components/SongDetailModal').then(module => ({default: module.SongDetailModal}))
 );
 
+function isUnpublishedHash(feature: string) {
+  return (feature === 'community' && !PUBLIC_FEATURES.ranking) ||
+    (feature === 'fan_reviews' && !PUBLIC_FEATURES.reviews);
+}
+
 function readLocation() {
   const [feature, song] = window.location.hash.slice(1).split('/');
+  if (isUnpublishedHash(feature)) return {tab: 'home' as const, songId: null};
   if (isInfoPage(feature)) return {tab: feature, songId: null};
   const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
   const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
@@ -71,6 +78,9 @@ export default function App() {
 
   useEffect(() => {
     const restore = () => {
+      if (isUnpublishedHash(window.location.hash.slice(1).split('/')[0])) {
+        window.history.replaceState(null, '', '#home');
+      }
       const {tab, songId} = readLocation();
       const pagePath = songId ? songPagePath(songId) : null;
       if (pagePath) {
@@ -81,6 +91,7 @@ export default function App() {
       setSelectedModalSongId(songId);
     };
     window.addEventListener('hashchange', restore);
+    restore();
     return () => window.removeEventListener('hashchange', restore);
   }, []);
 
@@ -171,8 +182,8 @@ export default function App() {
                       { id: 'sacred_map', label: '聖地マップ' },
                       { id: 'setlist', label: 'マイセトリ作成' },
                       { id: 'tour_archive', label: '歴代ツアー記録' },
-                      { id: 'community', label: '人気曲投票' },
-                      { id: 'fan_reviews', label: '感想ノート' },
+                      ...(PUBLIC_FEATURES.ranking ? [{ id: 'community' as const, label: '人気曲投票' }] : []),
+                      ...(PUBLIC_FEATURES.reviews ? [{ id: 'fan_reviews' as const, label: '感想ノート' }] : []),
                       { id: 'quiz', label: '検定クイズ(60問)' },
                       { id: 'quiz_archive', label: '出典図鑑' },
                     ] as { id: ActiveFeatureTab; label: string }[]
@@ -248,7 +259,7 @@ export default function App() {
                   />
                 )}
 
-                {(activeFeatureTab === 'community' ||
+                {(PUBLIC_FEATURES.ranking || PUBLIC_FEATURES.reviews) && (activeFeatureTab === 'community' ||
                   activeFeatureTab === 'fan_reviews') && (
                   <FanCommunitySection
                     key={records.resetEpoch}
@@ -295,7 +306,7 @@ export default function App() {
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-[#57534E]">
           <div className="space-y-1.5">
             <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
-              <span>サイト制作・編集</span>
+              <span>サイト作成者</span>
               <a href="https://katakatalab.com/who-is-katakata.html" rel="author" className="inline-block py-1 font-bold text-[#1C1917] underline underline-offset-4">
                 かたかた<span className="sr-only">のプロフィール</span>
               </a>
@@ -314,7 +325,7 @@ export default function App() {
             <p className="flex items-center gap-1.5 text-[11px] text-[#57534E]">
               <ShieldCheck className="h-3.5 w-3.5 text-[#15803D] shrink-0" />
               <span>
-                投票・マイセトリ・感想メモは、あなた専用のファンノートとしてお使いのブラウザ内に自動保存されます。
+                マイセトリや参戦・訪問記録は、このブラウザ内に保存されます。非公開中の投票・感想も、過去の保存分は初期化するまで残ります。
               </span>
             </p>
           </div>

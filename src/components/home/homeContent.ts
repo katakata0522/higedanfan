@@ -1,4 +1,5 @@
 import type { ActiveFeatureTab } from '../SiteHeader';
+import { PUBLIC_FEATURES } from '../../config/publicFeatures';
 import {
   REJOICE_IMAGE_PATH,
   EDITORIAL_IMAGE_PATH,
@@ -24,7 +25,7 @@ export const HERO_JACKET_SHOWCASE: {
   },
 ];
 
-export const HOME_FEATURE_CARDS: {
+type HomeFeatureCard = {
   id: Exclude<ActiveFeatureTab, 'home'>;
   secondaryId?: Exclude<ActiveFeatureTab, 'home'>;
   stepNum: string;
@@ -34,14 +35,16 @@ export const HOME_FEATURE_CARDS: {
   points: string[];
   ctaLabel: string;
   secondaryCtaLabel?: string;
-}[] = [
+};
+
+export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
   {
     id: 'mood',
     stepNum: '01',
     subtitle: '今の気分から1曲を見つける',
     title: 'マイソング診断',
     description:
-      '今の気分・聴きたい場面・好みのサウンドを1問ずつ選ぶだけで、今のあなたに一番響く1曲を条件の一致度付きで提案します。',
+      '気分・聴きたい場面・好みのサウンドを選ぶと、条件に合う曲を紹介します。',
     points: [
       '3つの質問に1問ずつ順番に答えるステップ遷移式',
       '診断結果のSNS風シェアカード生成＆理由解説付き',
@@ -73,7 +76,7 @@ export const HOME_FEATURE_CARDS: {
       '自分がライブで聴きたい理想のセットリストを自由に組んで曲順やアンコールを編集したり、歴代ツアーの思い出を振り返ることができます。',
     points: [
       '本編・アンコールの構成や収録音源の合計時間を自動計算',
-      '日産スタジアム公演など歴代ツアーの選曲例＆参戦記録',
+      '確認できた公演日・会場と掲載セトリ資料、ツアー単位の参戦記録',
     ],
     ctaLabel: 'マイセトリを作る',
     secondaryCtaLabel: '歴代ツアー記録へ',
@@ -96,7 +99,7 @@ export const HOME_FEATURE_CARDS: {
   {
     id: 'quiz',
     secondaryId: 'quiz_archive',
-    stepNum: '05',
+    stepNum: '04',
     subtitle: '各レベル20問（全60問）＆並び替え・データ検証クイズ',
     title: 'ヒゲダン検定クイズ・出典＆トリビア図鑑',
     description:
@@ -108,4 +111,4 @@ export const HOME_FEATURE_CARDS: {
     ctaLabel: 'ヒゲダン検定に挑戦する',
     secondaryCtaLabel: '出典記事＆トリビア図鑑へ',
   },
-];
+] satisfies HomeFeatureCard[]).filter(card => card.id !== 'community' || PUBLIC_FEATURES.ranking || PUBLIC_FEATURES.reviews);

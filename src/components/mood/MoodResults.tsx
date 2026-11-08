@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Check, Disc, Plus, Share2, Sparkles, Square, Volume2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen, Check, Disc, Plus, Share2, Sparkles } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
-import { playSongTempoPreview, stopTempoPreview } from '../../utils/audioPreview';
 import {
   formatDuration,
   isSafeAssetUrl,
@@ -33,28 +32,12 @@ export function MoodResults({
   songs, onSelectSong, onAddToSetlist, setlistSongIds,
   criteria, onRestart, theme, onSelectTheme,
 }: MoodResultsProps) {
-  const [playingSongId, setPlayingSongId] = useState<string | null>(null);
   const [shareRank, setShareRank] = useState<number | null>(null);
-  useEffect(() => () => stopTempoPreview(), []);
 
   const matches = useMemo(() => scoreSongsByMood(songs, criteria).slice(0, 3), [songs, criteria]);
   const [bestMatch, ...subMatches] = matches;
 
-  const handlePreviewTempo = (song: SongItem) => {
-    if (playingSongId === song.id) {
-      stopTempoPreview();
-      setPlayingSongId(null);
-    } else {
-      setPlayingSongId(song.id);
-      playSongTempoPreview(song.bpm, song.sound, () => {
-        setPlayingSongId(null);
-      });
-    }
-  };
-
   const handleOpenSongDetail = (song: SongItem) => {
-    stopTempoPreview();
-    setPlayingSongId(null);
     onSelectSong(song);
   };
 
@@ -108,9 +91,6 @@ export function MoodResults({
                   <Disc className="h-3.5 w-3.5 shrink-0 text-[#F5D0C9]" />
                   <span>{bestMatch.song.album}</span>
                 </div>
-                <div className="absolute top-3 right-3 rounded-md bg-[#C83E2B] px-2.5 py-1 text-xs font-bold font-mono-num text-white shadow-xs">
-                  選曲スコア {bestMatch.matchScore}点
-                </div>
                 <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 text-white">
                   <div className="text-[11px] font-mono-num text-white/80">
                     {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
@@ -130,7 +110,7 @@ export function MoodResults({
                 <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
                   <span className="inline-flex items-center gap-1.5 font-bold text-[#C83E2B]">
                     <Sparkles className="h-3.5 w-3.5" />
-                    あなたへのベストマッチ楽曲
+                    今日の気分から選ぶ1曲
                   </span>
                   <span className="font-mono-num">
                     {formatDuration(bestMatch.song.durationSec)} · BPM {bestMatch.song.bpm}
@@ -147,48 +127,18 @@ export function MoodResults({
                 {/* 1-2 Sentence Mood Match Reason */}
                 <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-2.5">
                   <div className="text-xs font-bold text-[#C83E2B]">
-                    今の気分にマッチする理由
+                    この曲を紹介する理由
                   </div>
                   <p className="text-xs sm:text-sm text-[#1C1917] leading-relaxed font-medium">
                     {bestMatch.moodMatchExplanation}
                   </p>
-                  <p className="text-xs text-[#57534E] leading-relaxed pt-2 border-t border-[#E6E1D6]">
-                    <strong className="text-[#1C1917]">サウンドの特徴：</strong>
-                    {bestMatch.soundAnalysisReason}
-                  </p>
                 </div>
 
-                {/* Iconic Lyric Quote */}
-                <p className="mt-4 font-editorial text-xs sm:text-sm italic text-[#1C1917] border-y border-[#E6E1D6] py-3 px-2">
-                  曲調：{bestMatch.song.musicalHighlight}
-                </p>
               </div>
 
               {/* Action Bar including Share Card Generator Button */}
               <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handlePreviewTempo(bestMatch.song)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                      playingSongId === bestMatch.song.id
-                        ? 'border-[#C83E2B] bg-[#FDF3F1] text-[#C83E2B]'
-                        : 'border-[#D5CEC2] bg-[#FBF9F5] text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
-                    }`}
-                  >
-                    {playingSongId === bestMatch.song.id ? (
-                      <>
-                        <Square className="h-3.5 w-3.5 fill-current" />
-                        停止 (BPM {bestMatch.song.bpm})
-                      </>
-                    ) : (
-                      <>
-                        <Volume2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                        テンポ試聴 (BPM {bestMatch.song.bpm})
-                      </>
-                    )}
-                  </button>
-
                   <button
                     type="button"
                     onClick={() => setShareRank(rank => rank === null ? 0 : null)}
@@ -256,13 +206,12 @@ export function MoodResults({
       {subMatches.length > 0 && (
         <div>
           <h4 className="text-xs font-bold tracking-wide text-[#78716C] mb-3">
-            あわせて聴きたいおすすめ候補曲（2位・3位）
+            ほかの候補
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {subMatches.map((match, idx) => {
-              const { song, matchScore, moodMatchExplanation } = match;
+              const { song } = match;
               const inSetlist = setlistSongIds.includes(song.id);
-              const isPlaying = playingSongId === song.id;
 
               return (
                 <article
@@ -282,50 +231,22 @@ export function MoodResults({
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-1 text-xs text-[#78716C]">
                           <span className="font-bold text-[#1E3A5F] font-mono-num">
-                            候補 {idx + 2}位 · 選曲スコア {matchScore}点
+                            候補 {idx + 2}
                           </span>
                           <span className="font-mono-num">BPM {song.bpm}</span>
                         </div>
                         <h5 className="mt-0.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                           {song.title}
                         </h5>
-                        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-[#E6E1D6]">
-                          <div
-                            className="h-full rounded-full bg-[#1E3A5F]"
-                            style={{ width: `${matchScore}%` }}
-                          />
-                        </div>
                       </div>
                     </div>
 
                     <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
-                      {moodMatchExplanation}
+                      曲調資料では「{song.musicalHighlight}」と紹介されています。
                     </p>
                   </div>
 
                   <div className="mt-3.5 flex items-center justify-between gap-1.5 border-t border-[#E6E1D6] pt-3">
-                    <button
-                      type="button"
-                      onClick={() => handlePreviewTempo(song)}
-                      className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                        isPlaying
-                          ? 'border-[#C83E2B] bg-[#FDF3F1] text-[#C83E2B]'
-                          : 'border-[#E6E1D6] bg-[#FBF9F5] text-[#57534E] hover:text-[#1C1917]'
-                      }`}
-                    >
-                      {isPlaying ? (
-                        <>
-                          <Square className="h-3 w-3 fill-current" />
-                          停止
-                        </>
-                      ) : (
-                        <>
-                          <Volume2 className="h-3 w-3 text-[#C83E2B]" />
-                          試聴
-                        </>
-                      )}
-                    </button>
-
                     <div className="flex items-center gap-1.5">
                       <button
                         type="button"

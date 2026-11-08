@@ -114,7 +114,8 @@ test('scoreSongsByMood prioritizes songs matching mood, situation, and sound and
   assert.equal(results[0].matchScore, 99);
   assert.ok(results[0].song.moods.includes('euphoric_drive'));
   assert.equal(results[0].matchReasons.length, 3);
-  assert.ok(results[0].moodMatchExplanation.includes('「最高に盛り上がりたい」今の気分に'));
+  assert.ok(results[0].moodMatchExplanation.includes('選んだ条件と一致します'));
+  assert.ok(results[0].moodMatchExplanation.includes(results[0].song.musicalHighlight));
   assert.ok(results[0].soundAnalysisReason.length > 10);
   assert.ok(results[0].matchBreakdown.moodSyncPercent >= 90);
   assert.ok(results[0].matchBreakdown.sceneFitPercent >= 90);
@@ -127,8 +128,8 @@ test('scoreSongsByMood prioritizes songs matching mood, situation, and sound and
     situation: 'late_night_alone',
     sound: 'piano_pop',
   });
-  assert.ok(heartbreakExplanation.includes('「切ない夜に浸りたい」今の気分に'));
-  assert.ok(heartbreakExplanation.includes('ひとり静かに過ごす夜'));
+  assert.ok(heartbreakExplanation.includes(HIGEDAN_SONGS[0].musicalHighlight));
+  assert.equal(heartbreakExplanation.includes('場面「ひとり静かに過ごす夜」'), HIGEDAN_SONGS[0].situations.includes('late_night_alone'));
 });
 
 test('filterAndSortDiscography filters by era, sound, and search query', () => {
@@ -226,7 +227,7 @@ test('normalizeSetlistOrder keeps main tracks before encore tracks and deduplica
   assert.equal(formatDateDot(new Date('2026-11-05T12:00:00Z')), '2026.11.05');
 });
 
-test('formatDiagnosisShareText formats song title, match score, mood reason, and hashtags for SNS share card', () => {
+test('formatDiagnosisShareText formats song title, mood reason, and hashtags without a subjective score', () => {
   const criteria = {
     mood: 'push_back' as const,
     situation: 'morning_commute' as const,
@@ -235,7 +236,7 @@ test('formatDiagnosisShareText formats song title, match score, mood reason, and
   const matches = scoreSongsByMood(HIGEDAN_SONGS, criteria);
   const shareText = formatDiagnosisShareText(matches[0], criteria);
   assert.ok(shareText.includes(`『${matches[0].song.title}』`));
-  assert.ok(shareText.includes(`選曲スコア ${matches[0].matchScore}点`));
+  assert.ok(!shareText.includes('選曲スコア'));
   assert.ok(shareText.includes(matches[0].moodMatchExplanation));
   assert.ok(shareText.includes('#115万キロのファンノート'));
 });
@@ -346,8 +347,8 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
 
   const toursOldestFirst = sortTourArchives(TOUR_ARCHIVES, 'oldest');
   const toursNewestFirst = sortTourArchives(TOUR_ARCHIVES, 'newest');
-  assert.equal(toursOldestFirst[0].id, 'tour-hall-travelers-2019');
-  assert.equal(toursNewestFirst[0].id, 'tour-oneman-2026');
+  assert.equal(toursOldestFirst[0].id, 'tour-oneman-2016');
+  assert.equal(toursNewestFirst[0].id, 'tour-asia-2026');
 
   // Verify songwriter credits for member-composed songs
   assert.equal(getSongwriterCredit({ id: 'rowan-song' }), '作詞・作曲：小笹大輔');
@@ -437,11 +438,18 @@ test('all 90 setlist entries and encore assignments survive validation', () => {
     assert.equal(songEvidence['sharon'].cd,'2024.07.24');
 });
 
-test('tour examples reference the exact names of existing recordings', () => {
-  const titles = new Set(HIGEDAN_SONGS.map(song => song.title));
+test('tour archive contains dated public concert records and only links to listed setlists', () => {
+  assert.equal(TOUR_ARCHIVES.length, 16);
+  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 221);
   for (const tour of TOUR_ARCHIVES) {
-    for (const title of [...tour.signatureSetlistIds, ...tour.encoreSetlistIds]) {
-      assert.ok(titles.has(title), tour.tourTitle + ': ' + title);
+    assert.ok(tour.events.length > 0, tour.tourTitle);
+    assert.equal(tour.startDate, tour.events[0].date);
+    assert.equal(tour.endDate, tour.events.at(-1)?.date);
+    for (const event of tour.events) {
+      assert.match(event.date, /^\d{4}-\d{2}-\d{2}$/);
+      assert.ok(event.venue.trim(), event.date);
+      assert.equal(new URL(event.liveRepoUrl).host, 'liverepo.katakatalab.com');
+      if (event.crossCheckSetlistUrl) assert.equal(new URL(event.crossCheckSetlistUrl).host, 'higedan-setlist.net');
     }
   }
 });

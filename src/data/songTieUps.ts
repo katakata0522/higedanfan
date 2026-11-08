@@ -56,6 +56,9 @@ export const songTieUps: Partial<Record<keyof typeof recordings, SongItem['tieUp
   'rashisa': [
     { text: "劇場アニメ『ひゃくえむ。』主題歌", source: "https://hyakuemu-anime.com/info/91/" },
   ],
+  'hagan-song': [
+    { text: 'JR東日本「あたりまえの毎日」CMソング', source: 'https://higedan.com/news/detail/101743' },
+  ],
   'driver-song': [
     { text: "メ〜テレ『デルサタ』テーマソング", source: "https://www.lastrum.co.jp/news/10521/" },
   ],
