@@ -122,6 +122,103 @@ async function inspectAllPages(browser, scenario) {
   console.log(`${scenario.name}: ${ids.length}曲を確認`);
 }
 
+async function verifyImmediateReload(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await context.newPage();
+  const lockPage = await context.newPage();
+  await page.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
+  await page.waitForFunction(() => localStorage.getItem('higedan_fan_magazine_state_v1') !== null);
+  await lockPage.goto(root, { waitUntil: 'load' });
+  async function holdLock() {
+    await lockPage.evaluate(() => {
+      window.releaseTestLock = null;
+      void navigator.locks.request('higedan_fan_magazine_state_v1', () => new Promise(resolve => {
+        window.releaseTestLock = resolve;
+      }));
+    });
+    await lockPage.waitForFunction(() => typeof window.releaseTestLock === 'function');
+  }
+  async function releaseLock() {
+    await lockPage.evaluate(() => window.releaseTestLock());
+  }
+  await holdLock();
+  await page.getByRole('button', { name: 'マイセトリに追加' }).click();
+  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'white-noise')), false, '保存が完了する前の状況を再現できません');
+  await page.reload({ waitUntil: 'load' });
+  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor({ timeout: 10000 });
+  await releaseLock();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'white-noise'));
+  await page.reload({ waitUntil: 'load' });
+  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+
+  // セトリ作成画面からの追加も、アンコール設定ごと同じ条件で復元する。
+  await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+  await page.getByLabel('追加する曲を選択').selectOption('cry-baby');
+  await page.getByLabel('アンコール枠で追加').check();
+  await holdLock();
+  await page.getByRole('button', { name: '曲を追加', exact: true }).click();
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby')), false);
+  await page.reload({ waitUntil: 'load' });
+  await page.getByLabel('追加する曲を選択').waitFor();
+  await releaseLock();
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby' && item.isEncore));
+
+  // 保存待ちの追加をその場で外したとき、再読み込みで復活させない。
+  await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
+  await holdLock();
+  await page.getByRole('button', { name: '曲を追加', exact: true }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
+  await page.reload({ waitUntil: 'load' });
+  await page.getByLabel('追加する曲を選択').waitFor();
+  assert.equal(await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).count(), 0);
+  await releaseLock();
+  await lockPage.evaluate(() => navigator.locks.request('higedan_fan_magazine_state_v1', () => true));
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk')), false);
+  await context.close();
+  console.log('楽曲ページとセトリ作成画面で、保存待ち中の再読み込みから曲とアンコール設定を復元');
+}
+
+async function verifyStorageFailures(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const page = await context.newPage();
+  await page.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (this === sessionStorage && key.startsWith('higedan_pending_setlist_add_v1:')) throw new Error('session storage blocked');
+      return setItem.call(this, key, value);
+    };
+  });
+  await page.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
+  await page.getByRole('button', { name: 'マイセトリに追加' }).click();
+  await page.getByRole('alert').getByText(/一時保存できません/).waitFor();
+  assert.equal(await page.getByRole('link', { name: 'マイセトリで確認' }).count(), 0);
+  await page.getByRole('button', { name: '画面上の記録を書き出す' }).waitFor();
+  await context.close();
+
+  const retryContext = await browser.newContext({ viewport: { width: 1280, height: 720 } });
+  const retry = await retryContext.newPage();
+  await retry.addInitScript(() => {
+    const setItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function (key, value) {
+      if (this === localStorage && key === 'higedan_fan_magazine_state_v1' && sessionStorage.getItem('test-block-primary') === '1') throw new Error('local storage blocked');
+      return setItem.call(this, key, value);
+    };
+  });
+  await retry.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
+  await retry.waitForFunction(() => localStorage.getItem('higedan_fan_magazine_state_v1') !== null);
+  await retry.evaluate(() => sessionStorage.setItem('test-block-primary', '1'));
+  await retry.getByRole('button', { name: 'マイセトリに追加' }).click();
+  await retry.getByRole('alert').getByText(/この端末に保存できません/).waitFor();
+  await retry.getByRole('button', { name: '画面上の記録を書き出す' }).waitFor();
+  await retry.evaluate(() => sessionStorage.removeItem('test-block-primary'));
+  await retry.reload({ waitUntil: 'load' });
+  await retry.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'white-noise'));
+  await retryContext.close();
+  console.log('一時保存や本保存に失敗した場合の警告と復元を確認');
+}
+
 async function verifyInteractions(browser) {
   const context = await browser.newContext({ viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 });
   const page = await context.newPage();
@@ -169,6 +266,8 @@ let browser;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  await verifyImmediateReload(browser);
+  await verifyStorageFailures(browser);
   await inspectAllPages(browser, { name: 'PC 1280×720', context: { viewport: { width: 1280, height: 720 } } });
   await inspectAllPages(browser, { name: 'PC 615×604', context: { viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 } });
   await inspectAllPages(browser, { name: 'スマホ 320px', mobile: true, context: { viewport: { width: 320, height: 844 }, isMobile: true, hasTouch: true } });

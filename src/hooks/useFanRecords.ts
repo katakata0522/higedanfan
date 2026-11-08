@@ -34,9 +34,7 @@ export function useFanRecords(showToast: (message: string) => void) {
       showToast(`「${song.title}」はすでにマイセトリに入っています。`);
       return;
     }
-    const result = await change(r => r.setlist.some(e => e.songId === id) ? r : {
-      ...r, setlist: normalizeSetlistOrder([...r.setlist, {songId: id, isEncore}]),
-    });
+    const result = await store.addToSetlist(id, isEncore, records.resetEpoch);
     if (result === 'saved') showToast(`「${song.title}」をマイセトリに追加しました！`);
   };
   const removeFromSetlist = (id: string) => {
