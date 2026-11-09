@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { MOOD_CHOICE_LABELS, SITUATION_CHOICE_LABELS, SOUND_PREFERENCE_LABELS } from '../../utils/moodMatching';
 import type { MoodAnswer, MoodSession, MoodStep } from './moodSession';
 
 interface Choice {
@@ -16,38 +17,38 @@ interface QuestionDefinition {
 
 const QUESTIONS: Record<MoodStep, QuestionDefinition> = {
   1: {
-    title: '今、どんな気分？',
-    description: '直感にいちばん近いものを選んでみて。',
+    title: '今日の気持ちに、いちばん近いのは？',
+    description: '深く考えず、心に浮かんだものを。',
     options: [
-      { id: 'push_back', label: '背中を押してほしい', sub: '一歩踏み出すきっかけがほしい' },
-      { id: 'heartbreak_night', label: '切なさに浸りたい', sub: '今の気持ちをゆっくり味わいたい' },
-      { id: 'euphoric_drive', label: '思いきり盛り上がりたい', sub: '気分を上げて、音に身を任せたい' },
-      { id: 'deep_lyric', label: '言葉や音をじっくり味わいたい', sub: '何度も聴き返したくなる曲に出会いたい' },
+      { id: 'push_back', label: MOOD_CHOICE_LABELS.push_back, sub: '一歩を踏み出すきっかけに' },
+      { id: 'heartbreak_night', label: MOOD_CHOICE_LABELS.heartbreak_night, sub: '今の気持ちを、そのまま大切に' },
+      { id: 'euphoric_drive', label: MOOD_CHOICE_LABELS.euphoric_drive, sub: '気分を上げて、音に身を任せて' },
+      { id: 'deep_lyric', label: MOOD_CHOICE_LABELS.deep_lyric, sub: '何度も聴き返したくなる一曲を' },
     ],
   },
   2: {
-    title: 'どんな場面で聴きたい？',
-    description: 'これから過ごす時間を思い浮かべて。',
+    title: 'この曲、どんな時間に聴こう？',
+    description: 'これから過ごすひとときを思い浮かべて。',
     options: [
-      { id: 'morning_commute', label: '朝の通勤・通学', sub: '一日が始まる、その前に' },
-      { id: 'late_night_alone', label: 'ひとり静かな夜', sub: '自分の時間にそっと流したい' },
-      { id: 'live_warmup', label: 'ライブ前・ドライブ', sub: '出かける前から気分を高めたい' },
-      { id: 'weekend_walk', label: '休日の散歩・カフェ', sub: 'のんびり過ごす時間のおともに' },
+      { id: 'morning_commute', label: SITUATION_CHOICE_LABELS.morning_commute, sub: '一日のはじまりのおともに' },
+      { id: 'late_night_alone', label: SITUATION_CHOICE_LABELS.late_night_alone, sub: '静かな自分の時間に' },
+      { id: 'live_warmup', label: SITUATION_CHOICE_LABELS.live_warmup, sub: '出かける時間を音楽と一緒に' },
+      { id: 'weekend_walk', label: SITUATION_CHOICE_LABELS.weekend_walk, sub: 'のんびり過ごす時間に' },
     ],
   },
   3: {
-    title: '今、惹かれるサウンドは？',
-    description: '迷ったら、今日いちばん聴きたい音を。',
+    title: '今日は、どんな音と過ごしたい？',
+    description: '聴いている自分を想像しながら選んでみて。',
     options: [
-      { id: 'piano_pop', label: '王道ピアノポップ', sub: 'ピアノとメロディを楽しみたい' },
-      { id: 'brass_funk', label: 'ブラス＆ファンク', sub: '華やかな音とリズムに乗りたい' },
-      { id: 'emotional_ballad', label: 'エモーショナルバラード', sub: '歌声にじっくり耳を傾けたい' },
-      { id: 'stadium_rock', label: 'スタジアムロック', sub: 'バンドの力強い音を浴びたい' },
+      { id: 'rhythm', label: SOUND_PREFERENCE_LABELS.rhythm, sub: '思わず体が動くような音を' },
+      { id: 'gentle', label: SOUND_PREFERENCE_LABELS.gentle, sub: 'ゆっくり耳を傾けたいときに' },
+      { id: 'melody', label: SOUND_PREFERENCE_LABELS.melody, sub: '歌声やピアノの響きと一緒に' },
+      { id: 'powerful', label: SOUND_PREFERENCE_LABELS.powerful, sub: 'バンドの音をたっぷりと' },
     ],
   },
   4: {
-    title: '聴きたい時期や作品はある？',
-    description: '選んだ分類の曲を優先します。ほかの時期も候補に入ります。',
+    title: 'どの頃のヒゲダンに会いたい？',
+    description: '選んだ時期から探します。迷ったらおまかせで。',
     options: [
       { id: 'any', label: 'どの時期の曲も聴きたい' },
       { id: 'indies_escaparade', label: '初期〜エスカパレード' },
@@ -58,8 +59,8 @@ const QUESTIONS: Record<MoodStep, QuestionDefinition> = {
     ],
   },
   5: {
-    title: '曲の長さはどれくらいがいい？',
-    description: '選んだ長さを優先します。決めずに探しても大丈夫。',
+    title: '今日は、どのくらい聴いていられそう？',
+    description: '今の時間に合う長さを選んでみて。',
     options: [
       { id: 'any', label: '長さはこだわらない' },
       { id: 'under4', label: '４分未満' },
@@ -120,7 +121,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
       {editing && <p className="mt-2 text-xs text-[#57534E]">選ぶと、この回答だけを変えて結果に戻ります。</p>}
 
       <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-        {question.options.map((option, index) => (
+        {question.options.map(option => (
           <button
             key={option.id}
             type="button"
@@ -132,9 +133,6 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
             ].join(' ')}
           >
             <div className="flex items-start gap-3.5 pr-3">
-              <span aria-hidden="true" className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#F2EFE9] font-mono-num text-xs font-bold text-[#1C1917] group-hover:bg-[#C83E2B] group-hover:text-white transition-colors">
-                {String.fromCharCode(65 + index)}
-              </span>
               <div>
                 <div className="text-sm sm:text-base font-bold text-[#1C1917]">{option.label}</div>
                 {option.sub && <div className="mt-1 text-xs text-[#57534E]">{option.sub}</div>}

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS } from '../data/higedanData';
-import { formatDiagnosisShareText, matchesLength, scoreSongsByMood, type MoodCriteria } from './moodMatching';
+import { formatDiagnosisShareText, matchesEra, matchesLength, recommendSongsByMood, scoreSongsByMood, type MoodCriteria } from './moodMatching';
 
 const originalCriteria: MoodCriteria = {
   mood: 'push_back', situation: 'morning_commute', sound: 'piano_pop',
@@ -67,4 +67,45 @@ test('a nonmatching condition is never presented as a match and legacy sharing s
   assert.ok(text.includes('Rejoice期'));
   assert.ok(text.includes('５分以上'));
   assert.ok(formatDiagnosisShareText(match, originalCriteria).includes('マイソング診断'));
+});
+
+test('requested release years and duration are honoured, including Rejoice songs from 2024', () => {
+  const sharon = HIGEDAN_SONGS.find(song => song.id === 'sharon');
+  const finder = HIGEDAN_SONGS.find(song => song.id === 'finder-song');
+  assert.ok(sharon && finder);
+  assert.equal(matchesEra(sharon, 'latest_2025_2026'), true);
+  assert.equal(matchesEra(finder, 'latest_2025_2026'), true);
+  const criteria: MoodCriteria = { mood: 'push_back', situation: 'weekend_walk', sound: 'rhythm', era: 'latest_2025_2026', length: 'fivePlus' };
+  const results = recommendSongsByMood(HIGEDAN_SONGS, criteria);
+  assert.ok(results.length > 0);
+  assert.ok(results.every(({ song }) => matchesEra(song, 'latest_2025_2026') && matchesLength(song.durationSec, 'fivePlus')));
+  assert.deepEqual(recommendSongsByMood([sharon], { ...criteria, length: 'fivePlus' }), []);
+});
+
+test('the sound choices distinguish a quiet song from an energetic one without filtering by genre', () => {
+  const base = { ...HIGEDAN_SONGS[0], moods: ['push_back'] as typeof HIGEDAN_SONGS[number]['moods'], situations: ['morning_commute'] as typeof HIGEDAN_SONGS[number]['situations'], sound: 'piano_pop' as const };
+  const energetic = { ...base, id: 'energetic-example', energyLevel: 9 };
+  const calm = { ...base, id: 'calm-example', energyLevel: 3 };
+  assert.equal(recommendSongsByMood([calm, energetic], { ...originalCriteria, sound: 'rhythm' })[0].song.id, energetic.id);
+  assert.equal(recommendSongsByMood([calm, energetic], { ...originalCriteria, sound: 'gentle' })[0].song.id, calm.id);
+});
+
+test('all answer combinations keep results distinct and give every song a chance to appear', () => {
+  const moods = ['push_back', 'heartbreak_night', 'euphoric_drive', 'deep_lyric'] as const;
+  const situations = ['morning_commute', 'late_night_alone', 'live_warmup', 'weekend_walk'] as const;
+  const sounds = ['rhythm', 'gentle', 'melody', 'powerful'] as const;
+  const eras = ['any', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026'] as const;
+  const lengths = ['any', 'under4', 'fourToFive', 'fivePlus'] as const;
+  const seen = new Set<string>();
+  for (const mood of moods) for (const situation of situations) for (const sound of sounds)
+    for (const era of eras) for (const length of lengths) {
+      const criteria = { mood, situation, sound, era, length };
+      const top = recommendSongsByMood(HIGEDAN_SONGS, criteria).slice(0, 3);
+      assert.ok(top.length >= 2);
+      assert.equal(new Set(top.map(match => match.song.id)).size, top.length);
+      assert.ok(top.every(({ song }) => matchesEra(song, era) && (length === 'any' || matchesLength(song.durationSec, length))));
+      top.forEach(match => seen.add(match.song.id));
+    }
+  assert.equal(seen.size, HIGEDAN_SONGS.length);
+  assert.deepEqual(recommendSongsByMood(HIGEDAN_SONGS, originalCriteria), recommendSongsByMood(HIGEDAN_SONGS, originalCriteria));
 });
