@@ -60,6 +60,7 @@ export interface SacredSpot {
   categoryLabel?: string;
   // areaは広域の目安、noneは地図での訪問案内をしない場所。
   mapScope?: 'area' | 'none';
+  mapAreaNote?: string;
   relatedSong: string;
   relatedSongLabel?: string;
   addressHint: string;
@@ -147,6 +148,36 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "historySource": "https://www.diskgarage.com/digaonline/pleasure/55307"
   },
   {
+    "id": "spot-matsue-b1-current",
+    "name": "松江B1（現在の会場）",
+    "area": "島根・松江",
+    "categories": ["ライブ会場", "メンバーの思い出"],
+    "categoryLabel": "移転後のライブ会場",
+    "relatedSong": "",
+    "addressHint": "島根県松江市寺町198-57 ボートピア松江ビル地下1階",
+    "description": "小笹大輔が地元の仲間と活動し、スタッフも務めたと振り返るライブハウス。松江B1は2015年に現在の場所へ移転しました。",
+    "fanTip": "2012年の初ライブの会場として記録されているB1は移転前の場所です。対談の出来事が移転前後どちらかは確認できていません。公演・利用の予定は会場の案内をご確認ください。",
+    "source": "https://eplus.jp/sf/venue/6900040",
+    "historySource": "https://blog.j-wave.co.jp/blog/kingsplace/meeting/2.html",
+    "historySourceLabel": "小笹さんと石原慎也さんの対談（2021年10月7日）",
+    "additionalSources": [{"label": "会場の移転について", "url": "https://www.livewalker.com/web/detail/7691"}]
+  },
+  {
+    "id": "spot-sound-ace-wada",
+    "name": "サウンドエース和田",
+    "area": "島根・松江",
+    "categories": ["街とヒゲダン"],
+    "categoryLabel": "ファンの訪問記",
+    "relatedSong": "",
+    "addressHint": "島根県松江市内中原町176",
+    "description": "松江の音楽教室・スタジオ。2022年のファンの訪問記では、ヒゲダンが練習に利用した場所として紹介されています。利用時期などの詳しい裏付けは確認できていません。",
+    "fanTip": "スタジオや音楽教室は通常の利用者のための施設です。利用方法や見学の可否は施設の案内をご確認ください。",
+    "source": "https://soundacewada.jp/company.html",
+    "historySource": "https://lovely088.hatenablog.com/entry/higedan_2",
+    "historySourceLabel": "2022年のファンの訪問記",
+    "additionalSources": [{"label": "スタジオの利用案内", "url": "https://soundacewada.jp/musicstudio.html"}]
+  },
+  {
     "id": "spot-shimane-univ",
     "name": "島根大学 松江キャンパス",
     "area": "島根・松江",
@@ -216,6 +247,23 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "historySource": "https://www.diskgarage.com/digaonline/pleasure/55307"
   },
   {
+    "id": "spot-karakoro-area",
+    "name": "京店カラコロ広場",
+    "area": "島根・松江",
+    "categories": ["ライブ会場"],
+    "categoryLabel": "ライブ会場の候補",
+    "mapScope": "area",
+    "mapAreaNote": "地図はカラコロ広場周辺の目安で、当日の詳しい演奏位置を示すものではありません。",
+    "relatedSong": "",
+    "addressHint": "島根県松江市末次本町110",
+    "description": "2015年のフリーライブツアーでは、松江の「カラコロ工房」の24時間テレビ会場が案内されました。近くのカラコロ広場での演奏として紹介するファンの記録もあります。",
+    "fanTip": "カラコロ工房と広場は橋を挟んだ別の場所です。当日の詳しい演奏位置は確認できていません。地図は広場周辺の目安です。",
+    "source": "https://www.city.matsue.lg.jp/sangyo_business/shiteikanrishaseido/shiteikanrishakobonoshirase/4/7457.html",
+    "historySource": "https://rockinon.com/news/detail/128612",
+    "historySourceLabel": "2015年のライブ案内",
+    "additionalSources": [{"label": "広場を紹介したファンの記録", "url": "https://lovely088.hatenablog.com/entry/higedan"}]
+  },
+  {
     "id": "spot-yonago-sanpou",
     "name": "とり料理 さんぽう",
     "area": "鳥取・米子",
@@ -226,6 +274,36 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "fanTip": "通常の飲食店です。営業日や利用方法はお店の案内をご確認ください。",
     "source": "https://tori-sanpou.co.jp/",
     "historySource": "https://newsdig.tbs.co.jp/articles/bss/38780?display=1"
+  },
+  {
+    "id": "spot-shunmon-yonago",
+    "name": "旬門 米子本店",
+    "area": "鳥取・米子",
+    "categories": ["街とヒゲダン"],
+    "categoryLabel": "サインの訪問記録",
+    "relatedSong": "",
+    "addressHint": "鳥取県米子市明治町154-1 パーキングビル1階",
+    "description": "2026年7月の来店記録に、ヒゲダンのサインを見たという報告がある飲食店。閉店した旬門松江店と同じグループです。メンバーの米子本店への来店や勤務は確認できていません。",
+    "fanTip": "サインの展示状況は変わることがあります。営業日や利用方法はお店の案内をご確認ください。",
+    "source": "https://visit-yonago.com/syunmon/",
+    "historySource": "https://retty.me/area/PRE31/ARE288/SUB28801/100000762943/62575808/",
+    "historySourceLabel": "2026年7月の来店記録",
+    "additionalSources": [{"label": "松江店の閉店と姉妹店の案内", "url": "https://unseki.co.jp/blog/close/22535"}]
+  },
+  {
+    "id": "spot-chuka-korou",
+    "name": "中華 虎楼",
+    "area": "島根・松江",
+    "categories": ["街とヒゲダン"],
+    "categoryLabel": "サインの訪問記録",
+    "relatedSong": "",
+    "addressHint": "島根県松江市灘町1-45",
+    "description": "2022年のファンの訪問記に、小笹大輔さんのサインについて記されている中華料理店。2024年にも、店内にヒゲダンの色紙があったという来店者の報告があります。",
+    "fanTip": "現在の展示状況や本人の来店は確認できていません。通常の飲食店として、営業や利用の案内をご確認ください。",
+    "source": "https://tabelog.com/shimane/A3201/A320101/32000288/",
+    "historySource": "https://lovely088.hatenablog.com/entry/higedan_2",
+    "historySourceLabel": "2022年のファンの訪問記",
+    "additionalSources": [{"label": "2024年の来店記録", "url": "https://tabelog.com/shimane/A3201/A320101/32000288/dtlrvwlst/B480044555/"}]
   },
   {
     "id": "spot-izumo-taisha-promotion",
@@ -407,6 +485,19 @@ export const SACRED_SPOTS: SacredSpot[] = [
     ]
   },
   {
+    "id": "spot-hiezu-tulip-court",
+    "name": "イオンモール日吉津 チューリップコート",
+    "area": "鳥取・日吉津",
+    "categories": ["ライブ会場"],
+    "relatedSong": "",
+    "addressHint": "鳥取県西伯郡日吉津村日吉津1160-1",
+    "description": "2015年のフリーライブツアーで、イオン日吉津の西館1階チューリップコートが会場として案内されました。山陰での初期の活動をたどれる場所です。",
+    "fanTip": "現在もイベントスペースとして使われています。施設の営業や催しの案内をご確認ください。",
+    "source": "https://www.aeon.jp/sc/hiezu/info/info_saiji/",
+    "historySource": "https://rockinon.com/news/detail/128612",
+    "historySourceLabel": "2015年のライブ案内"
+  },
+  {
     "id": "spot-okamoto-issenya",
     "name": "岡本一銭屋",
     "area": "鳥取・米子",
@@ -513,6 +604,19 @@ export const SACRED_SPOTS: SacredSpot[] = [
 
 export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
   {
+    id: 'spot-matsue-b1-former',
+    name: '松江B1（移転前）',
+    area: '島根・松江',
+    categories: ['ライブ会場', 'メンバーの思い出'],
+    status: '移転前の会場',
+    description: '2012年7月7日の初ライブについて、藤原聡は日付を語っており、ライブ情報サイトは当日の会場を松江B1と記録しています。B1は2015年に移転したため、現在の会場とは場所が異なります。',
+    sources: [
+      { label: '藤原さんが語った初ライブの日', url: 'https://www.oricon.co.jp/news/2139557/full/' },
+      { label: '2012年の公演記録', url: 'https://www.livefans.jp/events/1990155' },
+      { label: '会場の移転について', url: 'https://www.livewalker.com/web/detail/7691' },
+    ],
+  },
+  {
     id: 'spot-yonago-belier-former',
     name: '米子ベリエ（移転前）',
     area: '鳥取・米子',
@@ -542,9 +646,10 @@ export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
     area: '島根・松江',
     categories: ['街とヒゲダン'],
     status: '2025年閉店',
-    description: '2022年に訪れたファンの記録には、店内にヒゲダンのサインが飾られていたと記されています。店舗は2025年9月20日に閉店しました。メンバーの勤務や来店については確認できていません。',
+    description: '2022年に訪れたファンの記録には、店内にヒゲダンのサインが飾られていたと記されています。店舗は2014年に移転し、2025年9月20日に閉店しました。メンバーの勤務や来店については確認できていません。',
     sources: [
       { label: '2022年の来店記録', url: 'https://lovely088.hatenablog.com/entry/higedan' },
+      { label: '2014年の移転について', url: 'https://shunmongr.com/company/' },
       { label: '閉店についての地域記事', url: 'https://unseki.co.jp/blog/close/22535' },
     ],
   },
