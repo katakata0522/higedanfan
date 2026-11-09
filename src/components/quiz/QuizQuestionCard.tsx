@@ -1,4 +1,4 @@
-import { CheckCircle2, XCircle, RotateCcw, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered } from 'lucide-react';
+import { CheckCircle2, XCircle, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered, ChevronDown } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import type { QuizQuestion, SongItem } from '../../data/higedanData';
 import { formatOrderingSequence } from '../../utils/fanLogic';
@@ -37,7 +37,6 @@ export function QuizQuestionCard({
   useLayoutEffect(() => {
     if (visible && isOrderingQuestion && isOrderingSubmitted && orderingResult.current) {
       orderingResult.current.focus({ preventScroll: true });
-      orderingResult.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
   }, [visible, isOrderingQuestion, isOrderingSubmitted]);
 
@@ -52,11 +51,6 @@ export function QuizQuestionCard({
       ? selectedOrder.filter(item => item !== optionIdx)
       : [...selectedOrder, optionIdx];
     onAnswerChange({ ...answer, selectedOrder: nextOrder });
-  };
-
-  const handleResetOrdering = () => {
-    if (isOrderingSubmitted) return;
-    onAnswerChange({ ...answer, selectedOrder: [] });
   };
 
   const handleSubmitOrdering = () => {
@@ -100,52 +94,9 @@ export function QuizQuestionCard({
       {/* ============================================================
           INTERACTIVE TAP-TO-ORDER SEQUENCE QUIZ UI
           ============================================================ */}
-      {isOrderingQuestion ? !isOrderingSubmitted && (
+      {isOrderingQuestion ? (
         <div className="mt-5 space-y-4">
-          {/* Live 1st -> 4th Sequence Slot Bar & Reset Button */}
-          <div className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3.5 sm:p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-bold text-[#1C1917]">
-                下の4つの選択肢を「1番目 → 2番目 → 3番目 → 4番目」の順番に押してください
-              </span>
-              {!isOrderingSubmitted && (
-                <button
-                  type="button"
-                  onClick={handleResetOrdering}
-                  disabled={selectedOrder.length === 0}
-                  className="inline-flex items-center gap-1 rounded-lg border border-[#D5CEC2] bg-white px-2.5 py-1 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] disabled:opacity-40 cursor-pointer"
-                >
-                  <RotateCcw className="h-3 w-3" />
-                  選択順をリセット
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              {[0, 1, 2, 3].map((slotPos) => {
-                const chosenOptionIdx = selectedOrder[slotPos];
-                const chosenLabel =
-                  chosenOptionIdx !== undefined
-                    ? question.options[chosenOptionIdx]
-                    : '未選択';
-                return (
-                  <div
-                    key={`slot-${slotPos}`}
-                    className={`rounded-lg border px-3 py-2 text-xs ${
-                      chosenOptionIdx !== undefined
-                        ? 'border-[#1C1917] bg-white text-[#1C1917] font-bold'
-                        : 'border-dashed border-[#D5CEC2] bg-[#F2EFE9]/60 text-[#78716C]'
-                    }`}
-                  >
-                    <div className="text-[10px] font-mono-num font-bold text-[#C83E2B]">
-                      {slotPos + 1}番目
-                    </div>
-                    <div className="mt-0.5 min-w-0 wrap-anywhere whitespace-normal">{chosenLabel}</div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          {!isOrderingSubmitted && <p className="text-xs text-[#57534E]">順番に選んでください。もう一度押すと選択を取り消せます。</p>}
 
           {/* 4 Selectable Option Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -163,6 +114,8 @@ export function QuizQuestionCard({
                 <button
                   key={opt}
                   type="button"
+                  aria-pressed={isSelected}
+                  disabled={isOrderingSubmitted}
                   onClick={() => handleToggleOrderOption(idx)}
                   className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 sm:p-4 text-left text-sm font-bold transition-colors ${btnStyle}`}
                 >
@@ -307,11 +260,12 @@ export function QuizQuestionCard({
 
           {/* Verified Source Articles Box */}
           {question.sources && question.sources.length > 0 && (
-            <div className="rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-[#1E3A5F]">
+            <details className="group rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
+              <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-bold text-[#1E3A5F] [&::-webkit-details-marker]:hidden">
                 <Newspaper className="h-3.5 w-3.5 shrink-0" />
                 <span>出典・参考資料</span>
-              </div>
+                <ChevronDown aria-hidden="true" className="ml-auto h-4 w-4 transition-transform group-open:rotate-180" />
+              </summary>
               <div className="mt-2.5 grid grid-cols-1 gap-2.5">
                 {question.sources.map((src, sIdx) => {
                   const summary = visibleQuizSourceSummary(src);
@@ -342,7 +296,7 @@ export function QuizQuestionCard({
                   );
                 })}
               </div>
-            </div>
+            </details>
           )}
 
         </div>

@@ -11,17 +11,15 @@ import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from
 import { readQuizSession, saveQuizSession } from './quiz/quizSessionStorage';
 
 interface QuizSectionProps {
-  bestScorePercentage: number | null;
   sessionRef: RefObject<QuizSession | null>;
   resetEpoch: string;
-  onUpdateBestScore: (percentage: number) => void;
   songs?: SongItem[];
   onSelectSong?: (song: SongItem) => void;
   initialTab?: 'quiz' | 'archive';
 }
 
 export function QuizSection({
-  bestScorePercentage, sessionRef, resetEpoch, onUpdateBestScore, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
@@ -49,7 +47,6 @@ export function QuizSection({
       updateSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER });
     } else {
       updateSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER });
-      onUpdateBestScore(calculateQuizResult(score, questions).percentage);
     }
   }
 
@@ -91,7 +88,7 @@ export function QuizSection({
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
-              {quizStage === 'playing' ? '検定を終了する' : 'コース選択へ戻る'}
+              {quizStage === 'playing' ? '検定を終了してコース選択へ' : 'コース選択へ戻る'}
             </button>
           )}
         </div>
@@ -139,9 +136,6 @@ export function QuizSection({
             </button>
           </div>
 
-          <span className="text-xs font-mono-num text-[#78716C]">
-            全コース共通の最高正答率： <strong className="text-[#1C1917]">{bestScorePercentage === null ? '記録なし' : `${bestScorePercentage}%`}</strong>
-          </span>
         </div>
 
         {viewTab === 'quiz' && quizStage === 'select' && (
@@ -149,19 +143,25 @@ export function QuizSection({
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
-          <QuizQuestionCard
-            key={question.id}
-            visible={viewTab === 'quiz'}
-            question={question}
-            currentIndex={currentIndex}
-            questionCount={questions.length}
-            score={score}
-            answer={answer}
-            onAnswerChange={next => updateSession({ ...session, answer: next })}
-            relatedSong={songs.find(song => song.id === question.relatedSongId)}
-            onSelectSong={onSelectSong}
-            onNext={nextQuestion}
-          />
+          <>
+            <QuizQuestionCard
+              key={question.id}
+              visible={viewTab === 'quiz'}
+              question={question}
+              currentIndex={currentIndex}
+              questionCount={questions.length}
+              score={score}
+              answer={answer}
+              onAnswerChange={next => updateSession({ ...session, answer: next })}
+              relatedSong={songs.find(song => song.id === question.relatedSongId)}
+              onSelectSong={onSelectSong}
+              onNext={nextQuestion}
+            />
+            {viewTab === 'quiz' && <button type="button" onClick={chooseCourse}
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#57534E] underline underline-offset-4 hover:text-[#C83E2B] cursor-pointer">
+              <ArrowLeft className="h-4 w-4" />検定を終了してコース選択へ
+            </button>}
+          </>
         )}
         {quizStage === 'finished' && (
           <QuizResultCard

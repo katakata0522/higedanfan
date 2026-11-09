@@ -247,6 +247,27 @@ test('restores the last published ordering questions after their course or quest
   }
 });
 
+test('a revised ordering question restores the original in-progress answer and options', () => {
+  const recordStore = records('generation-a');
+  const oldQuestions = getCourseQuestions('intermediate', 'vol2', 'published');
+  const oldSession: QuizSession = {
+    ...INITIAL_SESSION, stage: 'playing', difficulty: 'intermediate', scope: 'vol2', currentIndex: 5,
+    answer: { selectedOption: null, selectedOrder: [3, 2], isOrderingSubmitted: false },
+  };
+  assert.equal(oldQuestions[5].id, 'q42');
+  assert.equal(oldQuestions[5].options[3], 'バンド初ライブ');
+  const signature = JSON.stringify(oldQuestions.map(q => [
+    q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+  ]));
+  const oldRaw = JSON.stringify({ version: 2, resetEpoch: 'generation-a', courseSignature: signature, session: oldSession });
+  const sessionStore = memoryStore({ [QUIZ_KEY]: oldRaw });
+  const restored = readQuizSession(sessionStore, recordStore);
+  assert.deepEqual(restored, { ...oldSession, questionSet: 'published' });
+  assert.equal(sessionStore.getItem(QUIZ_KEY), oldRaw);
+  assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+});
+
 test('storage access or quota errors leave the in-memory quiz usable', () => {
   const recordStore = records('');
   const denied = {

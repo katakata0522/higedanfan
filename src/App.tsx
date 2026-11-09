@@ -331,8 +331,6 @@ export default function App() {
                     key={records.resetEpoch}
                     resetEpoch={records.resetEpoch}
                     sessionRef={quizSession}
-                    bestScorePercentage={records.bestQuizScore}
-                    onUpdateBestScore={records.updateBestQuizScore}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
                     initialTab={
