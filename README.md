@@ -14,3 +14,9 @@
 | 楽曲ガイドの読み検索 | `src/data/songReadings.ts`、[曲ごとの確認資料](docs/song-readings.md) |
 
 楽曲ガイドとセトリは同じ録音データを参照します。曲の情報を更新するときは該当する曲IDのデータと出典を確認してください。個人記録の保存形式を変更するときは、以前のブラウザに残っている記録の復元も確認します。
+
+検索向けのHTMLは `scripts/generateSongPages.ts` と `vite.config.ts` から生成します。`songs/*/index.html` を直接編集せず、紹介文やデータの正本を更新して `npm run generate:song-pages` を実行してください。曲のタイトル・説明・canonicalと、JavaScript実行前にも読める曲リンクは `npm run test:browser` で検証します。
+
+CSPは `scripts/siteHtml.ts` が正本です。本番では同じサイトの外部ファイルからだけJavaScriptを実行し、ページへ直接書くコードやイベント属性は許可しません。Viteの開発用コードとWebSocket接続は開発時だけ許可します。CSPのマーカーが残った編集用HTMLをそのまま配信せず、`npm run build` の `dist/` を使用してください。ブラウザ検証では入力・保存・復元とCSPの実効性も確認します。
+
+依存の既知の脆弱性は `npm audit --audit-level=low` で確認し、PRのCIでも失敗時に公開を止めます。TypeScriptの `strict` を維持し、入力値はテキストとして扱い、HTMLへ直接挿入しないでください。

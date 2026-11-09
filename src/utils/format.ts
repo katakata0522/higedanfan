@@ -1,4 +1,4 @@
-import { isTempoUnderReview } from '../data/tempoReviewStatus';
+import { isTempoUnderReview } from '../data/tempoReviewStatus.ts';
 
 export function formatDateDot(date: Date = new Date()): string {
   const y = date.getFullYear();

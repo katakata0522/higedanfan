@@ -7,6 +7,7 @@ import { chromium } from 'playwright';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
+import { verifyStaticSeo, verifyInputAndScriptBoundaries } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
 const ids = [...publishedSongPageIds].sort();
@@ -375,6 +376,8 @@ let browser;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  await verifyStaticSeo(browser, root, ids);
+  await verifyInputAndScriptBoundaries(browser, root);
   await verifyGuideAndSetlistUsability(browser);
   if (!process.argv.includes('--ux-only')) {
     await verifyImmediateReload(browser);
