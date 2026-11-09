@@ -581,7 +581,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               <select id="map-place" className="mx-2 min-h-[44px] max-w-full border p-2" value={mapSpot.id} onChange={e=>setMapSpotId(e.target.value)}>
                 {mapSpots.map(s=><option key={s.id} value={s.id}>{s.name}{s.mapScope === 'area' ? '（エリアの目安）' : ''}</option>)}
               </select>
-              {mapSpot.mapScope === 'area' && <p className="mt-2 text-xs leading-relaxed text-[#57534E]">地図は周辺エリアの目安で、具体的な撮影地点を示すものではありません。</p>}
+              {mapSpot.mapScope === 'area' && <p className="mt-2 text-xs leading-relaxed text-[#57534E]">{mapSpot.mapAreaNote ?? '地図は周辺エリアの目安で、具体的な撮影地点を示すものではありません。'}</p>}
               <iframe className="mt-3 w-full rounded-xl border" height="280" title={mapSpot.name+'の地図'} loading="lazy" src={'https://maps.google.com/maps?output=embed&q='+mapQuery}></iframe>
               <a className="underline text-sm" href={'https://www.google.com/maps/search/?api=1&query='+mapQuery} target="_blank" rel="noreferrer">Google マップで開く・経路検索 ↗</a>
             </section>}
