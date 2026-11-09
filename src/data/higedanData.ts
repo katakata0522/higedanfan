@@ -50,13 +50,14 @@ export interface SongItem {
   isHiddenGem?: boolean;
 }
 
-export type SacredSpotCategory = 'MVロケ地' | 'メンバーの思い出' | 'ライブ会場' | '街とヒゲダン';
+export type SacredSpotCategory = 'MVロケ地' | 'メンバーの思い出' | 'メンバーのおすすめ' | 'ライブ会場' | '街とヒゲダン';
 
 export interface SacredSpot {
   id: string;
   name: string;
   area: string;
   categories: SacredSpotCategory[];
+  categoryLabel?: string;
   // areaは広域の目安、noneは地図での訪問案内をしない場所。
   mapScope?: 'area' | 'none';
   relatedSong: string;
@@ -66,7 +67,18 @@ export interface SacredSpot {
   fanTip: string;
   source: string;
   historySource?: string;
+  historySourceLabel?: string;
   additionalSources?: { label: string; url: string }[];
+}
+
+export interface HistoricalSacredSpot {
+  id: string;
+  name: string;
+  area: string;
+  categories: SacredSpotCategory[];
+  status: string;
+  description: string;
+  sources: { label: string; url: string }[];
 }
 
 export interface TourArchive {
@@ -145,7 +157,11 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "fanTip": "授業や研究が行われる場所です。訪問や見学の際は事前に大学の最新案内を確認し、大学の方々の活動に配慮しましょう。",
     "source": "https://www.shimane-u.ac.jp/campus_maps/map_matsue.html",
     "historySource": "https://guide.line.me/ja/features-and-columns/interview001.html",
-    "additionalSources": [{"label": "学外者向けの案内（2022年）", "url": "https://www.shimane-u.ac.jp/docs/2020080500038/"}]
+    "additionalSources": [
+      {"label": "結成についての本人の話", "url": "https://www.j-wave.co.jp/original/tokiohot100/guest_past/past_20161106.htm"},
+      {"label": "大学公式キャンパスツアー", "url": "https://museum.shimane-u.ac.jp/campustour.html"},
+      {"label": "学外者向けの案内（2022年当時）", "url": "https://www.shimane-u.ac.jp/docs/2020080500038/"}
+    ]
   },
   {
     "id": "spot-yonago-laughs",
@@ -154,11 +170,14 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "categories": ["メンバーの思い出", "ライブ会場"],
     "relatedSong": "日曜日のラブレター / コーヒーとシロップ",
     "addressHint": "鳥取県米子市道笑町1丁目3 BMEビル1階",
-    "description": "藤原聡が中学生の頃、初めてライブハウスで音楽を観た場所。後にヒゲダンもツアーでこのステージに立ちました。",
-    "fanTip": "ライブのある日は会場のスケジュールを確認してください。",
+    "description": "前身は、2006年に移転した米子ベリエ。藤原聡は中学生の頃、ベリエで初めてライブハウスの音楽に触れたと語っています。後にヒゲダンも、この会場でツアー公演を行いました。",
+    "fanTip": "藤原さんが当時訪れたのが移転前後のどちらかは確認できていません。公演や営業の予定は会場の案内をご確認ください。",
     "source": "https://aztic.net/laughs/",
     "historySource": "https://www.diskgarage.com/digaonline/pleasure/53833",
-    "additionalSources": [{"label": "2018年のツアー日程", "url": "https://www.lastrum.co.jp/news/10842/"}]
+    "additionalSources": [
+      {"label": "ベリエの移転について", "url": "https://camp-fire.jp/projects/409283/view"},
+      {"label": "2018年のツアー日程", "url": "https://www.lastrum.co.jp/news/10842/"}
+    ]
   },
   {
     "id": "spot-nissan-stadium",
@@ -179,7 +198,7 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "categories": ["ライブ会場"],
     "relatedSong": "Subtitle / Same Blue / ミックスナッツ",
     "addressHint": "神奈川県横浜市西区みなとみらい6-2-14",
-    "description": "2026年7月25日・26日のone-man tour 2026の会場です。",
+    "description": "2026年7月25日・26日に行われたone-man tour 2026の横浜会場。",
     "fanTip": "公演日の入退場ルートは施設公式サイトに掲載されています。",
     "source": "https://k-arena.com/access/",
     "historySource": "https://event.higedan.com/feature/zepp2025_hall2026"
@@ -343,26 +362,28 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "id": "spot-okamoto-issenya",
     "name": "岡本一銭屋",
     "area": "鳥取・米子",
-    "categories": ["メンバーの思い出"],
+    "categories": ["メンバーのおすすめ"],
     "relatedSong": "",
     "addressHint": "鳥取県米子市立町1-4",
-    "description": "米子の街で長く親しまれてきた駄菓子屋。藤原聡は地元の対談で、ふらっと立ち寄りたい場所として名前を挙げています。",
+    "description": "米子の街で長く親しまれてきた駄菓子屋。藤原聡が2019年の対談で、ふらっと立ち寄る場所として紹介しています。本人が訪れたことがあるかは、この対談では確認できません。",
     "fanTip": "営業日や営業時間は変わることがあります。普段のお買い物のお客さんにも配慮して訪れましょう。",
     "source": "https://www.city.yonago.lg.jp/secure/11394/2025guidebook00.pdf",
     "historySource": "https://wasshoi-yonago.com/20190808-02",
+    "historySourceLabel": "藤原さんの対談を読む",
     "additionalSources": [{"label": "2026年の店主取材", "url": "https://newsdig.tbs.co.jp/articles/bss/2649500?page=2"}]
   },
   {
     "id": "spot-kanda-shrine-yonago",
     "name": "勝田神社（かんだじんじゃ）",
     "area": "鳥取・米子",
-    "categories": ["メンバーの思い出"],
+    "categories": ["メンバーのおすすめ"],
     "relatedSong": "",
     "addressHint": "鳥取県米子市博労町2-10",
-    "description": "地元で「かんださん」と親しまれる神社。藤原聡が米子のおすすめの場所を聞かれ、訪れてほしいと語っています。",
+    "description": "地元で「かんださん」と親しまれる神社。藤原聡が2019年の対談で、米子を訪れる人におすすめしています。本人が訪れたことがあるかは、この対談では確認できません。",
     "fanTip": "参拝や撮影は神社の案内に従い、地域の方やほかの参拝者への配慮を忘れずに。",
     "source": "https://katsutajinja.or.jp/",
-    "historySource": "https://wasshoi-yonago.com/20190808-02"
+    "historySource": "https://wasshoi-yonago.com/20190808-02",
+    "historySourceLabel": "藤原さんの対談を読む"
   },
   {
     "id": "spot-bookcenter-cosmo-izumo",
@@ -382,6 +403,7 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "name": "豊洲ぐるり公園",
     "area": "東京・豊洲",
     "categories": ["MVロケ地"],
+    "categoryLabel": "MVロケ地の候補",
     "relatedSong": "Choral A",
     "relatedSongLabel": "ロケ地の候補に挙がる作品",
     "addressHint": "東京都江東区豊洲6丁目1番先・豊洲5丁目1番先",
@@ -395,14 +417,19 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "name": "笠松運動公園 山新スイミングアリーナ",
     "area": "茨城・ひたちなか",
     "categories": ["MVロケ地"],
+    "categoryLabel": "MVロケ地の候補",
     "relatedSong": "Subtitle",
     "relatedSongLabel": "ロケ地の候補に挙がる作品",
     "addressHint": "茨城県ひたちなか市佐和2197-28",
-    "description": "「Subtitle」のMVに映るスケートリンクの候補として、ファンが挙げている施設。制作側による撮影地の発表は確認できていません。",
+    "description": "「Subtitle」の公式MV概要欄には、笠松運動公園の撮影協力が記されています。園内の山新スイミングアリーナがスケートリンクの撮影地という説はありますが、施設名までは確認できていません。",
     "fanTip": "プールやスケート場は季節や行事によって利用できる時間が変わります。訪問前に施設の予定をご確認ください。",
     "source": "https://www.ibaraki-sports.or.jp/kasamatsu2/",
-    "historySource": "https://ameblo.jp/hatch-kai/entry-12771586496.html",
-    "additionalSources": [{"label": "プール・スケート場の案内", "url": "https://www.ibaraki-sports.or.jp/kasamatsu2/%E3%83%97%E3%83%BC%E3%83%AB%E3%83%BB%E3%82%A2%E3%82%A4%E3%82%B9%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%88%E5%A0%B4/"}]
+    "historySource": "https://www.youtube.com/watch?v=hN5MBlGv2Ac",
+    "historySourceLabel": "公式MVの概要欄",
+    "additionalSources": [
+      {"label": "ロケ地候補についてのファンの記事", "url": "https://ameblo.jp/hatch-kai/entry-12771586496.html"},
+      {"label": "プール・スケート場の案内", "url": "https://www.ibaraki-sports.or.jp/kasamatsu2/%E3%83%97%E3%83%BC%E3%83%AB%E3%83%BB%E3%82%A2%E3%82%A4%E3%82%B9%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%88%E5%A0%B4/"}
+    ]
   },
   {
     "id": "spot-usuda-deep-space-center",
@@ -428,9 +455,27 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "relatedSongLabel": "撮影された作品",
     "addressHint": "茨城県常陸大宮市（撮影地の紹介）",
     "description": "「Laughter」のMVが撮影された場所として、いばらきフィルムコミッションが紹介しています。",
-    "fanTip": "事業用の施設で、一般見学や立ち入りの可否は確認できていません。撮影地の紹介にとどめ、地図や経路案内は掲載していません。",
-    "source": "https://www.ibarakiguide.jp/ibaraki-fc/data/doc/1758080247_doc_2_0.pdf"
+    "fanTip": "通常は非公開の事業用施設です。フィルムコミッションの過去の案内では、敷地内への立ち入りや見学はできないとされています。撮影地の紹介にとどめ、地図や経路案内は掲載していません。",
+    "source": "https://www.ibarakiguide.jp/ibaraki-fc/data/doc/1758080247_doc_2_0.pdf",
+    "additionalSources": [
+      {"label": "ロケ地の見学についての案内", "url": "https://www.ibarakiguide.jp/ibaraki-fc/data/doc/1758081362_doc_2_0.pdf"}
+    ]
   }
+];
+
+export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
+  {
+    id: 'spot-yonago-belier-former',
+    name: '米子ベリエ（移転前）',
+    area: '鳥取・米子',
+    categories: ['ライブ会場'],
+    status: '移転前の会場',
+    description: '米子ベリエは1999年に紺屋町で開業し、2006年に道笑町へ移転。現在の米子 AZTiC laughsにつながるライブハウスです。藤原聡が初めてライブを観たベリエが、移転前後のどちらだったかは確認できていません。',
+    sources: [
+      { label: '会場の移転について', url: 'https://camp-fire.jp/projects/409283/view' },
+      { label: '藤原さんの初めてのライブの話', url: 'https://www.diskgarage.com/digaonline/pleasure/53833' },
+    ],
+  },
 ];
 import tourArchiveRecords from './tourArchiveRecords.json';
 
