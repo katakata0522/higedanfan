@@ -58,6 +58,18 @@ test('answers survive going back and session restoration until the user restarts
   assert.deepEqual(restoreMoodSession(sessions, records), newMoodSession());
 });
 
+test('new sound choices and previously saved genre choices both survive restoration', () => {
+  const sessions = memoryStore();
+  const records = memoryStore();
+  const legacy = completedSession();
+  assert.equal(saveMoodSession(legacy, '', sessions, records), true);
+  assert.deepEqual(restoreMoodSession(sessions, records), legacy);
+  const updated = selectMoodAnswer(editMoodAnswer(legacy, 3), 'gentle');
+  assert.equal(updated.completed, true);
+  assert.equal(saveMoodSession(updated, '', sessions, records), true);
+  assert.deepEqual(restoreMoodSession(sessions, records), updated);
+});
+
 test('reset generations prevent stale restoration and stale writes, without deleting current data during hydration', () => {
   const records = memoryStore({ [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'old' }) });
   const sessions = memoryStore();

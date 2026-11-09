@@ -4,11 +4,13 @@ import type { SongItem } from '../../data/higedanData';
 import {
   ERA_PREFERENCE_LABELS,
   isSafeAssetUrl,
+  isSoundMatch,
   LENGTH_PREFERENCE_LABELS,
-  MOOD_LABELS,
-  scoreSongsByMood,
-  SITUATION_LABELS,
+  MOOD_CHOICE_LABELS,
+  recommendSongsByMood,
+  SITUATION_CHOICE_LABELS,
   SOUND_LABELS,
+  SOUND_PREFERENCE_LABELS,
 } from '../../utils/fanLogic';
 import { GuideArtwork } from '../GuideArtwork';
 import { MoodListen, officialVideoId } from './MoodListen';
@@ -35,24 +37,33 @@ export function MoodResults({
   criteria, onEditAnswer, theme, onSelectTheme,
 }: MoodResultsProps) {
   const [shareRank, setShareRank] = useState<number | null>(null);
+  const [page, setPage] = useState(0);
   const resultHeadingRef = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
     resultHeadingRef.current?.focus();
   }, []);
 
-  const matches = useMemo(() => scoreSongsByMood(songs, criteria).slice(0, 3), [songs, criteria]);
+  const recommendations = useMemo(() => recommendSongsByMood(songs, criteria), [songs, criteria]);
+  const matches = recommendations.slice(page * 3, page * 3 + 3);
   const [bestMatch, ...subMatches] = matches;
   const bestCopy = bestMatch ? moodResultCopy(bestMatch.song, criteria) : null;
+  const showNearMatchNotice = Boolean(bestMatch
+    && (!bestMatch.song.moods.includes(criteria.mood) || !isSoundMatch(bestMatch.song, criteria.sound)));
   const answers: { step: MoodStep; name: string; value: string }[] = [
-    { step: 1, name: '気分', value: MOOD_LABELS[criteria.mood] },
-    { step: 2, name: '場面', value: SITUATION_LABELS[criteria.situation] },
-    { step: 3, name: '曲調', value: SOUND_LABELS[criteria.sound] },
+    { step: 1, name: '気分', value: MOOD_CHOICE_LABELS[criteria.mood] },
+    { step: 2, name: '場面', value: SITUATION_CHOICE_LABELS[criteria.situation] },
+    { step: 3, name: '音', value: SOUND_PREFERENCE_LABELS[criteria.sound] },
     { step: 4, name: '時期', value: ERA_PREFERENCE_LABELS[criteria.era] },
     { step: 5, name: '長さ', value: LENGTH_PREFERENCE_LABELS[criteria.length] },
   ];
 
   const handleOpenSongDetail = (song: SongItem) => {
     onSelectSong(song);
+  };
+  const changePage = (next: number) => {
+    setShareRank(null);
+    setPage(next);
+    resultHeadingRef.current?.focus();
   };
 
   return (
@@ -74,8 +85,26 @@ export function MoodResults({
             </button>
           ))}
         </div>
-        <p className="mt-2 leading-relaxed">すべての条件に一致しない曲も、近い候補として紹介することがあります。</p>
       </div>
+
+      {recommendations.length === 0 && (
+        <div className="rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7">
+          <p className="text-base font-bold text-[#1C1917]">ぴったりの曲が見つからなかったみたい。</p>
+          <p className="mt-2 text-sm leading-relaxed text-[#57534E]">時期か曲の長さを変えて、もう一度探してみよう。</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={() => onEditAnswer(4)} className="rounded-lg border border-[#D5CEC2] px-3 py-2 text-sm font-bold hover:bg-[#F2EFE9]">時期を変える</button>
+            <button type="button" onClick={() => onEditAnswer(5)} className="rounded-lg border border-[#D5CEC2] px-3 py-2 text-sm font-bold hover:bg-[#F2EFE9]">長さを変える</button>
+          </div>
+        </div>
+      )}
+
+      {showNearMatchNotice && (
+        <p className="rounded-xl bg-[#F2EFE9] px-4 py-3 text-sm leading-relaxed text-[#57534E]">
+          {criteria.era !== 'any' || criteria.length !== 'any'
+            ? '選んだ時期と長さに合う曲から探しました。気分や音のイメージは少し違うかもしれません。'
+            : '選んだ気分や音に近い曲を探しました。少し違う雰囲気の曲も楽しんでみてください。'}
+        </p>
+      )}
 
       {/* First recommendation and listening link */}
       {bestMatch && bestCopy && (
@@ -252,6 +281,13 @@ export function MoodResults({
               );
             })}
           </div>
+        </div>
+      )}
+
+      {(page > 0 || (page + 1) * 3 < recommendations.length) && (
+        <div className="flex flex-wrap justify-center gap-3">
+          {page > 0 && <button type="button" onClick={() => changePage(page - 1)} className="rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-sm font-bold text-[#1C1917] hover:bg-[#F2EFE9]">前のおすすめに戻る</button>}
+          {(page + 1) * 3 < recommendations.length && <button type="button" onClick={() => changePage(page + 1)} className="rounded-lg border border-[#C83E2B] bg-white px-4 py-2.5 text-sm font-bold text-[#A93020] hover:bg-[#FFF6F3]">ほかの曲も見てみる</button>}
         </div>
       )}
     </div>

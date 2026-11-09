@@ -7,9 +7,9 @@ import {
   ERA_PREFERENCE_LABELS,
   isSafeAssetUrl,
   LENGTH_PREFERENCE_LABELS,
-  MOOD_LABELS,
-  SITUATION_LABELS,
-  SOUND_LABELS,
+  MOOD_CHOICE_LABELS,
+  SITUATION_CHOICE_LABELS,
+  SOUND_PREFERENCE_LABELS,
   type MoodCriteria,
   type ScoredSongMatch,
 } from '../../utils/fanLogic';
@@ -231,8 +231,8 @@ export function MoodShareCard({
                   theme === 'dark' ? 'text-white/70' : 'text-[#57534E]'
                 }`}
               >
-                {MOOD_LABELS[criteria.mood]} ／ {SITUATION_LABELS[criteria.situation]} ／{' '}
-                {SOUND_LABELS[criteria.sound]}
+                {MOOD_CHOICE_LABELS[criteria.mood]} ／ {SITUATION_CHOICE_LABELS[criteria.situation]} ／{' '}
+                {SOUND_PREFERENCE_LABELS[criteria.sound]}
                 {criteria.era && <> ／ {ERA_PREFERENCE_LABELS[criteria.era]}</>}
                 {criteria.length && <> ／ {LENGTH_PREFERENCE_LABELS[criteria.length]}</>}
               </div>

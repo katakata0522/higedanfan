@@ -130,7 +130,7 @@ test('scoreSongsByMood prioritizes songs matching mood, situation, and sound and
     sound: 'piano_pop',
   });
   assert.ok(heartbreakExplanation.includes(HIGEDAN_SONGS[0].musicalHighlight));
-  assert.equal(heartbreakExplanation.includes('場面「ひとり静かに過ごす夜」'), HIGEDAN_SONGS[0].situations.includes('late_night_alone'));
+  assert.equal(heartbreakExplanation.includes('場面「ひとりで過ごす夜」'), HIGEDAN_SONGS[0].situations.includes('late_night_alone'));
 });
 
 test('filterAndSortDiscography filters by era, sound, and search query', () => {

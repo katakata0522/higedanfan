@@ -48,7 +48,7 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
               マイソング診断
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              ５つの質問から、今のあなたに聴いてほしい曲を探します。
+              今の気分と一緒に、ヒゲダンの一曲を探そう。
             </p>
           </div>
 
