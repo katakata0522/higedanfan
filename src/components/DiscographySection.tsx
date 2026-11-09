@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import {
   EraTag,
+  HISTORICAL_SACRED_SPOTS,
   SACRED_SPOTS,
   SacredSpotCategory,
   SongItem,
@@ -47,7 +48,7 @@ interface DiscographySectionProps {
 
 const INITIAL_VISIBLE_COUNT = 18;
 const SPOT_CATEGORIES: (SacredSpotCategory | 'all')[] = [
-  'all', 'MVロケ地', 'メンバーの思い出', 'ライブ会場', '街とヒゲダン',
+  'all', 'MVロケ地', 'メンバーの思い出', 'メンバーのおすすめ', 'ライブ会場', '街とヒゲダン',
 ];
 const PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 const PITCH_JA = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ'];
@@ -129,6 +130,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         : SACRED_SPOTS.filter((s) => s.categories.includes(selectedSpotCategory)),
     [selectedSpotCategory]
   );
+  const filteredHistoricalSpots = selectedSpotCategory === 'all'
+    ? HISTORICAL_SACRED_SPOTS
+    : HISTORICAL_SACRED_SPOTS.filter(spot => spot.categories.includes(selectedSpotCategory));
 
   const [mapSpotId, setMapSpotId] = useState('');
   const mapSpots = filteredSpots.filter(s => s.mapScope !== 'none');
@@ -599,7 +603,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
                         {spot.name}
                       </h4>
-                      <p className="mt-1 text-xs font-bold text-[#1E3A5F]">{spot.categories.join(' / ')}</p>
+                      <p className="mt-1 text-xs font-bold text-[#1E3A5F]">{spot.categoryLabel ?? spot.categories.join(' / ')}</p>
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
                         {spot.description}
                       </p>
@@ -609,7 +613,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <div className="mt-2 flex flex-wrap gap-3">
                           {spot.mapScope !== 'none' && <button type="button" className="underline" onClick={()=>{setMapSpotId(spot.id); document.getElementById('map-place')?.focus();}}>{spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}</button>}
                           <a className="underline" href={spot.source} target="_blank" rel="noreferrer">場所・作品の情報 ↗</a>
-                          {spot.historySource && <a className="underline" href={spot.historySource} target="_blank" rel="noreferrer">つながりの出典 ↗</a>}
+                          {spot.historySource && <a className="underline" href={spot.historySource} target="_blank" rel="noreferrer">{spot.historySourceLabel ?? 'つながりの出典'} ↗</a>}
                           {spot.additionalSources?.map(source => <a key={source.url} className="underline" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}
                         </div>
                       </div>
@@ -637,6 +641,28 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 );
               })}
             </div>
+            {filteredHistoricalSpots.length > 0 && (
+              <section aria-labelledby="historical-spots-heading" className="rounded-xl border border-[#E6E1D6] bg-[#F8F6F1] p-4 sm:p-5">
+                <h3 id="historical-spots-heading" className="text-base font-bold text-[#1C1917]">以前の場所・移転の記録</h3>
+                <p className="mt-1 text-xs leading-relaxed text-[#57534E]">
+                  移転や閉店などで、当時とは場所や形が変わったスポットの記録です。
+                </p>
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {filteredHistoricalSpots.map(spot => (
+                    <article key={spot.id} className="rounded-xl border border-[#E6E1D6] bg-white p-5">
+                      <p className="text-xs font-bold text-[#C83E2B]">{spot.area} <span className="ml-2 text-[#57534E]">{spot.status}</span></p>
+                      <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">{spot.name}</h4>
+                      <p className="mt-2 text-xs leading-relaxed text-[#57534E]">{spot.description}</p>
+                      <div className="mt-3 flex flex-wrap gap-3 border-t border-[#E6E1D6] pt-3 text-xs">
+                        {spot.sources.map(source => (
+                          <a key={source.url} className="underline" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>
+                        ))}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         )}
       </div>
