@@ -5,7 +5,7 @@ import { catalogEntries } from '../src/data/catalogEntries';
 import { autoSongPage } from '../src/songPages/autoSongPage';
 import { applySongEditorial } from '../src/songPages/applySongEditorial';
 import { editorialArticles } from '../src/songPages/editorialArticles';
-import { officialVideos, relatedSongs } from '../src/songPages/songConnections';
+import { officialVideoDescription, officialVideos, relatedSongs } from '../src/songPages/songConnections';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
 
 const root = join(import.meta.dirname, '..');
@@ -38,7 +38,7 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   const paragraphs = page.overview.map(paragraph => `            <p>${escapeHtml(paragraph)}</p>`).join('\n');
   const listening = `<a href="${escapeHtml(evidence[page.id].apple)}" target="_blank" rel="noreferrer">Apple Musicで聴く</a>`;
   const video = officialVideos[page.id]
-    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noreferrer">公式MVを見る</a>` : '';
+    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noreferrer">YouTubeで聴く${officialVideoDescription(page.id) ? `（${escapeHtml(officialVideoDescription(page.id) ?? '')}）` : ''}</a>` : '';
   const related = relatedSongs(page.id).map(item =>
     `<li><a href="/higedanfan/songs/${escapeHtml(item.id)}/">${escapeHtml(item.title)}</a>：${escapeHtml(item.reason)}</li>`).join('');
   return `<!doctype html>

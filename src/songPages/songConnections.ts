@@ -15,11 +15,12 @@ const editorialConnections: Readonly<Record<string, readonly { id: string; reaso
   'white-noise': [{ id: 'cry-baby', reason: '同じアニメ『東京リベンジャーズ』の主題歌' }],
 };
 
-// Only videos whose title and official channel were checked are included.
+// Official videos or label-provided audio, checked against the song and channel.
 export const officialVideos: Readonly<Record<string, string>> = {
   pretender: 'https://www.youtube.com/watch?v=TQ8WlA2GXbk',
   'yesterday-song': 'https://www.youtube.com/watch?v=DuMqFknYHBs',
   '115man-kilo': 'https://www.youtube.com/watch?v=ReCnlwVZj1M',
+  'uramitsurami-kiwami': 'https://www.youtube.com/watch?v=l4gPIP2KLas',
   subtitle: 'https://www.youtube.com/watch?v=hN5MBlGv2Ac',
   'mixed-nuts': 'https://www.youtube.com/watch?v=CbH2F0kXgTY',
   'cry-baby': 'https://www.youtube.com/watch?v=O1bhZgkC4Gw',
@@ -59,7 +60,74 @@ export const officialVideos: Readonly<Record<string, string>> = {
   'make-me-wonder': 'https://www.youtube.com/watch?v=LU7xD_yx43c',
   elderflower: 'https://www.youtube.com/watch?v=upLTD7DFtng',
   stardust: 'https://www.youtube.com/watch?v=O4fFTWQzXVE',
+  'yuugure-zoi': 'https://www.youtube.com/watch?v=Qi_n6KHDklU',
+  'yuki-seku-asa': 'https://www.youtube.com/watch?v=3MPrtzPA-t8',
+  'parade-indies': 'https://www.youtube.com/watch?v=a5l03rLNox8',
+  'darling-indies': 'https://www.youtube.com/watch?v=n69i0b3k8Oo',
+  'clap-clap': 'https://www.youtube.com/watch?v=zlJSYqcO2-4',
+  'happy-birthday-to-you': 'https://www.youtube.com/watch?v=tuqwU8v9ux0',
+  'koi-no-sarigiwa': 'https://www.youtube.com/watch?v=0ZLN0xqZFkE',
+  'zero-no-mamade': 'https://www.youtube.com/watch?v=ME_ZU0ME4vQ',
+  'nichiyoubi-no-loveletter': 'https://www.youtube.com/watch?v=_bH_0NIi_Vc',
+  'mikansei-na-mamade': 'https://www.youtube.com/watch?v=mS7iQKWy9HU',
+  'knit-no-boushi': 'https://www.youtube.com/watch?v=FvkkN1eE1gg',
+  'yellow-car': 'https://www.youtube.com/watch?v=yJp6PfusBik',
+  'hajimari-no-asa': 'https://www.youtube.com/watch?v=EusUvmUi2Xk',
+  'itan-na-star': 'https://www.youtube.com/watch?v=0OZ15_9YKPc',
+  '55-song': 'https://www.youtube.com/watch?v=eutdES-ynT8',
+  'rolling-song': 'https://www.youtube.com/watch?v=mXrafRk8EHc',
+  'equal-song': 'https://www.youtube.com/watch?v=Q0KH788Qn34',
+  'trailer-song': 'https://www.youtube.com/watch?v=T03DjDwcZb8',
+  'escapade-song': 'https://www.youtube.com/watch?v=dQb0T5TaRoQ',
+  'takaga-i-love-you': 'https://www.youtube.com/watch?v=y8B_5IpzTu0',
+  'saredo-hibi-wa': 'https://www.youtube.com/watch?v=N_Fu6b-CC7g',
+  'kanousei-song': 'https://www.youtube.com/watch?v=I0P6Jut7xBo',
+  'second-line': 'https://www.youtube.com/watch?v=U2GVSj3mbck',
+  'driver-song': 'https://www.youtube.com/watch?v=89t0FEEMako',
+  'soushisouai-song': 'https://www.youtube.com/watch?v=-gnY6HeAOYQ',
+  'hatsumeika-song': 'https://www.youtube.com/watch?v=ZPU2ngHWxV4',
+  'amazing-song': 'https://www.youtube.com/watch?v=KyXsavhevjE',
+  'rowan-song': 'https://www.youtube.com/watch?v=sHnUEWvSCDs',
+  'bad-for-me': 'https://www.youtube.com/watch?v=U-bbdN7v9Vc',
+  'saigo-no-koiwazurai': 'https://www.youtube.com/watch?v=mvhf0R2NW70',
+  'tabi-wa-michizure': 'https://www.youtube.com/watch?v=uXMsI4yTSeM',
+  'last-song': 'https://www.youtube.com/watch?v=0Ac1TwKuwCQ',
+  'travelers-outro': 'https://www.youtube.com/watch?v=x7VAva4vIbk',
+  'editorial-title-track': 'https://www.youtube.com/watch?v=mN3MEypzw2A',
+  'filament-song': 'https://www.youtube.com/watch?v=R9XE1n46ucM',
+  'shower-song': 'https://www.youtube.com/watch?v=MCZoio4dBB4',
+  'midori-no-amayoke': 'https://www.youtube.com/watch?v=SICzNfWhgn8',
+  'bedroom-talk': 'https://www.youtube.com/watch?v=l_HTf8JRTts',
+  'lost-in-my-room': 'https://www.youtube.com/watch?v=vqeeMwQLvME',
+  'natsumoyou-no-neko': 'https://www.youtube.com/watch?v=7XfIfRcx2v4',
+  'hagan-song': 'https://www.youtube.com/watch?v=TEKR7K7LbHw',
+  'finder-song': 'https://www.youtube.com/watch?v=clwriIVEpI4',
+  'get-back-to-jinsei': 'https://www.youtube.com/watch?v=sA1NVZRT8SY',
+  'catchball-song': 'https://www.youtube.com/watch?v=UgyNi_KseMY',
+  'dakuten-song': 'https://www.youtube.com/watch?v=Gua3N-qAYI0',
+  'anarchy-song': 'https://www.youtube.com/watch?v=i1PJ4ShuWfQ',
+  'b-side-blues': 'https://www.youtube.com/watch?v=msFjrYvsBsA',
 };
+
+// YouTube reported error 150 for these videos when checked on 2026-11-09.
+// A direct link is used instead of displaying an unavailable embedded player.
+export const youtubeExternalOnlySongs: ReadonlySet<string> = new Set([
+  'pretender', 'subtitle', 'mixed-nuts', 'cry-baby', 'shukumei', 'editorial-song',
+  'white-noise', 'tattoo', 'soulsoup', 'sharon', 'same-blue', 'rashisa',
+  'amazing-song', 'rowan-song', 'bad-for-me', 'saigo-no-koiwazurai', 'vintage-song', 'tabi-wa-michizure',
+  'last-song', 'travelers-outro', 'editorial-title-track', 'filament-song', 'hello-song',
+  'shower-song', 'midori-no-amayoke', 'parabola-song', 'pending-machine', 'bedroom-talk',
+  'laughter-song', 'universe-song', 'lost-in-my-room', 'natsumoyou-no-neko', 'choral-a-song',
+  'hagan-song', 'finder-song', 'get-back-to-jinsei', 'catchball-song', 'nichijou-song',
+  'dakuten-song', 'anarchy-song', 'uramitsurami-kiwami', 'chessboard-song', 'b-side-blues',
+  'fifty-percent', 'sanitizer', 'make-me-wonder', 'elderflower', 'stardust',
+]);
+
+export function officialVideoDescription(songId: string): string | null {
+  if (songId === 'bad-for-me') return 'ライブ音源';
+  if (songId === 'finder-song') return 'TV SPOT';
+  return null;
+}
 
 export function relatedSongs(songId: string): RelatedSong[] {
   const song = catalogEntries.find(item => item.id === songId);

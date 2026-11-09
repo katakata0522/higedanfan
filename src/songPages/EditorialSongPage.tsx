@@ -6,7 +6,7 @@ import { formatSongBpm, formatDuration } from '../utils/fanLogic';
 import { tempoAlternatives } from '../data/tempoAlternatives';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { guideReturnView } from '../utils/guideReturnState';
-import { officialVideos, relatedSongs } from './songConnections';
+import { officialVideoDescription, officialVideos, relatedSongs } from './songConnections';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
 const base = import.meta.env.BASE_URL;
@@ -99,7 +99,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             </div>
             <div className="listen-links">
               <a href={fact.apple} target="_blank" rel="noreferrer">Apple Musicで聴く <span aria-hidden="true">↗</span></a>
-              {video && <a href={video} target="_blank" rel="noreferrer">公式MVを見る <span aria-hidden="true">↗</span></a>}
+              {video && <a href={video} target="_blank" rel="noreferrer">YouTubeで聴く{officialVideoDescription(page.id) && `（${officialVideoDescription(page.id)}）`} <span aria-hidden="true">↗</span></a>}
             </div>
           </section>
 
