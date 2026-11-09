@@ -6,7 +6,7 @@ import { QuizCoursePicker } from './quiz/QuizCoursePicker';
 import { QuizQuestionCard } from './quiz/QuizQuestionCard';
 import { QuizResultCard } from './quiz/QuizResultCard';
 import { QuizSourceArchive } from './quiz/QuizSourceArchive';
-import { getCourseLabel, getCourseQuestions, type CourseDifficulty } from './quiz/quizCourses';
+import { getCourseLabel, getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter, type QuestionSet } from './quiz/quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
 import { readQuizSession, saveQuizSession } from './quiz/quizSessionStorage';
 
@@ -26,8 +26,8 @@ export function QuizSection({
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
-  const { stage: quizStage, difficulty, scope, currentIndex, correctBefore, answer } = session;
-  const questions = useMemo(() => getCourseQuestions(difficulty, scope), [difficulty, scope]);
+  const { stage: quizStage, difficulty, scope, questionSet, currentIndex, correctBefore, answer } = session;
+  const questions = useMemo(() => getCourseQuestions(difficulty, scope, questionSet), [difficulty, scope, questionSet]);
   const question = questions[currentIndex];
   const score = correctBefore + Number(quizStage === 'playing' && isAnswerCorrect(question, answer));
 
@@ -39,8 +39,8 @@ export function QuizSection({
     setSession(next);
   }
 
-  function startCourse(course: CourseDifficulty) {
-    updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope });
+  function startCourse(course: CourseDifficulty, nextScope: QuestionScopeFilter, set: QuestionSet = 'current') {
+    updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope: nextScope, questionSet: set });
     window.location.hash = 'quiz';
   }
 
@@ -58,7 +58,7 @@ export function QuizSection({
     if (quizStage === 'playing' && (currentIndex > 0 || hasAnswerInput)) {
       if (!window.confirm('今回の検定を終了して、コース選択に戻りますか？\nもう一度挑戦すると、第1問から始まります。')) return;
     }
-    updateSession({ ...INITIAL_SESSION, scope });
+    updateSession(INITIAL_SESSION);
   }
 
   return (
@@ -78,7 +78,7 @@ export function QuizSection({
               ヒゲダン検定クイズ（全60問）
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              初級・中級・上級は各20問。答え合わせのあとは、作品情報やインタビュー、使用した音源もたどれます。
+              1回10問。答え合わせのあとは、楽曲の背景やメンバーの言葉もたどれます。
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export function QuizSection({
               }`}
             >
               <HelpCircle className="h-4 w-4" />
-              クイズに挑戦する（各20問・全60問）
+              クイズに挑戦する
             </button>
             <button
               type="button"
@@ -143,7 +143,7 @@ export function QuizSection({
         </div>
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker scopeFilter={scope} onScopeChange={next => updateSession({ ...session, scope: next })} onStart={startCourse} />
+          <QuizCoursePicker onStart={startCourse} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
@@ -166,7 +166,7 @@ export function QuizSection({
             visible={viewTab === 'quiz'}
             activeCourseLabel={getCourseLabel(difficulty, scope)}
             quizSummary={calculateQuizResult(score, questions)}
-            onRestart={() => startCourse(difficulty)}
+            onRestart={() => startCourse(difficulty, scope, questionSet)}
             onChooseCourse={chooseCourse}
           />
         )}

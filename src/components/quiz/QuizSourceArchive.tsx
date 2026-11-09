@@ -165,9 +165,6 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
                         並び替え問題
                       </span>
                     )}
-                    <span className="text-xs font-bold text-[#78716C]">
-                      テーマ：{q.category}
-                    </span>
                   </div>
                   <span className="text-xs font-bold text-[#15803D]">
                     正解：{answerDisplay}
