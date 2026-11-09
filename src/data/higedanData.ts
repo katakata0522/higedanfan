@@ -338,6 +338,98 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "fanTip": "施設への入場や見学は、イベント・施設の案内をご確認ください。",
     "source": "https://www.toyota-arena-tokyo.jp/access/",
     "historySource": "https://fc.higedan.com/feature/onemanlive_2025"
+  },
+  {
+    "id": "spot-okamoto-issenya",
+    "name": "岡本一銭屋",
+    "area": "鳥取・米子",
+    "categories": ["メンバーの思い出"],
+    "relatedSong": "",
+    "addressHint": "鳥取県米子市立町1-4",
+    "description": "米子の街で長く親しまれてきた駄菓子屋。藤原聡は地元の対談で、ふらっと立ち寄りたい場所として名前を挙げています。",
+    "fanTip": "営業日や営業時間は変わることがあります。普段のお買い物のお客さんにも配慮して訪れましょう。",
+    "source": "https://www.city.yonago.lg.jp/secure/11394/2025guidebook00.pdf",
+    "historySource": "https://wasshoi-yonago.com/20190808-02",
+    "additionalSources": [{"label": "2026年の店主取材", "url": "https://newsdig.tbs.co.jp/articles/bss/2649500?page=2"}]
+  },
+  {
+    "id": "spot-kanda-shrine-yonago",
+    "name": "勝田神社（かんだじんじゃ）",
+    "area": "鳥取・米子",
+    "categories": ["メンバーの思い出"],
+    "relatedSong": "",
+    "addressHint": "鳥取県米子市博労町2-10",
+    "description": "地元で「かんださん」と親しまれる神社。藤原聡が米子のおすすめの場所を聞かれ、訪れてほしいと語っています。",
+    "fanTip": "参拝や撮影は神社の案内に従い、地域の方やほかの参拝者への配慮を忘れずに。",
+    "source": "https://katsutajinja.or.jp/",
+    "historySource": "https://wasshoi-yonago.com/20190808-02"
+  },
+  {
+    "id": "spot-bookcenter-cosmo-izumo",
+    "name": "ブックセンターコスモ出雲店",
+    "area": "島根・出雲",
+    "categories": ["街とヒゲダン"],
+    "relatedSong": "",
+    "addressHint": "島根県出雲市渡橋町724-1",
+    "description": "ヒゲダンの作品を扱い、2020年には受賞記念キャンペーンの対象店にもなった書店。2023年にはサインや特設コーナーを見たという来店者の報告もあります。",
+    "fanTip": "サインや展示が現在もあるかは確認できていません。営業や展示の最新情報は店舗の案内をご確認ください。",
+    "source": "https://www.e-hon.ne.jp/bec/SF/BranchHome?TohanShotenHome=&shotenCode=73016",
+    "historySource": "https://higedancp.ponycanyon.co.jp/cdshop/",
+    "additionalSources": [{"label": "2023年の来店者の報告", "url": "https://map.yahoo.co.jp/v3/place/onHlfgHqLZ-/review"}]
+  },
+  {
+    "id": "spot-toyosu-gururi",
+    "name": "豊洲ぐるり公園",
+    "area": "東京・豊洲",
+    "categories": ["MVロケ地"],
+    "relatedSong": "Choral A",
+    "relatedSongLabel": "ロケ地の候補に挙がる作品",
+    "addressHint": "東京都江東区豊洲6丁目1番先・豊洲5丁目1番先",
+    "description": "海沿いの景色が広がる公園。「Choral A」の映像に登場する場所としてファンの間で挙げられていますが、撮影地としての制作側の発表は確認できていません。",
+    "fanTip": "公園の案内や利用ルールを確認し、散歩しながら映像の景色を思い浮かべてみるのも楽しみ方の一つです。",
+    "source": "https://toyosugururi.jp/",
+    "historySource": "https://ameblo.jp/hatch-kai/entry-12926895799.html"
+  },
+  {
+    "id": "spot-kasamatsu-arena",
+    "name": "笠松運動公園 山新スイミングアリーナ",
+    "area": "茨城・ひたちなか",
+    "categories": ["MVロケ地"],
+    "relatedSong": "Subtitle",
+    "relatedSongLabel": "ロケ地の候補に挙がる作品",
+    "addressHint": "茨城県ひたちなか市佐和2197-28",
+    "description": "「Subtitle」のMVに映るスケートリンクの候補として、ファンが挙げている施設。制作側による撮影地の発表は確認できていません。",
+    "fanTip": "プールやスケート場は季節や行事によって利用できる時間が変わります。訪問前に施設の予定をご確認ください。",
+    "source": "https://www.ibaraki-sports.or.jp/kasamatsu2/",
+    "historySource": "https://ameblo.jp/hatch-kai/entry-12771586496.html",
+    "additionalSources": [{"label": "プール・スケート場の案内", "url": "https://www.ibaraki-sports.or.jp/kasamatsu2/%E3%83%97%E3%83%BC%E3%83%AB%E3%83%BB%E3%82%A2%E3%82%A4%E3%82%B9%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%88%E5%A0%B4/"}]
+  },
+  {
+    "id": "spot-usuda-deep-space-center",
+    "name": "臼田宇宙空間観測所",
+    "area": "長野・佐久",
+    "categories": ["街とヒゲダン"],
+    "relatedSong": "パラボラ",
+    "relatedSongLabel": "ジャケットに登場する作品",
+    "addressHint": "長野県佐久市上小田切大曲1831-6",
+    "description": "「パラボラ」のジャケットに写る大きなアンテナがあるJAXAの観測所。楽曲の特設サイトにも撮影協力先として名前が記されています。",
+    "fanTip": "JAXAによると、例年11月中旬から4月中旬は降雪のため見学休止。山道の状況も含め、出発前に公式案内を確認してください。",
+    "source": "https://www.jaxa.jp/about/centers/udsc/",
+    "historySource": "https://higedanparabora.com/",
+    "additionalSources": [{"label": "ジャケット写真の紹介", "url": "https://news.j-wave.co.jp/2020/04/post-5755.html"}]
+  },
+  {
+    "id": "spot-laughter-hitachiomiya",
+    "name": "松井建設（常陸大宮市）",
+    "area": "茨城・常陸大宮",
+    "categories": ["MVロケ地"],
+    "mapScope": "none",
+    "relatedSong": "Laughter",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "茨城県常陸大宮市（撮影地の紹介）",
+    "description": "「Laughter」のMVが撮影された場所として、いばらきフィルムコミッションが紹介しています。",
+    "fanTip": "事業用の施設で、一般見学や立ち入りの可否は確認できていません。撮影地の紹介にとどめ、地図や経路案内は掲載していません。",
+    "source": "https://www.ibarakiguide.jp/ibaraki-fc/data/doc/1758080247_doc_2_0.pdf"
   }
 ];
 import tourArchiveRecords from './tourArchiveRecords.json';
