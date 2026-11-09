@@ -1,0 +1,30 @@
+name: クイズ更新の配信物を一時ビルド
+
+on:
+  push:
+    branches: [temp/quiz-legacy-build-20261109]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Confirm the parent is the reviewed source
+        run: test "$(git rev-parse HEAD^)" = bbbec5d0010bd06c36d45fa89662d2c40fd192a3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-quiz-final-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
