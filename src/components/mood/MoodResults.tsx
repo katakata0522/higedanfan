@@ -46,7 +46,7 @@ export function MoodResults({
   const recommendations = useMemo(() => recommendSongsByMood(songs, criteria), [songs, criteria]);
   const matches = recommendations.slice(page * 3, page * 3 + 3);
   const [bestMatch, ...subMatches] = matches;
-  const bestCopy = bestMatch ? moodResultCopy(bestMatch.song, criteria) : null;
+  const bestCopy = bestMatch ? moodResultCopy(bestMatch.song) : null;
   const showNearMatchNotice = Boolean(bestMatch
     && (!bestMatch.song.moods.includes(criteria.mood) || !isSoundMatch(bestMatch.song, criteria.sound)));
   const answers: { step: MoodStep; name: string; value: string }[] = [
@@ -221,7 +221,7 @@ export function MoodResults({
             {subMatches.map(match => {
               const { song } = match;
               const inSetlist = setlistSongIds.includes(song.id);
-              const copy = moodResultCopy(song, criteria);
+              const copy = moodResultCopy(song);
 
               return (
                 <article
