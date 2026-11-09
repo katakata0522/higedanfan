@@ -1,9 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, Disc, Pencil, Plus, Share2, Sparkles } from 'lucide-react';
+import { BookOpen, Check, Disc, Pencil, Plus, Share2 } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
 import {
-  formatSongBpm,
-  formatDuration,
   ERA_PREFERENCE_LABELS,
   isSafeAssetUrl,
   LENGTH_PREFERENCE_LABELS,
@@ -13,9 +11,9 @@ import {
   SOUND_LABELS,
 } from '../../utils/fanLogic';
 import { GuideArtwork } from '../GuideArtwork';
-import { MoodMatchBreakdown } from './MoodMatchBreakdown';
 import { MoodListen, officialVideoId } from './MoodListen';
 import { MoodShareCard, type ShareTheme } from './MoodShareCard';
+import { moodResultCopy } from './moodResultCopy';
 import type { CompleteMoodCriteria, MoodStep } from './moodSession';
 
 export interface MoodLibraryProps {
@@ -44,6 +42,7 @@ export function MoodResults({
 
   const matches = useMemo(() => scoreSongsByMood(songs, criteria).slice(0, 3), [songs, criteria]);
   const [bestMatch, ...subMatches] = matches;
+  const bestCopy = bestMatch ? moodResultCopy(bestMatch.song, criteria) : null;
   const answers: { step: MoodStep; name: string; value: string }[] = [
     { step: 1, name: '気分', value: MOOD_LABELS[criteria.mood] },
     { step: 2, name: '場面', value: SITUATION_LABELS[criteria.situation] },
@@ -78,118 +77,97 @@ export function MoodResults({
         <p className="mt-2 leading-relaxed">すべての条件に一致しない曲も、近い候補として紹介することがあります。</p>
       </div>
 
-      {/* First recommendation, listening link, and match details */}
-      {bestMatch && (
+      {/* First recommendation and listening link */}
+      {bestMatch && bestCopy && (
         <article className="rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
-            <span className="inline-flex items-center gap-1.5 font-bold text-[#C83E2B]">
-              <Sparkles className="h-3.5 w-3.5" />
-              今日の気分から選ぶ1曲
-            </span>
-            <span className="font-mono-num">
-              {formatDuration(bestMatch.song.durationSec)} · BPM {formatSongBpm(bestMatch.song.id, bestMatch.song.bpm)}
-            </span>
-          </div>
+          <p className="text-xs font-bold text-[#C83E2B]">今日のあなたへのおすすめ</p>
           <h3 className="mt-2 text-2xl sm:text-3xl font-bold text-[#1C1917]">{bestMatch.song.title}</h3>
           <p className="mt-1 text-xs font-medium text-[#57534E]">{bestMatch.song.tieUp || bestMatch.song.englishSub}</p>
 
-          <div className="mt-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-            {/* Video or artwork, followed by the matching criteria */}
-            <div className="md:col-span-5 space-y-4">
-              {!officialVideoId(bestMatch.song.id) && <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
-                {isSafeAssetUrl(bestMatch.song.jacketImage) && (
-                  <GuideArtwork
-                    src={bestMatch.song.jacketImage}
-                    alt={`${bestMatch.song.title}  オリジナル図柄`}
-                    referrerPolicy="no-referrer"
-                    className="h-full w-full object-cover"
-                  />
-                )}
-                <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-xs">
-                  <Disc className="h-3.5 w-3.5 shrink-0 text-[#F5D0C9]" />
-                  <span>{bestMatch.song.album}</span>
+          <div className="mt-5 max-w-2xl space-y-4">
+            {/* Video or artwork */}
+            {!officialVideoId(bestMatch.song.id) && <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
+              {isSafeAssetUrl(bestMatch.song.jacketImage) && (
+                <GuideArtwork
+                  src={bestMatch.song.jacketImage}
+                  alt={`${bestMatch.song.title}  オリジナル図柄`}
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover"
+                />
+              )}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-xs">
+                <Disc className="h-3.5 w-3.5 shrink-0 text-[#F5D0C9]" />
+                <span>{bestMatch.song.album}</span>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 text-white">
+                <div className="text-[11px] font-mono-num text-white/80">
+                  {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
                 </div>
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 text-white">
-                  <div className="text-[11px] font-mono-num text-white/80">
-                    {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
-                  </div>
-                  <div className="mt-0.5 text-base font-bold min-w-0 wrap-anywhere whitespace-normal">
-                    {bestMatch.song.title}
-                  </div>
+                <div className="mt-0.5 text-base font-bold min-w-0 wrap-anywhere whitespace-normal">
+                  {bestMatch.song.title}
                 </div>
-              </div>}
+              </div>
+            </div>}
 
-              <MoodListen song={bestMatch.song} />
-              <MoodMatchBreakdown match={bestMatch} />
+            <MoodListen song={bestMatch.song} />
+          </div>
+
+          <div className="mt-5 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-6">
+            {bestCopy.feature && <h4 className="text-base font-bold leading-relaxed text-[#1C1917]">{bestCopy.feature}</h4>}
+            <p className="mt-2 text-sm leading-7 text-[#292524]">{bestCopy.introduction}</p>
+            {bestCopy.invitation && <p className="mt-3 text-sm leading-7 text-[#57534E]">{bestCopy.invitation}</p>}
+          </div>
+
+          {/* Action Bar including Share Card Generator Button */}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShareRank(rank => rank === null ? 0 : null)}
+                aria-expanded={shareRank !== null}
+                aria-controls="diagnosis-share-card-panel"
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                  shareRank !== null
+                    ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
+                    : 'border-[#D5CEC2] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
+                }`}
+              >
+                <Share2 className="h-3.5 w-3.5 text-[#C83E2B]" />
+                <span>シェアカード生成</span>
+              </button>
             </div>
 
-            {/* Explanation and actions */}
-            <div className="md:col-span-7 flex flex-col justify-between">
-              <div>
-                {/* 1-2 Sentence Mood Match Reason */}
-                <div className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-2.5">
-                  <div className="text-xs font-bold text-[#C83E2B]">
-                    この曲を紹介する理由
-                  </div>
-                  <p className="text-xs sm:text-sm text-[#1C1917] leading-relaxed font-medium">
-                    {bestMatch.moodMatchExplanation}
-                  </p>
-                </div>
-
-              </div>
-
-              {/* Action Bar including Share Card Generator Button */}
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShareRank(rank => rank === null ? 0 : null)}
-                    aria-expanded={shareRank !== null}
-                    aria-controls="diagnosis-share-card-panel"
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                      shareRank !== null
-                        ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
-                        : 'border-[#D5CEC2] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
-                    }`}
-                  >
-                    <Share2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                    <span>シェアカード生成</span>
-                  </button>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleOpenSongDetail(bestMatch.song)}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                  >
-                    <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
-                    詳しい解説を読む
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onAddToSetlist(bestMatch.song.id)}
-                    disabled={setlistSongIds.includes(bestMatch.song.id)}
-                    className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
-                      setlistSongIds.includes(bestMatch.song.id)
-                        ? 'bg-[#1C1917] text-white'
-                        : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
-                    }`}
-                  >
-                    {setlistSongIds.includes(bestMatch.song.id) ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" />
-                        セトリ追加済
-                      </>
-                    ) : (
-                      <>
-                        <Plus className="h-3.5 w-3.5" />
-                        マイセトリに追加
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleOpenSongDetail(bestMatch.song)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+                詳しい解説を読む
+              </button>
+              <button
+                type="button"
+                onClick={() => onAddToSetlist(bestMatch.song.id)}
+                disabled={setlistSongIds.includes(bestMatch.song.id)}
+                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                  setlistSongIds.includes(bestMatch.song.id)
+                    ? 'bg-[#1C1917] text-white'
+                    : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
+                }`}
+              >
+                {setlistSongIds.includes(bestMatch.song.id) ? (
+                  <>
+                    <Check className="h-3.5 w-3.5" />
+                    セトリ追加済
+                  </>
+                ) : (
+                  <>
+                    <Plus className="h-3.5 w-3.5" />
+                    マイセトリに追加
+                  </>
+                )}
+              </button>
             </div>
           </div>
 
@@ -208,12 +186,13 @@ export function MoodResults({
       {subMatches.length > 0 && (
         <div>
           <h4 className="text-xs font-bold tracking-wide text-[#78716C] mb-3">
-            ほかの候補
+            こんな曲もおすすめ
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {subMatches.map((match, idx) => {
+            {subMatches.map(match => {
               const { song } = match;
               const inSetlist = setlistSongIds.includes(song.id);
+              const copy = moodResultCopy(song, criteria);
 
               return (
                 <article
@@ -231,12 +210,6 @@ export function MoodResults({
                         />
                       )}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-1 text-xs text-[#78716C]">
-                          <span className="font-bold text-[#1E3A5F] font-mono-num">
-                            候補 {idx + 2}
-                          </span>
-                          <span className="font-mono-num">BPM {formatSongBpm(song.id, song.bpm)}</span>
-                        </div>
                         <h5 className="mt-0.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                           {song.title}
                         </h5>
@@ -244,7 +217,7 @@ export function MoodResults({
                     </div>
 
                     <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
-                      曲調資料では「{song.musicalHighlight}」と紹介されています。
+                      {copy.feature || copy.introduction}
                     </p>
                     <div className="mt-4">
                       <MoodListen song={song} />
