@@ -252,8 +252,8 @@ export function QuizQuestionCard({
           <div>
             <div className="text-xs sm:text-sm font-bold text-[#1C1917]">
               {isCurrentQuestionCorrect
-                ? '正解です！さすがの知識量！'
-                : '惜しい！解説と出典記事をチェックしてみましょう'}
+                ? '正解！'
+                : 'おしい！'}
             </div>
 
             {isOrderingQuestion && question.correctOrder && (
@@ -277,6 +277,32 @@ export function QuizQuestionCard({
             <p className="mt-2 text-xs sm:text-sm text-[#57534E] leading-relaxed">
               {question.explanation}
             </p>
+          </div>
+
+          <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
+            {relatedSong && onSelectSong ? (
+              <button
+                type="button"
+                onClick={() => onSelectSong(relatedSong)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
+              >
+                <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+                『{relatedSong.title}』の楽曲解説を読む
+              </button>
+            ) : (
+              <span />
+            )}
+
+            <button
+              type="button"
+              onClick={onNext}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-[#FBF9F5] hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              {currentIndex + 1 < questionCount
+                ? '次の問題へ進む'
+                : '検定結果を見る'}
+              <ArrowRight className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Verified Source Articles Box */}
@@ -319,31 +345,6 @@ export function QuizQuestionCard({
             </div>
           )}
 
-          <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
-            {relatedSong && onSelectSong ? (
-              <button
-                type="button"
-                onClick={() => onSelectSong(relatedSong)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
-              >
-                <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
-                『{relatedSong.title}』の楽曲解説を読む
-              </button>
-            ) : (
-              <span />
-            )}
-
-            <button
-              type="button"
-              onClick={onNext}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-[#FBF9F5] hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              {currentIndex + 1 < questionCount
-                ? '次の問題へ進む'
-                : '検定結果を見る'}
-              <ArrowRight className="h-4 w-4" />
-            </button>
-          </div>
         </div>
       )}
     </div>

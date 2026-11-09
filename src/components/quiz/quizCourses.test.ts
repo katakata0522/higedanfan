@@ -35,3 +35,13 @@ test('the six mixed volumes cover all 60 questions once and include all difficul
   }
   assert.deepEqual(new Set(volumes.flat().map(q => q.id)), new Set(QUIZ_QUESTIONS.map(q => q.id)));
 });
+
+test('a previous explanation does not give away the later Subtitle question', () => {
+  const volume = getCourseQuestions('beginner', 'vol1');
+  const earlier = volume.find(q => q.id === 'q2')!;
+  const later = volume.find(q => q.id === 'q37')!;
+  assert.ok(volume.indexOf(earlier) < volume.indexOf(later));
+  const laterAnswer = later.options[later.correctIndex];
+  const earlierFeedback = [earlier.explanation, ...earlier.sources.flatMap(s => [s.title, s.summary])].join(' ');
+  assert.equal(earlierFeedback.includes(laterAnswer), false);
+});
