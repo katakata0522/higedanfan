@@ -30,10 +30,11 @@ function isQuizSession(value: unknown): value is QuizSession {
   const scopes = ['full', 'new_variation', 'ordering_only', 'classic', 'vol1', 'vol2', 'vol3', 'vol4', 'vol5', 'vol6'];
   if (!['select', 'playing', 'finished'].includes(value.stage as string) ||
       !difficulties.includes(value.difficulty as string) || !scopes.includes(value.scope as string) ||
-      (value.questionSet !== undefined && value.questionSet !== 'current' && value.questionSet !== 'legacy') ||
+      (value.questionSet !== undefined && value.questionSet !== 'current' && value.questionSet !== 'previous' && value.questionSet !== 'legacy') ||
       !Number.isSafeInteger(value.currentIndex) || !Number.isSafeInteger(value.correctBefore)) return false;
 
-  const questions = getCourseQuestions(value.difficulty as CourseDifficulty, value.scope as QuestionScopeFilter, value.questionSet === 'legacy' ? 'legacy' : 'current');
+  const questions = getCourseQuestions(value.difficulty as CourseDifficulty, value.scope as QuestionScopeFilter,
+    value.questionSet === 'legacy' || value.questionSet === 'previous' ? value.questionSet : 'current');
   const index = value.currentIndex as number;
   const correctBefore = value.correctBefore as number;
   if (!questions.length || index < 0 || index >= questions.length || correctBefore < 0 ||
@@ -78,7 +79,11 @@ export function readQuizSession(
     if (!raw || raw.length > 100_000) return null;
     const saved: unknown = JSON.parse(raw);
     if (!isObject(saved) || saved.version !== (currentRaw === null ? 1 : 2) || saved.resetEpoch !== epoch || !isObject(saved.session)) return null;
-    const session = currentRaw === null ? { ...saved.session, questionSet: 'legacy' } : saved.session;
+    let session: unknown = currentRaw === null ? { ...saved.session, questionSet: 'legacy' } : saved.session;
+    if ((!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) && currentRaw !== null &&
+        (saved.session.questionSet === undefined || saved.session.questionSet === 'current')) {
+      session = { ...saved.session, questionSet: 'previous' };
+    }
     if (!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) return null;
     // A saved selection is not an in-progress attempt and can use the new picker.
     return currentRaw === null && session.stage === 'select' ? null : session;
