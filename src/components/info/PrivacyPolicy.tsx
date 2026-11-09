@@ -27,7 +27,7 @@ export function PrivacyPolicy() {
 
       <h2>聖地巡礼マップ・動画と外部リンク</h2>
       <p>聖地巡礼マップで地図が読み込まれると、ブラウザは表示地点の名前と所在地をGoogleに送ります。地図を操作する前にも、この通信は発生します。GoogleはIPアドレスやブラウザの情報を受け取り、設定に応じてCookieなどの識別子も利用します。地図を使わずに、ほかのコーナーを利用できます。<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a></p>
-      <p>マイソング診断の結果にYouTubeの動画が表示されると、再生する前にもブラウザがYouTubeに接続し、IPアドレスやブラウザの情報などが送られます。動画にはYouTubeのプライバシー強化モードを使用しています。詳しくは<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a>をご覧ください。</p>
+      <p>マイソング診断の結果にYouTubeの動画やサムネイルが表示されると、再生する前にもブラウザがYouTubeに接続し、IPアドレスやブラウザの情報などが送られます。埋め込み動画にはYouTubeのプライバシー強化モードを使用しています。詳しくは<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a>をご覧ください。</p>
       <p>経路検索や楽曲の出典のリンクを開くと、リンク先のサービスにもアクセスします。移動先での情報の取り扱いは、各サービスの方針をご覧ください。</p>
 
       <h2>お問い合わせ</h2>
