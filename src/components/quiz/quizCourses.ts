@@ -3,10 +3,11 @@ import { QUIZ_QUESTIONS as LEGACY_QUIZ_QUESTIONS } from '../../data/quizDataLega
 import { QUIZ_QUESTIONS as PREVIOUS_QUIZ_QUESTIONS } from '../../data/quizDataPrevious';
 import { QUIZ_QUESTIONS as PRIOR_QUIZ_QUESTIONS } from '../../data/quizDataPriorRevision';
 import { QUIZ_QUESTIONS as RECENT_QUIZ_QUESTIONS } from '../../data/quizDataRecent';
+import { QUIZ_QUESTIONS as PUBLISHED_QUIZ_QUESTIONS } from '../../data/quizDataPublishedRevision';
 
 export type CourseDifficulty = 'all' | QuizQuestion['difficulty'];
 export type QuestionScopeFilter = 'full' | 'new_variation' | 'ordering_only' | 'classic' | 'vol1' | 'vol2' | 'vol3' | 'vol4' | 'vol5' | 'vol6';
-export type QuestionSet = 'current' | 'recent' | 'prior' | 'previous' | 'legacy';
+export type QuestionSet = 'current' | 'published' | 'recent' | 'prior' | 'previous' | 'legacy';
 
 export const QUIZ_COURSES: {
   id: CourseDifficulty;
@@ -80,7 +81,7 @@ const RECENT_VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> =
   brothers: PRIOR_VOLUME_QUESTION_IDS.brothers,
 };
 
-const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+const PUBLISHED_VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   beginner: RECENT_VOLUME_QUESTION_IDS.beginner,
   intermediate: [
     'q11', 'q19', 'q12', 'q4', 'q13', 'q17', 'q14', 'q20', 'q15', 'q16',
@@ -89,7 +90,23 @@ const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   brothers: RECENT_VOLUME_QUESTION_IDS.brothers,
 };
 
+const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+  beginner: [
+    'q1', 'q5', 'q19', 'q16', 'q36', 'q35', 'q2', 'q57', 'q37', 'q27',
+    'q47', 'q31', 'q9', 'q25', 'q53', 'q7', 'q32', 'q49', 'q52', 'q10',
+  ],
+  intermediate: [
+    'q11', 'q43', 'q17', 'q3', 'q33', 'q28', 'q14', 'q22', 'q39', 'q15',
+    'q8', 'q45', 'q21', 'q41', 'q46', 'q42', 'q50', 'q26', 'q29', 'q20',
+  ],
+  brothers: [
+    'q55', 'q24', 'q23', 'q18', 'q30', 'q12', 'q4', 'q13', 'q38', 'q40',
+    'q6', 'q51', 'q58', 'q34', 'q56', 'q59', 'q54', 'q48', 'q44', 'q60',
+  ],
+};
+
 const CURRENT_BY_ID = new Map(QUIZ_QUESTIONS.map(question => [question.id, question]));
+const PUBLISHED_BY_ID = new Map(PUBLISHED_QUIZ_QUESTIONS.map(question => [question.id, question]));
 const PRIOR_BY_ID = new Map(PRIOR_QUIZ_QUESTIONS.map(question => [question.id, question]));
 const RECENT_BY_ID = new Map(RECENT_QUIZ_QUESTIONS.map(question => [question.id, question]));
 
@@ -98,7 +115,8 @@ export function getCourseQuestions(difficulty: CourseDifficulty, scope: Question
     ? LEGACY_QUIZ_QUESTIONS
     : questionSet === 'previous' ? PREVIOUS_QUIZ_QUESTIONS
     : questionSet === 'prior' ? PRIOR_QUIZ_QUESTIONS
-    : questionSet === 'recent' ? RECENT_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
+    : questionSet === 'recent' ? RECENT_QUIZ_QUESTIONS
+    : questionSet === 'published' ? PUBLISHED_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
   if (scope.startsWith('vol')) {
     if (questionSet === 'legacy') return [];
     const volume = Number(scope.slice(3));
@@ -106,6 +124,9 @@ export function getCourseQuestions(difficulty: CourseDifficulty, scope: Question
     const tierQuestions = (tier: QuizQuestion['difficulty']) => {
       if (questionSet === 'current') {
         return VOLUME_QUESTION_IDS[tier].map(id => CURRENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
+      }
+      if (questionSet === 'published') {
+        return PUBLISHED_VOLUME_QUESTION_IDS[tier].map(id => PUBLISHED_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
       }
       if (questionSet === 'recent') {
         return RECENT_VOLUME_QUESTION_IDS[tier].map(id => RECENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);

@@ -34,8 +34,11 @@ test('visible ordering answers, related songs, and source labels remain searchab
   assert.equal(matches('Pretender', 'q32'), true);
   assert.equal(matches('Sharon', 'q14'), false);
   assert.equal(matches('Subtitle', 'q37'), true);
-  assert.equal(matches('Anarchy (Rejoice ver.)', 'q55'), true);
-  assert.equal(matches('Anarchy (Rejoice ver.)', 'q55', false), false);
+  const relatedSong = HIGEDAN_SONGS.find(song => song.id === 'pretender')!;
+  const searchRelated = prepareQuizArchiveSearch(relatedSong.title, HIGEDAN_SONGS);
+  const unrelatedQuestion = questionById.get('q14')!;
+  assert.equal(searchRelated(unrelatedQuestion, relatedSong), true);
+  assert.equal(searchRelated(unrelatedQuestion), false);
   assert.equal(matches('Real Sound', 'q13'), true);
   assert.equal(matches('楽曲分析', 'q13'), true);
 });

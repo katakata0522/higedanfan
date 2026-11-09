@@ -34,6 +34,20 @@ test('the EP question is asked before the ordering question that names its answe
   assert.ok(volume[orderIndex].options.includes(`${volume[epIndex].options[volume[epIndex].correctIndex]} EP`));
 });
 
+test('four-choice answers do not concentrate in one part of a volume', () => {
+  for (const difficulty of ['beginner', 'intermediate', 'brothers'] as const) {
+    for (const scope of ['vol1', 'vol2'] as const) {
+      const answers = getCourseQuestions(difficulty, scope)
+        .filter(q => q.questionType !== 'ordering' && q.options.length === 4)
+        .map(q => q.correctIndex);
+      assert.deepEqual(new Set(answers), new Set([0, 1, 2, 3]));
+      for (let index = 2; index < answers.length; index++) {
+        assert.ok(answers[index] !== answers[index - 1] || answers[index] !== answers[index - 2]);
+      }
+    }
+  }
+});
+
 test('the six mixed volumes cover all 60 questions once and include all difficulties', () => {
   const volumes = Array.from({ length: 6 }, (_, i) =>
     getCourseQuestions('all', `vol${i + 1}` as QuestionScopeFilter));

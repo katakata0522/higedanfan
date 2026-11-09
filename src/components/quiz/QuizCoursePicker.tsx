@@ -8,25 +8,23 @@ interface Props {
 
 export function QuizCoursePicker({ onStart }: Props) {
   const [difficulty, setDifficulty] = useState<CourseDifficulty>('beginner');
-  const selected = QUIZ_COURSES.find(course => course.id === difficulty)!;
-  const volumes = difficulty === 'all' ? 6 : 2;
+  const volumes = 2;
   const orderingCount = getCourseQuestions(difficulty, 'ordering_only').length;
   return (
     <div className="mt-6 space-y-5">
       <div>
         <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">好きなコースを選ぼう</h3>
-        <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-2.5" role="group" aria-label="クイズのコース">
-          {QUIZ_COURSES.map(course => (
+        <div className="mt-3 grid grid-cols-3 gap-2.5" role="group" aria-label="クイズのコース">
+          {QUIZ_COURSES.filter(course => course.id !== 'all').map(course => (
             <button key={course.id} type="button" aria-pressed={difficulty === course.id}
               onClick={() => setDifficulty(course.id)}
               className={`rounded-xl border p-3 text-left text-sm font-bold transition-colors cursor-pointer ${difficulty === course.id
                 ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
                 : 'border-[#E6E1D6] bg-white text-[#1C1917] hover:border-[#1C1917]'}`}>
-              {course.id === 'all' ? '総合' : course.title}
+              {course.title}
             </button>
           ))}
         </div>
-        <p className="mt-3 text-xs sm:text-sm text-[#57534E] leading-relaxed">{selected.desc}</p>
       </div>
       <div>
         <h3 className="mb-3 text-sm sm:text-base font-bold text-[#1C1917]">挑戦する Vol. を選ぼう</h3>
@@ -40,7 +38,6 @@ export function QuizCoursePicker({ onStart }: Props) {
             </button>
           ))}
         </div>
-        {difficulty === 'all' && <p className="mt-3 text-xs text-[#57534E]">総合の Vol.1〜6 では、全60問を難易度を交えて出題します。</p>}
       </div>
       <button type="button" onClick={() => onStart(difficulty, 'ordering_only')}
         className="text-xs font-bold text-[#57534E] underline underline-offset-4 hover:text-[#C83E2B] cursor-pointer">
