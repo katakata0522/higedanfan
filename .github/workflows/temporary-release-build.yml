@@ -1,0 +1,30 @@
+name: 聖地マップ配信物の一時ビルド
+
+on:
+  push:
+    branches: [temp/more-sacred-build-20261109]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Confirm the parent is the reviewed source
+        run: test "$(git rev-parse HEAD^)" = aa9fef97e289181320cc4b850fe000bfe19cf5a4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-more-sacred-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
