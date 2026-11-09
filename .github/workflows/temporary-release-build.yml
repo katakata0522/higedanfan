@@ -1,0 +1,30 @@
+name: 聖地マップ配信物の一時ビルド
+
+on:
+  push:
+    branches: [temp/sacred-drive-deep-build-20261109]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Confirm the parent is the reviewed source
+        run: test "$(git rev-parse HEAD^)" = edbfb9fc7a466527a646ad4ab71c4cc83ea4a79d
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-sacred-drive-deep-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
