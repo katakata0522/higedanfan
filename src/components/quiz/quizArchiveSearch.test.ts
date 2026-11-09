@@ -23,7 +23,7 @@ test('single-choice distractors do not create invisible matches', () => {
     question.relatedSongId ? songsById.get(question.relatedSongId) : undefined,
   )).map(question => question.id);
 
-  assert.deepEqual(matchingIds, ['q13']);
+  assert.deepEqual(matchingIds, ['q13', 'q47']);
   assert.equal(matches('Same Blue', 'q11'), false);
   assert.equal(matches('Same Blue', 'q58'), false);
   assert.equal(matches('5拍子と6拍子', 'q13'), true);
@@ -33,7 +33,7 @@ test('visible ordering answers, related songs, and source labels remain searchab
   assert.equal(matches('Traveler', 'q31'), true);
   assert.equal(matches('Pretender', 'q32'), true);
   assert.equal(matches('Sharon', 'q14'), false);
-  assert.equal(matches('Sharon', 'q40'), true);
+  assert.equal(matches('Subtitle', 'q37'), true);
   assert.equal(matches('Anarchy (Rejoice ver.)', 'q55'), true);
   assert.equal(matches('Anarchy (Rejoice ver.)', 'q55', false), false);
   assert.equal(matches('Real Sound', 'q13'), true);
@@ -48,9 +48,7 @@ test('related song links have a visible connection to the question', () => {
   assert.equal(matches('SWEET TWEET', 'q41'), false);
 
   for (const [questionId, songId] of [
-    ['q47', 'sanitizer'],
     ['q53', 'elderflower'],
-    ['q58', 'make-me-wonder'],
   ]) {
     const question = questionById.get(questionId);
     const song = songsById.get(songId);
@@ -59,6 +57,10 @@ test('related song links have a visible connection to the question', () => {
     assert.equal(question.options[question.correctIndex], song.title);
     assert.equal(matches(song.title, questionId), true);
   }
+  assert.equal(questionById.get('q47')?.relatedSongId, 'same-blue');
+  assert.equal(matches('Same Blue', 'q47'), true);
+  assert.equal(questionById.get('q58')?.relatedSongId, 'stand-by-you');
+  assert.equal(matches('Stand By You', 'q58'), true);
 
   const albumQuestion = questionById.get('q29');
   const albumTrack = songsById.get('escapade-song');

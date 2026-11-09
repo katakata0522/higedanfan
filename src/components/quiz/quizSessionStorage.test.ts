@@ -5,7 +5,8 @@ import { getCourseQuestions } from './quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quizSession';
 import { clearStaleQuizSession, readQuizSession, saveQuizSession } from './quizSessionStorage';
 
-const QUIZ_KEY = 'higedanfan:quiz-session:v1';
+const QUIZ_KEY = 'higedanfan:quiz-session:v2';
+const LEGACY_KEY = 'higedanfan:quiz-session:v1';
 
 function memoryStore(initial: Record<string, string> = {}) {
   const entries = new Map(Object.entries(initial));
@@ -111,7 +112,7 @@ test('ignores malformed, incompatible and impossible sessions without overwritin
   const original = JSON.parse(sessionStore.getItem(QUIZ_KEY)!);
   const invalid = [
     'not json',
-    JSON.stringify({ ...original, version: 2 }),
+    JSON.stringify({ ...original, version: 1 }),
     JSON.stringify({ ...original, courseSignature: 'old questions' }),
     JSON.stringify({ ...original, session: { ...original.session, currentIndex: 100 } }),
     JSON.stringify({ ...original, session: { ...original.session, answer: { ...original.session.answer, selectedOrder: [2, 2] } } }),
@@ -125,6 +126,32 @@ test('ignores malformed, incompatible and impossible sessions without overwritin
   const unreadableRecords = memoryStore({ [STORAGE_KEY]: '{' });
   assert.equal(readQuizSession(sessionStore, unreadableRecords), null);
   assert.equal(saveQuizSession(progress, 'generation-a', sessionStore, unreadableRecords), false);
+});
+
+test('continues an older attempt against its original questions without overwriting the old save', () => {
+  const recordStore = records('generation-a');
+  const oldSession = {
+    stage: 'playing', difficulty: 'beginner', scope: 'full', currentIndex: 3, correctBefore: 2,
+    answer: { selectedOption: 3, selectedOrder: [], isOrderingSubmitted: false },
+  } as const;
+  const legacyQuestions = getCourseQuestions('beginner', 'full', 'legacy');
+  const signature = JSON.stringify(legacyQuestions.map(q => [
+    q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+  ]));
+  const oldRaw = JSON.stringify({ version: 1, resetEpoch: 'generation-a', courseSignature: signature, session: oldSession });
+  const sessionStore = memoryStore({ [LEGACY_KEY]: oldRaw });
+  const restored = readQuizSession(sessionStore, recordStore);
+  assert.deepEqual(restored, { ...oldSession, questionSet: 'legacy' });
+  assert.notEqual(legacyQuestions[3].prompt, getCourseQuestions('beginner', 'full')[3].prompt);
+  assert.equal(isAnswerCorrect(legacyQuestions[3], restored!.answer), true);
+  assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
+  assert.equal(sessionStore.getItem(LEGACY_KEY), oldRaw);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+
+  // Starting a new attempt must not revive the older one or alter its bytes.
+  assert.equal(saveQuizSession(INITIAL_SESSION, 'generation-a', sessionStore, recordStore), true);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), INITIAL_SESSION);
+  assert.equal(sessionStore.getItem(LEGACY_KEY), oldRaw);
 });
 
 test('storage access or quota errors leave the in-memory quiz usable', () => {

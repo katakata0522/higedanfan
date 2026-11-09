@@ -70,8 +70,7 @@ export function QuizQuestionCard({
         <div className="flex flex-wrap items-center gap-2">
           <span className="font-bold text-[#1C1917]">
             第 {currentIndex + 1} 問 / 全 {questionCount} 問 ·{' '}
-            {DIFFICULTY_LABEL[question.difficulty]} · テーマ：
-            {question.category}
+            {DIFFICULTY_LABEL[question.difficulty]}
           </span>
           {isOrderingQuestion && (
             <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">

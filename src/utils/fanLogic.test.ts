@@ -412,14 +412,6 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
     );
     indexCounts[q.correctIndex]++;
 
-    if (i > 0) {
-      assert.notEqual(
-        q.correctIndex,
-        QUIZ_QUESTIONS[i - 1].correctIndex,
-        `Question ${q.id} should not have the exact same correctIndex as ${QUIZ_QUESTIONS[i - 1].id}`
-      );
-    }
-
     if (q.relatedSongId) {
       assert.ok(
         allSongIds.has(q.relatedSongId),

@@ -2,7 +2,8 @@ import { STORAGE_KEY, restoreFanRecords } from '../../hooks/fanRecordStorage';
 import { getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter } from './quizCourses';
 import type { QuizAnswer, QuizSession } from './quizSession';
 
-const QUIZ_SESSION_KEY = 'higedanfan:quiz-session:v1';
+const LEGACY_SESSION_KEY = 'higedanfan:quiz-session:v1';
+const QUIZ_SESSION_KEY = 'higedanfan:quiz-session:v2';
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
 function browserStore(kind: 'localStorage' | 'sessionStorage'): Store | null {
@@ -26,12 +27,13 @@ function isObject(value: unknown): value is Record<string, unknown> {
 function isQuizSession(value: unknown): value is QuizSession {
   if (!isObject(value) || !isObject(value.answer)) return false;
   const difficulties = ['all', 'beginner', 'intermediate', 'brothers'];
-  const scopes = ['full', 'new_variation', 'ordering_only', 'classic'];
+  const scopes = ['full', 'new_variation', 'ordering_only', 'classic', 'vol1', 'vol2', 'vol3', 'vol4', 'vol5', 'vol6'];
   if (!['select', 'playing', 'finished'].includes(value.stage as string) ||
       !difficulties.includes(value.difficulty as string) || !scopes.includes(value.scope as string) ||
+      (value.questionSet !== undefined && value.questionSet !== 'current' && value.questionSet !== 'legacy') ||
       !Number.isSafeInteger(value.currentIndex) || !Number.isSafeInteger(value.correctBefore)) return false;
 
-  const questions = getCourseQuestions(value.difficulty as CourseDifficulty, value.scope as QuestionScopeFilter);
+  const questions = getCourseQuestions(value.difficulty as CourseDifficulty, value.scope as QuestionScopeFilter, value.questionSet === 'legacy' ? 'legacy' : 'current');
   const index = value.currentIndex as number;
   const correctBefore = value.correctBefore as number;
   if (!questions.length || index < 0 || index >= questions.length || correctBefore < 0 ||
@@ -58,7 +60,7 @@ function isQuizSession(value: unknown): value is QuizSession {
 // A changed question, answer or course order must not restore an old answer as
 // if it applied to the new content.
 function courseSignature(session: QuizSession): string {
-  return JSON.stringify(getCourseQuestions(session.difficulty, session.scope).map(question => [
+  return JSON.stringify(getCourseQuestions(session.difficulty, session.scope, session.questionSet).map(question => [
     question.id, question.prompt, question.questionType ?? 'single_choice', question.options,
     question.correctIndex, question.correctOrder ?? null,
   ]));
@@ -71,12 +73,15 @@ export function readQuizSession(
   const epoch = recordEpoch(recordStore);
   if (!sessionStore || epoch === null) return null;
   try {
-    const raw = sessionStore.getItem(QUIZ_SESSION_KEY);
+    const currentRaw = sessionStore.getItem(QUIZ_SESSION_KEY);
+    const raw = currentRaw ?? sessionStore.getItem(LEGACY_SESSION_KEY);
     if (!raw || raw.length > 100_000) return null;
     const saved: unknown = JSON.parse(raw);
-    if (!isObject(saved) || saved.version !== 1 || saved.resetEpoch !== epoch ||
-        !isQuizSession(saved.session) || saved.courseSignature !== courseSignature(saved.session)) return null;
-    return saved.session;
+    if (!isObject(saved) || saved.version !== (currentRaw === null ? 1 : 2) || saved.resetEpoch !== epoch || !isObject(saved.session)) return null;
+    const session = currentRaw === null ? { ...saved.session, questionSet: 'legacy' } : saved.session;
+    if (!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) return null;
+    // A saved selection is not an in-progress attempt and can use the new picker.
+    return currentRaw === null && session.stage === 'select' ? null : session;
   } catch { return null; }
 }
 
@@ -92,7 +97,7 @@ export function saveQuizSession(
   if (!sessionStore || recordEpoch(recordStore) !== expectedEpoch || !isQuizSession(session)) return false;
   try {
     sessionStore.setItem(QUIZ_SESSION_KEY, JSON.stringify({
-      version: 1, resetEpoch: expectedEpoch, courseSignature: courseSignature(session), session,
+      version: 2, resetEpoch: expectedEpoch, courseSignature: courseSignature(session), session,
     }));
     return true;
   } catch { return false; }
@@ -107,12 +112,18 @@ export function clearStaleQuizSession(
 ): boolean {
   if (!sessionStore || !expectedEpoch || recordEpoch(recordStore) !== expectedEpoch) return false;
   try {
-    const raw = sessionStore.getItem(QUIZ_SESSION_KEY);
-    if (!raw) return false;
-    const saved: unknown = JSON.parse(raw);
-    if (!isObject(saved) || saved.version !== 1 || typeof saved.resetEpoch !== 'string' ||
-        saved.resetEpoch === expectedEpoch) return false;
-    sessionStore.removeItem(QUIZ_SESSION_KEY);
-    return true;
+    let removed = false;
+    for (const [key, version] of [[QUIZ_SESSION_KEY, 2], [LEGACY_SESSION_KEY, 1]] as const) {
+      const raw = sessionStore.getItem(key);
+      if (!raw) continue;
+      try {
+        const saved: unknown = JSON.parse(raw);
+        if (isObject(saved) && saved.version === version && typeof saved.resetEpoch === 'string' && saved.resetEpoch !== expectedEpoch) {
+          sessionStore.removeItem(key);
+          removed = true;
+        }
+      } catch { /* Leave unrecognized data untouched. */ }
+    }
+    return removed;
   } catch { return false; }
 }
