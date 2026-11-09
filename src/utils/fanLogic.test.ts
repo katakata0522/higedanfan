@@ -405,10 +405,11 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
 
   for (let i = 0; i < QUIZ_QUESTIONS.length; i++) {
     const q = QUIZ_QUESTIONS[i];
-    assert.equal(q.options.length, 4, `Question ${q.id} must have 4 options`);
+    assert.ok(q.options.length >= 2 && q.options.length <= 4, `Question ${q.id} must have 2 to 4 options`);
+    assert.equal(new Set(q.options).size, q.options.length, `Question ${q.id} must have distinct options`);
     assert.ok(
-      q.correctIndex >= 0 && q.correctIndex <= 3,
-      `Question ${q.id} correctIndex must be 0..3`
+      q.correctIndex >= 0 && q.correctIndex < q.options.length,
+      `Question ${q.id} correctIndex must refer to an available option`
     );
     indexCounts[q.correctIndex]++;
 

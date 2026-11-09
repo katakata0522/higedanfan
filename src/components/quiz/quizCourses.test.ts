@@ -11,6 +11,14 @@ test('each difficulty has two distinct ten-question volumes', () => {
     assert.equal(second.length, 10);
     assert.equal(new Set([...first, ...second].map(q => q.id)).size, 20);
     assert.ok([...first, ...second].every(q => q.difficulty === difficulty));
+    for (const volume of [first, second]) {
+      for (let index = 1; index < volume.length; index++) {
+        const previous = volume[index - 1];
+        const current = volume[index];
+        if (previous.relatedSongId) assert.notEqual(previous.relatedSongId, current.relatedSongId);
+        assert.ok(previous.category !== 'タイアップ・代表曲' || current.category !== 'タイアップ・代表曲');
+      }
+    }
     const ordering = second.map((q, index) => q.questionType === 'ordering' ? index : -1).filter(index => index >= 0);
     assert.equal(ordering.length, 2);
     assert.ok(ordering[1] - ordering[0] > 1);

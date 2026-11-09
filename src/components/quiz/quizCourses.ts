@@ -1,9 +1,10 @@
 import { QUIZ_QUESTIONS, type QuizQuestion } from '../../data/quizData';
 import { QUIZ_QUESTIONS as LEGACY_QUIZ_QUESTIONS } from '../../data/quizDataLegacy';
+import { QUIZ_QUESTIONS as PREVIOUS_QUIZ_QUESTIONS } from '../../data/quizDataPrevious';
 
 export type CourseDifficulty = 'all' | QuizQuestion['difficulty'];
 export type QuestionScopeFilter = 'full' | 'new_variation' | 'ordering_only' | 'classic' | 'vol1' | 'vol2' | 'vol3' | 'vol4' | 'vol5' | 'vol6';
-export type QuestionSet = 'current' | 'legacy';
+export type QuestionSet = 'current' | 'previous' | 'legacy';
 
 export const QUIZ_COURSES: {
   id: CourseDifficulty;
@@ -47,15 +48,37 @@ const NEW_VARIATION_IDS = new Set(
   Array.from({ length: 30 }, (_, i) => `q${i + 31}`)
 );
 
+// 作品・歌詞・メンバーの話が続けて偏らないよう、10問ごとに並べる。
+const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+  beginner: [
+    'q1', 'q5', 'q8', 'q2', 'q33', 'q18', 'q37', 'q53', 'q3', 'q57',
+    'q35', 'q31', 'q9', 'q36', 'q7', 'q39', 'q32', 'q40', 'q10', 'q38',
+  ],
+  intermediate: [
+    'q11', 'q19', 'q12', 'q4', 'q13', 'q17', 'q14', 'q20', 'q15', 'q16',
+    'q43', 'q41', 'q48', 'q46', 'q45', 'q42', 'q50', 'q47', 'q49', 'q44',
+  ],
+  brothers: [
+    'q21', 'q24', 'q23', 'q28', 'q25', 'q30', 'q26', 'q29', 'q22', 'q27',
+    'q6', 'q51', 'q58', 'q34', 'q55', 'q52', 'q59', 'q54', 'q56', 'q60',
+  ],
+};
+
+const CURRENT_BY_ID = new Map(QUIZ_QUESTIONS.map(question => [question.id, question]));
+
 export function getCourseQuestions(difficulty: CourseDifficulty, scope: QuestionScopeFilter, questionSet: QuestionSet = 'current'): QuizQuestion[] {
-  const bank: QuizQuestion[] = questionSet === 'legacy' ? LEGACY_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
+  const bank: QuizQuestion[] = questionSet === 'legacy'
+    ? LEGACY_QUIZ_QUESTIONS
+    : questionSet === 'previous' ? PREVIOUS_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
   if (scope.startsWith('vol')) {
     if (questionSet === 'legacy') return [];
     const volume = Number(scope.slice(3));
     if (!Number.isInteger(volume) || volume < 1 || volume > (difficulty === 'all' ? 6 : 2)) return [];
-    // Spread the two ordering questions through Vol.2 instead of opening
-    // every second volume with two similar tasks.
     const tierQuestions = (tier: QuizQuestion['difficulty']) => {
+      if (questionSet === 'current') {
+        return VOLUME_QUESTION_IDS[tier].map(id => CURRENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
+      }
+      // 更新前に始めたコースは、出題順も含めて元のまま再開する。
       const questions = bank.filter(question => question.difficulty === tier);
       const secondVolume = questions.slice(10);
       return [...questions.slice(0, 10), ...[2, 0, 3, 4, 5, 1, 6, 7, 8, 9].map(index => secondVolume[index])];

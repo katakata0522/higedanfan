@@ -154,6 +154,45 @@ test('continues an older attempt against its original questions without overwrit
   assert.equal(sessionStore.getItem(LEGACY_KEY), oldRaw);
 });
 
+test('resumes an in-progress v2 attempt against the question and answer from before the refresh', () => {
+  const recordStore = records('generation-a');
+  const previousQuestions = getCourseQuestions('beginner', 'vol1', 'previous');
+  const priorSession: QuizSession = {
+    ...INITIAL_SESSION, stage: 'playing', difficulty: 'beginner', currentIndex: 3, correctBefore: 2,
+    answer: { selectedOption: 0, selectedOrder: [], isOrderingSubmitted: false },
+  };
+  const signature = JSON.stringify(previousQuestions.map(q => [
+    q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+  ]));
+  const oldRaw = JSON.stringify({ version: 2, resetEpoch: 'generation-a', courseSignature: signature, session: priorSession });
+  const sessionStore = memoryStore({ [QUIZ_KEY]: oldRaw });
+  const restored = readQuizSession(sessionStore, recordStore);
+  assert.deepEqual(restored, { ...priorSession, questionSet: 'previous' });
+  assert.equal(previousQuestions[3].id, 'q4');
+  assert.notEqual(getCourseQuestions('beginner', 'vol1')[3].id, previousQuestions[3].id);
+  assert.equal(isAnswerCorrect(previousQuestions[3], restored!.answer), true);
+  assert.equal(sessionStore.getItem(QUIZ_KEY), oldRaw);
+  assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+});
+
+test('resumes a partially selected ordering question from a previous v2 volume', () => {
+  const recordStore = records('');
+  const oldQuestions = getCourseQuestions('brothers', 'vol2', 'previous');
+  const oldSession: QuizSession = {
+    ...INITIAL_SESSION, stage: 'playing', difficulty: 'brothers', scope: 'vol2', currentIndex: 1,
+    answer: { selectedOption: null, selectedOrder: [2, 0], isOrderingSubmitted: false },
+  };
+  assert.equal(oldQuestions[1].questionType, 'ordering');
+  const signature = JSON.stringify(oldQuestions.map(q => [
+    q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+  ]));
+  const sessionStore = memoryStore({ [QUIZ_KEY]: JSON.stringify({
+    version: 2, resetEpoch: '', courseSignature: signature, session: oldSession,
+  }) });
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), { ...oldSession, questionSet: 'previous' });
+});
+
 test('storage access or quota errors leave the in-memory quiz usable', () => {
   const recordStore = records('');
   const denied = {

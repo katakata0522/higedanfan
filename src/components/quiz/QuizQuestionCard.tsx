@@ -24,6 +24,7 @@ export function QuizQuestionCard({
 }: Props) {
   const { selectedOption, selectedOrder, isOrderingSubmitted } = answer;
   const heading = useRef<HTMLHeadingElement>(null);
+  const orderingResult = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     if (visible && heading.current) {
       heading.current.focus({ preventScroll: true });
@@ -33,6 +34,12 @@ export function QuizQuestionCard({
   const isOrderingQuestion = question.questionType === 'ordering';
   const isQuestionAnswered = isOrderingQuestion ? isOrderingSubmitted : selectedOption !== null;
   const isCurrentQuestionCorrect = isAnswerCorrect(question, answer);
+  useLayoutEffect(() => {
+    if (visible && isOrderingQuestion && isOrderingSubmitted && orderingResult.current) {
+      orderingResult.current.focus({ preventScroll: true });
+      orderingResult.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+    }
+  }, [visible, isOrderingQuestion, isOrderingSubmitted]);
 
   const handleAnswerSingleChoice = (optionIdx: number) => {
     if (selectedOption !== null) return;
@@ -93,7 +100,7 @@ export function QuizQuestionCard({
       {/* ============================================================
           INTERACTIVE TAP-TO-ORDER SEQUENCE QUIZ UI
           ============================================================ */}
-      {isOrderingQuestion ? (
+      {isOrderingQuestion ? !isOrderingSubmitted && (
         <div className="mt-5 space-y-4">
           {/* Live 1st -> 4th Sequence Slot Bar & Reset Button */}
           <div className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3.5 sm:p-4 space-y-3">
@@ -145,28 +152,17 @@ export function QuizQuestionCard({
             {question.options.map((opt, idx) => {
               const orderPos = selectedOrder.indexOf(idx);
               const isSelected = orderPos !== -1;
-              const correctPos = question.correctOrder
-                ? question.correctOrder.indexOf(idx)
-                : -1;
-
               let btnStyle =
                 'border-[#E6E1D6] bg-[#FBF9F5] text-[#1C1917] hover:border-[#1C1917] hover:bg-white cursor-pointer';
-              if (!isOrderingSubmitted && isSelected) {
+              if (isSelected) {
                 btnStyle =
                   'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] cursor-pointer';
-              } else if (isOrderingSubmitted) {
-                if (orderPos === correctPos) {
-                  btnStyle = 'border-[#15803D] bg-[#F0FDF4] text-[#14532D]';
-                } else {
-                  btnStyle = 'border-[#C83E2B] bg-[#FDF3F1] text-[#7F1D1D]';
-                }
               }
 
               return (
                 <button
                   key={opt}
                   type="button"
-                  disabled={isOrderingSubmitted}
                   onClick={() => handleToggleOrderOption(idx)}
                   className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 sm:p-4 text-left text-sm font-bold transition-colors ${btnStyle}`}
                 >
@@ -174,20 +170,9 @@ export function QuizQuestionCard({
                   <div className="flex items-center gap-1.5 shrink-0">
                     {isSelected && (
                       <span
-                        className={`rounded-md px-2.5 py-1 text-xs font-mono-num font-bold ${
-                          isOrderingSubmitted
-                            ? orderPos === correctPos
-                              ? 'bg-[#15803D] text-white'
-                            : 'bg-[#C83E2B] text-white'
-                            : 'bg-[#C83E2B] text-white'
-                        }`}
+                        className="rounded-md px-2.5 py-1 text-xs font-mono-num font-bold bg-[#C83E2B] text-white"
                       >
                         {orderPos + 1}番目
-                      </span>
-                    )}
-                    {isOrderingSubmitted && (
-                      <span className="text-xs font-mono-num text-[#57534E]">
-                        (正解: {correctPos + 1}番目)
                       </span>
                     )}
                   </div>
@@ -263,7 +248,7 @@ export function QuizQuestionCard({
 
       {/* Explanation, Sources & Next Button */}
       {isQuestionAnswered && (
-        <div className="mt-5 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-4">
+        <div ref={isOrderingQuestion ? orderingResult : undefined} tabIndex={isOrderingQuestion ? -1 : undefined} className="mt-5 scroll-mt-20 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-4">
           <div>
             <div className="text-xs sm:text-sm font-bold text-[#1C1917]">
               {isCurrentQuestionCorrect
@@ -273,10 +258,12 @@ export function QuizQuestionCard({
 
             {isOrderingQuestion && question.correctOrder && (
               <div className="mt-2 rounded-lg border border-[#E6E1D6] bg-white p-3 text-xs space-y-1">
-                <div className="text-[#57534E]">
-                  <strong className="text-[#1C1917]">あなたの選択順：</strong>{' '}
-                  {formatOrderingSequence(question.options, selectedOrder)}
-                </div>
+                {!isCurrentQuestionCorrect && (
+                  <div className="text-[#57534E]">
+                    <strong className="text-[#1C1917]">あなたの選択順：</strong>{' '}
+                    {formatOrderingSequence(question.options, selectedOrder)}
+                  </div>
+                )}
                 <div className="text-[#15803D] font-bold">
                   <strong>正しい順番：</strong>{' '}
                   {formatOrderingSequence(
@@ -297,7 +284,7 @@ export function QuizQuestionCard({
             <div className="rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
               <div className="flex items-center gap-1.5 text-xs font-bold text-[#1E3A5F]">
                 <Newspaper className="h-3.5 w-3.5 shrink-0" />
-                <span>出典・関連インタビュー記事＆サイト内検証データ</span>
+                <span>出典・参考資料</span>
               </div>
               <div className="mt-2.5 grid grid-cols-1 gap-2.5">
                 {question.sources.map((src, sIdx) => {
