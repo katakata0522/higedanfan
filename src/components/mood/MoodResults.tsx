@@ -14,6 +14,7 @@ import {
 } from '../../utils/fanLogic';
 import { GuideArtwork } from '../GuideArtwork';
 import { MoodMatchBreakdown } from './MoodMatchBreakdown';
+import { MoodListen, officialVideoId } from './MoodListen';
 import { MoodShareCard, type ShareTheme } from './MoodShareCard';
 import type { CompleteMoodCriteria, MoodStep } from './moodSession';
 
@@ -77,13 +78,25 @@ export function MoodResults({
         <p className="mt-2 leading-relaxed">すべての条件に一致しない曲も、近い候補として紹介することがあります。</p>
       </div>
 
-      {/* #1 Diagnosed Song Card with Large Jacket Artwork + Visualized Breakdown + 1-2 Sentence Reason */}
+      {/* First recommendation, listening link, and match details */}
       {bestMatch && (
         <article className="rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
-            {/* Left: Large Jacket Photo + Visualized Match Breakdown (5 cols) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
+            <span className="inline-flex items-center gap-1.5 font-bold text-[#C83E2B]">
+              <Sparkles className="h-3.5 w-3.5" />
+              今日の気分から選ぶ1曲
+            </span>
+            <span className="font-mono-num">
+              {formatDuration(bestMatch.song.durationSec)} · BPM {formatSongBpm(bestMatch.song.id, bestMatch.song.bpm)}
+            </span>
+          </div>
+          <h3 className="mt-2 text-2xl sm:text-3xl font-bold text-[#1C1917]">{bestMatch.song.title}</h3>
+          <p className="mt-1 text-xs font-medium text-[#57534E]">{bestMatch.song.tieUp || bestMatch.song.englishSub}</p>
+
+          <div className="mt-5 grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+            {/* Video or artwork, followed by the matching criteria */}
             <div className="md:col-span-5 space-y-4">
-              <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
+              {!officialVideoId(bestMatch.song.id) && <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
                 {isSafeAssetUrl(bestMatch.song.jacketImage) && (
                   <GuideArtwork
                     src={bestMatch.song.jacketImage}
@@ -104,33 +117,17 @@ export function MoodResults({
                     {bestMatch.song.title}
                   </div>
                 </div>
-              </div>
+              </div>}
 
+              <MoodListen song={bestMatch.song} />
               <MoodMatchBreakdown match={bestMatch} />
             </div>
 
-            {/* Right: Song Title, 1-2 Sentence Mood Match Reason & Actions (7 cols) */}
+            {/* Explanation and actions */}
             <div className="md:col-span-7 flex flex-col justify-between">
               <div>
-                <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
-                  <span className="inline-flex items-center gap-1.5 font-bold text-[#C83E2B]">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    今日の気分から選ぶ1曲
-                  </span>
-                  <span className="font-mono-num">
-                    {formatDuration(bestMatch.song.durationSec)} · BPM {formatSongBpm(bestMatch.song.id, bestMatch.song.bpm)}
-                  </span>
-                </div>
-
-                <h3 className="mt-2 text-2xl sm:text-3xl font-bold text-[#1C1917]">
-                  {bestMatch.song.title}
-                </h3>
-                <p className="mt-1 text-xs font-medium text-[#57534E]">
-                  {bestMatch.song.tieUp || bestMatch.song.englishSub}
-                </p>
-
                 {/* 1-2 Sentence Mood Match Reason */}
-                <div className="mt-4 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-2.5">
+                <div className="rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-2.5">
                   <div className="text-xs font-bold text-[#C83E2B]">
                     この曲を紹介する理由
                   </div>
@@ -249,6 +246,9 @@ export function MoodResults({
                     <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
                       曲調資料では「{song.musicalHighlight}」と紹介されています。
                     </p>
+                    <div className="mt-4">
+                      <MoodListen song={song} />
+                    </div>
                   </div>
 
                   <div className="mt-3.5 flex items-center justify-between gap-1.5 border-t border-[#E6E1D6] pt-3">
