@@ -78,7 +78,9 @@ export function QuizSection({
               ヒゲダン検定クイズ（全60問）
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              1回10問。答え合わせのあとは、楽曲の背景やメンバーの言葉もたどれます。
+              {questionSet === 'legacy' && quizStage !== 'select'
+                ? '更新前に始めたクイズを、当時の問題の続きから再開しています。'
+                : '10問ずつのコースで、楽曲の背景やメンバーの言葉に出会おう。'}
             </p>
           </div>
 
