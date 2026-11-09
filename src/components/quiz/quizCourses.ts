@@ -1,10 +1,11 @@
 import { QUIZ_QUESTIONS, type QuizQuestion } from '../../data/quizData';
 import { QUIZ_QUESTIONS as LEGACY_QUIZ_QUESTIONS } from '../../data/quizDataLegacy';
 import { QUIZ_QUESTIONS as PREVIOUS_QUIZ_QUESTIONS } from '../../data/quizDataPrevious';
+import { QUIZ_QUESTIONS as PRIOR_QUIZ_QUESTIONS } from '../../data/quizDataPriorRevision';
 
 export type CourseDifficulty = 'all' | QuizQuestion['difficulty'];
 export type QuestionScopeFilter = 'full' | 'new_variation' | 'ordering_only' | 'classic' | 'vol1' | 'vol2' | 'vol3' | 'vol4' | 'vol5' | 'vol6';
-export type QuestionSet = 'current' | 'previous' | 'legacy';
+export type QuestionSet = 'current' | 'prior' | 'previous' | 'legacy';
 
 export const QUIZ_COURSES: {
   id: CourseDifficulty;
@@ -49,7 +50,8 @@ const NEW_VARIATION_IDS = new Set(
 );
 
 // 作品・歌詞・メンバーの話が続けて偏らないよう、10問ごとに並べる。
-const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+// Keep the published order for people who began a quiz before this revision.
+const PRIOR_VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   beginner: [
     'q1', 'q5', 'q8', 'q2', 'q33', 'q18', 'q37', 'q53', 'q3', 'q57',
     'q35', 'q31', 'q9', 'q36', 'q7', 'q39', 'q32', 'q40', 'q10', 'q38',
@@ -64,12 +66,26 @@ const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   ],
 };
 
+const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+  beginner: [
+    'q1', 'q5', 'q43', 'q2', 'q33', 'q18', 'q37', 'q53', 'q3', 'q57',
+    'q35', 'q31', 'q9', 'q36', 'q7', 'q39', 'q32', 'q40', 'q10', 'q38',
+  ],
+  intermediate: [
+    'q11', 'q19', 'q12', 'q4', 'q13', 'q17', 'q14', 'q20', 'q15', 'q16',
+    'q8', 'q41', 'q48', 'q46', 'q45', 'q42', 'q50', 'q47', 'q49', 'q44',
+  ],
+  brothers: PRIOR_VOLUME_QUESTION_IDS.brothers,
+};
+
 const CURRENT_BY_ID = new Map(QUIZ_QUESTIONS.map(question => [question.id, question]));
+const PRIOR_BY_ID = new Map(PRIOR_QUIZ_QUESTIONS.map(question => [question.id, question]));
 
 export function getCourseQuestions(difficulty: CourseDifficulty, scope: QuestionScopeFilter, questionSet: QuestionSet = 'current'): QuizQuestion[] {
   const bank: QuizQuestion[] = questionSet === 'legacy'
     ? LEGACY_QUIZ_QUESTIONS
-    : questionSet === 'previous' ? PREVIOUS_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
+    : questionSet === 'previous' ? PREVIOUS_QUIZ_QUESTIONS
+    : questionSet === 'prior' ? PRIOR_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
   if (scope.startsWith('vol')) {
     if (questionSet === 'legacy') return [];
     const volume = Number(scope.slice(3));
@@ -77,6 +93,9 @@ export function getCourseQuestions(difficulty: CourseDifficulty, scope: Question
     const tierQuestions = (tier: QuizQuestion['difficulty']) => {
       if (questionSet === 'current') {
         return VOLUME_QUESTION_IDS[tier].map(id => CURRENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
+      }
+      if (questionSet === 'prior') {
+        return PRIOR_VOLUME_QUESTION_IDS[tier].map(id => PRIOR_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
       }
       // 更新前に始めたコースは、出題順も含めて元のまま再開する。
       const questions = bank.filter(question => question.difficulty === tier);
