@@ -1,0 +1,30 @@
+name: クイズ改善の配信物を一時ビルド
+
+on:
+  push:
+    branches: [temp/quiz-experience-build-20261109]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: 検証済みの編集元から生成する
+        run: test "$(git rev-parse HEAD^)" = 1e9a7fd3b0731ba8d7857f1b25a50df110c94f1c
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: higedanfan-quiz-experience-dist
+          path: dist/
+          if-no-files-found: error
+          retention-days: 1
