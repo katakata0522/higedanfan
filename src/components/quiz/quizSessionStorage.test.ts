@@ -53,8 +53,9 @@ test('preserves partially selected and submitted ordering answers, and finished 
   assert.equal(saveQuizSession(submitted, '', sessionStore, recordStore), true);
   assert.equal(isAnswerCorrect(question, readQuizSession(sessionStore, recordStore)!.answer), true);
 
+  const total = getCourseQuestions('all', 'ordering_only').length;
   const finished: QuizSession = {
-    ...partial, stage: 'finished', currentIndex: 5, correctBefore: 6, answer: EMPTY_ANSWER,
+    ...partial, stage: 'finished', currentIndex: total - 1, correctBefore: total, answer: EMPTY_ANSWER,
   };
   assert.equal(saveQuizSession(finished, '', sessionStore, recordStore), true);
   assert.deepEqual(readQuizSession(sessionStore, recordStore), finished);
@@ -215,6 +216,35 @@ test('keeps the most recently published question and checked answer when that co
   assert.equal(sessionStore.getItem(QUIZ_KEY), oldRaw);
   assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
   assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+});
+
+test('restores the last published ordering questions after their course or question type changes', () => {
+  const recordStore = records('generation-a');
+  for (const [difficulty, scope, index, id] of [
+    ['intermediate', 'vol2', 1, 'q41'],
+    ['brothers', 'vol2', 5, 'q52'],
+    ['all', 'ordering_only', 0, 'q31'],
+  ] as const) {
+    const oldQuestions = getCourseQuestions(difficulty, scope, 'recent');
+    const oldSession: QuizSession = {
+      ...INITIAL_SESSION, stage: 'playing', difficulty, scope, currentIndex: index, correctBefore: 0,
+      answer: { selectedOption: null, selectedOrder: [2, 0], isOrderingSubmitted: false },
+    };
+    assert.equal(oldQuestions[index].id, id);
+    assert.equal(oldQuestions[index].questionType, 'ordering');
+    const currentQuestion = getCourseQuestions(difficulty, scope)[index];
+    assert.ok(currentQuestion.id !== id || currentQuestion.questionType !== 'ordering');
+    const signature = JSON.stringify(oldQuestions.map(q => [
+      q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+    ]));
+    const oldRaw = JSON.stringify({ version: 2, resetEpoch: 'generation-a', courseSignature: signature, session: oldSession });
+    const sessionStore = memoryStore({ [QUIZ_KEY]: oldRaw });
+    const restored = readQuizSession(sessionStore, recordStore);
+    assert.deepEqual(restored, { ...oldSession, questionSet: 'recent' });
+    assert.equal(sessionStore.getItem(QUIZ_KEY), oldRaw);
+    assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
+    assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+  }
 });
 
 test('storage access or quota errors leave the in-memory quiz usable', () => {

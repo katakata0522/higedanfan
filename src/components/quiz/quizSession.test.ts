@@ -22,6 +22,6 @@ test('filtered certificates describe only the questions actually played', () => 
     assert.match(label, /並び替え/);
     assert.doesNotMatch(label, /全(20|60)問/);
     assert.match(result.editorialMessage, new RegExp(result.total + '問'));
-    assert.equal(result.total, difficulty === 'all' ? 6 : 2);
+    assert.equal(result.total, difficulty === 'all' ? 4 : 1);
   }
 });

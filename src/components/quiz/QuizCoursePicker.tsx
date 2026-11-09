@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
-import { QUIZ_COURSES, type CourseDifficulty, type QuestionScopeFilter } from './quizCourses';
+import { getCourseQuestions, QUIZ_COURSES, type CourseDifficulty, type QuestionScopeFilter } from './quizCourses';
 
 interface Props {
   onStart: (difficulty: CourseDifficulty, scope: QuestionScopeFilter) => void;
@@ -10,6 +10,7 @@ export function QuizCoursePicker({ onStart }: Props) {
   const [difficulty, setDifficulty] = useState<CourseDifficulty>('beginner');
   const selected = QUIZ_COURSES.find(course => course.id === difficulty)!;
   const volumes = difficulty === 'all' ? 6 : 2;
+  const orderingCount = getCourseQuestions(difficulty, 'ordering_only').length;
   return (
     <div className="mt-6 space-y-5">
       <div>
@@ -43,7 +44,7 @@ export function QuizCoursePicker({ onStart }: Props) {
       </div>
       <button type="button" onClick={() => onStart(difficulty, 'ordering_only')}
         className="text-xs font-bold text-[#57534E] underline underline-offset-4 hover:text-[#C83E2B] cursor-pointer">
-        並び替え問題だけに挑戦する（{difficulty === 'all' ? 6 : 2}問）
+        並び替え問題だけに挑戦する（{orderingCount}問）
       </button>
     </div>
   );
