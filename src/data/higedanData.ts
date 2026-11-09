@@ -228,6 +228,22 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "historySource": "https://newsdig.tbs.co.jp/articles/bss/38780?display=1"
   },
   {
+    "id": "spot-izumo-taisha-promotion",
+    "name": "出雲大社",
+    "area": "島根・出雲",
+    "categories": ["街とヒゲダン"],
+    "categoryLabel": "大学PVの撮影地",
+    "relatedSong": "SWEET TWEET",
+    "relatedSongLabel": "島根大学PVで使われた曲",
+    "addressHint": "島根県出雲市大社町杵築東195",
+    "description": "島根大学のプロモーションビデオの撮影で、メンバー4人としまねっこが訪れた場所。大学は参拝や参道での撮影の様子を紹介しています。",
+    "fanTip": "参拝時間や境内での撮影は出雲大社の案内をご確認ください。確認した大学のYouTube上のPVは非公開でした（2026年11月確認）。",
+    "source": "https://izumooyashiro.or.jp/access",
+    "historySource": "https://www.shimane-u.ac.jp/pickup/promotion.html",
+    "historySourceLabel": "大学による撮影の記録",
+    "additionalSources": [{"label": "参拝時間の案内", "url": "https://izumooyashiro.or.jp/archives/news/12552"}]
+  },
+  {
     "id": "spot-yonago-station",
     "name": "JR米子駅",
     "area": "鳥取・米子",
@@ -321,6 +337,21 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "historySource": "https://popscene.jp/news/041374"
   },
   {
+    "id": "spot-shukumei-new-york",
+    "name": "ニューヨーク",
+    "area": "アメリカ・ニューヨーク",
+    "categories": ["MVロケ地"],
+    "mapScope": "area",
+    "relatedSong": "宿命",
+    "relatedSongLabel": "撮影された作品",
+    "addressHint": "アメリカ合衆国 ニューヨーク市",
+    "description": "「宿命」の公式MVが撮影された街。ニューヨークの風景の中で演奏する4人を映した映像です。",
+    "fanTip": "地図はニューヨーク市の位置の目安です。個別の撮影地点や建物を示すものではありません。",
+    "source": "https://ototoy.jp/news/101180",
+    "historySource": "https://thetv.jp/news/detail/196874/",
+    "historySourceLabel": "MV公開時の記事"
+  },
+  {
     "id": "spot-chessboard-film-location",
     "name": "入笠牧場 約束の丘",
     "area": "長野・伊那",
@@ -357,6 +388,23 @@ export const SACRED_SPOTS: SacredSpot[] = [
     "fanTip": "施設への入場や見学は、イベント・施設の案内をご確認ください。",
     "source": "https://www.toyota-arena-tokyo.jp/access/",
     "historySource": "https://fc.higedan.com/feature/onemanlive_2025"
+  },
+  {
+    "id": "spot-tsurumi-sunshine-court",
+    "name": "イオンモール鶴見緑地 サンシャインコート",
+    "area": "大阪・鶴見",
+    "categories": ["ライブ会場"],
+    "relatedSong": "",
+    "addressHint": "大阪府大阪市鶴見区鶴見4-17-1",
+    "description": "2015年のフリーライブツアーで、3階のサンシャインコートが会場として案内されました。山野楽器のスタッフも、このモールでのインストアライブを振り返っています。",
+    "fanTip": "会場の現在の様子は施設の案内をご確認ください。山野楽器は2025年に4階から3階へ移転しており、店舗とイベント会場は別の場所です。",
+    "source": "https://tsurumiryokuchi.aeonmall.jp/guide/equipment",
+    "historySource": "https://rockinon.com/news/detail/130627",
+    "historySourceLabel": "2015年のライブ案内",
+    "additionalSources": [
+      {"label": "山野楽器スタッフの回想", "url": "https://note.com/yamano_music/n/n743675449aea"},
+      {"label": "店舗移転の案内", "url": "https://www.yamano-music.co.jp/page-45260/"}
+    ]
   },
   {
     "id": "spot-okamoto-issenya",
@@ -474,6 +522,42 @@ export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
     sources: [
       { label: '会場の移転について', url: 'https://camp-fire.jp/projects/409283/view' },
       { label: '藤原さんの初めてのライブの話', url: 'https://www.diskgarage.com/digaonline/pleasure/53833' },
+    ],
+  },
+  {
+    id: 'spot-yamano-miwi-hashimoto-former',
+    name: '山野楽器 ミウィ橋本店',
+    area: '神奈川・相模原',
+    categories: ['街とヒゲダン'],
+    status: '2021年閉店',
+    description: 'インディーズ時代からヒゲダンを応援し、メンバーも訪れたレコード店。元店長によると、ファンの思いを届ける応援ノートも置かれていました。店舗は2021年7月25日に閉店しました。',
+    sources: [
+      { label: '元店長が振り返る応援の日々', url: 'https://note.com/yamano_music/n/n1578ec6e9a80' },
+      { label: '応援ノートのその後', url: 'https://note.com/yamano_music/n/n4ccd5a355388' },
+    ],
+  },
+  {
+    id: 'spot-shunmon-matsue-former',
+    name: '旬門 松江店',
+    area: '島根・松江',
+    categories: ['街とヒゲダン'],
+    status: '2025年閉店',
+    description: '2022年に訪れたファンの記録には、店内にヒゲダンのサインが飾られていたと記されています。店舗は2025年9月20日に閉店しました。メンバーの勤務や来店については確認できていません。',
+    sources: [
+      { label: '2022年の来店記録', url: 'https://lovely088.hatenablog.com/entry/higedan' },
+      { label: '閉店についての地域記事', url: 'https://unseki.co.jp/blog/close/22535' },
+    ],
+  },
+  {
+    id: 'spot-taipei-artist-village-former',
+    name: '台北国際芸術村（旧拠点）',
+    area: '台湾・台北',
+    categories: ['MVロケ地'],
+    status: '運営終了・ロケ地は候補',
+    description: '「Pretender」の演奏場面について、ファンが屋上を撮影地の候補として挙げた施設。撮影側による施設名の公表は確認できていません。旧拠点は2023年末に運営を終了し、活動は宝蔵巌へ移りました。',
+    sources: [
+      { label: 'ロケ地候補を紹介した記事', url: 'https://zukkytaiwan.com/pretender-pv/' },
+      { label: '施設の沿革（運営者）', url: 'https://www.artistvillage.org/about.php' },
     ],
   },
 ];
