@@ -380,14 +380,14 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
   assert.equal(getSongwriterCredit({ id: 'filament-song' }), '作詞・作曲：松浦匡希・藤原聡');
   assert.equal(getSongwriterCredit({ id: 'pretender' }), '作詞・作曲：藤原聡');
 
-  // Verify 60 quiz questions (20 per difficulty course), 6 ordering questions, verified sources, valid relatedSongIds, and balanced correctIndex distribution
+  // Verify 60 quiz questions, four ordering questions, sources, song links and answer distribution.
   assert.equal(QUIZ_QUESTIONS.length, 60);
   assert.equal(QUIZ_QUESTIONS.filter((q) => q.difficulty === 'beginner').length, 20);
   assert.equal(QUIZ_QUESTIONS.filter((q) => q.difficulty === 'intermediate').length, 20);
   assert.equal(QUIZ_QUESTIONS.filter((q) => q.difficulty === 'brothers').length, 20);
 
   const orderingQuestions = QUIZ_QUESTIONS.filter((q) => q.questionType === 'ordering');
-  assert.equal(orderingQuestions.length, 6);
+  assert.equal(orderingQuestions.length, 4);
   for (const oq of orderingQuestions) {
     assert.ok(Array.isArray(oq.correctOrder) && oq.correctOrder.length === 4);
     assert.deepEqual([...oq.correctOrder].sort(), [0, 1, 2, 3]);

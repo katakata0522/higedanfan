@@ -20,10 +20,18 @@ test('each difficulty has two distinct ten-question volumes', () => {
       }
     }
     const ordering = second.map((q, index) => q.questionType === 'ordering' ? index : -1).filter(index => index >= 0);
-    assert.equal(ordering.length, 2);
-    assert.ok(ordering[1] - ordering[0] > 1);
+    assert.equal(ordering.length, difficulty === 'intermediate' ? 2 : 1);
+    if (ordering.length > 1) assert.ok(ordering[1] - ordering[0] > 1);
     assert.deepEqual(getCourseQuestions(difficulty, 'vol3'), []);
   }
+});
+
+test('the EP question is asked before the ordering question that names its answer', () => {
+  const volume = getCourseQuestions('intermediate', 'vol2');
+  const epIndex = volume.findIndex(q => q.id === 'q45');
+  const orderIndex = volume.findIndex(q => q.id === 'q41');
+  assert.ok(epIndex >= 0 && orderIndex > epIndex);
+  assert.ok(volume[orderIndex].options.includes(`${volume[epIndex].options[volume[epIndex].correctIndex]} EP`));
 });
 
 test('the six mixed volumes cover all 60 questions once and include all difficulties', () => {
