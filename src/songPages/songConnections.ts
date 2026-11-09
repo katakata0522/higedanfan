@@ -18,6 +18,8 @@ const editorialConnections: Readonly<Record<string, readonly { id: string; reaso
 // Only videos whose title and official channel were checked are included.
 export const officialVideos: Readonly<Record<string, string>> = {
   pretender: 'https://www.youtube.com/watch?v=TQ8WlA2GXbk',
+  'yesterday-song': 'https://www.youtube.com/watch?v=DuMqFknYHBs',
+  '115man-kilo': 'https://www.youtube.com/watch?v=ReCnlwVZj1M',
   subtitle: 'https://www.youtube.com/watch?v=hN5MBlGv2Ac',
   'mixed-nuts': 'https://www.youtube.com/watch?v=CbH2F0kXgTY',
   'cry-baby': 'https://www.youtube.com/watch?v=O1bhZgkC4Gw',

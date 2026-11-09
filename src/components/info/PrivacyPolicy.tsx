@@ -25,14 +25,15 @@ export function PrivacyPolicy() {
       <p>ページを表示すると、配信元のエックスサーバーがIPアドレスや要求されたページ・ファイルのパスを受け取ります。アクセス日時やブラウザの種類とともに、サーバーのアクセスログに記録される場合があります。<a href="https://www.xserver.ne.jp/manual/man_server_log.php">エックスサーバーのアクセスログについて</a></p>
       <p>KatakataLabの一部のページではGoogle アナリティクスを使っています。このファンサイトのページには、Google アナリティクスなどのアクセス解析タグを組み込んでいません。</p>
 
-      <h2>聖地巡礼マップと外部リンク</h2>
+      <h2>聖地巡礼マップ・動画と外部リンク</h2>
       <p>聖地巡礼マップで地図が読み込まれると、ブラウザは表示地点の名前と所在地をGoogleに送ります。地図を操作する前にも、この通信は発生します。GoogleはIPアドレスやブラウザの情報を受け取り、設定に応じてCookieなどの識別子も利用します。地図を使わずに、ほかのコーナーを利用できます。<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a></p>
+      <p>マイソング診断の結果にYouTubeの動画が表示されると、再生する前にもブラウザがYouTubeに接続し、IPアドレスやブラウザの情報などが送られます。動画にはYouTubeのプライバシー強化モードを使用しています。詳しくは<a href="https://policies.google.com/privacy?hl=ja">Googleのプライバシーポリシー</a>をご覧ください。</p>
       <p>経路検索や楽曲の出典のリンクを開くと、リンク先のサービスにもアクセスします。移動先での情報の取り扱いは、各サービスの方針をご覧ください。</p>
 
       <h2>お問い合わせ</h2>
       <p>ファンノートでの情報の取り扱いについては、KatakataLabの窓口で受け付けています。フォームやメールでお知らせいただいた内容と連絡先は、お問い合わせに回答するために使います。<a href="https://katakatalab.com/contact.html">KatakataLabのお問い合わせ窓口</a></p>
       <p><a href="https://katakatalab.com/privacy.html">KatakataLab全体のプライバシーポリシー</a></p>
-      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-08">2026年11月8日更新</time></p>
+      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-09">2026年11月9日更新</time></p>
     </article>
   );
 }
