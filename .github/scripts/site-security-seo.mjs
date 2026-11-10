@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import songEvidence from '../../src/data/songEvidence.json' with { type: 'json' };
 import { formatSongBpm } from '../../src/utils/format.ts';
@@ -120,4 +121,68 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
     assert.deepEqual(runtimeErrors, [], '診断またはクイズで実行エラーがあります');
   } finally { await context.close(); }
   console.log('検索・セトリ名の保存と復元・スクリプト実行拒否・診断5問と聴く導線・クイズ回答を確認');
+}
+
+export async function verifyRecordFileImport(browser, root) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  let dialogCount = 0;
+  let acceptImport = false;
+  page.on('dialog', async dialog => {
+    dialogCount++;
+    if (acceptImport) await dialog.accept();
+    else await dialog.dismiss();
+  });
+  const key = 'higedan_fan_magazine_state_v1';
+  const assertUnchanged = (actualRaw, expectedRaw, message) => {
+    const actual = JSON.parse(actualRaw), expected = JSON.parse(expectedRaw);
+    const changed = [...new Set([...Object.keys(actual), ...Object.keys(expected)])]
+      .filter(field => !isDeepStrictEqual(actual[field], expected[field]));
+    assert.deepEqual(changed, [], message);
+  };
+  const upload = records => page.getByLabel('ファイルから記録を戻す', { exact: true }).setInputFiles({
+    name: 'notebook-regression.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(records)),
+  });
+  const openImport = async () => {
+    await page.getByLabel('マイセットリストのタイトル').waitFor();
+    await page.getByText('記録の保存・引き継ぎ', { exact: true }).click();
+  };
+  try {
+    await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+    await page.waitForFunction(key => localStorage.getItem(key) !== null, key);
+    const before = await page.evaluate(key => localStorage.getItem(key), key);
+    const legitimate = {
+      ...JSON.parse(before), setlistTitle: '読み込み確認 ', bestQuizScore: 0, hasQuizAttempt: true,
+      reviews: [{ id: 'rev-browser-regression', author: '読者', title: '思い出の記録', comment: '一行目の感想です。\n二行目の思い出です。',
+        songId: 'pretender', category: 'ライブ体験', fanTenure: '3年', postedAt: '2026.11.10', likes: 0 }],
+    };
+    let index = 0;
+    for (const field of ['setlistTitle', 'author', 'title', 'comment', 'fanTenure', 'postedAt']) {
+      await page.reload({ waitUntil: 'load' });
+      await openImport();
+      const records = structuredClone(legitimate);
+      const payload = ['<!--', '<a', '＜a'][index % 3].repeat(64000);
+      if (field === 'setlistTitle') records.setlistTitle = payload;
+      else records.reviews[0][field] = payload;
+      await upload(index++ % 2 ? { format: 'higedan-fan-notebook', version: 1, records } : records);
+      await page.getByText('記録ファイルを読み込めませんでした。元の記録は残っています。', { exact: true }).waitFor({ timeout: 5000 });
+      assertUnchanged(await page.evaluate(key => localStorage.getItem(key), key), before, `${field}: 拒否したファイルで記録が変わりました`);
+      assert.equal(dialogCount, 0, `${field}: 不正な記録が確認画面まで進みました`);
+    }
+    const cancelled = page.waitForEvent('dialog');
+    await upload({ format: 'higedan-fan-notebook', version: 1, records: legitimate });
+    await cancelled;
+    assertUnchanged(await page.evaluate(key => localStorage.getItem(key), key), before, 'キャンセルで元の記録が変わりました');
+    acceptImport = true;
+    await upload({ format: 'higedan-fan-notebook', version: 1, records: legitimate });
+    await page.getByText('記録を読み込みました。', { exact: true }).waitFor();
+    await page.reload({ waitUntil: 'load' });
+    await page.getByLabel('マイセットリストのタイトル').waitFor();
+    const restored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
+    assert.equal(restored.setlistTitle, legitimate.setlistTitle);
+    assert.deepEqual(restored.reviews, legitimate.reviews);
+    assert.equal(restored.bestQuizScore, 0);
+    assert.deepEqual(restored.setlist, legitimate.setlist);
+  } finally { await context.close(); }
+  console.log('ファイル選択から6項目の不正入力拒否・元の記録保持・キャンセル・通常の復元と再読み込みを確認');
 }
