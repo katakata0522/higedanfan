@@ -7,6 +7,7 @@ import { applySongEditorial } from '../src/songPages/applySongEditorial';
 import { editorialArticles } from '../src/songPages/editorialArticles';
 import { officialVideoDescription, officialVideos, relatedSongs } from '../src/songPages/songConnections';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
+import { CSP_MARKER, escapeHtml } from './siteHtml';
 
 const root = join(import.meta.dirname, '..');
 const dataDir = join(root, 'src/songPages/data');
@@ -21,12 +22,6 @@ const evidence = JSON.parse(readFileSync(join(root, 'src/data/songEvidence.json'
   otherSource: string;
 }>;
 
-function escapeHtml(value: string): string {
-  return value.replace(/[&<>"']/g, character => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[character]!);
-}
-
 function isHttpsUrl(value: string): boolean {
   try { return new URL(value).protocol === 'https:'; } catch { return false; }
 }
@@ -34,7 +29,7 @@ function isHttpsUrl(value: string): boolean {
 function renderHtml(page: EditorialSongPageData, title: string): string {
   const escapedTitle = escapeHtml(title);
   const url = `https://katakatalab.com/higedanfan/songs/${page.id}/`;
-  const description = `Official髭男dism『${title}』の収録作品、演奏時間、テンポ、歌の音域、曲の概要と出典をまとめた非公式ファンサイトの楽曲ガイド。`;
+  const description = `Official髭男dism「${title}」の楽曲ガイド。${page.overview[0] ?? ''}`;
   const paragraphs = page.overview.map(paragraph => `            <p>${escapeHtml(paragraph)}</p>`).join('\n');
   const listening = `<a href="${escapeHtml(evidence[page.id].apple)}" target="_blank" rel="noreferrer">Apple Musicで聴く</a>`;
   const video = officialVideos[page.id]
@@ -46,18 +41,21 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; connect-src 'self' ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self';" />
-    <title>${escapedTitle}｜楽曲ガイド｜115万キロのファンノート</title>
+    <meta http-equiv="Content-Security-Policy" content="${CSP_MARKER}" />
+    <title>${escapedTitle}｜Official髭男dism 楽曲ガイド｜115万キロのファンノート</title>
     <meta name="description" content="${escapeHtml(description)}" />
     <link rel="canonical" href="${url}" />
     <link rel="icon" href="/higedanfan/hige-mark.svg?v=34b8cc7" type="image/svg+xml" sizes="any" />
     <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png?v=cd4d0ca" sizes="180x180" />
     <meta property="og:type" content="article" />
-    <meta property="og:title" content="${escapedTitle}｜115万キロのファンノート" />
-    <meta property="og:description" content="曲の概要、演奏時間、テンポ、音域と資料を読む。" />
+    <meta property="og:title" content="${escapedTitle}｜Official髭男dism 楽曲ガイド" />
+    <meta property="og:description" content="${escapeHtml(description)}" />
     <meta property="og:url" content="${url}" />
     <meta property="og:image" content="https://katakatalab.com/higedanfan/social-cover.png?v=8d2a973" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="${escapedTitle}｜Official髭男dism 楽曲ガイド" />
+    <meta name="twitter:description" content="${escapeHtml(description)}" />
+    <meta name="twitter:image" content="https://katakatalab.com/higedanfan/social-cover.png?v=8d2a973" />
   </head>
   <body>
     <div id="root" data-song-id="${page.id}">

@@ -4,17 +4,20 @@ import path from 'path';
 import evidence from './src/data/songEvidence.json' with { type: 'json' };
 import { isTempoUnderReview } from './src/data/tempoReviewStatus.ts';
 import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
-const escape = (s: string) => s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+import { formatDuration, formatSongBpm } from './src/utils/format.ts';
+import { contentSecurityPolicy, CSP_MARKER, escapeHtml as escape } from './scripts/siteHtml.ts';
 function renderCatalog() {
   return Object.entries(evidence).map(([id, f]) => {
-    const duration = Math.floor(f.seconds/60) + ':' + String(f.seconds%60).padStart(2,'0');
-    return '<li><strong>'+escape(f.recording)+'</strong> ／ '+escape(f.style)+' ／ '+duration+' ／ '+(isTempoUnderReview(id) ? 'テンポ：調査中' : '約'+f.tempo+' BPM')+' ／ 地声 '+f.low+'～'+f.chest+' ／ 裏声最高 '+(f.falsetto || '記載なし')+
+    const duration = formatDuration(f.seconds);
+    const title = '<strong>'+escape(f.recording)+'</strong>';
+    const songLink = publishedSongPageIds.has(id) ? '<a href="/higedanfan/songs/'+encodeURIComponent(id)+'/">'+title+'</a>' : title;
+    return '<li>'+songLink+' ／ '+escape(f.style)+' ／ '+duration+' ／ '+formatSongBpm(id, f.tempo)+(isTempoUnderReview(id) ? '' : ' BPM')+' ／ 地声 '+escape(f.low)+'～'+escape(f.chest)+' ／ 裏声最高 '+escape(f.falsetto || '記載なし')+
       ' ／ 配信掲載日 '+f.release+' <a href="'+escape(f.apple)+'">音源</a> · <a href="'+escape(f.rangeSource)+'">採譜</a> · <a href="'+escape(f.styleSource)+'">曲調</a> · <a href="'+escape(f.tempoSource)+'">テンポ</a></li>';
   }).join('\n');
 }
 import {defineConfig} from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ command }) => {
   return {
     base: '/higedanfan/',
     publicDir: 'brand',
@@ -29,7 +32,12 @@ export default defineConfig(() => {
         },
       },
     },
-    plugins: [react(), tailwindcss(), { name:'static-song-guide', transformIndexHtml: html => html.replace('<!--verified-songs-->', renderCatalog()) }],
+    plugins: [react(), tailwindcss(), {
+      name: 'static-song-guide',
+      transformIndexHtml: html => html
+        .replace(CSP_MARKER, contentSecurityPolicy(command === 'serve'))
+        .replace('<!--verified-songs-->', renderCatalog()),
+    }],
     resolve: {
       alias: {
         '@': path.resolve(import.meta.dirname, '.'),
