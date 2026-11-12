@@ -303,7 +303,7 @@ export function MoodResults({
           className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
         >
           <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
-          もう一度診断する
+          最初から診断し直す
         </button>
       </div>
     </div>
