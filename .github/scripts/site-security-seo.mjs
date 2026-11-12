@@ -189,11 +189,12 @@ export async function verifyRecordFileImport(browser, root) {
   console.log('ファイル選択から6項目の不正入力拒否・元の記録保持・キャンセル・通常の復元と再読み込みを確認');
 }
 
-export async function openSetlistEditor(page) {
+export async function openSetlistEditor(page, method = 'search') {
   const panel = page.locator('#setlist-edit-panel');
   await panel.waitFor({ state: 'attached' });
   if (await panel.getAttribute('open') === null) {
     await page.getByRole('button', { name: '曲を追加・編集する欄を開く', exact: true }).click();
   }
-  await page.getByLabel('曲を探して追加').waitFor();
+  await page.getByRole('button', { name: method === 'album' ? 'アルバムから選ぶ' : '曲名で探す', exact: true }).click();
+  await page.getByLabel(method === 'album' ? '追加する曲を選択' : '曲を探して追加').waitFor();
 }

@@ -72,10 +72,12 @@ export function QuizSection({
               id="quiz-heading"
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              ヒゲダン検定クイズ（全60問）
+              {viewTab === 'archive' ? '出典記事・トリビア図鑑' : 'ヒゲダン検定クイズ（全60問）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              {questionSet && questionSet !== 'current' && quizStage !== 'select'
+              {viewTab === 'archive'
+                ? '楽曲の背景やメンバーの言葉を、解説と出典からたどれます。'
+                : questionSet && questionSet !== 'current' && quizStage !== 'select'
                 ? '更新前に始めたクイズを、当時の問題の続きから再開しています。'
                 : '10問ずつのコースで、楽曲の背景やメンバーの言葉に出会おう。'}
             </p>

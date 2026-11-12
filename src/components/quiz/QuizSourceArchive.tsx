@@ -100,25 +100,13 @@ export function QuizSourceArchive({visible, songs, onSelectSong}: Props) {
           </div>
         </div>
 
-        {/* Publisher Filter Pills */}
-        <div className="flex flex-wrap items-center gap-1.5 pt-1">
-          <span className="text-[11px] font-bold text-[#78716C] mr-1">
-            出典メディア絞り込み：
-          </span>
-          {PUBLISHERS.map((pub) => (
-            <button
-              key={pub.id}
-              type="button"
-              onClick={() => setPublisherFilter(pub.id)}
-              className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition-colors cursor-pointer ${
-                publisherFilter === pub.id
-                  ? 'bg-[#1C1917] text-[#FBF9F5]'
-                  : 'border border-[#E6E1D6] bg-white text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              {pub.label}
-            </button>
-          ))}
+        {/* 媒体の選択肢は1つの欄にまとめ、本文を先に読めるようにする。 */}
+        <div className="flex flex-col gap-1.5 pt-1 sm:flex-row sm:items-center sm:gap-3">
+          <label htmlFor="quiz-publisher-filter" className="text-xs font-bold text-[#57534E]">出典媒体</label>
+          <select id="quiz-publisher-filter" value={publisherFilter} onChange={event => setPublisherFilter(event.target.value)}
+            className="min-h-11 w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base text-[#1C1917] sm:max-w-sm sm:text-sm">
+            {PUBLISHERS.map(pub => <option key={pub.id} value={pub.id}>{pub.label}</option>)}
+          </select>
         </div>
       </div>
 

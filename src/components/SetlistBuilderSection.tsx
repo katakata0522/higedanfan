@@ -17,7 +17,6 @@ import { SongItem } from '../data/higedanData';
 import {
   calculateSetlistStats,
   formatApproxBpm,
-  formatSongBpm,
   formatDuration,
   sanitizeUserText,
   SetlistEntry,
@@ -59,6 +58,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   initialSubTab = 'builder',
 }) => {
   const activeSubTab = initialSubTab;
+  const [songPickerMode, setSongPickerMode] = useState<'search' | 'album'>('search');
   const [songSearchFilter, setSongSearchFilter] = useState<string>('');
   const [requestedSong, setSelectedSongToAdd] = useState<string>(
     songs.find((s) => !setlist.some((item) => item.songId === s.id))?.id ||
@@ -71,10 +71,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const copyTimerRef = useRef<number | null>(null);
   const editorRef = useRef<HTMLDetailsElement>(null);
   const songSearchInputRef = useRef<HTMLInputElement>(null);
+  const albumSongSelectRef = useRef<HTMLSelectElement>(null);
   const [requestedEntryId, setRequestedEntryId] = useState('');
 
   const selectableSongsByAlbum = useMemo(() => {
-    const match = prepareSongSearch(songSearchFilter);
+    const match = prepareSongSearch(songPickerMode === 'search' ? songSearchFilter : '');
     const matching = match
       ? songs.map(song => ({ song, rank: match(song) }))
         .filter((item): item is { song: SongItem; rank: number } => item.rank !== undefined)
@@ -88,7 +89,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       groups.set(s.album, list);
     }
     return Array.from(groups.entries());
-  }, [songs, songSearchFilter]);
+  }, [songs, songSearchFilter, songPickerMode]);
 
   useEffect(() => {
     return () => {
@@ -133,7 +134,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
 
   const openEditor = () => {
     if (editorRef.current) editorRef.current.open = true;
-    songSearchInputRef.current?.focus();
+    (songSearchInputRef.current ?? albumSongSelectRef.current)?.focus();
   };
 
   const handleAddSelectedSong = () => {
@@ -226,8 +227,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
 
         </div>
-
-        {activeSubTab === 'tours' && recordStorageControls}
 
         {activeSubTab === 'builder' ? (
           <div className="mt-4 space-y-4">
@@ -358,9 +357,19 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 </button>
               </div>
 
-              {/* Search results can be added directly; the album selector remains available. */}
+              {/* 検索とアルバム選択は切り替えて使い、追加操作の重複を避ける。 */}
               <div className="mt-4 space-y-3 rounded-lg bg-[#F2EFE9] p-3 border border-[#E6E1D6]">
-                <div>
+                <div className="flex flex-wrap gap-1.5" role="group" aria-label="曲の追加方法">
+                  {([['search', '曲名で探す'], ['album', 'アルバムから選ぶ']] as const).map(([mode, label]) => (
+                    <button key={mode} type="button" aria-pressed={songPickerMode === mode} onClick={() => setSongPickerMode(mode)}
+                      className={`min-h-[44px] rounded-lg border px-3 py-2 text-xs font-bold ${songPickerMode === mode
+                        ? 'border-[#1C1917] bg-[#1C1917] text-white'
+                        : 'border-[#D5CEC2] bg-white text-[#57534E] hover:border-[#1C1917]'}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {songPickerMode === 'search' && <div>
                   <label htmlFor="setlist-song-filter" className="mb-1 block text-xs font-bold text-[#1C1917]">曲を探して追加</label>
                   <div className="relative">
                     <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
@@ -385,7 +394,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-9 pr-3 py-2 text-base sm:text-sm text-[#1C1917] min-h-[44px]"
                     />
                   </div>
-                </div>
+                </div>}
 
                 <label className="inline-flex min-h-[36px] items-center gap-2 text-xs font-medium text-[#1C1917] cursor-pointer">
                   <input
@@ -397,7 +406,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   アンコール枠で追加
                 </label>
 
-                {songSearchFilter.trim() && (
+                {songPickerMode === 'search' && songSearchFilter.trim() && (
                   <div className="rounded-lg border border-[#E6E1D6] bg-white p-2" aria-label="曲の検索結果">
                     <p className="px-2 py-1 text-xs font-bold text-[#57534E]" role="status">
                       {visibleSongs.length ? `${visibleSongs.length}曲見つかりました。曲を押して追加できます。` : '曲が見つかりませんでした。'}
@@ -421,15 +430,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   </div>
                 )}
 
-                <div className="flex flex-wrap items-end gap-2">
+                {songPickerMode === 'album' && <div className="flex flex-wrap items-end gap-2">
                   <div className="min-w-0 flex-1 basis-48">
                     <label htmlFor="add-song-select" className="mb-1 block text-xs font-bold text-[#57534E]">追加する曲を選択</label>
-                    <select id="add-song-select" value={selectedSongToAdd} onChange={(e) => setSelectedSongToAdd(e.target.value)}
-                      className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-xs font-bold text-[#1C1917] min-h-[44px]">
+                    <select id="add-song-select" ref={albumSongSelectRef} value={selectedSongToAdd} onChange={(e) => setSelectedSongToAdd(e.target.value)}
+                      className="w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base sm:text-sm font-bold text-[#1C1917] min-h-[44px]">
                       {selectableSongsByAlbum.map(([albumName, groupSongs]) => (
                         <optgroup key={albumName} label={`収録：${albumName}`}>
                           {groupSongs.map(s => <option key={s.id} value={s.id}>
-                            {s.title}{setlistIdSet.has(s.id) ? '（追加済み）' : `（BPM ${formatSongBpm(s.id, s.bpm)} · ${formatDuration(s.durationSec)}）`}
+                            {s.title}{setlistIdSet.has(s.id) ? '（追加済み）' : `（${formatDuration(s.durationSec)}）`}
                           </option>)}
                         </optgroup>
                       ))}
@@ -441,7 +450,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'}`}>
                     {isSelectedAlreadyInSetlist ? <><Check className="h-3.5 w-3.5" />追加済み</> : <><Plus className="h-3.5 w-3.5" />曲を追加</>}
                   </button>
-                </div>
+                </div>}
               </div>
                   {editingEntry && editingSong && (
                     <fieldset className="space-y-3 rounded-lg border border-[#E6E1D6] p-3">
@@ -456,7 +465,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                           return <option key={entry.songId} value={entry.songId}>{badge} {song?.title ?? entry.songId}</option>;
                         })}
                       </select>
-                      <p className="text-xs leading-5 text-[#57534E]">収録：{editingSong.album} · {formatDuration(editingSong.durationSec)} · BPM {formatSongBpm(editingSong.id, editingSong.bpm)}</p>
+                      <p className="text-xs leading-5 text-[#57534E]">収録：{editingSong.album} · {formatDuration(editingSong.durationSec)}</p>
                       <div className="flex flex-wrap gap-2">
                         <button type="button" onClick={() => onToggleEncore(editingIndex)} aria-label={`${editingSong.title}を${editingEntry.isEncore ? '本編' : 'アンコール'}へ移動`}
                           className="min-h-11 rounded-lg border border-[#D5CEC2] px-3 text-xs font-semibold text-[#1C1917] hover:bg-[#F2EFE9]">
@@ -482,63 +491,12 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <summary className="cursor-pointer text-sm font-semibold text-[#57534E]">合計時間・構成を見る</summary>
               <div className="mt-3">
               <div className="rounded-xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] overflow-hidden">
-                <div className="relative h-32 w-full">
-                  <svg aria-hidden="true" className="absolute inset-0 h-full w-full" viewBox="0 0 480 128" preserveAspectRatio="xMidYMid slice">
-                    <defs><linearGradient id="setlist-banner" x1="0" y1="0" x2="1" y2="1"><stop stopColor="#355B55" /><stop offset="1" stopColor="#1C1917" /></linearGradient></defs>
-                    <rect width="480" height="128" fill="url(#setlist-banner)" />
-                    <g fill="none" stroke="#E7C68A" strokeOpacity=".3" strokeWidth="1">
-                      <path d="M-20 76 C70 30 150 30 240 76 S410 122 500 76" />
-                      <path d="M-20 90 C70 44 150 44 240 90 S410 136 500 90" />
-                      <path d="M-20 104 C70 58 150 58 240 104 S410 150 500 104" />
-                    </g>
-                    <g fill="#E7C68A" fillOpacity=".8"><circle cx="362" cy="29" r="3" /><circle cx="383" cy="22" r="2" /><circle cx="404" cy="30" r="3" /></g>
-                  </svg>
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#1C1917] via-[#1C1917]/40 to-transparent flex flex-col justify-end p-4">
-                    <span className="text-[11px] font-bold text-[#F5D0C9]">
-                      セットリスト構成データ
-                    </span>
-                    <h3 className="mt-0.5 text-base sm:text-lg font-bold text-white min-w-0 wrap-anywhere whitespace-normal">
-                      {safeDisplayTitle}
-                    </h3>
-                  </div>
-                </div>
-
                 <div className="p-4 sm:p-5 space-y-4">
-                  {/* Tabular Stats Row */}
-                  <div className="grid grid-cols-3 gap-2 border-b border-white/15 pb-3.5 text-center">
-                    <div>
-                      <span className="block text-[11px] text-white/60">曲数 / 合計時間</span>
-                      <span className="mt-0.5 block text-xs sm:text-sm font-bold font-mono-num text-white">
-                        {stats.totalSongs}曲 · {stats.formattedDuration}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[11px] text-white/60">平均テンポ</span>
-                      <span className="mt-0.5 block text-xs sm:text-sm font-bold font-mono-num text-[#FDE68A]">
-                        {stats.avgBpm !== null ? `BPM ${formatApproxBpm(stats.avgBpm)}` : stats.totalSongs ? '調査中' : '—'}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="block text-[11px] text-white/60">本編の曲数</span>
-                      <span className="mt-0.5 block text-xs sm:text-sm font-bold font-mono-num text-[#F5D0C9]">
-                        {stats.mainCount} 曲
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="mt-2 text-[11px] leading-relaxed text-white/70">BPMは目安です。資料や拍の数え方によって異なる場合があります。</p>
-                  {stats.unconfirmedBpmCount > 0 && <p className="mt-2 text-[11px] leading-relaxed text-white/70">{stats.avgBpm === null ? 'テンポが調査中の曲のみのため、平均は表示していません。' : `調査中の${stats.unconfirmedBpmCount}曲を除いて平均しています。`}</p>}
-
                   {/* Live Energy Curve Bars */}
                   <div>
-                    <div className="flex flex-wrap items-center justify-between gap-1 text-xs">
-                      <span className="font-bold text-white/90">
-                        曲順で見る熱量の目安
-                      </span>
-                      <span className="font-bold text-[#FDE68A]">{stats.vibeTitle}</span>
-                    </div>
+                    <h3 className="text-sm font-bold text-white/90">曲順で見る熱量の目安</h3>
                     <p className="mt-1 text-xs text-white/75 leading-relaxed">
-                      {stats.vibeDescription}
+                      棒の高さは、編集者が各曲に付けた盛り上がりの目安です。
                     </p>
 
                     <div className="mt-3 flex items-end overflow-x-auto gap-1.5 h-24 pt-3 px-2 rounded-lg bg-white/5 border border-white/10">
@@ -562,7 +520,18 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     </div>
                   </div>
 
-
+                  <details className="border-t border-white/15 pt-3 text-xs">
+                    <summary className="cursor-pointer font-bold text-white/80">数値と見方</summary>
+                    <dl className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <div><dt className="text-white/60">曲数 / 合計時間</dt><dd className="mt-1 font-mono-num font-bold">{stats.totalSongs}曲 · {stats.formattedDuration}</dd></div>
+                      <div><dt className="text-white/60">本編 / アンコール</dt><dd className="mt-1 font-mono-num font-bold">{stats.mainCount}曲 / {stats.encoreCount}曲</dd></div>
+                      <div><dt className="text-white/60">平均テンポ</dt><dd className="mt-1 font-mono-num font-bold text-[#FDE68A]">{stats.avgBpm !== null ? `BPM ${formatApproxBpm(stats.avgBpm)}` : stats.totalSongs ? '調査中' : '—'}</dd></div>
+                    </dl>
+                    <p className="mt-3 font-bold text-[#FDE68A]">{stats.vibeTitle}</p>
+                    <p className="mt-1 leading-relaxed text-white/75">{stats.vibeDescription}</p>
+                    <p className="mt-2 text-[11px] leading-relaxed text-white/70">BPMは目安です。資料や拍の数え方によって異なる場合があります。</p>
+                    {stats.unconfirmedBpmCount > 0 && <p className="mt-2 text-[11px] leading-relaxed text-white/70">{stats.avgBpm === null ? 'テンポが調査中の曲のみのため、平均は表示していません。' : `調査中の${stats.unconfirmedBpmCount}曲を除いて平均しています。`}</p>}
+                  </details>
                 </div>
               </div>
               </div>
@@ -570,7 +539,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             {recordStorageControls}
           </div>
         ) : (
-          <TourArchiveSection attendedTourIds={attendedTourIds} onToggleAttendedTour={onToggleAttendedTour} />
+          <>
+            <TourArchiveSection attendedTourIds={attendedTourIds} onToggleAttendedTour={onToggleAttendedTour} />
+            {recordStorageControls}
+          </>
         )}
       </div>
     </section>

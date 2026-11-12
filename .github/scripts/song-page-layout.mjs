@@ -164,14 +164,14 @@ async function verifyImmediateReload(browser) {
 
   // セトリ作成画面からの追加も、アンコール設定ごと同じ条件で復元する。
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
-  await openSetlistEditor(page);
+  await openSetlistEditor(page, 'album');
   await page.getByLabel('追加する曲を選択').selectOption('cry-baby');
   await page.getByLabel('アンコール枠で追加').check();
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby')), false);
   await page.reload({ waitUntil: 'load' });
-  await openSetlistEditor(page);
+  await openSetlistEditor(page, 'album');
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby' && item.isEncore));
 
@@ -183,7 +183,7 @@ async function verifyImmediateReload(browser) {
   await page.getByLabel('編集する曲', { exact: true }).selectOption('bedroom-talk');
   await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
   await page.reload({ waitUntil: 'load' });
-  await openSetlistEditor(page);
+  await openSetlistEditor(page, 'album');
   assert.equal(await page.locator('li[data-song-id="bedroom-talk"]').count(), 0);
   await releaseLock();
   await lockPage.evaluate(() => navigator.locks.request('higedan_fan_magazine_state_v1', () => true));
@@ -387,7 +387,8 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.getByLabel('編集する曲', { exact: true }).selectOption('subtitle');
   const subtitleActions = page.getByRole('group', { name: 'アンコール・曲の削除', exact: true });
   assert.match(await subtitleActions.innerText(), /収録：Rejoice/);
-  assert.match(await subtitleActions.innerText(), /BPM\s*約65/);
+  assert.match(await subtitleActions.innerText(), / · \d+:\d{2}/);
+  assert.doesNotMatch(await subtitleActions.innerText(), /BPM/);
   await page.getByRole('button', { name: 'Subtitleを本編へ移動' }).click();
   await page.getByRole('button', { name: 'Subtitleをアンコールへ移動' }).click();
   await search.fill('cry baby');
