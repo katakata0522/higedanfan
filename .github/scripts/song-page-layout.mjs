@@ -5,7 +5,7 @@ import { createServer } from 'node:net';
 import path from 'node:path';
 import { chromium } from 'playwright';
 import { songReadings } from '../../src/data/songReadings.ts';
-import { songLatinReadings } from '../../src/data/songLatinReadings.ts';
+import { songLatinReadings, songTitleAliases } from '../../src/data/songLatinReadings.ts';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
@@ -364,7 +364,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   for (const song of catalogEntries) {
     const reading = songReadings[song.id];
     const katakana = reading.replace(/[ぁ-ゖ]/g, kana => String.fromCharCode(kana.charCodeAt(0) + 0x60));
-    for (const query of [reading, katakana, songLatinReadings[song.id]]) {
+    for (const query of [reading, katakana, songLatinReadings[song.id], ...(songTitleAliases[song.id] ?? [])]) {
       await titleSearch.fill(query);
       await page.getByRole('heading', { name: song.title, exact: true }).waitFor();
     }

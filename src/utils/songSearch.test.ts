@@ -3,6 +3,7 @@ import test from 'node:test';
 import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songReadings } from '../data/songReadings';
 import { songLatinReadings } from '../data/songLatinReadings';
+import { songTitleAliases } from '../data/songLatinReadings';
 import { filterAndSortDiscography, type DiscographyFilter } from './discography';
 import { matchedSongContexts } from './songSearch';
 
@@ -35,10 +36,18 @@ test('全90曲をひらがな・カタカナ・英字の検索語で見つけら
     const katakana = reading.replace(/[ぁ-ゖ]/g, kana => String.fromCharCode(kana.charCodeAt(0) + 0x60));
     const latin = songLatinReadings[song.id];
     assert.match(latin, /^[\x20-\x7e]+$/, song.title);
-    for (const query of [reading, katakana, latin]) {
+    for (const query of [reading, katakana, latin, ...(songTitleAliases[song.id] ?? [])]) {
       assert.ok(search(query).some(result => result.id === song.id), `${song.title}: ${query}`);
     }
   }
+});
+
+test('カタカナ原題を英語の綴りや数字を使った表記でも探せる', () => {
+  for (const [query, id] of [
+    ['No Doubt', 'no-doubt'], ['Yesterday', 'yesterday-song'],
+    ['Mixed Nuts', 'mixed-nuts'], ['White Noise', 'white-noise'],
+    ['115man kilo no film', '115man-kilo'], ['Stardust', 'stardust'],
+  ]) assert.equal(search(query)[0]?.id, id, query);
 });
 
 test('an exact song title beats album and EP mentions in the guide order only', () => {
