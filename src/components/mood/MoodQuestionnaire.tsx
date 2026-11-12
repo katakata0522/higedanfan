@@ -114,6 +114,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
         </div>
       </div>
 
+      <div key={step} className="mood-question-enter">
       <h3 ref={headingRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-[#1C1917] focus:outline-none">
         {question.title}
       </h3>
@@ -128,7 +129,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
             onClick={() => onChoose(option.id)}
             aria-pressed={option.id === selected}
             className={[
-              'group flex items-center justify-between rounded-xl border p-4 sm:p-5 text-left hover:border-[#1C1917] hover:bg-white transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B]',
+              'mood-answer group flex items-center justify-between rounded-xl border p-4 sm:p-5 text-left hover:border-[#1C1917] hover:bg-white transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B]',
               option.id === selected ? 'border-[#C83E2B] bg-[#FFF6F3]' : 'border-[#E6E1D6] bg-[#FBF9F5]',
             ].join(' ')}
           >
@@ -142,6 +143,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
             <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C] group-hover:translate-x-0.5 group-hover:text-[#1C1917] transition-transform" />
           </button>
         ))}
+      </div>
       </div>
     </div>
   );
