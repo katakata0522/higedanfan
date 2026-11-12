@@ -84,7 +84,7 @@ export function MoodResults({
 
       {/* First recommendation and listening link */}
       {bestMatch && bestCopy && (
-        <article className="rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
+        <article key={bestMatch.song.id} className="mood-result-enter rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
           <p className="text-xs font-bold text-[#C83E2B]">今日のあなたへのおすすめ</p>
           <h3 ref={resultHeadingRef} tabIndex={-1} className="mt-2 scroll-mt-28 text-2xl sm:text-3xl font-bold text-[#1C1917] focus:outline-none">{bestMatch.song.title}</h3>
           <p className="mt-1 text-xs font-medium text-[#57534E]">{bestMatch.song.tieUp || bestMatch.song.englishSub}</p>

@@ -56,6 +56,23 @@
   }
 }
 
+@keyframes mood-question-enter {
+  from { opacity: 0.8; transform: translateX(6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes mood-result-enter {
+  from { opacity: 0.88; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .mood-question-enter { animation: mood-question-enter 180ms ease-out; }
+  .mood-answer { transition-duration: 100ms; }
+  .mood-answer:active { transform: scale(0.99); }
+  .mood-result-enter { animation: mood-result-enter 220ms ease-out; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

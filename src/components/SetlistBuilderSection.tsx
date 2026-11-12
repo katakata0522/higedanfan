@@ -99,6 +99,28 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   }, []);
 
   const stats = useMemo(() => calculateSetlistStats(setlist, songs), [setlist, songs]);
+  const durationLabelRef = useRef<HTMLSpanElement>(null);
+  const previousDurationRef = useRef(stats.totalDurationSec);
+
+  useEffect(() => {
+    const previousDuration = previousDurationRef.current;
+    previousDurationRef.current = stats.totalDurationSec;
+    const label = durationLabelRef.current;
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (previousDuration === stats.totalDurationSec || !label || reducedMotion.matches) return;
+
+    const animation = label.animate([
+      { backgroundColor: '#F5E5C9', color: '#9A341F' },
+      { backgroundColor: 'transparent', color: getComputedStyle(label).color },
+    ], { duration: 240, easing: 'ease-out' });
+    const stopForReducedMotion = () => { if (reducedMotion.matches) animation.cancel(); };
+    reducedMotion.addEventListener('change', stopForReducedMotion);
+    return () => {
+      animation.cancel();
+      reducedMotion.removeEventListener('change', stopForReducedMotion);
+    };
+  }, [stats.totalDurationSec]);
+
   const songMap = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
   const setlistIdSet = useMemo(() => new Set(setlist.map((s) => s.songId)), [setlist]);
   const visibleSongs = selectableSongsByAlbum.flatMap(([, group]) => group);
@@ -212,7 +234,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             <div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
                 <h3 id="setlist-tracks-heading" title={safeDisplayTitle} className="line-clamp-2 w-full min-w-0 wrap-anywhere text-[15px] font-semibold leading-6 text-[#1C1917] sm:w-auto sm:flex-1">{safeDisplayTitle}</h3>
-                <p className="text-xs text-[#78716C]">{stats.totalSongs}曲 · {stats.formattedDuration}</p>
+                <p className="text-xs text-[#78716C]">{stats.totalSongs}曲 · <span ref={durationLabelRef} className="rounded-sm">{stats.formattedDuration}</span></p>
                 <button type="button" onClick={openEditor} aria-controls="setlist-edit-panel" aria-label="曲を追加・編集する欄を開く"
                   className="inline-flex min-h-8 items-center gap-1 text-xs font-medium text-[#57534E] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2">
                   <Plus aria-hidden="true" className="h-3.5 w-3.5" />追加・編集
