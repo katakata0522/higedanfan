@@ -1,5 +1,6 @@
 import type { SongItem } from '../data/higedanData';
 import { songReadings } from '../data/songReadings';
+import { songLatinReadings } from '../data/songLatinReadings';
 import { sanitizeUserText } from './userInput';
 import { ALBUM_CHRONOLOGY_RANK, songAlbums, songwriterInfo } from './songCatalog';
 
@@ -9,7 +10,7 @@ function normalize(value: string): string {
   );
 }
 
-// Keep pitch sharps and numbers; ignore separators such as those in Cry Baby and I LOVE....
+// 曲名の空白・句読点の有無によらず検索する。
 function searchKey(value: string): string {
   return normalize(value).replace(/[\s'‘’".…・!?‐‑–—×-]+/g, '');
 }
@@ -19,7 +20,7 @@ function keywords(query: string): string[] {
 }
 
 function titleKeys(song: SongItem): string[] {
-  return [song.title, songReadings[song.id] ?? ''].map(searchKey).filter(Boolean);
+  return [song.title, songReadings[song.id] ?? '', songLatinReadings[song.id] ?? ''].map(searchKey).filter(Boolean);
 }
 
 const albumSearchKeys = new Map(Object.keys(ALBUM_CHRONOLOGY_RANK).map(album =>
@@ -58,8 +59,6 @@ export function prepareSongSearch(query: string) {
 
     const fields = [
       ...contextFields(song).map(item => item.label + item.text), song.musicalHighlight, song.linerNotes,
-      song.vocalRange.highestChestNote, song.vocalRange.highestFalsettoNote,
-      song.vocalRange.lowestNote, song.vocalRange.highNoteSection,
     ].map(searchKey);
     const searchable = titles.concat(fields);
     return words.every(word => searchable.some(field => field.includes(word))) ? 3 : undefined;

@@ -1,5 +1,6 @@
 import type { SongGuideFilterValues } from '../components/SongGuideFilters';
 import { ALBUM_CHRONOLOGY_RANK } from './songCatalog';
+import { SONG_TABLE_SORT_KEYS } from './songTableSort';
 
 const key = 'higedanfan:guide-return:v1';
 const eras = new Set(['all', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026']);
@@ -45,6 +46,9 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
         (filters.album !== 'all' && !Object.hasOwn(ALBUM_CHRONOLOGY_RANK, filters.album)) ||
         typeof filters.searchQuery !== 'string' || filters.searchQuery.length > 60 ||
         !Number.isInteger(visibleCount) || visibleCount! < 1 || visibleCount! > songCount) return null;
+    if (filters.tableSort !== undefined && (!filters.tableSort ||
+        !SONG_TABLE_SORT_KEYS.includes(filters.tableSort.key) ||
+        !['ascending', 'descending'].includes(filters.tableSort.direction))) return null;
     if (voice !== undefined) {
       const pitchValid = (pitch: unknown) => typeof pitch === 'string' && (pitch === '' || (/^\d+$/.test(pitch) && Number(pitch) >= 36 && Number(pitch) <= 84));
       if (!voice || !pitchValid(voice.low) || !pitchValid(voice.high) || !Number.isInteger(voice.keyShift) || voice.keyShift < -12 || voice.keyShift > 12) return null;

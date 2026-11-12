@@ -86,7 +86,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
       assert.ok(blocked.violations.includes('script-src-elem') && blocked.violations.includes('script-src-attr'));
     }
     await page.goto(`${root}#discography`, { waitUntil: 'load' });
-    await page.getByLabel('曲名・読み・音域・タイアップで検索').fill(payload);
+    await page.getByLabel('曲名・読み・タイアップで検索').fill(payload);
     assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
     await page.goto(`${root}#setlist`, { waitUntil: 'load' });
     const title = page.getByLabel('マイセットリストのタイトル');

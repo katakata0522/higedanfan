@@ -22,7 +22,6 @@ export default function InfoPage({ page }: { page: InfoPageId }) {
   const Content = content[page];
   return (
     <div ref={region} className="mx-auto max-w-4xl px-4 pb-12 pt-5 sm:px-6">
-      <a href="#home" className="inline-block py-2 text-sm text-[#57534E] underline">トップへ戻る</a>
       <Content />
     </div>
   );
