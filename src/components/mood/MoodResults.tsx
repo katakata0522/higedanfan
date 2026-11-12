@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, Disc, Pencil, Plus, Share2 } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Disc, Pencil, Plus, RotateCcw, Share2 } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
 import {
   ERA_PREFERENCE_LABELS,
@@ -28,25 +28,29 @@ export interface MoodLibraryProps {
 interface MoodResultsProps extends MoodLibraryProps {
   criteria: CompleteMoodCriteria;
   onEditAnswer: (step: MoodStep) => void;
+  onRestart: () => void;
   theme: ShareTheme;
   onSelectTheme: (theme: ShareTheme) => void;
 }
 
 export function MoodResults({
   songs, onSelectSong, onAddToSetlist, setlistSongIds,
-  criteria, onEditAnswer, theme, onSelectTheme,
+  criteria, onEditAnswer, onRestart, theme, onSelectTheme,
 }: MoodResultsProps) {
   const [shareRank, setShareRank] = useState<number | null>(null);
   const [page, setPage] = useState(0);
-  const resultHeadingRef = useRef<HTMLParagraphElement>(null);
-  useEffect(() => {
-    resultHeadingRef.current?.focus();
-  }, []);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const recommendations = useMemo(() => recommendSongsByMood(songs, criteria), [songs, criteria]);
   const matches = recommendations.slice(page * 3, page * 3 + 3);
   const [bestMatch, ...subMatches] = matches;
   const bestCopy = bestMatch ? moodResultCopy(bestMatch.song) : null;
+  const recommendedSongId = bestMatch?.song.id;
+  useEffect(() => {
+    const heading = resultHeadingRef.current;
+    heading?.focus({ preventScroll: true });
+    heading?.scrollIntoView({ block: 'start' });
+  }, [recommendedSongId]);
   const showNearMatchNotice = Boolean(bestMatch
     && (!bestMatch.song.moods.includes(criteria.mood) || !isSoundMatch(bestMatch.song, criteria.sound)));
   const answers: { step: MoodStep; name: string; value: string }[] = [
@@ -63,33 +67,13 @@ export function MoodResults({
   const changePage = (next: number) => {
     setShareRank(null);
     setPage(next);
-    resultHeadingRef.current?.focus();
   };
 
   return (
-    <div className="mt-6 space-y-6">
-      {/* Selected Answers Summary Bar */}
-      <div className="rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] px-4 py-3 text-xs text-[#57534E]">
-        <p ref={resultHeadingRef} tabIndex={-1} className="font-bold text-[#1C1917] focus:outline-none">選んだ答え <span className="font-normal text-[#57534E]">・押すとその答えだけ変えられます</span></p>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {answers.map(answer => (
-            <button
-              key={answer.step}
-              type="button"
-              onClick={() => onEditAnswer(answer.step)}
-              aria-label={answer.name + '「' + answer.value + '」を変更'}
-              className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-left font-medium text-[#1C1917] hover:border-[#C83E2B] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
-            >
-              <span className="text-[#78716C]">{answer.name}</span> {answer.value}
-              <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
-            </button>
-          ))}
-        </div>
-      </div>
-
+    <div className="space-y-6">
       {recommendations.length === 0 && (
         <div className="rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7">
-          <p className="text-base font-bold text-[#1C1917]">ぴったりの曲が見つからなかったみたい。</p>
+          <h3 ref={resultHeadingRef} tabIndex={-1} className="scroll-mt-28 text-base font-bold text-[#1C1917] focus:outline-none">ぴったりの曲が見つからなかったみたい。</h3>
           <p className="mt-2 text-sm leading-relaxed text-[#57534E]">時期か曲の長さを変えて、もう一度探してみよう。</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={() => onEditAnswer(4)} className="rounded-lg border border-[#D5CEC2] px-3 py-2 text-sm font-bold hover:bg-[#F2EFE9]">時期を変える</button>
@@ -98,19 +82,11 @@ export function MoodResults({
         </div>
       )}
 
-      {showNearMatchNotice && (
-        <p className="rounded-xl bg-[#F2EFE9] px-4 py-3 text-sm leading-relaxed text-[#57534E]">
-          {criteria.era !== 'any' || criteria.length !== 'any'
-            ? '選んだ時期と長さに合う曲から探しました。気分や音のイメージは少し違うかもしれません。'
-            : '選んだ気分や音に近い曲を探しました。少し違う雰囲気の曲も楽しんでみてください。'}
-        </p>
-      )}
-
       {/* First recommendation and listening link */}
       {bestMatch && bestCopy && (
         <article className="rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
           <p className="text-xs font-bold text-[#C83E2B]">今日のあなたへのおすすめ</p>
-          <h3 className="mt-2 text-2xl sm:text-3xl font-bold text-[#1C1917]">{bestMatch.song.title}</h3>
+          <h3 ref={resultHeadingRef} tabIndex={-1} className="mt-2 scroll-mt-28 text-2xl sm:text-3xl font-bold text-[#1C1917] focus:outline-none">{bestMatch.song.title}</h3>
           <p className="mt-1 text-xs font-medium text-[#57534E]">{bestMatch.song.tieUp || bestMatch.song.englishSub}</p>
 
           <div className="mt-5 max-w-2xl space-y-4">
@@ -146,6 +122,14 @@ export function MoodResults({
             <p className="mt-2 text-sm leading-7 text-[#292524]">{bestCopy.introduction}</p>
             {bestCopy.invitation && <p className="mt-3 text-sm leading-7 text-[#57534E]">{bestCopy.invitation}</p>}
           </div>
+
+          {showNearMatchNotice && (
+            <p className="mt-4 rounded-xl bg-[#F2EFE9] px-4 py-3 text-sm leading-relaxed text-[#57534E]">
+              {criteria.era !== 'any' || criteria.length !== 'any'
+                ? '選んだ時期と長さに合う曲から探しました。気分や音のイメージは少し違うかもしれません。'
+                : '選んだ気分や音に近い曲を探しました。少し違う雰囲気の曲も楽しんでみてください。'}
+            </p>
+          )}
 
           {/* Action Bar including Share Card Generator Button */}
           <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-4">
@@ -290,6 +274,38 @@ export function MoodResults({
           {(page + 1) * 3 < recommendations.length && <button type="button" onClick={() => changePage(page + 1)} className="rounded-lg border border-[#C83E2B] bg-white px-4 py-2.5 text-sm font-bold text-[#A93020] hover:bg-[#FFF6F3]">ほかの曲も見てみる</button>}
         </div>
       )}
+
+      <div className="space-y-4 border-t border-[#E6E1D6] pt-5">
+        <details className="group rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] text-xs text-[#57534E]">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-4 py-3 font-bold text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] [&::-webkit-details-marker]:hidden">
+            条件を変えて探す
+            <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 transition-transform group-open:rotate-180" />
+          </summary>
+          <p className="px-4">変えたい答えを選ぶと、その回答だけを変えられます。</p>
+          <div className="flex flex-wrap gap-2 px-4 pb-4 pt-3">
+            {answers.map(answer => (
+              <button
+                key={answer.step}
+                type="button"
+                onClick={() => onEditAnswer(answer.step)}
+                aria-label={answer.name + '「' + answer.value + '」を変更'}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-left font-medium text-[#1C1917] hover:border-[#C83E2B] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+              >
+                <span className="text-[#78716C]">{answer.name}</span> {answer.value}
+                <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
+              </button>
+            ))}
+          </div>
+        </details>
+        <button
+          type="button"
+          onClick={onRestart}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+        >
+          <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
+          最初から診断し直す
+        </button>
+      </div>
     </div>
   );
 }
