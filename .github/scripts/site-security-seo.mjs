@@ -89,6 +89,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
     await page.getByLabel('曲名・読み・タイアップで検索').fill(payload);
     assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
     await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+    await openSetlistEditor(page);
     const title = page.getByLabel('マイセットリストのタイトル');
     await title.fill(payload);
     const accepted = await title.inputValue();
@@ -97,6 +98,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
       return value && JSON.parse(value).setlistTitle === expected;
     }, accepted);
     await page.reload({ waitUntil: 'load' });
+    await openSetlistEditor(page);
     assert.equal(await title.inputValue(), accepted);
     assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
     assert.equal(await page.evaluate(() => window.__inputExecuted ?? 0), 0);
@@ -144,7 +146,7 @@ export async function verifyRecordFileImport(browser, root) {
     name: 'notebook-regression.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(records)),
   });
   const openImport = async () => {
-    await page.getByLabel('マイセットリストのタイトル').waitFor();
+    await page.getByRole('heading', { name: 'マイセットリスト作成', exact: true }).waitFor();
     await page.getByText('記録の保存・引き継ぎ', { exact: true }).click();
   };
   try {
@@ -177,7 +179,7 @@ export async function verifyRecordFileImport(browser, root) {
     await upload({ format: 'higedan-fan-notebook', version: 1, records: legitimate });
     await page.getByText('記録を読み込みました。', { exact: true }).waitFor();
     await page.reload({ waitUntil: 'load' });
-    await page.getByLabel('マイセットリストのタイトル').waitFor();
+    await openSetlistEditor(page);
     const restored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
     assert.equal(restored.setlistTitle, legitimate.setlistTitle);
     assert.deepEqual(restored.reviews, legitimate.reviews);
@@ -185,4 +187,13 @@ export async function verifyRecordFileImport(browser, root) {
     assert.deepEqual(restored.setlist, legitimate.setlist);
   } finally { await context.close(); }
   console.log('ファイル選択から6項目の不正入力拒否・元の記録保持・キャンセル・通常の復元と再読み込みを確認');
+}
+
+export async function openSetlistEditor(page) {
+  const panel = page.locator('#setlist-edit-panel');
+  await panel.waitFor({ state: 'attached' });
+  if (await panel.getAttribute('open') === null) {
+    await page.getByRole('button', { name: '曲を追加・編集する欄を開く', exact: true }).click();
+  }
+  await page.getByLabel('曲を探して追加').waitFor();
 }

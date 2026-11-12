@@ -9,7 +9,7 @@ import { songLatinReadings, songTitleAliases } from '../../src/data/songLatinRea
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
-import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport } from './site-security-seo.mjs';
+import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
 const ids = [...publishedSongPageIds].sort();
@@ -164,13 +164,14 @@ async function verifyImmediateReload(browser) {
 
   // セトリ作成画面からの追加も、アンコール設定ごと同じ条件で復元する。
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+  await openSetlistEditor(page);
   await page.getByLabel('追加する曲を選択').selectOption('cry-baby');
   await page.getByLabel('アンコール枠で追加').check();
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby')), false);
   await page.reload({ waitUntil: 'load' });
-  await page.getByLabel('追加する曲を選択').waitFor();
+  await openSetlistEditor(page);
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby' && item.isEncore));
 
@@ -179,10 +180,11 @@ async function verifyImmediateReload(browser) {
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   page.once('dialog', dialog => dialog.accept());
+  await page.getByLabel('編集する曲', { exact: true }).selectOption('bedroom-talk');
   await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
   await page.reload({ waitUntil: 'load' });
-  await page.getByLabel('追加する曲を選択').waitFor();
-  assert.equal(await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).count(), 0);
+  await openSetlistEditor(page);
+  assert.equal(await page.locator('li[data-song-id="bedroom-talk"]').count(), 0);
   await releaseLock();
   await lockPage.evaluate(() => navigator.locks.request('higedan_fan_magazine_state_v1', () => true));
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk')), false);
@@ -192,12 +194,13 @@ async function verifyImmediateReload(browser) {
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   page.once('dialog', dialog => dialog.accept());
+  await page.getByLabel('編集する曲', { exact: true }).selectOption('bedroom-talk');
   await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
   await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
   await page.getByLabel('アンコール枠で追加').check();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).waitFor();
+  await page.getByRole('button', { name: 'Bedroom Talk', exact: true }).waitFor();
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk' && item.isEncore));
   await context.close();
@@ -371,6 +374,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   }
 
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+  await openSetlistEditor(page);
   const search = page.getByLabel('曲を探して追加');
   await search.fill('ぷりてんだー');
   await page.getByRole('button', { name: 'Pretenderを本編に追加' }).click();
@@ -380,12 +384,11 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.getByLabel('アンコール枠で追加').check();
   await page.getByRole('button', { name: 'Subtitleをアンコールに追加' }).click();
   await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
-  await page.getByLabel('Subtitleのその他の操作').click();
-  const subtitleActions = page.locator('details').filter({ has: page.getByLabel('Subtitleのその他の操作') });
+  await page.getByLabel('編集する曲', { exact: true }).selectOption('subtitle');
+  const subtitleActions = page.getByRole('group', { name: 'アンコール・曲の削除', exact: true });
   assert.match(await subtitleActions.innerText(), /収録：Rejoice/);
   assert.match(await subtitleActions.innerText(), /BPM\s*約65/);
   await page.getByRole('button', { name: 'Subtitleを本編へ移動' }).click();
-  await page.getByLabel('Subtitleのその他の操作').click();
   await page.getByRole('button', { name: 'Subtitleをアンコールへ移動' }).click();
   await search.fill('cry baby');
   await page.getByLabel('アンコール枠で追加').uncheck();
@@ -403,14 +406,14 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホのセトリ画面が横にはみ出しています');
   await page.setViewportSize({ width: 320, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxのセトリ画面が横にはみ出しています');
+  await openSetlistEditor(page);
   await search.fill('いぬかきゃっとかでしぬまでけんかしよう');
   await page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！を本編に追加' }).click();
   const longTitle = page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！', exact: true });
   await longTitle.waitFor();
   const titleBox = await longTitle.evaluate(el => {
-    const title = el.querySelector('span');
-    const bounds = title.getBoundingClientRect();
-    return { width: bounds.width, height: bounds.height, line: parseFloat(getComputedStyle(title).lineHeight) };
+    const bounds = el.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height, line: parseFloat(getComputedStyle(el).lineHeight) };
   });
   assert.ok(titleBox.width >= 160 && titleBox.height <= titleBox.line * 2 + 1, '320pxの長い曲名が縦に潰れています');
   await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
@@ -418,6 +421,58 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxの音域一覧が横にはみ出しています');
   await context.close();
   console.log('全90曲の3表記検索・見出しソート・メニュー・320pxの曲名と曲順・保存を確認');
+}
+
+async function verifySetlistHierarchy(browser) {
+  const context = await browser.newContext({ viewport: { width: 320, height: 844 } });
+  await context.addInitScript(() => {
+    const ids = ['mixed-nuts', 'inu-ka-cat-ka', '115man-kilo', 'subtitle', 'sharon', 'soulsoup', 'pretender', 'stand-by-you'];
+    localStorage.setItem('higedan_fan_magazine_state_v1', JSON.stringify({
+      setlistTitle: '曲順の表示確認', setlist: ids.map((songId, index) => ({ songId, isEncore: index >= 6 })),
+    }));
+  });
+  const page = await context.newPage();
+  await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+  const list = page.getByRole('list', { name: 'マイセットリストの曲順', exact: true });
+  await list.locator('li[data-song-id]').first().waitFor();
+  assert.equal(await list.locator('li[data-song-id]').count(), 8);
+  assert.equal(await page.getByLabel('マイセットリストのタイトル').isVisible(), false);
+  assert.equal(await page.getByLabel('曲を探して追加').isVisible(), false);
+  assert.equal(await page.getByText('操作', { exact: true }).count(), 0);
+  assert.equal(await list.getByRole('button', { name: /その他の操作/ }).count(), 0);
+
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    const layout = await list.evaluate(el => {
+      const rows = [...el.querySelectorAll('li[data-song-id]')];
+      return {
+        viewport: innerWidth, pageWidth: document.documentElement.scrollWidth,
+        firstTop: rows[0].getBoundingClientRect().top,
+        lastBottom: rows.at(-1).getBoundingClientRect().bottom,
+        rows: rows.map(row => {
+          const card = row.querySelector('.setlist-track-card').getBoundingClientRect();
+          const moves = row.querySelector('.setlist-move-controls').getBoundingClientRect();
+          const title = row.querySelector('.setlist-track-title');
+          const box = title.getBoundingClientRect();
+          const font = getComputedStyle(title);
+          const icon = row.querySelector('.setlist-move-controls svg').getBoundingClientRect();
+          const hit = row.querySelector('.setlist-move-controls button').getBoundingClientRect();
+          return { title: title.textContent, font: parseFloat(font.fontSize), line: parseFloat(font.lineHeight),
+            titleHeight: box.height, cardRight: card.right, movesLeft: moves.left, icon: icon.width, hitWidth: hit.width, hitHeight: hit.height };
+        }),
+      };
+    });
+    assert.ok(layout.pageWidth <= layout.viewport, `${width}pxでページが横にはみ出します`);
+    assert.ok(layout.firstTop < 350 && layout.lastBottom <= 844, `${width}pxで8曲の流れを最初の画面で見渡せません`);
+    for (const row of layout.rows) {
+      assert.ok(row.font >= 18 && row.font > row.icon, `${width}px ${row.title}: 曲名が矢印より目立ちません`);
+      assert.ok(row.titleHeight <= row.line * 2 + 1, `${width}px ${row.title}: 曲名が縦に潰れています`);
+      assert.ok(row.cardRight + 4 <= row.movesLeft, `${width}px ${row.title}: 矢印が曲の枠に干渉します`);
+      assert.ok(row.hitWidth >= 24 && row.hitHeight >= 24, `${width}px ${row.title}: 移動ボタンを押せる範囲が小さすぎます`);
+    }
+  }
+  await context.close();
+  console.log('320/390px・PCで8曲を先に表示し、大きな曲名と枠外の小さな移動欄を確認');
 }
 
 let browser;
@@ -428,6 +483,7 @@ try {
   await verifyInputAndScriptBoundaries(browser, root);
   await verifyRecordFileImport(browser, root);
   await verifyGuideAndSetlistUsability(browser);
+  await verifySetlistHierarchy(browser);
   if (!process.argv.includes('--ux-only')) {
     await verifyImmediateReload(browser);
     await verifyStorageFailures(browser);
