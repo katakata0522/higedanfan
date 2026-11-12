@@ -101,14 +101,14 @@ export const HOME_FEATURE_CARDS: HomeFeatureCard[] = ([
     secondaryId: 'quiz_archive',
     stepNum: '04',
     subtitle: '知っている曲から、新しい発見へ',
-    title: 'ヒゲダン検定クイズ・出典＆トリビア図鑑',
+    title: 'ヒゲダン検定クイズ・参考記事',
     description:
-      '初級・中級・上級は各20問。答え合わせのあとは、作品情報やインタビュー、使用した音源もたどれます。',
+      '初級・中級・上級は各20問。参考記事の一覧では、曲の物語や検定で参照したインタビュー・公式資料を探せます。',
     points: [
       '初級から上級、曲順の並び替えにも挑戦',
       '気になる答えはインタビューや資料へ',
     ],
     ctaLabel: 'ヒゲダン検定に挑戦する',
-    secondaryCtaLabel: '出典記事＆トリビア図鑑へ',
+    secondaryCtaLabel: '参考記事・インタビューへ',
   },
 ] satisfies HomeFeatureCard[]).filter(card => card.id !== 'community' || PUBLIC_FEATURES.ranking || PUBLIC_FEATURES.reviews);
