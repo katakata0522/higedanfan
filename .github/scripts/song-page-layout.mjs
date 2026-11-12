@@ -328,6 +328,7 @@ async function verifyGuideAndSetlistUsability(browser) {
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${root}#quiz`, { waitUntil: 'load' });
+  await page.locator('#section-quiz').waitFor();
   assert.equal(await page.getByRole('navigation', { name: 'コーナー切り替えナビゲーション' }).count(), 0);
   assert.equal(await page.getByRole('group', { name: /の切り替え/ }).count(), 0);
   await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
