@@ -266,6 +266,7 @@ async function verifyInteractions(browser) {
     fontSize: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
   }));
   assert.ok(readable.width <= readable.viewport && readable.height > readable.viewportHeight && readable.fontSize > initialFont, '大きな文字で読む表示が正しくありません');
+  await page.locator('.song-site-menu > summary').click();
   await page.getByRole('button', { name: '標準の文字に戻す' }).click();
   await page.waitForFunction(() => !document.querySelector('.sheet-frame--readable'));
 
