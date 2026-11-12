@@ -21,11 +21,6 @@ export function TourArchiveSection({ attendedTourIds, onToggleAttendedTour }: To
 
   return (
     <div className="mt-5 space-y-4">
-      <div className="rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm text-[#57534E]">
-        <p><strong className="text-[#1C1917]">公演記録：{TOUR_ARCHIVES.length}シリーズ・{concertCount}公演</strong>（2026年11月8日確認）。公演日と会場は<a className="underline" href="https://liverepo.katakatalab.com/" target="_blank" rel="noreferrer">LiveRepo</a>の公開記録を、<a className="underline" href="https://higedan-setlist.net/" target="_blank" rel="noreferrer">ヒゲダンセトリ</a>の公演一覧と照合しました。2016年の3公演は公式告知とも照合しています。</p>
-        <p className="mt-2">セトリが掲載されている公演だけリンクを表示します。リンク先の曲順は各資料の記録であり、当サイトが公演音源と照合したものではありません。「参戦・視聴」はツアー単位の個人メモです。</p>
-      </div>
-
       <div className="flex flex-col gap-3 rounded-xl border border-[#E6E1D6] bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
         <label className="flex min-w-0 flex-1 items-center gap-2 text-xs font-bold text-[#1C1917]">
           日付・会場を探す
@@ -92,6 +87,11 @@ export function TourArchiveSection({ attendedTourIds, onToggleAttendedTour }: To
           );
         })}
       </div>
+      <details className="rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm text-[#57534E]">
+        <summary className="cursor-pointer font-bold text-[#1C1917]">この公演記録について</summary>
+        <p className="mt-3"><strong className="text-[#1C1917]">公演記録：{TOUR_ARCHIVES.length}シリーズ・{concertCount}公演</strong>（2026年11月8日確認）。公演日と会場は<a className="underline" href="https://liverepo.katakatalab.com/" target="_blank" rel="noreferrer">LiveRepo</a>の公開記録を、<a className="underline" href="https://higedan-setlist.net/" target="_blank" rel="noreferrer">ヒゲダンセトリ</a>の公演一覧と照合しました。2016年の3公演は公式告知とも照合しています。</p>
+        <p className="mt-2">セトリが掲載されている公演だけリンクを表示します。リンク先の曲順は各資料の記録であり、当サイトが公演音源と照合したものではありません。「参戦・視聴」はツアー単位の個人メモです。</p>
+      </details>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
   {
     id: 'quiz',
     label: 'ヒゲダン検定クイズ（全60問）',
-    shortDesc: '選択問題と並び替え！各20問・全60問の検定',
+    shortDesc: '1回10問。各難易度20問、全60問の検定',
     icon: <HelpCircle className="h-4 w-4 shrink-0" />,
   },
   {

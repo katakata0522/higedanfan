@@ -21,7 +21,6 @@ import {
   SACRED_SPOTS,
   SacredSpotCategory,
   SongItem,
-  MATSUE_IMAGE_PATH,
 } from '../data/higedanData';
 import {
   EP_TRACK_ORDER_MAP,
@@ -474,27 +473,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {/* Sub-View 3: Sacred Spots Map & Pilgrimage Guide */}
         {activeSubView === 'sacred_map' && (
           <div className="mt-4 space-y-4">
-            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 rounded-xl border border-[#E6E1D6] bg-white p-4 sm:p-5">
-              <div className="flex items-center gap-4">
-                {isSafeAssetUrl(MATSUE_IMAGE_PATH) && (
-                  <GuideArtwork
-                    src={MATSUE_IMAGE_PATH}
-                    alt="宍道湖の夕景をイメージした図柄"
-                    referrerPolicy="no-referrer"
-                    className="h-16 w-24 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
-                  />
-                )}
-                <div>
-                  <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">
-                    ヒゲダンとつながる場所へ
-                  </h3>
-                  <p className="mt-0.5 text-xs text-[#57534E]">
-                    思い出の街から、あのMVの景色まで。訪れた場所にはチェックを残せます。
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap gap-1.5 lg:justify-end" role="group" aria-label="場所とのつながりで絞り込む">
+            <div className="rounded-xl border border-[#E6E1D6] bg-white p-3 sm:p-4">
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="場所とのつながりで絞り込む">
                 {SPOT_CATEGORIES.map(
                   (category) => (
                     <button
@@ -533,16 +513,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-5"
                   >
                     <div>
-                      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 text-xs text-[#78716C]">
-                        <span className="font-bold text-[#C83E2B] shrink-0 whitespace-nowrap">
-                          {spot.area}
-                        </span>
-                        {spot.relatedSong && <span className="min-w-0 wrap-anywhere whitespace-normal">{spot.relatedSongLabel ?? '散策のお供に（作成者の選曲）'}: {spot.relatedSong}</span>}
-                      </div>
-                      <h4 className="mt-1.5 text-base font-bold text-[#1C1917]">
+                      <h3 className="text-base font-bold text-[#1C1917]">
                         {spot.name}
-                      </h4>
+                      </h3>
+                      <p className="mt-1 text-xs font-bold text-[#C83E2B]">{spot.area}</p>
                       <p className="mt-1 text-xs font-bold text-[#1E3A5F]">{spot.categoryLabel ?? spot.categories.join(' / ')}</p>
+                      {spot.relatedSong && spot.relatedSongLabel && <p className="mt-2 text-xs leading-relaxed text-[#57534E]">{spot.relatedSongLabel}: {spot.relatedSong}</p>}
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
                         {spot.description}
                       </p>
@@ -556,6 +532,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {spot.additionalSources?.map(source => <a key={source.url} className="underline" href={source.url} target="_blank" rel="noreferrer">{source.label} ↗</a>)}
                         </div>
                       </div>
+                      {spot.relatedSong && !spot.relatedSongLabel && <p className="mt-3 text-xs leading-relaxed text-[#78716C]">散策のお供に（作成者の選曲）: {spot.relatedSong}</p>}
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#E6E1D6]">
