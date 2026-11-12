@@ -36,7 +36,7 @@ export function calculateQuizResult(
       rankTitle: 'グッドミュージック特派員',
       rankBadgeCode: 'RANK A · SENIOR WRITER',
       editorialMessage:
-        '出典図鑑では、気になった問題の作品情報やインタビューを読めます。',
+        '参考記事の一覧では、作品情報やインタビューの掲載元をたどれます。',
     };
   }
   return {

@@ -476,6 +476,49 @@ async function verifySetlistHierarchy(browser) {
   console.log('320/390px・PCで8曲を先に表示し、大きな曲名と枠外の小さな移動欄を確認');
 }
 
+async function verifyReferenceLibrary(browser) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${root}#quiz_archive`, { waitUntil: 'load' });
+    const library = page.locator('#section-quiz');
+    await library.getByRole('heading', { name: '参考記事・インタビュー', exact: true }).waitFor();
+    const cards = library.locator('[data-reference-list] > article');
+    assert.equal(await cards.count(), 24, '最初の24件が表示されません');
+    assert.equal(await library.getByText(/正解：|^Q\./).count(), 0, '資料一覧にクイズの問題や正解が残っています');
+    await library.getByLabel('媒体', { exact: true }).selectOption('rockinon.com');
+    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('Rejoice');
+    assert.equal(await cards.count(), 1, '記事名と媒体で絞り込めません');
+    await cards.getByRole('link', { name: /新作『Rejoice』のすべて/ }).waitFor();
+    assert.equal(await cards.locator('time').getAttribute('datetime'), '2024-07-31');
+    assert.equal(await cards.getByRole('link', { name: /新作『Rejoice』のすべて/ }).getAttribute('href'), 'https://rockinon.com/interview/detail/210118');
+    const layout = await page.evaluate(() => ({
+      width: document.documentElement.scrollWidth, viewport: innerWidth,
+      links: [...document.querySelectorAll('[data-reference-list] article > a')].map(link => {
+        const box = link.getBoundingClientRect();
+        return { left: box.left, right: box.right };
+      }),
+    }));
+    assert.ok(layout.width <= layout.viewport, `${width}pxで資料一覧が横にはみ出します`);
+    assert.ok(layout.links.every(link => link.left >= 0 && link.right <= layout.viewport), `${width}pxで記事リンクが画面外にはみ出します`);
+    await library.getByLabel('媒体', { exact: true }).selectOption('all');
+    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('ぷりてんだー');
+    await cards.getByRole('link', { name: /研究と向上心を欠かさない4人/ }).waitFor();
+    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('該当しない参考記事XYZ');
+    await library.getByText('条件に一致する参考記事が見つかりませんでした。').waitFor();
+    await library.getByRole('button', { name: '検索条件をリセット', exact: true }).click();
+    assert.equal(await cards.count(), 24);
+    await library.getByRole('button', { name: /さらに24件を見る/ }).click();
+    assert.equal(await cards.count(), 48, '続きの記事を表示できません');
+    await library.getByLabel('日付順', { exact: true }).selectOption('oldest');
+    assert.equal(await cards.count(), 24, '並び替えで表示件数が戻りません');
+    assert.equal(await cards.first().locator('time').getAttribute('datetime'), '2015-02-06');
+  }
+  await context.close();
+  console.log('320/390px・PCで記事名・日付・掲載元リンク、媒体/曲名検索、追加表示と日付順を確認');
+}
+
 let browser;
 try {
   await waitForServer();
@@ -485,6 +528,7 @@ try {
   await verifyRecordFileImport(browser, root);
   await verifyGuideAndSetlistUsability(browser);
   await verifySetlistHierarchy(browser);
+  await verifyReferenceLibrary(browser);
   if (!process.argv.includes('--ux-only')) {
     await verifyImmediateReload(browser);
     await verifyStorageFailures(browser);

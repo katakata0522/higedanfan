@@ -72,11 +72,11 @@ export function QuizSection({
               id="quiz-heading"
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              {viewTab === 'archive' ? '出典記事・トリビア図鑑' : 'ヒゲダン検定クイズ（全60問）'}
+              {viewTab === 'archive' ? '参考記事・インタビュー' : 'ヒゲダン検定クイズ（全60問）'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {viewTab === 'archive'
-                ? '楽曲の背景やメンバーの言葉を、解説と出典からたどれます。'
+                ? '曲の物語や検定で参考にした記事・インタビュー・公式資料。記事名・媒体・日付から、掲載元をたどれます。'
                 : questionSet && questionSet !== 'current' && quizStage !== 'select'
                 ? '更新前に始めたクイズを、当時の問題の続きから再開しています。'
                 : '10問ずつのコースで、楽曲の背景やメンバーの言葉に出会おう。'}
@@ -95,7 +95,7 @@ export function QuizSection({
           )}
         </div>
 
-        {sessionSaveUnavailable && (
+        {viewTab === 'quiz' && sessionSaveUnavailable && (
           <p role="status" className="mt-4 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] p-3 text-xs text-[#57534E]">
             このブラウザでは途中経過を一時保存できません。画面を移動すると回答が消える場合があります。
           </p>

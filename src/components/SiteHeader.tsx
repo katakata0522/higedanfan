@@ -101,8 +101,8 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
   },
   {
     id: 'quiz_archive',
-    label: '出典記事＆トリビア図鑑',
-    shortDesc: '解答の根拠になった作品情報・曲別資料',
+    label: '参考記事・インタビュー',
+    shortDesc: '曲の物語・検定で参考にした記事と公式資料',
     icon: <Newspaper className="h-4 w-4 shrink-0" />,
   },
 ] satisfies NavMenuItem[]).filter(item =>

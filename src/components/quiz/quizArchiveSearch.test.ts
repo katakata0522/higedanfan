@@ -1,95 +1,51 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { HIGEDAN_SONGS } from '../../data/higedanData';
-import { QUIZ_QUESTIONS } from '../../data/quizData';
-import { prepareQuizArchiveSearch } from './quizArchiveSearch';
+import { REFERENCE_ARTICLES, type ReferenceArticle } from '../../data/referenceArticles';
+import { prepareReferenceSearch, referenceDateLabel, sortReferenceArticles } from './quizArchiveSearch';
 
-const songsById = new Map(HIGEDAN_SONGS.map(song => [song.id, song]));
-const questionById = new Map(QUIZ_QUESTIONS.map(question => [question.id, question]));
-
-function matches(query: string, id: string, showRelatedSong = true): boolean {
-  const question = questionById.get(id);
-  assert.ok(question, `Missing question ${id}`);
-  const relatedSong = showRelatedSong && question.relatedSongId
-    ? songsById.get(question.relatedSongId)
-    : undefined;
-  return prepareQuizArchiveSearch(query, HIGEDAN_SONGS)(question, relatedSong);
+function find(query: string) {
+  return REFERENCE_ARTICLES.filter(prepareReferenceSearch(query, HIGEDAN_SONGS).matches);
 }
 
-test('single-choice distractors do not create invisible matches', () => {
-  const search = prepareQuizArchiveSearch('Same Blue', HIGEDAN_SONGS);
-  const matchingIds = QUIZ_QUESTIONS.filter(question => search(
-    question,
-    question.relatedSongId ? songsById.get(question.relatedSongId) : undefined,
-  )).map(question => question.id);
-
-  assert.deepEqual(matchingIds, ['q13', 'q47']);
-  assert.equal(matches('Same Blue', 'q11'), false);
-  assert.equal(matches('Same Blue', 'q58'), false);
-  assert.equal(matches('5拍子と6拍子', 'q13'), true);
-});
-
-test('visible ordering answers, related songs, and source labels remain searchable', () => {
-  assert.equal(matches('Traveler', 'q31'), true);
-  assert.equal(matches('Pretender', 'q32'), true);
-  assert.equal(matches('Sharon', 'q14'), false);
-  assert.equal(matches('Subtitle', 'q37'), true);
-  const relatedSong = HIGEDAN_SONGS.find(song => song.id === 'pretender')!;
-  const searchRelated = prepareQuizArchiveSearch(relatedSong.title, HIGEDAN_SONGS);
-  const unrelatedQuestion = questionById.get('q14')!;
-  assert.equal(searchRelated(unrelatedQuestion, relatedSong), true);
-  assert.equal(searchRelated(unrelatedQuestion), false);
-  assert.equal(matches('Real Sound', 'q13'), true);
-  assert.equal(matches('楽曲分析', 'q13'), true);
-});
-
-test('related song links have a visible connection to the question', () => {
-  for (const id of ['q14', 'q31', 'q41']) {
-    assert.equal(questionById.get(id)?.relatedSongId, undefined);
+test('記事名・媒体・日付・表示された関連曲から参考記事を探せる', () => {
+  const rejoiceInterview = REFERENCE_ARTICLES.find(article => article.url === 'https://rockinon.com/interview/detail/210118');
+  assert.ok(rejoiceInterview);
+  for (const query of ['Rejoice', 'rockinon.com', '2024/07/31', '2024年7月31日']) {
+    assert.ok(find(query).includes(rejoiceInterview), query);
   }
-  assert.equal(matches('115万キロのフィルム', 'q31'), false);
-  assert.equal(matches('SWEET TWEET', 'q41'), false);
-
-  for (const [questionId, songId] of [
-    ['q53', 'elderflower'],
-  ]) {
-    const question = questionById.get(questionId);
-    const song = songsById.get(songId);
-    assert.ok(question && song);
-    assert.equal(question.relatedSongId, song.id);
-    assert.equal(question.options[question.correctIndex], song.title);
-    assert.equal(matches(song.title, questionId), true);
+  const pretenderInterview = REFERENCE_ARTICLES.find(article => article.url.includes('/50294/'));
+  assert.ok(pretenderInterview);
+  for (const query of ['Pretender', 'ＰＲＥＴＥＮＤＥＲ', 'プリテンダー', 'ぷりてんだー']) {
+    assert.ok(find(query).includes(pretenderInterview), query);
   }
-  assert.equal(questionById.get('q47')?.relatedSongId, 'same-blue');
-  assert.equal(matches('Same Blue', 'q47'), true);
-  assert.equal(questionById.get('q58')?.relatedSongId, 'stand-by-you');
-  assert.equal(matches('Stand By You', 'q58'), true);
-
-  const albumQuestion = questionById.get('q29');
-  const albumTrack = songsById.get('escapade-song');
-  assert.ok(albumQuestion && albumTrack);
-  assert.equal(albumQuestion.relatedSongId, albumTrack.id);
-  assert.equal(albumTrack.album, 'エスカパレード');
-  assert.equal(albumTrack.trackNumber, 3);
-  assert.match(albumQuestion.explanation, /「ESCAPADE」はこのアルバムの3曲目/);
-  assert.ok(albumQuestion.sources.some(source => source.url === 'https://higedan.com/discography/detail/8/'));
 });
 
-test('width, case, punctuation and song readings work without matching hidden choices', () => {
-  assert.equal(matches('ＳＡＭＥ　ＢＬＵＥ', 'q13'), true);
-  assert.equal(matches('せいむぶるー', 'q13'), true);
-  assert.equal(matches('セイムブルー', 'q11'), false);
-  assert.equal(matches('プリテンダー', 'q32'), true);
-  assert.equal(matches('プリテンダー', 'q2'), false);
+test('検索には表示しない問題文・正解・内部の問題番号を含めない', () => {
+  for (const query of ['q13', 'この問いで参照した資料', '正解：', '5拍子と6拍子']) {
+    assert.equal(find(query).length, 0, query);
+  }
+  assert.equal(find('  ').length, REFERENCE_ARTICLES.length);
 });
 
-test('archive search ignores suppressed boilerplate but still matches visible source details', () => {
-  assert.equal(matches('この問いで参照した資料', 'q1'), false);
-  assert.equal(matches('Rejoiceの配信日', 'q1'), true);
-  assert.equal(matches('小節ごとの拍数', 'q13'), true);
+test('日付不明の資料は新しい順・古い順とも末尾に置き、元データを並び替えない', () => {
+  const base = REFERENCE_ARTICLES[0];
+  const input: ReferenceArticle[] = [
+    {...base, title: '不明', date: null},
+    {...base, title: '古い', date: '2018-06-12'},
+    {...base, title: '新しい', date: '2024-07-31'},
+  ];
+  assert.deepEqual(sortReferenceArticles(input, 'newest').map(article => article.title), ['新しい', '古い', '不明']);
+  assert.deepEqual(sortReferenceArticles(input, 'oldest').map(article => article.title), ['古い', '新しい', '不明']);
+  assert.deepEqual(input.map(article => article.title), ['不明', '古い', '新しい']);
 });
 
-test('an empty query leaves all 60 archive questions available', () => {
-  const search = prepareQuizArchiveSearch('  ', HIGEDAN_SONGS);
-  assert.equal(QUIZ_QUESTIONS.filter(question => search(question)).length, 60);
+test('記事公開日と、更新日・放送日・発行日・資料発売日を区別する', () => {
+  const base = {...REFERENCE_ARTICLES[0], date: '2024-07-31'};
+  assert.equal(referenceDateLabel({...base, dateKind: 'published'}), '2024/07/31 公開');
+  assert.equal(referenceDateLabel({...base, dateKind: 'updated'}), '2024/07/31 更新');
+  assert.equal(referenceDateLabel({...base, dateKind: 'broadcast'}), '2024/07/31 放送');
+  assert.equal(referenceDateLabel({...base, dateKind: 'issued'}), '2024/07/31 発行');
+  assert.equal(referenceDateLabel({...base, dateKind: 'released'}), '2024/07/31 資料発売');
+  assert.equal(referenceDateLabel({...base, date: null}), '公開日未確認');
 });
