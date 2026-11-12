@@ -91,3 +91,24 @@ export const songLatinReadings: Readonly<Record<string, string>> = {
   'elderflower': 'erudaa furawaa',
   'stardust': 'sutaadasuto',
 };
+
+// カタカナ語は、読みのローマ字に加えて元の英語の綴りでも探せるようにする。
+export const songTitleAliases: Readonly<Record<string, readonly string[]>> = {
+  'mixed-nuts': ['Mixed Nuts'],
+  '115man-kilo': ['115man kilo no film', '115man kiro no firumu'],
+  'no-doubt': ['No Doubt'],
+  'editorial-song': ['Apoptosis'],
+  'white-noise': ['White Noise'],
+  'darling-indies': ['daarin'],
+  'equal-song': ['Equal'],
+  'takaga-i-love-you': ['takaga ai rabu yuu'],
+  'brothers-song': ['burazaazu'],
+  'yesterday-song': ['Yesterday'],
+  'vintage-song': ['Vintage'],
+  'filament-song': ['Filament'],
+  'parabola-song': ['Parabola'],
+  'pending-machine': ['Pending Machine'],
+  'catchball-song': ['Catch Ball'],
+  'elderflower': ['Elderflower', 'Elder Flower'],
+  'stardust': ['Stardust'],
+};

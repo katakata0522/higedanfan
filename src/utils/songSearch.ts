@@ -1,6 +1,6 @@
 import type { SongItem } from '../data/higedanData';
 import { songReadings } from '../data/songReadings';
-import { songLatinReadings } from '../data/songLatinReadings';
+import { songLatinReadings, songTitleAliases } from '../data/songLatinReadings';
 import { sanitizeUserText } from './userInput';
 import { ALBUM_CHRONOLOGY_RANK, songAlbums, songwriterInfo } from './songCatalog';
 
@@ -20,7 +20,7 @@ function keywords(query: string): string[] {
 }
 
 function titleKeys(song: SongItem): string[] {
-  return [song.title, songReadings[song.id] ?? '', songLatinReadings[song.id] ?? ''].map(searchKey).filter(Boolean);
+  return [song.title, songReadings[song.id] ?? '', songLatinReadings[song.id] ?? '', ...(songTitleAliases[song.id] ?? [])].map(searchKey).filter(Boolean);
 }
 
 const albumSearchKeys = new Map(Object.keys(ALBUM_CHRONOLOGY_RANK).map(album =>
