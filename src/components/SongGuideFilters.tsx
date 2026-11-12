@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, RotateCcw, Search, X } from 'lucide-react';
 import type { EraTag, SoundTag } from '../data/higedanData';
 import type { DiscographySortOption } from '../utils/discography';
+import { SONG_TABLE_SORT_LABELS, type SongTableSort } from '../utils/songTableSort';
 
 export interface SongGuideFilterValues {
   era: EraTag | 'all';
@@ -9,6 +10,7 @@ export interface SongGuideFilterValues {
   sound: SoundTag | 'all';
   sortBy: DiscographySortOption;
   searchQuery: string;
+  tableSort?: SongTableSort;
 }
 
 export const DEFAULT_GUIDE_FILTERS: SongGuideFilterValues = {
@@ -64,25 +66,30 @@ interface Props {
   onChange: (values: SongGuideFilterValues) => void;
   resultCount: number;
   shownCount: number;
-  showSort?: boolean;
+  children?: ReactNode;
+  voiceSummary?: string;
+  onReset?: () => void;
 }
 
 const selectClass = 'w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-2 text-xs font-medium text-[#1C1917] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]';
 
-export function SongGuideFilters({ values, onChange, resultCount, shownCount, showSort = false }: Props) {
+export function SongGuideFilters({ values, onChange, resultCount, shownCount, children, voiceSummary, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultStatus = useRef<HTMLSpanElement>(null);
   const { era, album, sound, sortBy, searchQuery } = values;
   const secondaryChoices = [
+    album !== 'all' && album,
     era !== 'all' && ERA_TABS.find(tab => tab.id === era)?.shortLabel,
     sound !== 'all' && SOUND_FILTERS.find(option => option.id === sound)?.label,
-    sortBy !== 'guide_order' && SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', ''),
+    values.tableSort ? `${SONG_TABLE_SORT_LABELS[values.tableSort.key]}・${values.tableSort.direction === 'ascending' ? '昇順' : '降順'}` : sortBy !== 'guide_order' && SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', ''),
+    voiceSummary,
   ].filter(Boolean);
   const hasActiveFilter = album !== 'all' || Boolean(searchQuery.trim()) || secondaryChoices.length > 0;
   const sortSelect = (
-    <select id="discography-sort-select" className={selectClass} value={sortBy}
-      onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption })}>
+    <select id="discography-sort-select" className={selectClass} value={values.tableSort ? 'table' : sortBy}
+      onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption, tableSort: undefined })}>
+      {values.tableSort && <option value="table" disabled>表の見出しで指定：{SONG_TABLE_SORT_LABELS[values.tableSort.key]}（{values.tableSort.direction === 'ascending' ? '昇順' : '降順'}）</option>}
       {SORT_OPTIONS.map(option => <option key={option.id} value={option.id}>
         {option.id === 'guide_order' && searchQuery.trim() ? '並び順：曲名・読みの一致を優先' : option.label}
       </option>)}
@@ -91,9 +98,9 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, sh
 
   return (
     <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E1D6] bg-white p-3 sm:p-4">
-      <div className={`grid gap-2 ${showSort ? 'sm:grid-cols-2 lg:grid-cols-3' : 'sm:grid-cols-2'}`}>
+      <div>
         <div>
-          <label htmlFor="discography-search" className="mb-1 block text-xs font-bold text-[#57534E]">曲名・読み・音域・タイアップで検索</label>
+          <label htmlFor="discography-search" className="mb-1 block text-xs font-bold text-[#57534E]">曲名・読み・タイアップで検索</label>
           <div className="relative">
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#57534E]" />
           <input id="discography-search" ref={input} type="search" enterKeyHint="search"
@@ -117,7 +124,16 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, sh
           )}
           </div>
         </div>
-        <div>
+      </div>
+
+      <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
+        onClick={() => setExpanded(current => !current)}
+        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
+        <span>条件を絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
+        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid-cols-2`}>
+        <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="album-filter-select">収録アルバム・EPで絞り込み</label>
           <select id="album-filter-select" value={album} className={selectClass}
             onChange={e => {
@@ -128,19 +144,6 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, sh
             {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
-        {showSort && <div>
-          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="discography-sort-select">並び替え</label>
-          {sortSelect}
-        </div>}
-      </div>
-
-      <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
-        onClick={() => setExpanded(current => !current)}
-        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
-        <span>{showSort ? '年代・曲調で絞る' : '詳しく絞る・並べ替える'}{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
-        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
-      </button>
-      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid-cols-2`}>
         <div role="group" aria-label="年代で絞り込み" className="flex flex-wrap items-center gap-1 sm:col-span-2">
           {ERA_TABS.map(tab => {
             const active = era === tab.id && album === 'all';
@@ -155,24 +158,25 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, sh
           })}
         </div>
         <div>
-          <label className="sr-only" htmlFor="sound-filter-select">おすすめ分類（作成者）</label>
+          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="sound-filter-select">おすすめ分類（作成者）</label>
           <select id="sound-filter-select" className={selectClass} value={sound}
             onChange={e => onChange({ ...values, sound: e.target.value as SongGuideFilterValues['sound'] })}>
             {SOUND_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
-        {!showSort && <div>
-          <label className="sr-only" htmlFor="discography-sort-select">楽曲の並び替え</label>
+        <div>
+          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="discography-sort-select">並び替え</label>
           {sortSelect}
-        </div>}
+        </div>
+        {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E] sm:col-span-2">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
+        {children && <div className="sm:col-span-2">{children}</div>}
       </div>
-      {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E]">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-2 text-xs">
         <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
           className="scroll-mt-20 font-bold text-[#1C1917]">
           該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
         </span>
-        {hasActiveFilter && <button type="button" onClick={() => onChange(DEFAULT_GUIDE_FILTERS)}
+        {hasActiveFilter && <button type="button" onClick={() => onReset ? onReset() : onChange(DEFAULT_GUIDE_FILTERS)}
           className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline">
           <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />条件リセット
         </button>}

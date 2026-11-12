@@ -1,5 +1,5 @@
 import { useLayoutEffect, useMemo, useState, type RefObject } from 'react';
-import { ArrowLeft, HelpCircle, Newspaper } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
 import { QuizCoursePicker } from './quiz/QuizCoursePicker';
@@ -98,45 +98,6 @@ export function QuizSection({
             このブラウザでは途中経過を一時保存できません。画面を移動すると回答が消える場合があります。
           </p>
         )}
-
-        {/* Sub-navigation Tabs: Quiz Mode vs Source Archive Mode */}
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <div
-            role="group"
-            aria-label="クイズと出典記事図鑑の切り替え"
-            className="inline-flex rounded-xl border border-[#D5CEC2] bg-[#F2EFE9] p-1"
-          >
-            <button
-              type="button"
-
-              aria-pressed={viewTab === 'quiz'}
-              onClick={() => (window.location.hash = 'quiz')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-                viewTab === 'quiz'
-                  ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <HelpCircle className="h-4 w-4" />
-              クイズに挑戦する
-            </button>
-            <button
-              type="button"
-
-              aria-pressed={viewTab === 'archive'}
-              onClick={() => (window.location.hash = 'quiz_archive')}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs sm:text-sm font-bold transition-colors cursor-pointer ${
-                viewTab === 'archive'
-                  ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <Newspaper className="h-4 w-4" />
-              全60問の出典＆トリビア図鑑
-            </button>
-          </div>
-
-        </div>
 
         {viewTab === 'quiz' && quizStage === 'select' && (
           <QuizCoursePicker onStart={startCourse} />

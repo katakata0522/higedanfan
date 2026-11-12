@@ -15,7 +15,7 @@ function memoryStore() {
 test('楽曲ページから戻ると検索条件と表示件数を一度だけ復元する', () => {
   const store = memoryStore();
   const state = {
-    filters: { ...DEFAULT_GUIDE_FILTERS, era: 'traveler' as const, searchQuery: 'ぷりてんだー' },
+    filters: { ...DEFAULT_GUIDE_FILTERS, era: 'traveler' as const, searchQuery: 'ぷりてんだー', tableSort: { key: 'chest' as const, direction: 'descending' as const } },
     visibleCount: 42,
     view: 'vocal_range' as const,
     voice: { low: '48', high: '72', keyShift: -2 },
@@ -35,4 +35,12 @@ test('古い件数や不正な検索条件を復元しない', () => {
   assert.equal(takeGuideReturnState(90, store), null);
   saveGuideReturnState({ filters: DEFAULT_GUIDE_FILTERS, visibleCount: 18, view: 'vocal_range', voice: { low: '100', high: '72', keyShift: 0 } }, store);
   assert.equal(takeGuideReturnState(90, store), null);
+});
+
+test('保存された表の並べ替えに不正な見出し・方向があれば復元しない', () => {
+  for (const tableSort of [{ key: 'no-such-column', direction: 'ascending' }, { key: 'low', direction: 'sideways' }, null]) {
+    const store = memoryStore();
+    store.setItem('higedanfan:guide-return:v1', JSON.stringify({ filters: { ...DEFAULT_GUIDE_FILTERS, tableSort }, visibleCount: 18, view: 'vocal_range' }));
+    assert.equal(takeGuideReturnState(90, store), null);
+  }
 });

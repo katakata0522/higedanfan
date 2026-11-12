@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { HIGEDAN_SONGS } from '../data/higedanData';
 import { songReadings } from '../data/songReadings';
+import { songLatinReadings } from '../data/songLatinReadings';
 import { filterAndSortDiscography, type DiscographyFilter } from './discography';
 import { matchedSongContexts } from './songSearch';
 
@@ -25,11 +26,18 @@ test('phone keyboard variants and known title readings find their song first', (
   }
 });
 
-test('every guide entry is discoverable by its verified reading', () => {
+test('全90曲をひらがな・カタカナ・英字の検索語で見つけられる', () => {
+  assert.equal(HIGEDAN_SONGS.length, 90);
+  assert.deepEqual(Object.keys(songLatinReadings).sort(), HIGEDAN_SONGS.map(song => song.id).sort());
   for (const song of HIGEDAN_SONGS) {
     const reading = songReadings[song.id];
     assert.ok(reading, song.title);
-    assert.ok(search(reading).some(result => result.id === song.id), song.title);
+    const katakana = reading.replace(/[ぁ-ゖ]/g, kana => String.fromCharCode(kana.charCodeAt(0) + 0x60));
+    const latin = songLatinReadings[song.id];
+    assert.match(latin, /^[\x20-\x7e]+$/, song.title);
+    for (const query of [reading, katakana, latin]) {
+      assert.ok(search(query).some(result => result.id === song.id), `${song.title}: ${query}`);
+    }
   }
 });
 
@@ -94,9 +102,8 @@ test('production credits, album notes, and sourced tie-ups remain distinct', () 
   }
 });
 
-test('a sharp sign still distinguishes vocal-range searches', () => {
-  const sharp = search('hiD#').map(s => s.title);
-  assert.ok(sharp.includes('アポトーシス'));
-  assert.ok(!sharp.includes('ミックスナッツ'));
-  assert.ok(search('hiD').some(s => s.title === 'ミックスナッツ'));
+test('音域値はキーワード検索の対象に含めない', () => {
+  assert.deepEqual(search('hiD#'), []);
+  assert.deepEqual(search('hiD'), []);
+  assert.deepEqual(search('mid1C'), []);
 });

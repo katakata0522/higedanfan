@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, RotateCcw, ShieldCheck } from 'lucide-react';
+import { RotateCcw, ShieldCheck } from 'lucide-react';
 import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
 import { HomePage } from './components/home/HomePage';
@@ -56,33 +56,6 @@ export default function App() {
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
 
   const toastTimerRef = React.useRef<number | null>(null);
-  const featureNavRef = React.useRef<HTMLElement | null>(null);
-  const activeFeatureRef = React.useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    const revealCurrentFeature = () => {
-      const nav = featureNavRef.current;
-      const focused = document.activeElement;
-      const current = nav && focused instanceof HTMLButtonElement && nav.contains(focused) && focused.matches(':focus-visible')
-        ? focused
-        : activeFeatureRef.current;
-      if (!nav || !current) return;
-      const bounds = nav.getBoundingClientRect();
-      const item = current.getBoundingClientRect();
-      const padding = 8;
-      const home = nav.querySelector<HTMLElement>('[data-feature-home]');
-      const homeWidth = home && getComputedStyle(home).position === 'sticky' ? home.getBoundingClientRect().width : 0;
-      const visibleLeft = bounds.left + padding + homeWidth;
-      const delta = item.left < visibleLeft || item.right > bounds.right - padding
-        ? item.left - visibleLeft
-        : 0;
-      if (delta) nav.scrollLeft += delta;
-    };
-    revealCurrentFeature();
-    window.addEventListener('resize', revealCurrentFeature);
-    return () => window.removeEventListener('resize', revealCurrentFeature);
-  }, [activeFeatureTab]);
-
   useEffect(() => {
     return () => {
       if (toastTimerRef.current !== null) {
@@ -166,63 +139,6 @@ export default function App() {
 
   const setlistSongIds = setlist.map((s) => s.songId);
 
-  const featureNavigation = (
-    <div className={`mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 ${activeFeatureTab === 'mood' ? 'pb-4' : 'pt-3.5'}`}>
-      <nav
-        aria-label="コーナー切り替えナビゲーション"
-        ref={featureNavRef}
-        className="flex items-center gap-1.5 overflow-x-auto [scroll-padding-left:5.75rem] sm:[scroll-padding-left:0px] sm:flex-wrap rounded-xl border border-[#E6E1D6] bg-white p-1.5 sm:p-2"
-      >
-        <button
-          type="button"
-          data-feature-home
-          onClick={() => handleSelectTab('home', 'all')}
-          className="sticky left-0 z-10 sm:static inline-flex items-center gap-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-xs font-bold text-[#1C1917] shadow-[-10px_0_0_0_#fff] sm:shadow-none hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer shrink-0"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          トップへ
-        </button>
-
-        <span aria-hidden="true" className="text-[#D5CEC2] px-0.5 hidden sm:inline">
-          |
-        </span>
-
-        {(
-          [
-            { id: 'mood', label: 'マイソング診断' },
-            { id: 'discography', label: '楽曲ガイド(90曲)' },
-            { id: 'vocal_range', label: '音域・発売日表' },
-            { id: 'sacred_map', label: '聖地マップ' },
-            { id: 'setlist', label: 'マイセトリ作成' },
-            { id: 'tour_archive', label: '歴代ツアー記録' },
-            ...(PUBLIC_FEATURES.ranking ? [{ id: 'community' as const, label: '人気曲投票' }] : []),
-            ...(PUBLIC_FEATURES.reviews ? [{ id: 'fan_reviews' as const, label: '感想ノート' }] : []),
-            { id: 'quiz', label: '検定クイズ(60問)' },
-            { id: 'quiz_archive', label: '出典図鑑' },
-          ] as { id: ActiveFeatureTab; label: string }[]
-        ).map((navItem) => {
-          const isCurrent = activeFeatureTab === navItem.id;
-          return (
-            <button
-              key={navItem.id}
-              type="button"
-              ref={isCurrent ? activeFeatureRef : undefined}
-              aria-current={isCurrent ? 'page' : undefined}
-              onClick={() => handleSelectTab(navItem.id, 'all')}
-              className={`rounded-lg px-2.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                isCurrent
-                  ? 'bg-[#1C1917] text-[#FBF9F5]'
-                  : 'text-[#57534E] hover:bg-[#F2EFE9] hover:text-[#1C1917]'
-              }`}
-            >
-              {navItem.label}
-            </button>
-          );
-        })}
-      </nav>
-    </div>
-  );
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917]">
       {records.storageNotice && (
@@ -246,9 +162,8 @@ export default function App() {
               <InfoPage page={activeFeatureTab} />
             </React.Suspense>
           ) : (
-            /* Feature Screen View with Direct Cross-Feature Switch Bar */
+            /* 各コンテンツの画面 */
             <div>
-              {activeFeatureTab !== 'mood' && featureNavigation}
 
               <React.Suspense fallback={<p role="status" className="p-5">読み込み中…</p>}>
                 {activeFeatureTab === 'mood' && (
@@ -343,7 +258,6 @@ export default function App() {
                   />
                 )}
               </React.Suspense>
-              {activeFeatureTab === 'mood' && featureNavigation}
             </div>
           )}
         </main>

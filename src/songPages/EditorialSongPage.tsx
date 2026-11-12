@@ -6,6 +6,8 @@ import { formatSongBpm, formatDuration } from '../utils/fanLogic';
 import { tempoAlternatives } from '../data/tempoAlternatives';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { guideReturnView } from '../utils/guideReturnState';
+import { SITE_NAV_ITEMS } from '../components/SiteHeader';
+import { infoPages } from '../components/info/infoPages';
 import { officialVideoDescription, officialVideos, relatedSongs } from './songConnections';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
@@ -21,6 +23,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const [toast, setToast] = useState<string | null>(null);
   const [readable, setReadable] = useState(false);
   const sourcesRef = useRef<HTMLDetailsElement>(null);
+  const siteMenuRef = useRef<HTMLDetailsElement>(null);
   const toastTimer = useRef<number | null>(null);
   const records = useFanRecords(message => {
     setToast(message);
@@ -42,11 +45,24 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           <img src={`${base}hige-mark.svg?v=34b8cc7`} alt="" width="40" height="40" />
           <span>115万キロのファンノート</span>
         </a>
-        <nav aria-label="サイト内の移動">
-          <a href={`${base}#discography`}>楽曲ガイド</a>
-          <a href={`${base}#setlist`}>マイセトリ</a>
-          <button className="reading-toggle" type="button" aria-pressed={readable} onClick={() => setReadable(value => !value)}>{readable ? '標準の文字に戻す' : '大きな文字で読む'}</button>
-        </nav>
+        <details className="song-site-menu" ref={siteMenuRef}
+          onBlur={event => {
+            if (!event.currentTarget.contains(event.relatedTarget)) siteMenuRef.current?.removeAttribute('open');
+          }}
+          onKeyDown={event => {
+            if (event.key === 'Escape') {
+              siteMenuRef.current?.removeAttribute('open');
+              siteMenuRef.current?.querySelector('summary')?.focus();
+            }
+          }}>
+          <summary aria-label="サイト内メニュー"><span aria-hidden="true">☰</span> メニュー</summary>
+          <nav className="song-menu-panel" aria-label="サイト内メニュー">
+            {SITE_NAV_ITEMS.map(item => <a key={item.id} href={`${base}#${item.id}`}>{item.label}</a>)}
+            {Object.entries(infoPages).map(([id, label]) => <a key={id} href={`${base}#${id}`}>{label}</a>)}
+            <button className="reading-toggle" type="button" aria-pressed={readable}
+              onClick={() => { setReadable(value => !value); siteMenuRef.current?.removeAttribute('open'); }}>{readable ? '標準の文字に戻す' : '大きな文字で読む'}</button>
+          </nav>
+        </details>
       </header>
 
       <main id="main" className="page-main">

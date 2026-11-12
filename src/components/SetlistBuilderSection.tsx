@@ -10,9 +10,7 @@ import {
   Plus,
   Copy,
   Check,
-  Ticket,
   RotateCcw,
-  ListMusic,
   BookOpen,
   Search,
 } from 'lucide-react';
@@ -159,7 +157,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       className="py-6 sm:py-8"
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-        {/* Clean Section Heading + Sub-Tab Switcher */}
+        {/* セクション見出し */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
           <div>
             <h2
@@ -177,40 +175,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </p>
           </div>
 
-          <div
-            role="group"
-            aria-label="セットリストとツアー記録の切り替え"
-            className="grid grid-cols-2 sm:inline-flex items-center gap-1 rounded-lg bg-[#F2EFE9] p-1 border border-[#E6E1D6] w-full sm:w-auto shrink-0"
-          >
-            <button
-              type="button"
-
-              aria-pressed={activeSubTab === 'builder'}
-              onClick={() => (window.location.hash = 'setlist')}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
-                activeSubTab === 'builder'
-                  ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <ListMusic className="h-3.5 w-3.5 shrink-0" />
-              マイセトリ作成
-            </button>
-            <button
-              type="button"
-
-              aria-pressed={activeSubTab === 'tours'}
-              onClick={() => (window.location.hash = 'tour_archive')}
-              className={`inline-flex items-center justify-center gap-1.5 rounded-md px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
-                activeSubTab === 'tours'
-                  ? 'bg-[#1C1917] text-[#FBF9F5] shadow-xs'
-                  : 'text-[#57534E] hover:text-[#1C1917]'
-              }`}
-            >
-              <Ticket className="h-3.5 w-3.5 shrink-0" />
-              歴代ツアー記録
-            </button>
-          </div>
         </div>
 
         <details className="mt-4 rounded-xl border border-[#E6E1D6] bg-white p-4 text-sm">
@@ -393,11 +357,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     return (
                       <div
                         key={`${entry.songId}-${idx}`}
-                        className={`flex items-center justify-between gap-2 py-2.5 px-2 transition-colors ${
+                        className={`flex flex-col items-stretch gap-2 py-2.5 px-2 transition-colors md:flex-row md:items-center md:justify-between ${
                           entry.isEncore ? 'bg-[#FEF8EC]/70' : 'bg-white'
                         }`}
                       >
-                        <div className="flex flex-1 items-center gap-3 min-w-0">
+                        <div className="flex w-full min-w-0 flex-1 items-start gap-3 md:w-auto md:items-center">
                           <span
                             className={`font-mono-num text-xs font-bold w-8 shrink-0 ${
                               entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'
@@ -482,22 +446,22 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             外す
                           </button>
                         </div>
-                        <div className="flex shrink-0 items-center gap-1 md:hidden">
+                        <div className="ml-11 flex items-center justify-end gap-2 md:hidden">
                           <button type="button" onClick={() => onMoveSong(idx, 'up')}
                             disabled={idx === 0 || setlist[idx - 1]?.isEncore !== entry.isEncore}
                             aria-label={`${song.title}を1つ上へ移動`}
-                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
+                            className="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
                             <ArrowUp aria-hidden="true" className="h-3.5 w-3.5" />
                           </button>
                           <button type="button" onClick={() => onMoveSong(idx, 'down')}
                             disabled={idx === setlist.length - 1 || setlist[idx + 1]?.isEncore !== entry.isEncore}
                             aria-label={`${song.title}を1つ下へ移動`}
-                            className="inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
+                            className="inline-flex min-h-[32px] min-w-[32px] items-center justify-center rounded border border-[#D5CEC2] text-[#1C1917] disabled:opacity-30">
                             <ArrowDown aria-hidden="true" className="h-3.5 w-3.5" />
                           </button>
                           <details className="relative">
                             <summary aria-label={`${song.title}のその他の操作`}
-                              className="flex min-h-[40px] min-w-[44px] cursor-pointer list-none items-center justify-center rounded border border-[#D5CEC2] bg-[#FBF9F5] px-1.5 text-xs font-bold [&::-webkit-details-marker]:hidden">
+                              className="flex min-h-[32px] min-w-[44px] cursor-pointer list-none items-center justify-center rounded border border-[#D5CEC2] bg-[#FBF9F5] px-1.5 text-xs font-bold [&::-webkit-details-marker]:hidden">
                               操作
                             </summary>
                             <div className="absolute right-0 z-20 mt-1 min-w-36 rounded-lg border border-[#D5CEC2] bg-white p-1 shadow-lg">

@@ -4,6 +4,8 @@ import { readdir } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
 import { chromium } from 'playwright';
+import { songReadings } from '../../src/data/songReadings.ts';
+import { songLatinReadings } from '../../src/data/songLatinReadings.ts';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
@@ -57,6 +59,7 @@ async function inspectAllPages(browser, scenario) {
         assert.equal(response?.status(), 200, '楽曲ページに到達できません');
         await page.locator('.overview-copy p').first().waitFor();
         if (scenario.readable) {
+          await page.locator('.song-site-menu > summary').click();
           await page.getByRole('button', { name: '大きな文字で読む' }).click();
           await page.locator('.sheet-frame--readable').waitFor();
         }
@@ -85,6 +88,10 @@ async function inspectAllPages(browser, scenario) {
             titleWidth: title.scrollWidth, titleClient: title.clientWidth,
             placeholders: document.querySelectorAll('.cover-placeholder').length,
             coverImages: document.querySelectorAll('.cover img').length,
+            closeClickable: (() => {
+              const link = document.querySelector('.sheet-close'), r = link.getBoundingClientRect();
+              return link.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+            })(),
             badges: [...document.querySelectorAll('a')].filter(link => /iTunes Store/i.test(`${link.textContent} ${link.querySelector('img')?.alt || ''}`)).length
               + document.querySelectorAll('iframe[src*="music.apple.com"]').length,
             overviewFont: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
@@ -95,6 +102,7 @@ async function inspectAllPages(browser, scenario) {
 
         assert.equal(result.placeholders, 1, '正方形の仮枠がありません');
         assert.equal(result.coverImages, 0, '仮枠に画像が残っています');
+        assert.ok(result.closeClickable, '一覧に戻るリンクがタイトルに覆われています');
         assert.equal(result.badges, 0, 'ストアのバッジやプレーヤーが残っています');
         assert.match(result.tempoText, isTempoUnderReview(id) ? /^調査中$/ : /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポの表示が調査状況と一致しません');
         assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, '仮枠が正方形ではありません');
@@ -249,6 +257,7 @@ async function verifyInteractions(browser) {
   await page.locator('.sources summary').click();
   await page.waitForFunction(() => !document.querySelector('.sources')?.open);
 
+  await page.locator('.song-site-menu > summary').click();
   await page.getByRole('button', { name: '大きな文字で読む' }).click();
   await page.locator('.sheet-frame--readable').waitFor();
   const readable = await page.evaluate(() => ({
@@ -303,6 +312,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await table.locator('tbody tr').count(), 18);
   await page.getByRole('button', { name: /全 90 曲をすべて表示/ }).click();
   assert.equal(await table.locator('tbody tr').count(), 90, 'PCで全曲を縦に比較できません');
+  await page.getByRole('button', { name: /条件を絞る・並べ替える/ }).click();
   await page.getByLabel('並び替え', { exact: true }).selectOption('highest_note');
   assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/, '地声最高音順に並びません');
   assert.equal(await table.locator('tbody tr').count(), 90, '並び替えた後に表示曲数が減っています');
@@ -311,26 +321,52 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await subtitle.getByRole('link', { name: /Subtitleの採譜/ }).count(), 1);
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
-  await page.getByLabel('曲名・読み・音域・タイアップで検索').fill('Pretender');
+  await page.getByLabel('曲名・読み・タイアップで検索').fill('Pretender');
   const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
   assert.match(await pretender.innerText(), /配信掲載\s*2019\.04\.17/);
   assert.doesNotMatch(await pretender.innerText(), /BPM[^\n]*配信サービス掲載日/);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${root}#quiz`, { waitUntil: 'load' });
-  await page.waitForFunction(() => {
-    const nav = document.querySelector('nav[aria-label="コーナー切り替えナビゲーション"]');
-    const current = nav?.querySelector('[aria-current="page"]');
-    const home = nav?.querySelector('[data-feature-home]');
-    if (!nav || !current || !home) return false;
-    const box = nav.getBoundingClientRect(), item = current.getBoundingClientRect();
-    const homeBox = home.getBoundingClientRect();
-    return homeBox.left >= box.left && homeBox.right <= box.right && item.left >= homeBox.right && item.right <= box.right && current.textContent.includes('検定クイズ');
-  });
-  await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
+  assert.equal(await page.getByRole('navigation', { name: 'コーナー切り替えナビゲーション' }).count(), 0);
+  assert.equal(await page.getByRole('group', { name: /の切り替え/ }).count(), 0);
+  await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
+  const menu = page.getByRole('navigation', { name: 'サイト内メニュー' });
+  assert.equal(await menu.getByRole('button').count(), 9, 'メニューに公開コンテンツが揃っていません');
+  await menu.getByRole('button', { name: /^掲載90曲の音域・発売日一覧/ }).click();
   await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
-  assert.equal(await table.isVisible(), false, 'スマホに幅広いPC向けの表が表示されています');
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホの音域一覧が横にはみ出しています');
+  assert.equal(await table.isVisible(), true, 'スマホでも比較表を使える必要があります');
+  assert.equal(await page.getByLabel('収録アルバム・EPで絞り込み').isVisible(), false, '条件欄は最初は閉じます');
+  assert.equal(await page.getByRole('heading', { name: '自分の声の範囲で探す' }).isVisible(), false);
+  await page.getByText('↔ 表は横にスクロールできます。', { exact: false }).waitFor();
+  assert.ok(await page.getByRole('region', { name: '音域・発売日比較表' }).evaluate(el => el.scrollWidth > el.clientWidth), 'スマホの表が横スクロールになっていません');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホのページ全体が横にはみ出しています');
+  await page.getByRole('button', { name: '地声最高を昇順で並べ替え', exact: true }).click();
+  assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'ascending');
+  await page.getByRole('button', { name: '地声最高を降順で並べ替え', exact: true }).click();
+  assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/);
+  const firstTitle = await table.locator('tbody th button').first().innerText();
+  await table.locator('tbody th button').first().click();
+  await page.getByRole('heading', { name: firstTitle, exact: true }).waitFor();
+  await page.locator('.song-site-menu > summary').click();
+  assert.equal(await page.getByRole('navigation', { name: 'サイト内メニュー' }).getByRole('link').count(), 12);
+  await page.locator('.song-site-menu > summary').press('Escape');
+  await page.getByRole('link', { name: '音域一覧に戻る', exact: true }).first().click();
+  await table.waitFor();
+  assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'descending');
+  await page.getByRole('button', { name: /^115万キロのファンノート/ }).click();
+  await page.getByRole('button', { name: '今日の1曲を探す' }).waitFor();
+
+  await page.goto(`${root}#discography`, { waitUntil: 'load' });
+  const titleSearch = page.getByLabel('曲名・読み・タイアップで検索');
+  for (const song of catalogEntries) {
+    const reading = songReadings[song.id];
+    const katakana = reading.replace(/[ぁ-ゖ]/g, kana => String.fromCharCode(kana.charCodeAt(0) + 0x60));
+    for (const query of [reading, katakana, songLatinReadings[song.id]]) {
+      await titleSearch.fill(query);
+      await page.getByRole('heading', { name: song.title, exact: true }).waitFor();
+    }
+  }
 
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
   const search = page.getByLabel('曲を探して追加');
@@ -365,11 +401,21 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホのセトリ画面が横にはみ出しています');
   await page.setViewportSize({ width: 320, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxのセトリ画面が横にはみ出しています');
+  await search.fill('いぬかきゃっとかでしぬまでけんかしよう');
+  await page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！を本編に追加' }).click();
+  const longTitle = page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！', exact: true });
+  await longTitle.waitFor();
+  const titleBox = await longTitle.evaluate(el => {
+    const title = el.querySelector('span');
+    const bounds = title.getBoundingClientRect();
+    return { width: bounds.width, height: bounds.height, line: parseFloat(getComputedStyle(title).lineHeight) };
+  });
+  assert.ok(titleBox.width >= 160 && titleBox.height <= titleBox.line * 2 + 1, '320pxの長い曲名が縦に潰れています');
   await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
   await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxの音域一覧が横にはみ出しています');
   await context.close();
-  console.log('PC比較表・出典・スマホの現在地表示・検索からの追加と曲順・保存を確認');
+  console.log('全90曲の3表記検索・見出しソート・メニュー・320pxの曲名と曲順・保存を確認');
 }
 
 let browser;
