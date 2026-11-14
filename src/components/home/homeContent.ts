@@ -2,8 +2,6 @@ import type { ActiveFeatureTab } from '../SiteHeader';
 
 export type HomeStickyNote = {
   id: Exclude<ActiveFeatureTab, 'home'>;
-  secondaryId?: Exclude<ActiveFeatureTab, 'home'>;
-  secondaryCtaLabel?: string;
   stepNum: string;
   title: string;
   description: string;
@@ -19,7 +17,8 @@ export const HOME_STICKY_NOTES: HomeStickyNote[] = [
     id: 'mood',
     stepNum: '01',
     title: 'マイソング診断',
-    description: '今の気分や過ごしたい景色に、ぴったり重なる1曲を探しに行こう。',
+    description:
+      '今の気分や過ごしたい景色に、ぴったり重なる1曲を。今のあなたにそっと寄り添う一曲を探しに行こう。',
     ctaLabel: 'ひらく ↗',
     noteBg: '#edf7fc',
     tapeBg: '#bce3f8',
@@ -28,11 +27,10 @@ export const HOME_STICKY_NOTES: HomeStickyNote[] = [
   },
   {
     id: 'discography',
-    secondaryId: 'vocal_range',
-    secondaryCtaLabel: '音域・発売日表 ↗',
     stepNum: '02',
-    title: '楽曲ガイド（全90曲）',
-    description: '楽曲ごとの背景や音の秘密まで。知れば知るほど、いつもの名曲がさらに輝きだす。',
+    title: '楽曲ガイド',
+    description:
+      '一曲ごとの物語や音の仕掛け、知られざる制作秘話まで。知れば知るほど、いつもの名曲がさらに輝き出す。',
     ctaLabel: 'ひらく ↗',
     noteBg: '#fffde6',
     tapeBg: '#f6e39c',
@@ -65,7 +63,8 @@ export const HOME_STICKY_NOTES: HomeStickyNote[] = [
     id: 'tour_archive',
     stepNum: '05',
     title: '歴代ツアー記録',
-    description: 'あの日の歓声とセットリストがよみがえる、これまでのツアーと歩みをたどる記録。',
+    description:
+      'あの日の歓声とセットリストが蘇る、髭男が歩いた軌跡。あなたが参戦した思い出のライブも記録に残せます。',
     ctaLabel: 'ひらく ↗',
     noteBg: '#f6eefc',
     tapeBg: '#dfcaf6',
@@ -74,11 +73,10 @@ export const HOME_STICKY_NOTES: HomeStickyNote[] = [
   },
   {
     id: 'quiz',
-    secondaryId: 'quiz_archive',
-    secondaryCtaLabel: '参考記事・資料 ↗',
     stepNum: '06',
     title: 'Official髭男dism検定',
-    description: '名曲の裏話やメンバーの歩みまで、コアな知識やヒゲダン愛を試す問題に挑め！',
+    description:
+      '名曲の裏話やメンバーの歩みまで、思わず語りたくなるドラマが満載。コアな知識と髭男愛を試す問題に挑め！',
     ctaLabel: 'ひらく ↗',
     noteBg: '#eef9f0',
     tapeBg: '#c0e6c7',

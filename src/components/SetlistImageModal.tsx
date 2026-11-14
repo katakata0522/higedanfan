@@ -96,11 +96,11 @@ export function renderSetlistPosterDataUrl({
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const fontDisplay = '"Kaisei Decol", "Shippori Mincho", "Hiragino Mincho ProN", serif';
+  const fontDisplay = '"Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", serif';
   const fontBody = '"Noto Sans JP", "Hiragino Sans", sans-serif';
   const fontMono = '"JetBrains Mono", "Roboto Mono", monospace';
 
-  ctx.font = `700 50px ${fontDisplay}`;
+  ctx.font = `500 50px ${fontDisplay}`;
   const titleLines = wrapTextLines(ctx, title, CONTENT_WIDTH - 24, 2);
 
   const rowHeight = 62;
@@ -169,7 +169,7 @@ export function renderSetlistPosterDataUrl({
 
   // Title
   let cursorY = 170;
-  ctx.font = `700 50px ${fontDisplay}`;
+  ctx.font = `500 50px ${fontDisplay}`;
   ctx.fillStyle = textPrimary;
   for (const line of titleLines) {
     ctx.fillText(line, PADDING_X, cursorY);
@@ -311,7 +311,8 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
         if (document.fonts) {
           await Promise.allSettled([
             document.fonts.ready,
-            document.fonts.load('700 44px "Kaisei Decol"'),
+            document.fonts.load('500 44px "Kiwi Maru"'),
+            document.fonts.load('600 44px "Shippori Mincho"'),
           ]);
         }
       } catch {

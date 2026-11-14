@@ -20,9 +20,11 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
         <header className="text-center">
           <h1
             id="home-desk-heading"
-            className="font-note-serif text-2xl sm:text-[36px] font-bold tracking-[.05em] leading-[1.45] text-[#253331] text-balance"
+            className="font-note-serif text-[23px] sm:text-[34px] font-medium tracking-[.04em] leading-[1.45] text-[#253331]"
           >
-            好きな音を、手元に集めたファンノート。
+            <span className="inline-block whitespace-nowrap">好きな音を、</span>
+            <span className="inline-block whitespace-nowrap">手元に集めた</span>
+            <span className="inline-block whitespace-nowrap">ファンノート。</span>
           </h1>
           <p className="mt-3 mx-auto max-w-xl text-xs sm:text-[13.5px] leading-[1.9] text-[#57534E]">
             Official髭男dismの楽曲や思い出を、自由にめくって楽しむためのノートです。
@@ -57,18 +59,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                     <h2 className="fusen-title">{note.title}</h2>
                     <p className="fusen-desc">{note.description}</p>
                   </div>
-                  <div className="mt-3 flex items-center justify-between gap-2 pt-1">
-                    {note.secondaryId && note.secondaryCtaLabel ? (
-                      <button
-                        type="button"
-                        onClick={() => onSelectTab(note.secondaryId!)}
-                        className="pointer-events-auto relative z-[3] inline-flex items-center rounded border border-[#253331]/15 bg-white/80 px-2.5 py-1 text-[11px] font-bold text-[#253331] hover:border-[#253331]/45 hover:bg-white transition-colors cursor-pointer"
-                      >
-                        {note.secondaryCtaLabel}
-                      </button>
-                    ) : (
-                      <span />
-                    )}
+                  <div className="mt-1.5 flex items-center justify-end">
                     <span
                       className="text-[12px] font-bold tracking-[0.04em]"
                       style={{ color: 'var(--accent)' }}

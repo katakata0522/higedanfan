@@ -608,7 +608,8 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   await page.getByRole('heading', { name: '聖地巡礼マップ', exact: true }).waitFor();
   assert.ok(await page.locator('.fusen-memo-card').count() >= 5, '聖地巡礼マップのメモカードが表示されていません');
   await page.getByRole('button', { name: '付箋一覧へ戻る' }).click();
-  await page.getByRole('button', { name: '音域・発売日表 ↗' }).click();
+  await page.getByRole('button', { name: '楽曲ガイドをひらく' }).click();
+  await page.getByRole('link', { name: '音域・発売日比較表' }).click();
   await page.getByRole('table', { name: /音域・発売日比較表/ }).waitFor();
 
   await page.goto(`${root}?intro=1`, { waitUntil: 'load' });

@@ -25,7 +25,7 @@
 
     --font-display: 'Outfit', system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
     --font-serif: 'Fraunces', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-    --font-note-serif: 'Kaisei Decol', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
+    --font-note-serif: 'Kiwi Maru', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', 'Noto Serif JP', serif;
     --font-sans: system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
     --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
   }
@@ -401,8 +401,8 @@ body.kurun-intro-active {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  min-height: 158px;
-  padding: 15px 18px 10px 16px;
+  min-height: 122px;
+  padding: 13px 16px 9px 16px;
   border: 1px solid rgba(28, 25, 23, .08);
   border-radius: 4px;
   background-color: var(--note-bg, #fffde6);
@@ -435,7 +435,7 @@ body.kurun-intro-active {
 .fusen-note-lines::after {
   content: "";
   position: absolute;
-  inset: 44px 0 8px 0;
+  inset: 40px 0 8px 0;
   z-index: 0;
   pointer-events: none;
   background-image: repeating-linear-gradient(
@@ -443,23 +443,24 @@ body.kurun-intro-active {
     rgba(28, 25, 23, .07) 0px,
     rgba(28, 25, 23, .07) 1px,
     transparent 1px,
-    transparent 30px
+    transparent 26px
   );
 }
 .fusen-title {
   margin: 0;
   font-family: var(--font-note-serif);
   font-size: 18px;
-  font-weight: 700;
-  line-height: 26px;
+  font-weight: 500;
+  font-synthesis-weight: none;
+  line-height: 24px;
   letter-spacing: .03em;
   color: #1C1917;
 }
 .fusen-desc {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   font-size: 13px;
   color: #57534E;
-  line-height: 30px;
+  line-height: 26px;
 }
 
 /* Gemini ノート世界観：共通紙面キャンバス＆メモカード */
@@ -472,6 +473,8 @@ body.kurun-intro-active {
 }
 .font-note-serif {
   font-family: var(--font-note-serif);
+  font-weight: 500;
+  font-synthesis-weight: none;
 }
 .notebook-paper {
   background-color: #fffdf8;
@@ -486,7 +489,8 @@ body.kurun-intro-active {
   color: #253331;
   font-family: var(--font-note-serif);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   letter-spacing: .06em;
   clip-path: polygon(2% 0%, 98% 2%, 100% 35%, 97% 65%, 99% 100%, 2% 98%, 0% 62%, 3% 28%);
 }
