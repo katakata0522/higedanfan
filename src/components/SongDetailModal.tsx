@@ -1,10 +1,9 @@
-import { GuideArtwork } from './GuideArtwork';
 import { songEvidence } from '../data/fullCatalogSongs';
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { X, Music, Sparkles, Plus, Check, Disc, Mic2, Radio, Volume2, Square } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
 import { songwriterInfo } from '../utils/songCatalog';
-import { formatApproxBpm, formatSongBpm, formatDuration, getSongwriterCredit, isSafeAssetUrl, SOUND_LABELS } from '../utils/fanLogic';
+import { formatApproxBpm, formatSongBpm, formatDuration, getSongwriterCredit, SOUND_LABELS } from '../utils/fanLogic';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { playSongTempoPreview, stopTempoPreview } from '../utils/audioPreview';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
@@ -104,15 +103,7 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
       >
         {/* Top Header with Jacket Artwork & Close */}
         <div className="flex items-start justify-between gap-4 border-b border-[#E6E1D6] pb-4">
-          <div className="flex items-center gap-4 min-w-0">
-            {isSafeAssetUrl(song.jacketImage) && (
-              <GuideArtwork
-                src={song.jacketImage}
-                alt={`${song.title} のイメージ画像`}
-                referrerPolicy="no-referrer"
-                className="h-16 w-16 sm:h-20 sm:w-20 shrink-0 rounded-xl object-cover ring-1 ring-black/15 shadow-xs"
-              />
-            )}
+          <div className="flex items-center min-w-0">
             <div className="min-w-0">
               <div className="text-xs font-medium text-[#78716C] font-mono-num">
                 {song.album}
@@ -201,10 +192,10 @@ export const SongDetailModal: React.FC<SongDetailModalProps> = ({
               <div><dt>裏声最高</dt><dd className="font-bold">{song.vocalRange.highestFalsettoNote}</dd></div>
             </dl>
             <p>掲載値の幅：{song.vocalRange.rangeSpanSemitones}半音。裏声欄の「記載なし」は、裏声を使わないという意味ではありません。</p>
-            <a className="underline" href={fact.rangeSource} target="_blank" rel="noreferrer">採用した採譜：{fact.rangeLabel} ↗</a>
+            <a className="underline" href={fact.rangeSource} target="_blank" rel="noreferrer">採用した採譜：{fact.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : fact.rangeLabel} ↗</a>
             {song.id === 'mixed-nuts' && <p className="mt-2">ラストのフェイク（歌詞のない歌い回し）を含むと裏声最高はA#5、除くとC#5です。</p>}
             {fact.otherRange && <p className="mt-2">別の採譜（地声最低／地声最高／裏声最高）：
-              {fact.otherRange.join(' ／ ')}。 <a className="underline" href={fact.otherSource} target="_blank" rel="noreferrer">音域調査 Wiki ↗</a></p>}
+              {fact.otherRange.join(' ／ ')}。 <a className="underline" href={fact.otherSource} target="_blank" rel="noreferrer">音域データ！＠ウィキ ↗</a></p>}
           </div>
           <div className="rounded-xl border border-[#E6E1D6] bg-white p-4 space-y-2">
             <h3 className="font-bold">収録音源と発売日</h3>

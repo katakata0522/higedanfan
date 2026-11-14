@@ -89,7 +89,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
     await page.getByLabel('曲名・読み・タイアップで検索').fill(payload);
     assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
     await page.goto(`${root}#setlist`, { waitUntil: 'load' });
-    await openSetlistEditor(page);
+    await page.getByRole('button', { name: 'セットリスト名を編集', exact: true }).click();
     const title = page.getByLabel('マイセットリストのタイトル');
     await title.fill(payload);
     const accepted = await title.inputValue();
@@ -98,7 +98,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
       return value && JSON.parse(value).setlistTitle === expected;
     }, accepted);
     await page.reload({ waitUntil: 'load' });
-    await openSetlistEditor(page);
+    await page.getByRole('button', { name: 'セットリスト名を編集', exact: true }).click();
     assert.equal(await title.inputValue(), accepted);
     assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
     assert.equal(await page.evaluate(() => window.__inputExecuted ?? 0), 0);
@@ -112,7 +112,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
       await mood.getByText(`質問 ${step} / 5`, { exact: true }).waitFor();
       await mood.locator('button[aria-pressed]').first().click();
     }
-    await mood.getByRole('button', { name: '最初から診断し直す' }).waitFor();
+    await mood.getByRole('button', { name: '最初から診断する' }).waitFor();
     assert.ok(await mood.locator('iframe[src^="https://www.youtube-nocookie.com/embed/"], a[href^="https://www.youtube.com/watch?"]').count() > 0, '診断結果の聴く導線がありません');
     await page.goto(`${root}#quiz`, { waitUntil: 'load' });
     const quiz = page.locator('#section-quiz');
@@ -146,11 +146,11 @@ export async function verifyRecordFileImport(browser, root) {
     name: 'notebook-regression.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(records)),
   });
   const openImport = async () => {
-    await page.getByRole('heading', { name: 'マイセットリスト作成', exact: true }).waitFor();
-    await page.getByText('記録の保存・引き継ぎ', { exact: true }).click();
+    await page.goto(`${root}#privacy`, { waitUntil: 'load' });
+    await page.getByLabel('ファイルから記録を戻す', { exact: true }).waitFor();
   };
   try {
-    await page.goto(`${root}#setlist`, { waitUntil: 'load' });
+    await openImport();
     await page.waitForFunction(key => localStorage.getItem(key) !== null, key);
     const before = await page.evaluate(key => localStorage.getItem(key), key);
     const legitimate = {
@@ -179,7 +179,7 @@ export async function verifyRecordFileImport(browser, root) {
     await upload({ format: 'higedan-fan-notebook', version: 1, records: legitimate });
     await page.getByText('記録を読み込みました。', { exact: true }).waitFor();
     await page.reload({ waitUntil: 'load' });
-    await openSetlistEditor(page);
+    await page.getByLabel('ファイルから記録を戻す', { exact: true }).waitFor();
     const restored = await page.evaluate(key => JSON.parse(localStorage.getItem(key)), key);
     assert.equal(restored.setlistTitle, legitimate.setlistTitle);
     assert.deepEqual(restored.reviews, legitimate.reviews);
@@ -189,11 +189,16 @@ export async function verifyRecordFileImport(browser, root) {
   console.log('ファイル選択から6項目の不正入力拒否・元の記録保持・キャンセル・通常の復元と再読み込みを確認');
 }
 
-export async function openSetlistEditor(page, method = 'search') {
-  const panel = page.locator('#setlist-edit-panel');
-  await panel.waitFor({ state: 'attached' });
-  if (await panel.getAttribute('open') === null) {
-    await page.getByRole('button', { name: '曲を追加・編集する欄を開く', exact: true }).click();
+export async function openSetlistEditor(page, method = 'search', target = 'main') {
+  const reopenBtn = page.getByRole('button', { name: 'セットリストの追加・並び替えを開く', exact: true });
+  if (await reopenBtn.isVisible()) {
+    await reopenBtn.click();
+  }
+  const addBtnName = target === 'encore' ? 'アンコールに曲を追加' : 'ここに曲を追加';
+  const addBtn = page.getByRole('button', { name: addBtnName, exact: true });
+  await addBtn.waitFor();
+  if ((await addBtn.getAttribute('aria-expanded')) !== 'true') {
+    await addBtn.click();
   }
   await page.getByRole('button', { name: method === 'album' ? 'アルバムから選ぶ' : '曲名で探す', exact: true }).click();
   await page.getByLabel(method === 'album' ? '追加する曲を選択' : '曲を探して追加').waitFor();

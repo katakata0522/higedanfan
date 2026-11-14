@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_GUIDE_FILTERS } from '../components/SongGuideFilters';
-import { guideReturnView, saveGuideReturnState, takeGuideReturnState } from './guideReturnState';
+import {
+  clearSongReturnTab,
+  guideReturnView,
+  saveGuideReturnState,
+  saveSongReturnTab,
+  songReturnDestination,
+  takeGuideReturnState,
+} from './guideReturnState';
 
 function memoryStore() {
   const values = new Map<string, string>();
@@ -43,4 +50,27 @@ test('保存された表の並べ替えに不正な見出し・方向があれ�
     store.setItem('higedanfan:guide-return:v1', JSON.stringify({ filters: { ...DEFAULT_GUIDE_FILTERS, tableSort }, visibleCount: 18, view: 'vocal_range' }));
     assert.equal(takeGuideReturnState(90, store), null);
   }
+});
+
+test('楽曲ページの戻り先を直前のコーナーに応じて返し、不正値は無視する', () => {
+  const store = memoryStore();
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+
+  saveSongReturnTab('setlist', store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'setlist', label: 'マイセトリに戻る' });
+
+  saveSongReturnTab('mood', store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'mood', label: 'マイソング診断に戻る' });
+
+  saveSongReturnTab('home', store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'home', label: 'トップページに戻る' });
+
+  saveSongReturnTab('quiz', store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'quiz', label: 'Official髭男dism検定に戻る' });
+
+  saveSongReturnTab('unknown-evil-tab', store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'quiz', label: 'Official髭男dism検定に戻る' });
+
+  clearSongReturnTab(store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
 });

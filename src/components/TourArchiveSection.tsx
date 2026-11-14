@@ -60,7 +60,7 @@ export function TourArchiveSection({ attendedTourIds, onToggleAttendedTour }: To
                   className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold ${attended ? 'bg-[#15803D] text-white' : 'border border-[#D5CEC2] text-[#1C1917]'}`}
                 >
                   <Ticket className="h-4 w-4" />
-                  {attended ? '参戦・視聴を記録済み' : 'このシリーズを観た'}
+                  {attended ? '参戦・視聴を記録済み' : '参戦・視聴を記録する'}
                 </button>
               </div>
               <details className="mt-4 border-t border-[#E6E1D6] pt-3" open={Boolean(query)}>

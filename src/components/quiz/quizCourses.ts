@@ -162,7 +162,7 @@ export function getCourseLabel(difficulty: CourseDifficulty, scope: QuestionScop
   if (scope.startsWith('vol')) return `${title} Vol.${scope.slice(3)}`;
   switch (scope) {
     case 'new_variation': return title + '［追加バリエーション編］';
-    case 'ordering_only': return title + '［並び替え特訓モード］';
+    case 'ordering_only': return title + '［順番並び替え編］';
     case 'classic': return title + '［王道・基本編］';
     case 'full': return title;
     default: return title;

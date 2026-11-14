@@ -71,7 +71,7 @@ interface Props {
   onReset?: () => void;
 }
 
-const selectClass = 'w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-2 text-xs font-medium text-[#1C1917] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]';
+const selectClass = 'w-full min-w-0 rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-2 text-xs font-medium text-[#253331] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#253331]';
 
 export function SongGuideFilters({ values, onChange, resultCount, shownCount, children, voiceSummary, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -97,7 +97,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
   );
 
   return (
-    <div className="mt-4 space-y-2.5 rounded-xl border border-[#E6E1D6] bg-white p-3 sm:p-4">
+    <div className="mt-5 space-y-2.5 notebook-paper rounded-xl p-3.5 sm:p-4">
       <div>
         <div>
           <label htmlFor="discography-search" className="mb-1 block text-xs font-bold text-[#57534E]">曲名・読み・タイアップで検索</label>
@@ -113,7 +113,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
               }
             }}
             placeholder="例：プリテンダー"
-            className="w-full min-h-[44px] rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] pl-9 pr-11 py-2 text-base sm:text-sm text-[#1C1917] placeholder:text-[#57534E] focus:outline-none focus:ring-2 focus:ring-[#1C1917] [&::-webkit-search-cancel-button]:appearance-none"
+            className="w-full min-h-[44px] rounded-lg border border-[#dfd7c7] bg-[#faf6eb] pl-9 pr-11 py-2 text-base sm:text-sm text-[#253331] placeholder:text-[#78716C] focus:outline-none focus:ring-2 focus:ring-[#253331] [&::-webkit-search-cancel-button]:appearance-none"
           />
           {searchQuery && (
             <button type="button" aria-label="検索キーワードをクリア"
@@ -128,11 +128,11 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
 
       <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
         onClick={() => setExpanded(current => !current)}
-        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#E6E1D6] px-3 py-2 text-left text-xs font-bold text-[#1C1917] hover:bg-[#FBF9F5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917]">
-        <span>条件を絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal">{secondaryChoices.join(' ／ ')}</span>}</span>
-        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 ${expanded ? 'rotate-180' : ''}`} />
+        className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#e5dccb] bg-[#faf6eb]/70 px-3 py-2 text-left text-xs font-bold text-[#253331] hover:bg-[#f4efe4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer">
+        <span>条件を絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal text-[#57534E]">{secondaryChoices.join(' ／ ')}</span>}</span>
+        <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
-      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2 sm:grid-cols-2`}>
+      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2.5 sm:grid-cols-2 pt-1`}>
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="album-filter-select">収録アルバム・EPで絞り込み</label>
           <select id="album-filter-select" value={album} className={selectClass}
@@ -144,14 +144,14 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
             {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
-        <div role="group" aria-label="年代で絞り込み" className="flex flex-wrap items-center gap-1 sm:col-span-2">
+        <div role="group" aria-label="年代で絞り込み" className="flex flex-wrap items-center gap-1.5 sm:col-span-2">
           {ERA_TABS.map(tab => {
             const active = era === tab.id && album === 'all';
             return (
               <button key={tab.id} type="button" aria-pressed={active}
                 onClick={() => onChange({ ...values, era: tab.id, album: 'all' })}
-                className={`min-h-[32px] rounded-md px-2.5 py-1.5 text-xs font-bold ${active
-                  ? 'bg-[#1C1917] text-white' : 'bg-[#FBF9F5] text-[#57534E] hover:bg-[#F2EFE9]'}`}>
+                className={`min-h-[32px] rounded-full border px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${active
+                  ? 'border-[#253331] bg-[#253331] text-[#faf6eb]' : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:bg-[#f4efe4] hover:text-[#253331]'}`}>
                 <span className="sm:hidden">{tab.shortLabel}</span><span className="hidden sm:inline">{tab.label}</span>
               </button>
             );
@@ -171,13 +171,13 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
         {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E] sm:col-span-2">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
         {children && <div className="sm:col-span-2">{children}</div>}
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-2 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#ece3d2] pt-2 text-xs">
         <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
-          className="scroll-mt-20 font-bold text-[#1C1917]">
+          className="scroll-mt-20 font-bold text-[#253331]">
           該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
         </span>
         {hasActiveFilter && <button type="button" onClick={() => onReset ? onReset() : onChange(DEFAULT_GUIDE_FILTERS)}
-          className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline">
+          className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline cursor-pointer">
           <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />条件リセット
         </button>}
       </div>

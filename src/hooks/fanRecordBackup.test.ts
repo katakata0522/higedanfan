@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { createFanRecordBackup, parseFanRecordBackup } from './fanRecordBackup';
+import { createFanRecordBackup, parseFanRecordBackup, parseFanRecordBackupWithSetlists } from './fanRecordBackup';
 import { FanRecordStore, initialRecords } from './fanRecordStore';
+import { createInitialSavedSetlistsState, createNewSavedSetlist } from '../utils/savedSetlists';
 import { SACRED_SPOTS, TOUR_ARCHIVES } from '../data/higedanData';
 
 test('backup round-trips a completed zero score and rejects invalid data', () => {
@@ -64,4 +65,29 @@ test('import refuses stale snapshots and failed writes leave the saved records u
   assert.equal(await a.importBackup(imported, fresh), true);
   assert.equal(JSON.parse(data.raw!).setlistTitle, '保存したセトリ');
   assert.notEqual(a.snapshot().records.resetEpoch, fresh.resetEpoch);
+});
+
+test('backup preserves multiple saved setlists and rejects tampered setlist entries', () => {
+  const records = { ...initialRecords('epoch-1'), setlistTitle: 'セトリ2' };
+  const baseSaved = createInitialSavedSetlistsState(
+    'セトリ1',
+    [{ songId: 'pretender', isEncore: false }],
+    undefined,
+    '2026-11-14T10:00:00.000Z',
+  );
+  const { state: twoSaved } = createNewSavedSetlist(
+    baseSaved,
+    'セトリ2',
+    records.setlist,
+    '2026-11-14T11:00:00.000Z',
+  );
+
+  const backup = createFanRecordBackup(records, twoSaved);
+  const restored = parseFanRecordBackupWithSetlists(backup);
+  assert.equal(restored.savedSetlists?.items.length, 2);
+  assert.equal(restored.savedSetlists?.activeId, twoSaved.activeId);
+
+  const tampered = JSON.parse(backup);
+  tampered.savedSetlists.items[0].entries.push({ songId: 'not-a-real-song', isEncore: false });
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tampered)), /安全に読み込めません/);
 });

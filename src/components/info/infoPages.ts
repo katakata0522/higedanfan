@@ -1,4 +1,5 @@
 export const infoPages = {
+  editor: '編集者について（かたかた）',
   sources: '参考資料・謝辞',
   terms: '利用規約',
   privacy: 'プライバシーポリシー',

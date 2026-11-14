@@ -25,7 +25,7 @@ export function calculateQuizResult(
       rankTitle: '名誉編集長 / BROTHERS マスター',
       rankBadgeCode: 'RANK S · EDITORIAL CHIEF',
       editorialMessage:
-        `今回挑戦した${total}問にすべて正解しました！`,
+        `今回挑戦した${total}問にすべて正解しました！楽曲の背景からメンバーの言葉まで、深い愛が光る見事な記録です。`,
     };
   }
   if (percentage >= 65) {
@@ -36,7 +36,7 @@ export function calculateQuizResult(
       rankTitle: 'グッドミュージック特派員',
       rankBadgeCode: 'RANK A · SENIOR WRITER',
       editorialMessage:
-        '参考記事の一覧では、作品情報やインタビューの掲載元をたどれます。',
+        'たくさんの楽曲エピソードをご存じですね！気になった問題の背景は、参考記事・インタビュー一覧からさらに深くたどれます。',
     };
   }
   return {
@@ -44,9 +44,9 @@ export function calculateQuizResult(
     total,
     percentage,
     rankTitle: 'ヒゲダン沼のルーキー読者',
-    rankBadgeCode: 'RANK B · NEW LISTENER',
+    rankBadgeCode: 'RANK B · MUSIC ROOKIE',
     editorialMessage:
-      'これからさらに多くの名曲と出会える最高のタイミング！まずはディスコグラフィと気分診断から気になる1曲を深掘りしてみましょう。',
+      'ここからさらに沼が深まる予感！知らなかったエピソードは、楽曲ガイドや参考記事からぜひ追いかけてみてください。',
   };
 }
 

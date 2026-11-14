@@ -166,7 +166,7 @@ export function SourcesAndThanks() {
 
       <section className="mt-7 border-t border-[#D5CEC2] pt-5">
         <h2 className="text-lg font-bold sm:text-xl">
-          サイト制作・編集　<a href="https://katakatalab.com/who-is-katakata.html" rel="author" className="text-[#1E3A5F] underline underline-offset-4">
+          サイト制作・編集　<a href="#editor" className="text-[#1E3A5F] underline underline-offset-4">
             かたかた<span className="sr-only">のプロフィール</span>
           </a>
         </h2>

@@ -4,19 +4,24 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { RotateCcw, ShieldCheck } from 'lucide-react';
 import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
 import { HomePage } from './components/home/HomePage';
+import {
+  KurunIntroOverlay,
+  isKurunIntroSeen,
+  markKurunIntroSeen,
+} from './components/KurunIntroOverlay';
 import { useFanRecords } from './hooks/useFanRecords';
 import { SiteHeader, ActiveFeatureTab, type SiteTab, SITE_NAV_ITEMS } from './components/SiteHeader';
-import { infoPages, isInfoPage } from './components/info/infoPages';
+import { isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import type { QuizSession } from './components/quiz/quizSession';
 import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
+import { clearSongReturnTab, saveSongReturnTab } from './utils/guideReturnState';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -54,6 +59,23 @@ export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
+  const [isIntroOpen, setIsIntroOpen] = useState<boolean>(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('intro') === '1') return true;
+    const initial = readLocation();
+    return initial.tab === 'home' && !initial.songId && !isKurunIntroSeen();
+  });
+  const [introReplayToken, setIntroReplayToken] = useState(0);
+
+  const handleCloseIntro = React.useCallback(() => {
+    markKurunIntroSeen();
+    setIsIntroOpen(false);
+  }, []);
+
+  const handleReplayIntro = React.useCallback(() => {
+    setIntroReplayToken((n) => n + 1);
+    setIsIntroOpen(true);
+  }, []);
 
   const toastTimerRef = React.useRef<number | null>(null);
   useEffect(() => {
@@ -84,9 +106,11 @@ export default function App() {
       const {tab, songId} = readLocation();
       const pagePath = songId ? songPagePath(songId) : null;
       if (pagePath) {
+        saveSongReturnTab(tab);
         window.location.replace(`${import.meta.env.BASE_URL}${pagePath}`);
         return;
       }
+      clearSongReturnTab();
       setActiveFeatureTab(tab);
       setSelectedModalSongId(songId);
     };
@@ -98,6 +122,7 @@ export default function App() {
   const selectSong = (id: string | null) => {
     const editorialPath = id ? songPagePath(id) : null;
     if (editorialPath) {
+      saveSongReturnTab(activeFeatureTab);
       window.location.assign(`${import.meta.env.BASE_URL}${editorialPath}`);
       return;
     }
@@ -140,7 +165,12 @@ export default function App() {
   const setlistSongIds = setlist.map((s) => s.songId);
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FBF9F5] text-[#1C1917]">
+    <div className="min-h-screen flex flex-col notebook-canvas text-[#253331]">
+      <KurunIntroOverlay
+        isOpen={isIntroOpen}
+        replayToken={introReplayToken}
+        onClose={handleCloseIntro}
+      />
       {records.storageNotice && (
         <p role="alert" className="bg-amber-100 p-3 text-sm">
           {records.storageNotice}{' '}
@@ -150,16 +180,26 @@ export default function App() {
       <SiteHeader
         activeTab={activeFeatureTab}
         onSelectTab={handleSelectTab}
+        onReplayIntro={handleReplayIntro}
       />
 
       {/* Main Content Area Protected by ErrorBoundary */}
       <ErrorBoundary onResetApp={() => handleSelectTab('home', 'all')}>
         <main id="top" className="flex-1">
           {activeFeatureTab === 'home' ? (
-            <HomePage songs={songs} onSelectTab={handleSelectTab} onSelectSong={selectSong} />
+            <HomePage
+              songs={songs}
+              onSelectTab={handleSelectTab}
+              onSelectSong={selectSong}
+            />
           ) : isInfoPage(activeFeatureTab) ? (
             <React.Suspense fallback={<p role="status" className="p-5">読み込み中…</p>}>
-              <InfoPage page={activeFeatureTab} />
+              <InfoPage
+                page={activeFeatureTab}
+                onExportRecords={records.downloadRecords}
+                onImportRecords={records.importRecords}
+                onResetAllUserData={records.resetAllUserData}
+              />
             </React.Suspense>
           ) : (
             /* 各コンテンツの画面 */
@@ -196,6 +236,7 @@ export default function App() {
                         : 'discography'
                     }
                     initialEraFilter={discographyEraPreset}
+                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -211,6 +252,7 @@ export default function App() {
                     onMoveSong={records.moveSetlistSong}
                     onToggleEncore={records.toggleEncore}
                     onLoadPresetSetlist={records.loadPresetSetlist}
+                    onReplaceSetlistSilently={records.replaceSetlistSilently}
                     attendedTourIds={records.attendedTourIds}
                     onToggleAttendedTour={records.toggleAttendedTour}
                     onExportRecords={records.downloadRecords}
@@ -263,44 +305,18 @@ export default function App() {
         </main>
       </ErrorBoundary>
 
-      {/* Clean Archival Footer */}
-      <footer className="border-t border-[#E6E1D6] bg-[#F2EFE9] py-7 mt-10">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-[#57534E]">
-          <div className="space-y-1.5">
-            <p className="flex flex-wrap items-baseline gap-x-2 text-sm">
-              <span>サイト作成者</span>
-              <a href="https://katakatalab.com/who-is-katakata.html" rel="author" className="inline-block py-1 font-bold text-[#1C1917] underline underline-offset-4">
-                かたかた<span className="sr-only">のプロフィール</span>
-              </a>
-            </p>
-            <nav aria-label="サイト情報" className="flex flex-wrap gap-x-4">
-              {Object.entries(infoPages).map(([id, label]) => (
-                <a key={id} href={'#' + id} className="py-1 underline">{label}</a>
-              ))}
-            </nav>
-            <p className="font-bold text-[#1C1917]">
-              115万キロのファンノート — Official髭男dism 非公式ファンサイト
-            </p>
-            <p>
-              <a href="https://katakatalab.com/" className="underline">KatakataLab トップ</a> ／ ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
-            </p>
-            <p className="flex items-center gap-1.5 text-[11px] text-[#57534E]">
-              <ShieldCheck className="h-3.5 w-3.5 text-[#15803D] shrink-0" />
-              <span>
-                マイセトリや参戦・訪問記録は、このブラウザ内に保存されます。非公開中の投票・感想も、過去の保存分は初期化するまで残ります。
-              </span>
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <button
-              type="button"
-              onClick={records.resetAllUserData}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#FBF9F5] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            >
-              <RotateCcw className="h-3.5 w-3.5 text-[#57534E]" />
-              このブラウザの保存記録をすべて初期化
-            </button>
-          </div>
+      {/* Clean Archival Notebook Footer */}
+      <footer className="border-t border-[#e2d8c5] bg-[#f4efe4]/90 py-8 mt-8">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-1.5 text-xs text-[#57534E]">
+          <p className="font-note-serif text-sm font-bold text-[#253331]">
+            © 115万キロのファンノート — Official髭男dism 非公式ファンサイト
+          </p>
+          <p className="leading-relaxed">
+            ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
+          </p>
+          <p className="text-[11px] leading-relaxed text-[#57534E]">
+            ※マイセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href="#privacy" className="underline underline-offset-2 hover:text-[#C83E2B]">プライバシーポリシー</a>から行えます）。
+          </p>
         </div>
       </footer>
 

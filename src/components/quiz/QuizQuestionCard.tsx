@@ -76,7 +76,7 @@ export function QuizQuestionCard({
           {isOrderingQuestion && (
             <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">
               <ListOrdered className="h-3 w-3" />
-              1番目〜4番目 並び替え問題
+              順番に並べる問題
             </span>
           )}
         </div>
@@ -206,7 +206,7 @@ export function QuizQuestionCard({
             <div className="text-xs sm:text-sm font-bold text-[#1C1917]">
               {isCurrentQuestionCorrect
                 ? '正解！'
-                : 'おしい！'}
+                : 'おしい！正解はこちら'}
             </div>
 
             {isOrderingQuestion && question.correctOrder && (

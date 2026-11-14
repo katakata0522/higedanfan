@@ -3,7 +3,6 @@ import { BookOpen, Check, ChevronDown, Disc, Pencil, Plus, RotateCcw, Share2 } f
 import type { SongItem } from '../../data/higedanData';
 import {
   ERA_PREFERENCE_LABELS,
-  isSafeAssetUrl,
   isSoundMatch,
   LENGTH_PREFERENCE_LABELS,
   MOOD_CHOICE_LABELS,
@@ -12,7 +11,6 @@ import {
   SOUND_LABELS,
   SOUND_PREFERENCE_LABELS,
 } from '../../utils/fanLogic';
-import { GuideArtwork } from '../GuideArtwork';
 import { MoodListen, officialVideoId } from './MoodListen';
 import { MoodShareCard, type ShareTheme } from './MoodShareCard';
 import { moodResultCopy } from './moodResultCopy';
@@ -91,28 +89,20 @@ export function MoodResults({
 
           <div className="mt-5 max-w-2xl space-y-4">
             {/* Video or artwork */}
-            {!officialVideoId(bestMatch.song.id) && <div className="relative aspect-square w-full overflow-hidden rounded-xl bg-[#1C1917] ring-1 ring-black/10 shadow-md">
-              {isSafeAssetUrl(bestMatch.song.jacketImage) && (
-                <GuideArtwork
-                  src={bestMatch.song.jacketImage}
-                  alt={`${bestMatch.song.title}  オリジナル図柄`}
-                  referrerPolicy="no-referrer"
-                  className="h-full w-full object-cover"
-                />
-              )}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 rounded-md bg-black/80 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-xs">
-                <Disc className="h-3.5 w-3.5 shrink-0 text-[#F5D0C9]" />
-                <span>{bestMatch.song.album}</span>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3.5 text-white">
-                <div className="text-[11px] font-mono-num text-white/80">
-                  {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
+            {!officialVideoId(bestMatch.song.id) && (
+              <div className="rounded-xl border border-[#E6E1D6] bg-[#FFFDF8] p-4 shadow-xs">
+                <div className="inline-flex items-center gap-1.5 rounded-md bg-[#F2EFE9] px-2.5 py-1 text-[11px] font-bold text-[#253331]">
+                  <Disc className="h-3.5 w-3.5 shrink-0 text-[#A93020]" />
+                  <span>{bestMatch.song.album}</span>
                 </div>
-                <div className="mt-0.5 text-base font-bold min-w-0 wrap-anywhere whitespace-normal">
+                <div className="mt-2.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                   {bestMatch.song.title}
                 </div>
+                <div className="mt-1 text-[11px] font-mono-num text-[#57534E]">
+                  {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
+                </div>
               </div>
-            </div>}
+            )}
 
             <MoodListen song={bestMatch.song} />
           </div>
@@ -213,20 +203,10 @@ export function MoodResults({
                   className="flex flex-col justify-between rounded-xl border border-[#E6E1D6] bg-white p-4 sm:p-5"
                 >
                   <div>
-                    <div className="flex items-start gap-3.5">
-                      {isSafeAssetUrl(song.jacketImage) && (
-                        <GuideArtwork
-                          src={song.jacketImage}
-                          alt={`${song.title} オリジナル図柄`}
-                          referrerPolicy="no-referrer"
-                          className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-black/10"
-                        />
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <h5 className="mt-0.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
-                          {song.title}
-                        </h5>
-                      </div>
+                    <div className="min-w-0">
+                      <h5 className="text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
+                        {song.title}
+                      </h5>
                     </div>
 
                     <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
@@ -268,12 +248,25 @@ export function MoodResults({
         </div>
       )}
 
-      {(page > 0 || (page + 1) * 3 < recommendations.length) && (
-        <div className="flex flex-wrap justify-center gap-3">
-          {page > 0 && <button type="button" onClick={() => changePage(page - 1)} className="rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-sm font-bold text-[#1C1917] hover:bg-[#F2EFE9]">前のおすすめに戻る</button>}
-          {(page + 1) * 3 < recommendations.length && <button type="button" onClick={() => changePage(page + 1)} className="rounded-lg border border-[#C83E2B] bg-white px-4 py-2.5 text-sm font-bold text-[#A93020] hover:bg-[#FFF6F3]">ほかの曲も見てみる</button>}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={onRestart}
+          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FAF6EB] px-4 py-2.5 text-sm font-bold text-[#57534E] hover:border-[#1C1917] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+        >
+          <RotateCcw aria-hidden="true" className="h-4 w-4" />
+          最初から診断する
+        </button>
+        {(page + 1) * 3 < recommendations.length && (
+          <button
+            type="button"
+            onClick={() => changePage(page + 1)}
+            className="min-h-11 rounded-lg border border-[#C83E2B]/55 bg-[#FFFDF8] px-4 py-2.5 text-sm font-bold text-[#A93020] hover:border-[#C83E2B] hover:bg-[#FDF6EE] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+          >
+            ほかの曲も見てみる
+          </button>
+        )}
+      </div>
 
       <div className="space-y-4 border-t border-[#E6E1D6] pt-5">
         <details className="group rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] text-xs text-[#57534E]">
@@ -297,14 +290,6 @@ export function MoodResults({
             ))}
           </div>
         </details>
-        <button
-          type="button"
-          onClick={onRestart}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
-        >
-          <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />
-          最初から診断し直す
-        </button>
       </div>
     </div>
   );
