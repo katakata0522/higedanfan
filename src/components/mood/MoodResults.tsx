@@ -47,7 +47,7 @@ export function MoodResults({
   useEffect(() => {
     const heading = resultHeadingRef.current;
     heading?.focus({ preventScroll: true });
-    heading?.scrollIntoView({ block: 'start' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [recommendedSongId]);
   const showNearMatchNotice = Boolean(bestMatch
     && (!bestMatch.song.moods.includes(criteria.mood) || !isSoundMatch(bestMatch.song, criteria.sound)));

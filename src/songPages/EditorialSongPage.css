@@ -35,12 +35,24 @@ a { color: inherit; }
   z-index: 60;
   top: -60px;
   left: 16px;
-  padding: 10px 14px;
-  background: #fff;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid #253331;
+  background: #fffdf8;
+  color: #253331;
   font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(24, 34, 32, 0.12);
+  transition: top 120ms ease-out;
 }
 
-.skip-link:focus { top: 12px; }
+.skip-link:focus {
+  top: 12px;
+  outline: 2px solid #c83e2b;
+  outline-offset: 2px;
+}
 
 .site-topbar {
   position: sticky;
@@ -267,6 +279,7 @@ a { color: inherit; }
 .reading-toggle:hover { background: #f4efe4; }
 
 .page-main { flex: 1; padding: 14px 16px 24px; }
+.page-main:focus { outline: none; }
 
 .sheet-frame { max-width: 980px; margin: 0 auto; }
 

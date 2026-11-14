@@ -28,7 +28,7 @@ export function QuizQuestionCard({
   useLayoutEffect(() => {
     if (visible && heading.current) {
       heading.current.focus({ preventScroll: true });
-      heading.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+      window.scrollTo({ top: 0, behavior: 'instant' });
     }
   }, [visible, question.id]);
   const isOrderingQuestion = question.questionType === 'ordering';
