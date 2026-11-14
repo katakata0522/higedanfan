@@ -10,10 +10,12 @@
     "prebuild": "npm run generate:song-pages",
     "build": "vite build",
     "preview": "vite preview",
-    "clean": "rm -rf dist server.js",
+    "clean": "node -e \"import('node:fs').then(fs=>['dist','server.js'].forEach(p=>fs.rmSync(p,{recursive:true,force:true})))\"",
     "lint": "tsc --noEmit",
     "test": "node --import tsx --test \"src/**/*.test.ts\"",
-    "test:browser": "node --import tsx .github/scripts/song-page-layout.mjs"
+    "test:ux": "node --import tsx .github/scripts/song-page-layout.mjs --ux-only",
+    "test:browser": "node --import tsx .github/scripts/song-page-layout.mjs",
+    "check": "npm run lint && npm test && npm run build && npm audit --audit-level=low"
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.3.3",

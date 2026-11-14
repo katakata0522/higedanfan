@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
+import { existsSync } from 'node:fs';
 import { readdir } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import path from 'node:path';
@@ -617,10 +618,40 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   console.log('ひげくるん初回オープニング・再訪スキップ・再再生・6枚付箋ノートと横幅を確認');
 }
 
+function resolveChromiumExecutable() {
+  const explicit = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?.trim();
+  if (explicit) return explicit;
+  try {
+    const bundled = chromium.executablePath();
+    if (bundled && existsSync(bundled)) return undefined;
+  } catch {
+    // Playwrightの標準ブラウザが未導入のローカル環境だけ既存ブラウザを探す。
+  }
+  const candidates = process.platform === 'win32'
+    ? [
+        path.join(process.env['PROGRAMFILES'] || 'C:\\Program Files', 'Google\\Chrome\\Application\\chrome.exe'),
+        path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Google\\Chrome\\Application\\chrome.exe'),
+        process.env['LOCALAPPDATA'] ? path.join(process.env['LOCALAPPDATA'], 'Google\\Chrome\\Application\\chrome.exe') : '',
+        path.join(process.env['PROGRAMFILES(X86)'] || 'C:\\Program Files (x86)', 'Microsoft\\Edge\\Application\\msedge.exe'),
+        path.join(process.env['PROGRAMFILES'] || 'C:\\Program Files', 'Microsoft\\Edge\\Application\\msedge.exe'),
+      ]
+    : process.platform === 'darwin'
+    ? [
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+      ]
+    : [
+        '/usr/bin/chromium',
+        '/usr/bin/chromium-browser',
+        '/usr/bin/google-chrome',
+      ];
+  return candidates.find(candidate => candidate && existsSync(candidate));
+}
+
 let browser;
 try {
   await waitForServer();
-  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined });
+  browser = await chromium.launch({ headless: true, executablePath: resolveChromiumExecutable() });
   await verifyStaticSeo(browser, root, ids);
   await verifyInputAndScriptBoundaries(browser, root);
   await verifyRecordFileImport(browser, root);
