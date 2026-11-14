@@ -70,7 +70,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   onBackHome,
 }) => {
   const activeSubView = initialSubView;
-  const [returnState] = useState(() => takeGuideReturnState(songs.length));
+  const [returnState] = useState(() => (initialSubView === 'sacred_map' ? null : takeGuideReturnState(songs.length)));
   const restored = initialEraFilter === 'all' ? returnState : null;
   const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery } = filters;

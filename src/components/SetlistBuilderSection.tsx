@@ -670,7 +670,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           <div>
             <h2
               id="setlist-heading"
-              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
             >
               {activeSubTab === 'tours'
                 ? '歴代ツアー・公演記録'

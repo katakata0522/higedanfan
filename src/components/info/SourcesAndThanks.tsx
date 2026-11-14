@@ -142,7 +142,7 @@ export function SourcesAndThanks() {
   return (
     <article aria-labelledby="sources-title" className="my-4 text-[#1C1917]">
       <header className="mb-7 border-b border-[#D5CEC2] pb-6">
-        <h1 id="sources-title" className="text-3xl font-bold tracking-tight sm:text-4xl">参考資料・謝辞</h1>
+        <h1 id="sources-title" className="font-note-serif text-2xl font-bold tracking-[.04em] text-[#253331] sm:text-3xl">参考資料・謝辞</h1>
         <p className="mt-3 text-base leading-7 text-[#57534E]">楽曲ガイド、検定クイズ、聖地巡礼マップ、ツアー記録で参照した資料を紹介します。</p>
       </header>
 

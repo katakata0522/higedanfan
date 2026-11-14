@@ -143,7 +143,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
         </div>
       </header>
 
-      <main id="main" className="page-main">
+      <main id="main" tabIndex={-1} className="page-main">
         <div className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`}>
         <article className="song-sheet" aria-labelledby="song-title">
           <a className="sheet-close" href={`${base}#${returnDest.hash}`} aria-label={returnDest.label}>×</a>

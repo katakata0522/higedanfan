@@ -11,7 +11,7 @@ export function PrivacyPolicy({
 }: PrivacyPolicyProps) {
   return (
     <article aria-labelledby="privacy-title" className="space-y-4 text-base leading-7 text-[#292524] [&_a]:text-[#1E3A5F] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold">
-      <h1 id="privacy-title" className="text-2xl font-bold sm:text-3xl">プライバシーポリシー</h1>
+      <h1 id="privacy-title" className="font-note-serif text-2xl font-bold tracking-[.04em] text-[#253331] sm:text-3xl">プライバシーポリシー</h1>
       <p><a href="#editor">編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html">KatakataLab</a>）が運営する「115万キロのファンノート」では、マイセトリなどの記録を、お使いのブラウザに保存します。人気投票と感想ノートは現在非公開です。過去に保存した投票・感想は、非公開にしただけでは消えません。</p>
 
       <h2>ブラウザに保存する記録</h2>

@@ -21,7 +21,7 @@ import type { QuizSession } from './components/quiz/quizSession';
 import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
-import { clearSongReturnTab, saveSongReturnTab } from './utils/guideReturnState';
+import { clearGuideReturnState, clearSongReturnTab, saveSongReturnTab } from './utils/guideReturnState';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -58,6 +58,7 @@ export default function App() {
   const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(() => readLocation().songId);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
+  const prevTabRef = React.useRef<SiteTab>(activeFeatureTab);
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
   const [isIntroOpen, setIsIntroOpen] = useState<boolean>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -110,9 +111,18 @@ export default function App() {
         window.location.replace(`${import.meta.env.BASE_URL}${pagePath}`);
         return;
       }
-      clearSongReturnTab();
+      if (tab !== 'discography' && tab !== 'vocal_range') {
+        clearGuideReturnState();
+      } else {
+        clearSongReturnTab();
+      }
+      const tabChanged = prevTabRef.current !== tab;
+      prevTabRef.current = tab;
       setActiveFeatureTab(tab);
       setSelectedModalSongId(songId);
+      if (tabChanged && !songId) {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      }
     };
     window.addEventListener('hashchange', restore);
     restore();
@@ -139,6 +149,8 @@ export default function App() {
   };
 
   const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
+    clearGuideReturnState();
+    prevTabRef.current = tab;
     setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
     setSelectedModalSongId(null);
@@ -200,6 +212,7 @@ export default function App() {
                 onExportRecords={records.downloadRecords}
                 onImportRecords={records.importRecords}
                 onResetAllUserData={records.resetAllUserData}
+                onBackHome={() => handleSelectTab('home')}
               />
             </React.Suspense>
           ) : (
@@ -301,6 +314,7 @@ export default function App() {
                       activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
                     }
                     onBackHome={() => handleSelectTab('home')}
+                    onUpdateBestScore={records.updateBestQuizScore}
                   />
                 )}
               </React.Suspense>

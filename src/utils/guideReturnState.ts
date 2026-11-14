@@ -44,6 +44,13 @@ export function clearSongReturnTab(store: Store | null = browserStore()): void {
   try { store?.removeItem(originTabKey); } catch { /* ignore */ }
 }
 
+export function clearGuideReturnState(store: Store | null = browserStore()): void {
+  try {
+    store?.removeItem(key);
+    store?.removeItem(originTabKey);
+  } catch { /* ignore */ }
+}
+
 export function saveGuideReturnState(state: GuideReturnState, store: Store | null = browserStore()): void {
   try {
     store?.setItem(key, JSON.stringify(state));

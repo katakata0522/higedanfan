@@ -62,7 +62,7 @@ export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props
           <div>
             <h2
               id="mood-heading"
-              className={criteria ? 'sr-only' : 'text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]'}
+              className={criteria ? 'sr-only' : 'font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]'}
             >
               マイソング診断
             </h2>

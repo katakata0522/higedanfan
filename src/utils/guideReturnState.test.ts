@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_GUIDE_FILTERS } from '../components/SongGuideFilters';
 import {
+  clearGuideReturnState,
   clearSongReturnTab,
   guideReturnView,
   saveGuideReturnState,
@@ -72,5 +73,19 @@ test('楽曲ページの戻り先を直前のコーナーに応じて返し、�
   assert.deepEqual(songReturnDestination(store), { hash: 'quiz', label: 'Official髭男dism検定に戻る' });
 
   clearSongReturnTab(store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+});
+
+test('clearGuideReturnStateは一覧の絞り込み状態と戻り先タブの両方を消去する', () => {
+  const store = memoryStore();
+  saveGuideReturnState({
+    filters: { ...DEFAULT_GUIDE_FILTERS, searchQuery: 'Pretender' },
+    visibleCount: 18,
+    view: 'discography',
+  }, store);
+  assert.equal(guideReturnView(store), 'discography');
+
+  clearGuideReturnState(store);
+  assert.equal(takeGuideReturnState(90, store), null);
   assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
 });

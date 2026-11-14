@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
@@ -17,10 +17,11 @@ interface QuizSectionProps {
   onSelectSong?: (song: SongItem) => void;
   initialTab?: 'quiz' | 'archive';
   onBackHome?: () => void;
+  onUpdateBestScore?: (percentage: number) => void;
 }
 
 export function QuizSection({
-  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome,
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome, onUpdateBestScore,
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
@@ -29,6 +30,23 @@ export function QuizSection({
   const questions = useMemo(() => getCourseQuestions(difficulty, scope, questionSet), [difficulty, scope, questionSet]);
   const question = questions[currentIndex];
   const score = correctBefore + Number(quizStage === 'playing' && isAnswerCorrect(question, answer));
+
+  const onUpdateBestScoreRef = useRef(onUpdateBestScore);
+  onUpdateBestScoreRef.current = onUpdateBestScore;
+  const lastRecordedKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (quizStage === 'finished' && questions.length > 0) {
+      const recordKey = `${resetEpoch}:${difficulty}:${scope}:${questionSet}:${score}:${questions.length}`;
+      if (lastRecordedKeyRef.current !== recordKey) {
+        lastRecordedKeyRef.current = recordKey;
+        const summary = calculateQuizResult(score, questions);
+        onUpdateBestScoreRef.current?.(summary.percentage);
+      }
+    } else if (quizStage !== 'finished') {
+      lastRecordedKeyRef.current = null;
+    }
+  }, [quizStage, resetEpoch, difficulty, scope, questionSet, score, questions]);
 
   function updateSession(next: QuizSession) {
     sessionRef.current = next;
@@ -88,7 +106,7 @@ export function QuizSection({
               </span>
             </div>
 
-            {viewTab === 'quiz' && quizStage !== 'select' && (
+            {viewTab === 'quiz' && quizStage !== 'select' ? (
               <button
                 type="button"
                 onClick={chooseCourse}
@@ -97,12 +115,26 @@ export function QuizSection({
                 <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
                 {quizStage === 'playing' ? '検定を終了してコース選択へ' : 'コース選択へ戻る'}
               </button>
+            ) : viewTab === 'quiz' ? (
+              <a
+                href="#quiz_archive"
+                className="text-xs font-bold text-[#5d554c] hover:text-[#1C1917] px-3 py-1.5 rounded-lg border border-[#d8ccb8] bg-[#fffdf8] transition-colors shrink-0"
+              >
+                参考記事・インタビュー
+              </a>
+            ) : (
+              <a
+                href="#quiz"
+                className="text-xs font-bold text-[#5d554c] hover:text-[#1C1917] px-3 py-1.5 rounded-lg border border-[#d8ccb8] bg-[#fffdf8] transition-colors shrink-0"
+              >
+                Official髭男dism検定へ
+              </a>
             )}
           </div>
           <div>
             <h2
               id="quiz-heading"
-              className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
+              className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
             >
               {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
             </h2>
