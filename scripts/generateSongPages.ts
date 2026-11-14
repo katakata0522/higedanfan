@@ -50,7 +50,7 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
     <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png?v=cd4d0ca" sizes="180x180" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Shippori+Mincho:wght@500;600&display=swap" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapedTitle}｜Official髭男dism 楽曲ガイド" />
     <meta property="og:description" content="${escapeHtml(description)}" />

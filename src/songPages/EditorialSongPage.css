@@ -104,9 +104,10 @@ a { color: inherit; }
 
 .site-brand-title {
   display: block;
-  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   line-height: 1.25;
   color: #253331;
 }
@@ -192,9 +193,10 @@ a { color: inherit; }
   border-bottom: 1px solid #e5dccb;
 }
 .song-menu-heading {
-  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   color: #253331;
 }
 .song-menu-note { font-size: 11px; color: #78716C; }
@@ -642,9 +644,10 @@ a { color: inherit; }
 }
 .song-site-footer-brand {
   margin: 0;
-  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   color: #253331;
 }
 .song-site-footer-note { margin: 6px 0 0; }

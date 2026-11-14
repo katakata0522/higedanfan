@@ -155,7 +155,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   return (
     <header className="sticky top-0 z-40 border-b border-[#e7dfd0] bg-[#f9f5eb]/95 backdrop-blur-md">
       <div className="relative mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
-        {/* Left: Hand-drawn Mustache Emblem & Kaisei Decol Brand */}
+        {/* Left: Hand-drawn Mustache Emblem & Kiwi Maru Brand */}
         <button
           type="button"
           onClick={() => handleNavigate('home')}
