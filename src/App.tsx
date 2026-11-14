@@ -171,6 +171,7 @@ export default function App() {
         replayToken={introReplayToken}
         onClose={handleCloseIntro}
       />
+      <a href="#top" className="skip-link">本文へ移動</a>
       {records.storageNotice && (
         <p role="alert" className="bg-amber-100 p-3 text-sm">
           {records.storageNotice}{' '}
@@ -185,7 +186,7 @@ export default function App() {
 
       {/* Main Content Area Protected by ErrorBoundary */}
       <ErrorBoundary onResetApp={() => handleSelectTab('home', 'all')}>
-        <main id="top" className="flex-1">
+        <main id="top" tabIndex={-1} className="flex-1 outline-none">
           {activeFeatureTab === 'home' ? (
             <HomePage
               songs={songs}
@@ -215,6 +216,7 @@ export default function App() {
                     onSelectSong={(song) => selectSong(song.id)}
                     onAddToSetlist={records.addToSetlist}
                     setlistSongIds={setlistSongIds}
+                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -261,6 +263,7 @@ export default function App() {
                     initialSubTab={
                       activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
                     }
+                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -297,6 +300,7 @@ export default function App() {
                     initialTab={
                       activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
                     }
+                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
               </React.Suspense>

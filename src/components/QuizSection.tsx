@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useState, type RefObject } from 'react';
+import { useLayoutEffect, useMemo, useState, type CSSProperties, type RefObject } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
@@ -16,10 +16,11 @@ interface QuizSectionProps {
   songs?: SongItem[];
   onSelectSong?: (song: SongItem) => void;
   initialTab?: 'quiz' | 'archive';
+  onBackHome?: () => void;
 }
 
 export function QuizSection({
-  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz',
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome,
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
@@ -66,7 +67,38 @@ export function QuizSection({
     >
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Clean Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
+        <div className="pb-5 border-b border-[#e5dccb] space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              {onBackHome && (
+                <button
+                  type="button"
+                  onClick={onBackHome}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 text-[#C83E2B]" aria-hidden="true" />
+                  <span>付箋一覧へ戻る</span>
+                </button>
+              )}
+              <span
+                className="fusen-washi-tag"
+                style={{ '--tape-bg': 'rgba(192, 230, 199, 0.78)' } as CSSProperties}
+              >
+                {viewTab === 'archive' ? '制作とインタビューの記録' : 'ヒゲダン愛の力試し'}
+              </span>
+            </div>
+
+            {viewTab === 'quiz' && quizStage !== 'select' && (
+              <button
+                type="button"
+                onClick={chooseCourse}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors shrink-0 cursor-pointer"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                {quizStage === 'playing' ? '検定を終了してコース選択へ' : 'コース選択へ戻る'}
+              </button>
+            )}
+          </div>
           <div>
             <h2
               id="quiz-heading"
@@ -82,17 +114,6 @@ export function QuizSection({
                 : 'どの曲にも、思わず誰かに話したくなる背景がある。気になるコースを選んで挑戦しよう。'}
             </p>
           </div>
-
-          {viewTab === 'quiz' && quizStage !== 'select' && (
-            <button
-              type="button"
-              onClick={chooseCourse}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors shrink-0 self-start sm:self-auto cursor-pointer"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              {quizStage === 'playing' ? '検定を終了してコース選択へ' : 'コース選択へ戻る'}
-            </button>
-          )}
         </div>
 
         {viewTab === 'quiz' && sessionSaveUnavailable && (
