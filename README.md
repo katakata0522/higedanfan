@@ -23,3 +23,5 @@
 CSPは `scripts/siteHtml.ts` が正本です。本番では同じサイトの外部ファイルからだけJavaScriptを実行し、ページへ直接書くコードやイベント属性は許可しません。Viteの開発用コードとWebSocket接続は開発時だけ許可します。CSPのマーカーが残った編集用HTMLをそのまま配信せず、`npm run build` の `dist/` を使用してください。ブラウザ検証では入力・保存・復元とCSPの実効性も確認します。
 
 依存の既知の脆弱性は `npm audit --audit-level=low` で確認し、PRのCIでも失敗時に公開を止めます。TypeScriptの `strict` を維持し、入力値はテキストとして扱い、HTMLへ直接挿入しないでください。
+
+PR前のローカル一括確認には `npm run check`（`lint` / `test` / `build` / `audit`）、主要画面のブラウザ確認には `npm run test:ux`、全90曲×5画面幅の完全検証には `npm run test:browser` を使用します。ブランチ作成から `katakatalab-web`・`KatakataLab` を経た本番反映の標準手順は [開発・公開リリース運用手順](docs/release-workflow.md) にまとめています。
