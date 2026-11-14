@@ -10,7 +10,7 @@ export function escapeHtml(value: string): string {
 export function contentSecurityPolicy(development = false): string {
   return [
     "default-src 'self'",
-    "img-src 'self' data: blob: https://i.ytimg.com",
+    "img-src 'self' data: blob: https://i.ytimg.com https://*.mzstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     `script-src 'self'${development ? " 'unsafe-inline'" : ''}`,

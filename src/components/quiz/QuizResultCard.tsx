@@ -33,7 +33,7 @@ export function QuizResultCard({
   }, []);
 
   const handleCopyCertShareText = async () => {
-    const shareText = `【ヒゲダン検定クイズ】\n挑戦コース：${activeCourseLabel}\n認定ランク：${quizSummary.rankTitle}（${quizSummary.rankBadgeCode}）\n正解数：${quizSummary.score} / ${quizSummary.total} 問（正答率 ${quizSummary.percentage}%）\n#115万キロのファンノート #Official髭男dism #ヒゲダン検定`;
+    const shareText = `【Official髭男dism検定】\n挑戦コース：${activeCourseLabel}\n認定ランク：${quizSummary.rankTitle}（${quizSummary.rankBadgeCode}）\n正解数：${quizSummary.score} / ${quizSummary.total} 問（正答率 ${quizSummary.percentage}%）\n#115万キロのファンノート #Official髭男dism #Official髭男dism検定`;
     try {
       await navigator.clipboard.writeText(shareText);
     } catch {
@@ -58,7 +58,7 @@ export function QuizResultCard({
       </div>
 
       <div className="text-xs font-bold text-[#78716C]">
-        ヒゲダン検定クイズ 認定結果（{activeCourseLabel}）
+        Official髭男dism検定 認定結果（{activeCourseLabel}）
       </div>
 
       <h3 ref={heading} tabIndex={-1} className="scroll-mt-20 text-xl sm:text-2xl font-bold text-[#1C1917]">
@@ -120,7 +120,7 @@ export function QuizResultCard({
         <div className="mt-5 pt-5 border-t border-[#E6E1D6] text-left space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h4 className="text-sm font-bold text-[#1C1917]">
-              ヒゲダン検定 認定証シェアカード
+              Official髭男dism検定 認定証シェアカード
             </h4>
             <div className="flex items-center gap-2">
               <button
@@ -154,7 +154,7 @@ export function QuizResultCard({
           <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] shadow-lg">
             <div className="flex items-center justify-between border-b border-white/15 bg-black/30 px-5 py-3 text-xs">
               <span className="font-bold text-[#F5D0C9]">
-                115万キロのファンノート · ヒゲダン検定クイズ認定証
+                115万キロのファンノート · Official髭男dism検定 認定証
               </span>
               <span className="font-mono-num font-bold text-white">
                 {quizSummary.rankBadgeCode}
@@ -174,7 +174,7 @@ export function QuizResultCard({
               </p>
             </div>
             <div className="flex items-center justify-between border-t border-white/10 bg-black/25 px-5 py-2.5 text-[11px] text-white/65">
-              <span>#115万キロのファンノート #Official髭男dism #ヒゲダン検定</span>
+              <span>#115万キロのファンノート #Official髭男dism #Official髭男dism検定</span>
               <span>今回の出題数：{quizSummary.total}問</span>
             </div>
           </div>

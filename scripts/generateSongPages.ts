@@ -6,6 +6,7 @@ import { autoSongPage } from '../src/songPages/autoSongPage';
 import { applySongEditorial } from '../src/songPages/applySongEditorial';
 import { editorialArticles } from '../src/songPages/editorialArticles';
 import { officialVideoDescription, officialVideos, relatedSongs } from '../src/songPages/songConnections';
+import { songAppleArtwork } from '../src/data/songAppleArtwork';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
 import { CSP_MARKER, escapeHtml } from './siteHtml';
 
@@ -47,6 +48,9 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
     <link rel="canonical" href="${url}" />
     <link rel="icon" href="/higedanfan/hige-mark.svg?v=34b8cc7" type="image/svg+xml" sizes="any" />
     <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png?v=cd4d0ca" sizes="180x180" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@500;700&display=swap" />
     <meta property="og:type" content="article" />
     <meta property="og:title" content="${escapedTitle}｜Official髭男dism 楽曲ガイド" />
     <meta property="og:description" content="${escapeHtml(description)}" />
@@ -103,8 +107,12 @@ for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrde
   const id = song.id;
   const page = applySongEditorial(customPages.get(id) ?? autoSongPage(id));
   const fact = evidence[id];
+  const appleArtwork = songAppleArtwork[id];
   if (!fact || page.id !== id || !fact.recording) {
     throw new Error(`${id}: 楽曲IDと検証済みデータを確認してください`);
+  }
+  if (!appleArtwork || !isHttpsUrl(appleArtwork.artworkUrl) || !isHttpsUrl(appleArtwork.appleUrl)) {
+    throw new Error(`${id}: Apple Music ジャケットURLと公式リンクを確認してください`);
   }
   if (!page.feature.text || !page.feature.credit || page.overview.length === 0 || page.overview.some(text => !text.trim())) {
     throw new Error(`${id}: 紹介文と概要を入力してください`);
@@ -139,4 +147,5 @@ for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrde
 const routesPath = join(root, 'src/songPages/publishedSongPageIds.ts');
 const routes = `// scripts/generateSongPages.ts から生成。掲載曲は catalogEntries と songEvidence に追加する。\nexport const publishedSongPageIds = new Set<string>(${JSON.stringify(ids)});\n\nexport function songPagePath(id: string): string | null {\n  return publishedSongPageIds.has(id) ? \`songs/\${id}/\` : null;\n}\n`;
 if (!existsSync(routesPath) || readFileSync(routesPath, 'utf8') !== routes) writeFileSync(routesPath, routes);
+
 console.log(`楽曲ページ ${ids.length} 件のHTMLと導線を生成しました`);

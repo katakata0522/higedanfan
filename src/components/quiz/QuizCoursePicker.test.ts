@@ -5,8 +5,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { QuizCoursePicker } from './QuizCoursePicker';
 import { getCourseQuestions } from './quizCourses';
 
-test('the beginner picker shows the number of ordering questions actually available', () => {
+test('the beginner picker offers standard courses without ordering-only mode', () => {
   const html = renderToStaticMarkup(createElement(QuizCoursePicker, { onStart: () => {} }));
-  const count = getCourseQuestions('beginner', 'ordering_only').length;
-  assert.match(html, new RegExp(`並び替え問題だけに挑戦する（${count}問）`));
+  const fullCount = getCourseQuestions('beginner', 'full').length;
+  assert.ok(fullCount > 0);
+  assert.doesNotMatch(html, /並び替え問題だけに挑戦する/);
 });

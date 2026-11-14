@@ -44,8 +44,30 @@ async function waitForServer() {
   throw new Error(`試験用サーバーが起動しません: ${serverOutput}`);
 }
 
+const appleCdnCache = new Map();
+
 async function inspectAllPages(browser, scenario) {
   const context = await browser.newContext(scenario.context);
+  await context.route('https://*.mzstatic.com/**', async route => {
+    const url = route.request().url();
+    let cached = appleCdnCache.get(url);
+    if (!cached) {
+      const pending = route.fetch().then(async res => ({
+        status: res.status(),
+        contentType: res.headers()['content-type'] || 'image/jpeg',
+        body: await res.body(),
+      }));
+      appleCdnCache.set(url, pending);
+      cached = pending;
+    }
+    try {
+      const entry = await cached;
+      await route.fulfill({ status: entry.status, contentType: entry.contentType, body: entry.body });
+    } catch {
+      appleCdnCache.delete(url);
+      await route.abort();
+    }
+  });
   const failures = [];
   let next = 0;
 
@@ -63,12 +85,22 @@ async function inspectAllPages(browser, scenario) {
           await page.getByRole('button', { name: '大きな文字で読む' }).click();
           await page.locator('.sheet-frame--readable').waitFor();
         }
+        await page.waitForFunction(() => {
+          const cover = document.querySelector('.cover .cover-art');
+          const placeholder = document.querySelector('.cover .cover-placeholder');
+          const badge = document.querySelector('.cover .cover-apple-badge-img');
+          return Boolean((cover?.complete || placeholder) && badge?.complete);
+        });
         await page.evaluate(() => document.fonts.ready);
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
         const result = await page.evaluate(() => {
-          const box = selector => document.querySelector(selector).getBoundingClientRect();
-          const cover = box('.cover-placeholder');
+          const box = selector => document.querySelector(selector)?.getBoundingClientRect();
+          const coverImg = document.querySelector('.cover .cover-art');
+          const badgeImg = document.querySelector('.cover .cover-apple-badge-img');
+          const badgeLink = document.querySelector('.cover .cover-apple-badge');
+          const cover = box('.cover .cover-art') ?? box('.cover .cover-placeholder');
+          const badge = badgeLink?.getBoundingClientRect();
           const hero = box('.song-hero');
           const content = box('.hero-content');
           const feature = box('.feature-line');
@@ -82,17 +114,31 @@ async function inspectAllPages(browser, scenario) {
             width: document.documentElement.scrollWidth, viewport: innerWidth,
             height: document.documentElement.scrollHeight, viewportHeight: innerHeight,
             coverWidth: cover.width, coverHeight: cover.height, coverRight: cover.right, coverBottom: cover.bottom,
+            coverLoaded: Boolean(
+              coverImg?.complete
+              && coverImg.naturalWidth >= 500
+              && coverImg.naturalHeight >= 500
+              && Math.abs(coverImg.naturalWidth - coverImg.naturalHeight) <= 8
+            ),
+            badgeLoaded: Boolean(badgeImg?.complete && badgeImg.naturalWidth > 0),
+            badgeHref: badgeLink?.getAttribute('href') ?? '',
+            badgeTop: badge?.top ?? 0,
+            badgeRight: badge?.right ?? 0,
+            badgeBottom: badge?.bottom ?? 0,
+            badgeWidth: badge?.width ?? 0,
+            badgeHeight: badge?.height ?? 0,
             contentLeft: content.left, contentTop: content.top,
             heroLeft: hero.left, heroWidth: hero.width, heroBottom: hero.bottom,
             featureLeft: feature.left, featureWidth: feature.width, featureTop: feature.top,
             titleWidth: title.scrollWidth, titleClient: title.clientWidth,
             placeholders: document.querySelectorAll('.cover-placeholder').length,
-            coverImages: document.querySelectorAll('.cover img').length,
+            coverImages: document.querySelectorAll('.cover .cover-art').length,
+            appleBadges: document.querySelectorAll('.cover .cover-apple-badge').length,
             closeClickable: (() => {
               const link = document.querySelector('.sheet-close'), r = link.getBoundingClientRect();
               return link.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
             })(),
-            badges: [...document.querySelectorAll('a')].filter(link => /iTunes Store/i.test(`${link.textContent} ${link.querySelector('img')?.alt || ''}`)).length
+            legacyBadges: [...document.querySelectorAll('a')].filter(link => /iTunes Store/i.test(`${link.textContent} ${link.querySelector('img')?.alt || ''}`)).length
               + document.querySelectorAll('iframe[src*="music.apple.com"]').length,
             overviewFont: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
             tempoText: document.querySelectorAll('.fact-item')[1].querySelector('dd').textContent,
@@ -100,21 +146,26 @@ async function inspectAllPages(browser, scenario) {
           };
         });
 
-        assert.equal(result.placeholders, 1, '正方形の仮枠がありません');
-        assert.equal(result.coverImages, 0, '仮枠に画像が残っています');
+        assert.equal(result.placeholders, 0, 'ジャケット画像が仮枠のままです');
+        assert.equal(result.coverImages, 1, 'ジャケット画像が表示されていません');
+        assert.ok(result.coverLoaded, 'ジャケット画像の読み込みに失敗しているか正方形ではありません');
+        assert.equal(result.appleBadges, 1, 'Apple Music公式バッジがありません');
+        assert.ok(result.badgeLoaded, 'Apple Music公式バッジSVGが読み込めませんでした');
+        assert.match(result.badgeHref, /^https:\/\/music\.apple\.com\//, 'Apple Music公式バッジのリンク先が不正です');
+        assert.ok(result.badgeTop - result.coverBottom >= 4, 'ジャケットとApple Musicバッジの間隔が狭すぎます');
         assert.ok(result.closeClickable, '一覧に戻るリンクがタイトルに覆われています');
-        assert.equal(result.badges, 0, 'ストアのバッジやプレーヤーが残っています');
+        assert.equal(result.legacyBadges, 0, '旧ストアバッジやプレーヤー埋め込みが残っています');
         assert.match(result.tempoText, isTempoUnderReview(id) ? /^調査中$/ : /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポの表示が調査状況と一致しません');
-        assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, '仮枠が正方形ではありません');
+        assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, 'ジャケット画像枠が正方形ではありません');
         assert.ok(result.width <= result.viewport, '横にはみ出しています');
         assert.ok(result.titleWidth <= result.titleClient + 1, '曲名がはみ出しています');
         assert.ok(result.facts.every(fact => fact.left >= -1 && fact.right >= -1), '楽曲データが枠からはみ出しています');
         assert.ok(Math.abs(result.heroLeft - result.featureLeft) < 1 && Math.abs(result.heroWidth - result.featureWidth) < 1 && result.featureTop >= result.heroBottom, '紹介文の帯が紙面幅になっていません');
         assert.ok(Math.abs(result.facts[0].top - result.facts[1].top) < 1 && result.facts[2].top > result.facts[0].top && Math.abs(result.facts[2].top - result.facts[3].top) < 1 && Math.abs(result.facts[3].top - result.facts[4].top) < 1, 'データが2項目と3項目の2段になっていません');
         if (scenario.mobile) {
-          assert.ok(result.coverBottom <= result.contentTop + 1, 'スマホで画像欄と曲名が重なっています');
+          assert.ok(result.coverBottom <= result.contentTop + 1 && result.badgeBottom <= result.contentTop + 1, 'スマホで画像欄と曲名が重なっています');
         } else {
-          assert.ok(result.coverRight <= result.contentLeft + 1, '画像欄と曲名が重なっています');
+          assert.ok(result.coverRight <= result.contentLeft + 1 && result.badgeRight <= result.contentLeft + 1, '画像欄と曲名が重なっています');
           if (scenario.readable) assert.ok(result.overviewFont >= 20, '大きな文字で読む表示が小さすぎます');
           else assert.ok(result.overviewFont >= 18, '本文の文字が小さすぎます');
         }
@@ -164,26 +215,24 @@ async function verifyImmediateReload(browser) {
 
   // セトリ作成画面からの追加も、アンコール設定ごと同じ条件で復元する。
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
-  await openSetlistEditor(page, 'album');
+  await openSetlistEditor(page, 'album', 'encore');
   await page.getByLabel('追加する曲を選択').selectOption('cry-baby');
-  await page.getByLabel('アンコール枠で追加').check();
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby')), false);
   await page.reload({ waitUntil: 'load' });
-  await openSetlistEditor(page, 'album');
+  await openSetlistEditor(page, 'album', 'encore');
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'cry-baby' && item.isEncore));
 
   // 保存待ちの追加をその場で外したとき、再読み込みで復活させない。
+  await openSetlistEditor(page, 'album', 'main');
   await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
-  page.once('dialog', dialog => dialog.accept());
-  await page.getByLabel('編集する曲', { exact: true }).selectOption('bedroom-talk');
   await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
   await page.reload({ waitUntil: 'load' });
-  await openSetlistEditor(page, 'album');
+  await openSetlistEditor(page, 'album', 'main');
   assert.equal(await page.locator('li[data-song-id="bedroom-talk"]').count(), 0);
   await releaseLock();
   await lockPage.evaluate(() => navigator.locks.request('higedan_fan_magazine_state_v1', () => true));
@@ -193,11 +242,9 @@ async function verifyImmediateReload(browser) {
   await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
   await holdLock();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
-  page.once('dialog', dialog => dialog.accept());
-  await page.getByLabel('編集する曲', { exact: true }).selectOption('bedroom-talk');
   await page.getByRole('button', { name: 'Bedroom Talkをセットリストから外す' }).click();
+  await openSetlistEditor(page, 'album', 'encore');
   await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
-  await page.getByLabel('アンコール枠で追加').check();
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   await page.reload({ waitUntil: 'load' });
   await page.getByRole('button', { name: 'Bedroom Talk', exact: true }).waitFor();
@@ -301,14 +348,15 @@ async function verifyGuideAndSetlistUsability(browser) {
   await context.addInitScript(() => {
     const key = 'higedan_fan_magazine_state_v1';
     if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ setlist: [], setlistTitle: '確認用セトリ' }));
+    if (!localStorage.getItem('higedan_intro_seen_v2')) localStorage.setItem('higedan_intro_seen_v2', '1');
   });
   const page = await context.newPage();
   await page.goto(root, { waitUntil: 'load' });
-  await page.getByRole('button', { name: '今日の1曲を探す' }).waitFor();
+  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
   assert.equal(await page.getByText('図柄を選択', { exact: false }).count(), 0);
-  await page.getByRole('button', { name: '「Pretender」の「世界線」、アニメとのつながりを読む →' }).click();
-  await page.getByRole('heading', { name: 'Pretender', exact: true }).waitFor();
-  assert.match(await page.locator('.overview-copy').innerText(), /STEINS;GATE/);
+  await page.getByRole('button', { name: /関連する楽曲ページ：『イエスタデイ』/ }).click();
+  await page.getByRole('heading', { name: 'イエスタデイ', exact: true }).waitFor();
+  assert.match(await page.locator('.overview-copy').innerText(), /HELLO WORLD/);
 
   await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
   const table = page.getByRole('table', { name: /音域・発売日比較表/ });
@@ -322,7 +370,9 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await table.locator('tbody tr').count(), 90, '並び替えた後に表示曲数が減っています');
   const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
   assert.match(await subtitle.innerText(), /記載なし/, '採譜にない値を誤表示しています');
-  assert.equal(await subtitle.getByRole('link', { name: /Subtitleの採譜/ }).count(), 1);
+  assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域出典/ }).count(), 1);
+  assert.match(await subtitle.innerText(), /J-POP 音域の沼 ↗/);
+  assert.doesNotMatch(await table.innerText(), /(?:^|\s)採譜 ↗/);
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
   await page.getByLabel('曲名・読み・タイアップで検索').fill('Pretender');
@@ -337,7 +387,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await page.getByRole('group', { name: /の切り替え/ }).count(), 0);
   await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
   const menu = page.getByRole('navigation', { name: 'サイト内メニュー' });
-  assert.equal(await menu.getByRole('button').count(), 9, 'メニューに公開コンテンツが揃っていません');
+  assert.equal(await menu.getByRole('button').count(), 10, 'メニューに公開コンテンツが揃っていません');
   await menu.getByRole('button', { name: /^掲載90曲の音域・発売日一覧/ }).click();
   await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
   assert.equal(await table.isVisible(), true, 'スマホでも比較表を使える必要があります');
@@ -354,13 +404,13 @@ async function verifyGuideAndSetlistUsability(browser) {
   await table.locator('tbody th button').first().click();
   await page.getByRole('heading', { name: firstTitle, exact: true }).waitFor();
   await page.locator('.song-site-menu > summary').click();
-  assert.equal(await page.getByRole('navigation', { name: 'サイト内メニュー' }).getByRole('link').count(), 12);
+  assert.equal(await page.getByRole('navigation', { name: 'サイト内メニュー' }).getByRole('link').count(), 13);
   await page.locator('.song-site-menu > summary').press('Escape');
   await page.getByRole('link', { name: '音域一覧に戻る', exact: true }).first().click();
   await table.waitFor();
   assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'descending');
   await page.getByRole('button', { name: /^115万キロのファンノート/ }).click();
-  await page.getByRole('button', { name: '今日の1曲を探す' }).waitFor();
+  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
   const titleSearch = page.getByLabel('曲名・読み・タイアップで検索');
@@ -374,25 +424,28 @@ async function verifyGuideAndSetlistUsability(browser) {
   }
 
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
-  await openSetlistEditor(page);
+  await openSetlistEditor(page, 'search', 'main');
   const search = page.getByLabel('曲を探して追加');
   await search.fill('ぷりてんだー');
   await page.getByRole('button', { name: 'Pretenderを本編に追加' }).click();
   await page.getByRole('button', { name: 'Pretender', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Pretenderは追加済み' }).isDisabled(), true);
+  await openSetlistEditor(page, 'search', 'encore');
   await search.fill('さぶたいとる');
-  await page.getByLabel('アンコール枠で追加').check();
   await page.getByRole('button', { name: 'Subtitleをアンコールに追加' }).click();
   await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
-  await page.getByLabel('編集する曲', { exact: true }).selectOption('subtitle');
-  const subtitleActions = page.getByRole('group', { name: 'アンコール・曲の削除', exact: true });
-  assert.match(await subtitleActions.innerText(), /収録：Rejoice/);
-  assert.match(await subtitleActions.innerText(), / · \d+:\d{2}/);
-  assert.doesNotMatch(await subtitleActions.innerText(), /BPM/);
-  await page.getByRole('button', { name: 'Subtitleを本編へ移動' }).click();
-  await page.getByRole('button', { name: 'Subtitleをアンコールへ移動' }).click();
+  await page.getByRole('button', { name: 'Subtitleを1つ上へ移動' }).click();
+  await page.waitForFunction(() => {
+    const value = localStorage.getItem('higedan_fan_magazine_state_v1');
+    return value && JSON.parse(value).setlist.some(item => item.songId === 'subtitle' && !item.isEncore);
+  });
+  await page.getByRole('button', { name: 'Subtitleを1つ下へ移動' }).click();
+  await page.waitForFunction(() => {
+    const value = localStorage.getItem('higedan_fan_magazine_state_v1');
+    return value && JSON.parse(value).setlist.some(item => item.songId === 'subtitle' && item.isEncore);
+  });
+  await openSetlistEditor(page, 'search', 'main');
   await search.fill('cry baby');
-  await page.getByLabel('アンコール枠で追加').uncheck();
   await page.getByRole('button', { name: 'Cry Babyを本編に追加' }).click();
   await page.getByRole('button', { name: 'Cry Baby', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Pretenderを1つ下へ移動' }).click();
@@ -519,6 +572,51 @@ async function verifyReferenceLibrary(browser) {
   console.log('320/390px・PCで記事名・日付・掲載元リンク、媒体/曲名検索、追加表示と日付順を確認');
 }
 
+async function verifyKurunIntroAndStickyNotes(browser) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', err => pageErrors.push(err.message));
+
+  await page.goto(root, { waitUntil: 'load' });
+  const intro = page.locator('#kurun-intro-overlay');
+  await intro.waitFor({ state: 'visible' });
+  assert.equal(await intro.locator('.kurun-doodle').count(), 4, 'オープニングの背景モチーフが4つ揃っていません');
+  await page.locator('#kurun-skip-btn').click();
+  await intro.waitFor({ state: 'detached' });
+  assert.equal(await page.evaluate(() => localStorage.getItem('higedan_intro_seen_v2')), '1', '閲覧済みフラグが保存されていません');
+
+  await page.reload({ waitUntil: 'load' });
+  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
+  assert.equal(await intro.count(), 0, '2回目以降のアクセスでオープニングが自動再生されました');
+
+  await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
+  await page.locator('#kurun-replay-btn').click();
+  await intro.waitFor({ state: 'visible' });
+  await page.keyboard.press('Escape');
+  await intro.waitFor({ state: 'detached' });
+
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    const stickyCount = await page.locator('.fusen-card').count();
+    assert.equal(stickyCount, 6, `${width}pxで付箋カードが6枚揃っていません`);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}pxでトップページが横にはみ出しています`);
+  }
+
+  await page.getByRole('button', { name: '聖地巡礼マップをひらく' }).click();
+  await page.getByRole('heading', { name: '聖地巡礼マップ', exact: true }).waitFor();
+  assert.ok(await page.locator('.fusen-memo-card').count() >= 5, '聖地巡礼マップのメモカードが表示されていません');
+  await page.getByRole('button', { name: '付箋一覧へ戻る' }).click();
+  await page.getByRole('button', { name: '音域・発売日表 ↗' }).click();
+  await page.getByRole('table', { name: /音域・発売日比較表/ }).waitFor();
+
+  await page.goto(`${root}?intro=1`, { waitUntil: 'load' });
+  await intro.waitFor({ state: 'visible' });
+  assert.deepEqual(pageErrors, [], `ページ実行時エラー: ${pageErrors.join('; ')}`);
+  await context.close();
+  console.log('ひげくるん初回オープニング・再訪スキップ・再再生・6枚付箋ノートと横幅を確認');
+}
+
 let browser;
 try {
   await waitForServer();
@@ -526,6 +624,7 @@ try {
   await verifyStaticSeo(browser, root, ids);
   await verifyInputAndScriptBoundaries(browser, root);
   await verifyRecordFileImport(browser, root);
+  await verifyKurunIntroAndStickyNotes(browser);
   await verifyGuideAndSetlistUsability(browser);
   await verifySetlistHierarchy(browser);
   await verifyReferenceLibrary(browser);

@@ -72,14 +72,14 @@ export function QuizSection({
               id="quiz-heading"
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#1C1917]"
             >
-              {viewTab === 'archive' ? '参考記事・インタビュー' : 'ヒゲダン検定クイズ（全60問）'}
+              {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
             </h2>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {viewTab === 'archive'
                 ? '曲の物語や検定で参考にした記事・インタビュー・公式資料。記事名・媒体・日付から、掲載元をたどれます。'
                 : questionSet && questionSet !== 'current' && quizStage !== 'select'
-                ? '更新前に始めたクイズを、当時の問題の続きから再開しています。'
-                : '10問ずつのコースで、楽曲の背景やメンバーの言葉に出会おう。'}
+                ? '更新前に始めた検定を、当時の問題の続きから再開しています。'
+                : 'どの曲にも、思わず誰かに話したくなる背景がある。気になるコースを選んで挑戦しよう。'}
             </p>
           </div>
 

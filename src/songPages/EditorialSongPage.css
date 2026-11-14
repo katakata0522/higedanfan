@@ -20,71 +20,253 @@ a { color: inherit; }
 
 .song-page {
   min-height: 100vh;
-  background: radial-gradient(circle at 50% -15%, #f8f5ee 0, #e8e4dc 55%, #d9d4cb 100%);
+  display: flex;
+  flex-direction: column;
+  background-color: #faf6eb;
+  background-image:
+    radial-gradient(rgba(160, 148, 128, .22) 1.1px, transparent 1.1px),
+    linear-gradient(90deg, rgba(160, 148, 128, .04) 1px, transparent 1px);
+  background-size: 26px 26px, 26px 100%;
+  color: #253331;
 }
 
 .skip-link {
   position: absolute;
-  z-index: 10;
+  z-index: 60;
   top: -60px;
   left: 16px;
   padding: 10px 14px;
   background: #fff;
-  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
 
 .skip-link:focus { top: 12px; }
 
 .site-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid #e7dfd0;
+  background: rgba(249, 245, 235, .95);
+  backdrop-filter: blur(12px);
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+
+.site-topbar-inner {
   position: relative;
-  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  min-height: 50px;
-  padding: 5px max(24px, calc((100vw - 1160px) / 2));
-  border-bottom: 1px solid #d6d0c5;
-  background: #f8f6f1d9;
-  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  max-width: 1152px;
+  height: 64px;
+  margin: 0 auto;
+  padding: 0 12px;
+}
+
+@media (min-width: 640px) {
+  .site-topbar-inner { padding: 0 24px; }
+}
+
+@media (min-width: 1024px) {
+  .site-topbar-inner { padding: 0 32px; }
 }
 
 .site-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
   text-decoration: none;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: .01em;
+  color: #253331;
 }
 
-.site-brand img { flex: none; width: 34px; height: 34px; }
+.site-brand-logo {
+  flex: none;
+  width: 36px;
+  height: 24px;
+  overflow: visible;
+}
+
+.site-brand-text { min-width: 0; }
+
+.site-brand-title {
+  display: block;
+  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #253331;
+}
+
+.site-brand-title span {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.site-brand-sub {
+  display: none;
+  font-size: 10.5px;
+  line-height: 1.3;
+  color: #78716C;
+}
+
+@media (min-width: 640px) {
+  .site-brand { gap: 10px; }
+  .site-brand-logo { width: 44px; height: 28px; }
+  .site-brand-title { font-size: 16px; letter-spacing: .03em; }
+  .site-brand-sub { display: block; }
+}
 
 .song-site-menu { flex: none; }
-.song-site-menu > summary { display: flex; min-height: 40px; align-items: center; gap: 5px; padding: 7px 10px; border: 1px solid #a69d91; border-radius: 7px; list-style: none; cursor: pointer; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.song-site-menu > summary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 8px 14px;
+  border: 1px solid #dfd7c7;
+  border-radius: 9999px;
+  background: #fffcf5;
+  color: #253331;
+  list-style: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transition: background-color .15s ease, border-color .15s ease, color .15s ease;
+}
 .song-site-menu > summary::-webkit-details-marker { display: none; }
-.song-site-menu[open] > summary { background: #1c1917; color: #fbf9f5; }
-.site-topbar .song-menu-panel { position: absolute; z-index: 10; right: max(12px, calc((100vw - 1160px) / 2)); top: 100%; display: flex; flex-direction: column; align-items: stretch; gap: 4px; width: min(400px, calc(100vw - 24px)); max-height: calc(100dvh - 90px); overflow-y: auto; padding: 12px; border: 1px solid #d6d0c5; border-radius: 0 0 12px 12px; background: #fbf9f5; box-shadow: 0 15px 30px #1c191730; font-size: 13px; }
-.song-menu-panel a { display: flex; min-height: 44px; align-items: center; padding: 10px 12px; border: 1px solid #e6e1d6; border-radius: 7px; background: white; text-decoration: none; font-weight: 700; }
-.song-menu-panel a:hover { background: #f2efe9; }
+.song-site-menu > summary:hover { border-color: #253331; background: #f2ece0; }
+.song-site-menu[open] > summary { border-color: #253331; background: #253331; color: #faf6eb; }
+.song-menu-trigger-icon { width: 16px; height: 16px; flex: none; }
+
+.song-menu-panel {
+  position: absolute;
+  z-index: 40;
+  right: 0;
+  top: 64px;
+  width: min(400px, 100vw);
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+  padding: 14px;
+  border-bottom: 1px solid #dfd7c7;
+  background: #faf6eb;
+  box-shadow: 0 20px 32px -12px rgba(37, 51, 50, .18);
+  font-size: 13px;
+}
+
+@media (min-width: 640px) {
+  .song-menu-panel {
+    right: 24px;
+    padding: 16px;
+    border: 1px solid #dfd7c7;
+    border-radius: 0 0 16px 16px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .song-menu-panel { right: 32px; }
+}
+
+.song-menu-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px 10px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e5dccb;
+}
+.song-menu-heading {
+  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 12px;
+  font-weight: 700;
+  color: #253331;
+}
+.song-menu-note { font-size: 11px; color: #78716C; }
+
+.song-menu-items { display: flex; flex-direction: column; gap: 6px; }
+.song-menu-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px solid #e5dccb;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #253331;
+  text-decoration: none;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.song-menu-card:hover { border-color: rgba(37, 51, 50, .5); background: #f4efe4; }
+
+.song-menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: 6px;
+  background: #f4efe4;
+  color: #253331;
+  transition: background-color .15s ease, color .15s ease;
+}
+.song-menu-icon svg { width: 16px; height: 16px; }
+.song-menu-card:hover .song-menu-icon { background: #C83E2B; color: #ffffff; }
+
+.song-menu-copy { min-width: 0; flex: 1; }
+.song-menu-label { display: block; font-size: 14px; font-weight: 700; line-height: 1.35; color: #253331; }
+.song-menu-desc { display: block; font-size: 11px; line-height: 1.35; color: #57534E; }
+.song-menu-chevron { width: 16px; height: 16px; flex: none; color: #78716C; }
+.song-menu-card:hover .song-menu-chevron { color: #253331; }
+
+.song-menu-footer {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid #e5dccb;
+  display: flex;
+  flex-direction: column;
+}
+.song-menu-sublink {
+  display: flex;
+  width: 100%;
+  min-height: 44px;
+  align-items: center;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #253331;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+.song-menu-sublink:hover { background: #f4efe4; }
 
 .reading-toggle {
   display: none;
-  min-height: 34px;
-  padding: 4px 10px;
-  border: 1px solid #a69d91;
-  border-radius: 5px;
-  background: transparent;
-  color: inherit;
+  margin-top: 4px;
+  min-height: 36px;
+  padding: 6px 12px;
+  border: 1px solid #dfd7c7;
+  border-radius: 8px;
+  background: #fffdf8;
+  color: #253331;
   font: inherit;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
 }
+.reading-toggle:hover { background: #f4efe4; }
 
-.reading-toggle:hover { background: #eee8de; }
-
-.page-main { padding: 12px 16px 12px; }
+.page-main { flex: 1; padding: 14px 16px 24px; }
 
 .sheet-frame { max-width: 980px; margin: 0 auto; }
 
@@ -134,7 +316,7 @@ a { color: inherit; }
 
 .cover { margin: 0; align-self: start; }
 
-.cover img, .cover-placeholder {
+.cover .cover-art, .cover .cover-placeholder {
   display: block;
   width: 225px;
   height: 225px;
@@ -145,7 +327,32 @@ a { color: inherit; }
   box-shadow: 0 2px 9px #0002;
 }
 
-.cover-placeholder { border: 1px solid #c9bfb3; background: #efe8de; }
+.cover .cover-art { border: 1px solid #d5cbc0; background: #efe8de; }
+
+.cover .cover-placeholder { border: 1px solid #c9bfb3; background: #efe8de; }
+
+.cover-caption {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.cover-apple-badge {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 7px;
+  line-height: 0;
+  transition: transform .15s ease, opacity .15s ease;
+}
+
+.cover-apple-badge:hover { transform: translateY(-1px); opacity: .92; }
+
+.cover-apple-badge-img {
+  display: block;
+  width: 140px;
+  max-width: 100%;
+  height: auto;
+}
 
 .hero-content { display: flex; min-width: 0; flex-direction: column; }
 
@@ -300,6 +507,7 @@ a { color: inherit; }
 .listen-links { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
 .listen-links a { display: inline-flex; min-height: 44px; align-items: center; gap: 8px; padding: 10px 15px; border-radius: 7px; background: #a92b38; color: white; font-size: 14px; font-weight: 700; text-decoration: none; }
 .listen-links a + a { border: 1px solid #a92b38; background: transparent; color: #8d1f2a; }
+.listen-note { margin: 12px 0 0; color: #57534e; font-size: 12px; line-height: 1.55; }
 .related-section ul { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; margin: 14px 0 0; padding: 0; list-style: none; }
 .related-section li { padding: 12px 14px; border-radius: 7px; background: white; }
 .related-section a { display: flex; min-height: 32px; justify-content: space-between; gap: 12px; color: #203f4b; font-size: 15px; font-weight: 700; text-underline-offset: 3px; }
@@ -346,7 +554,7 @@ a { color: inherit; }
   .song-sheet { min-height: 0; padding: 30px 32px; }
   .sheet-close { top: 14px; right: 16px; }
   .song-hero { grid-template-columns: minmax(120px, 26%) minmax(0, 1fr); gap: 16px; }
-  .cover img, .cover-placeholder { width: 100%; height: auto; }
+  .cover .cover-art, .cover .cover-placeholder { width: 100%; height: auto; }
   .hero-content h1 { font-size: clamp(30px, 5.5vw, 50px); }
   .recording { margin: 8px 0; font-size: 16px; }
   .recording span { font-size: 18px; }
@@ -361,22 +569,13 @@ a { color: inherit; }
   .sheet-frame--readable .overview-copy p { font-size: 21px; }
 }
 
-@media (min-width: 521px) and (max-width: 760px) and (hover: hover) and (pointer: fine) {
-  .site-topbar { gap: 8px; padding-inline: 16px; }
-  .site-brand { font-size: 13px; }
-  .site-topbar nav { gap: 8px; font-size: 12px; }
-}
-
 @media (max-width: 520px), (max-width: 760px) and (pointer: coarse), (max-width: 760px) and (hover: none) {
-  .site-topbar { padding: 7px 16px; }
-  .site-brand { font-size: 13px; }
-  .site-topbar nav { gap: 9px; font-size: 12px; }
   .page-main { padding: 14px 10px 28px; }
   .song-sheet { min-height: 0; padding: 24px 18px 26px; }
   .sheet-close { top: 14px; right: 16px; width: 36px; height: 36px; }
   .song-hero { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .cover { width: min(58vw, 225px); justify-self: center; }
-  .cover img, .cover-placeholder { width: 100%; height: auto; }
+  .cover .cover-art, .cover .cover-placeholder { width: 100%; height: auto; }
   .hero-content h1 { padding-right: 0; font-size: clamp(31px, 8vw, 45px); }
   .recording { margin: 8px 0; font-size: 15px; }
   .recording span { font-size: 17px; }
@@ -402,14 +601,142 @@ a { color: inherit; }
 }
 
 @media (max-width: 390px) {
-  .site-topbar { gap: 8px; padding-inline: 12px; }
   .source-facts { grid-template-columns: 1fr; }
   .sources summary { flex-direction: column; align-items: flex-start; gap: 5px; }
   .sources summary > span { width: 100%; text-align: left; }
 }
 
+.song-site-footer {
+  margin-top: 24px;
+  border-top: 1px solid #e2d8c5;
+  background: rgba(244, 239, 228, .9);
+  padding: 28px 0;
+  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}
+.song-site-footer-inner {
+  max-width: 1152px;
+  margin: 0 auto;
+  padding: 0 16px;
+  color: #57534E;
+  font-size: 12px;
+  line-height: 1.65;
+}
+@media (min-width: 640px) {
+  .song-site-footer-inner { padding: 0 24px; }
+}
+@media (min-width: 1024px) {
+  .song-site-footer-inner { padding: 0 32px; }
+}
+.song-site-footer-brand {
+  margin: 0;
+  font-family: "Kaisei Decol", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #253331;
+}
+.song-site-footer-note { margin: 6px 0 0; }
+.song-site-footer-storage { margin: 6px 0 0; font-size: 11px; }
+.song-site-footer-storage a { text-decoration: underline; text-underline-offset: 2px; }
+.song-site-footer-storage a:hover { color: #C83E2B; }
+
+body.kurun-intro-active { overflow: hidden; }
+.kurun-paper-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: .30;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.62' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E");
+  mix-blend-mode: multiply;
+  z-index: 0;
+}
+.kurun-paper-grain > * { position: relative; z-index: 1; }
+.kurun-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 28px 20px;
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 42%, #fcfaf4 0%, #f9f5eb 64%, #f4ede0 100%);
+  transition: opacity 1.05s ease, visibility 1.05s ease, transform 1.10s cubic-bezier(.28,.08,.22,1);
+}
+.kurun-intro::after {
+  content: "";
+  position: absolute;
+  inset: 18px;
+  border: 1px solid rgba(125,112,91,.16);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.kurun-intro.is-leaving { opacity: 0; visibility: hidden; transform: translateY(-2.4%); pointer-events: none; }
+.kurun-skip {
+  position: absolute;
+  top: clamp(24px, 4.4vh, 46px);
+  right: clamp(24px, 5vw, 68px);
+  background: transparent;
+  color: #1C1917;
+  border: 0;
+  border-bottom: 1px solid #57534E;
+  cursor: pointer;
+  padding: 7px 2px;
+  font-size: 12px;
+  letter-spacing: .04em;
+  z-index: 3;
+}
+.kurun-skip:hover { color: #C83E2B; border-color: #C83E2B; }
+.kurun-center { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; max-width: 860px; transform: translateY(-1.5%); }
+.kurun-title { display: flex; flex-direction: column; align-items: center; margin: 0; text-align: center; }
+.kurun-crayon-a { width: min(74vw, 336px); height: auto; overflow: visible; }
+.kurun-crayon-b { width: min(78vw, 356px); height: auto; overflow: visible; margin-top: 6px; }
+.kurun-stroke { fill: none; stroke-linecap: round; stroke-linejoin: round; transition-property: stroke-dashoffset; transition-timing-function: cubic-bezier(.24, .12, .22, 1); }
+.kurun-sub { margin: 16px 0 8px; color: #57534E; text-align: center; font-size: 12px; line-height: 1.9; letter-spacing: .08em; opacity: 0; }
+.kurun-intro.is-playing .kurun-sub { animation: kurunLiftIn 1.08s 2.86s cubic-bezier(.25,.12,.25,1) both; }
+.kurun-art { width: min(78vw, 660px); margin: 2px 0 0; overflow: visible; filter: drop-shadow(0 6px 0 rgba(171,143,106,.07)); transform-origin: center 54%; }
+.kurun-intro.is-playing .kurun-art { animation: kurunArtSpring .54s 3.52s cubic-bezier(.34,1.56,.64,1) both; }
+.kurun-mask-body { fill: none; stroke: #ffffff; stroke-width: 122; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100.5; stroke-dashoffset: 100.5; }
+.kurun-mask-curl { fill: none; stroke: #ffffff; stroke-width: 50; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100.5; stroke-dashoffset: 100.5; }
+.kurun-intro.is-playing .kurun-body-left { animation: kurunInkDraw .54s 0s cubic-bezier(.22,.62,.36,1) forwards; }
+.kurun-intro.is-playing .kurun-body-right { animation: kurunInkDraw .54s .02s cubic-bezier(.22,.62,.36,1) forwards; }
+.kurun-intro.is-playing .kurun-curl-left { animation: kurunInkDraw .76s .28s cubic-bezier(.24,.52,.28,1) forwards; }
+.kurun-intro.is-playing .kurun-curl-right { animation: kurunInkDraw .76s .30s cubic-bezier(.24,.52,.28,1) forwards; }
+.kurun-heart { transform-origin: 370px 104px; opacity: 0; }
+.kurun-intro.is-playing .kurun-heart { animation: kurunPopIn .58s 3.52s cubic-bezier(.34,1.56,.64,1) both; }
+.kurun-spark { opacity: 0; transform-box: fill-box; transform-origin: center; }
+.kurun-intro.is-playing .kurun-spark { animation: kurunPopIn .48s 3.58s cubic-bezier(.34,1.56,.64,1) both, kurunSmallWiggle 3.1s 4.08s infinite alternate ease-in-out; }
+.kurun-intro.is-playing .kurun-spark.delay { animation-delay: 3.66s, 4.16s; }
+.kurun-loading { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(125,112,91,.08); }
+.kurun-loading span { display: block; height: 100%; background: #C83E2B; width: 0; }
+.kurun-intro.is-playing .kurun-loading span { animation: kurunProgress 4.70s linear forwards; }
+.kurun-doodle { position: absolute; pointer-events: none; user-select: none; }
+.kurun-snowflake { left: clamp(24px, 10vw, 150px); top: clamp(68px, 22vh, 200px); width: 56px; opacity: .52; animation: kurunSmallWiggle 5.2s ease-in-out infinite alternate; }
+.kurun-coffee { right: clamp(24px, 9.5vw, 150px); top: clamp(108px, 25vh, 215px); width: 68px; opacity: .58; animation: kurunSmallWiggle 5.6s -2.4s ease-in-out infinite alternate; }
+.kurun-balloon { left: clamp(24px, 8vw, 122px); bottom: clamp(38px, 10vh, 102px); width: 60px; opacity: .60; animation: kurunBalloonFloat 4.8s ease-in-out infinite alternate; }
+.kurun-film { right: clamp(24px, 8.5vw, 130px); bottom: clamp(46px, 12vh, 116px); width: 82px; opacity: .50; transform: rotate(-10deg); }
+.kurun-intro.is-static .kurun-stroke { transition: none !important; stroke-dashoffset: 0 !important; }
+.kurun-intro.is-static .kurun-mask-body, .kurun-intro.is-static .kurun-mask-curl { stroke-dashoffset: 0; }
+.kurun-intro.is-static .kurun-sub, .kurun-intro.is-static .kurun-heart, .kurun-intro.is-static .kurun-spark { opacity: 1; animation: none; }
+.kurun-intro.is-static .kurun-loading span { width: 100%; animation: none; }
+@keyframes kurunBalloonFloat { from { transform: translateY(0) rotate(-2deg); } to { transform: translateY(-7px) rotate(2deg); } }
+@keyframes kurunInkDraw { from { stroke-dashoffset: 100.5; } to { stroke-dashoffset: 0; } }
+@keyframes kurunLiftIn { from { opacity: 0; transform: translateY(10px); filter: blur(1px); } to { opacity: 1; transform: translateY(0); filter: blur(0); } }
+@keyframes kurunPopIn { 0% { opacity: 0; transform: scale(.32) rotate(-14deg); } 68% { opacity: 1; transform: scale(1.16) rotate(3deg); } 100% { opacity: 1; transform: scale(1) rotate(0); } }
+@keyframes kurunArtSpring { 0% { transform: scale(1) rotate(0); } 45% { transform: scale(1.032) rotate(-.8deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes kurunSmallWiggle { from { transform: rotate(-6deg); } to { transform: rotate(8deg); } }
+@keyframes kurunProgress { from { width: 0; } to { width: 100%; } }
+@media (max-width: 680px) {
+  .kurun-intro { padding: 20px 14px; }
+  .kurun-intro::after { inset: 12px; }
+  .kurun-snowflake { left: 22px; top: 76px; width: 44px; }
+  .kurun-coffee { right: 18px; top: 102px; width: 52px; }
+  .kurun-balloon { left: 18px; bottom: 34px; width: 46px; }
+  .kurun-film { right: 20px; bottom: 48px; width: 62px; }
+  .kurun-art { width: min(88vw, 480px); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .add-button, .back-button { transition: none; }
+  .add-button, .back-button, .cover-apple-badge { transition: none; }
   .sources summary span[aria-hidden="true"] { transition: none; }
 }

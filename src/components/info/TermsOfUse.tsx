@@ -2,7 +2,7 @@ export function TermsOfUse() {
   return (
     <article aria-labelledby="terms-title" className="space-y-4 text-base leading-7 text-[#292524] [&_a]:text-[#1E3A5F] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold">
       <h1 id="terms-title" className="text-2xl font-bold sm:text-3xl">利用規約</h1>
-      <p>「115万キロのファンノート」は、<a href="https://katakatalab.com/who-is-katakata.html">KatakataLabのかたかた</a>が運営するOfficial髭男dismの非公式ファンサイトです。<a href="https://katakatalab.com/terms.html">KatakataLab共通の利用規約</a>が適用されます。</p>
+      <p>「115万キロのファンノート」は、<a href="#editor">編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html">KatakataLab</a>）が制作・運営するOfficial髭男dismの非公式ファンサイトです。<a href="https://katakatalab.com/terms.html">KatakataLab共通の利用規約</a>が適用されます。</p>
       <h2>楽曲情報と公演記録</h2>
       <p>音域は各曲の出典にある採譜をもとにしています。音源や地声・裏声の判定によって、資料ごとに値が異なることがあります。演奏時間は掲載した音源の長さです。公演日と会場は公開資料を照合した記録です。個別公演のセトリはリンク先の掲載情報で、当サイトが実演順を保証するものではありません。</p>
       <h2>共有・引用・転載</h2>
