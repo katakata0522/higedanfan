@@ -11,8 +11,9 @@ import {
   switchSavedSetlist,
   syncActiveSavedSetlist,
 } from '../utils/savedSetlists';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
+  ArrowLeft,
   ArrowUp,
   ArrowDown,
   Plus,
@@ -64,6 +65,7 @@ interface SetlistBuilderSectionProps {
   onImportRecords?: (file: File) => Promise<void>;
   onSelectSong?: (song: SongItem) => void;
   initialSubTab?: 'builder' | 'tours';
+  onBackHome?: () => void;
 }
 
 function serializeSetlistEntries(entries: readonly SetlistEntry[]): string {
@@ -84,6 +86,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onToggleAttendedTour,
   onSelectSong,
   initialSubTab = 'builder',
+  onBackHome,
 }) => {
   const activeSubTab = initialSubTab;
   const [songPickerMode, setSongPickerMode] = useState<'search' | 'album'>('search');
@@ -638,7 +641,32 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     >
       <div className={`mx-auto ${activeSubTab === 'builder' ? 'max-w-4xl' : 'max-w-6xl'} px-4 sm:px-6 lg:px-8`}>
         {/* セクション見出し */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-[#E6E1D6]">
+        <div className="pb-5 border-b border-[#e5dccb] space-y-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            {onBackHome && (
+              <button
+                type="button"
+                onClick={onBackHome}
+                className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors cursor-pointer"
+              >
+                <ArrowLeft className="h-3.5 w-3.5 text-[#C83E2B]" aria-hidden="true" />
+                <span>付箋一覧へ戻る</span>
+              </button>
+            )}
+            <span
+              className="fusen-washi-tag"
+              style={
+                {
+                  '--tape-bg':
+                    activeSubTab === 'tours'
+                      ? 'rgba(223, 202, 246, 0.78)'
+                      : 'rgba(245, 198, 190, 0.78)',
+                } as CSSProperties
+              }
+            >
+              {activeSubTab === 'tours' ? 'ライブ参戦の記録' : '夢のライブ構想'}
+            </span>
+          </div>
           <div>
             <h2
               id="setlist-heading"
