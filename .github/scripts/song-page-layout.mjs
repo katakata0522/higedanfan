@@ -559,8 +559,27 @@ async function verifyTourArchiveSetlists(browser) {
   await page.getByRole('link', { name: '歴代ツアー記録に戻る', exact: true }).first().click();
   await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').waitFor();
   assert.equal(await page.getByLabel('日付・会場を探す').inputValue(), '2025-05-31');
+
+  // 曲名でのツアー検索、参戦フィルター、公演セトリからMYセトリ作成、静的コーナーURLを確認。
+  await page.getByLabel('日付・会場を探す').fill('えるだーふらわー');
+  await page.getByText(/演奏曲に一致：エルダーフラワー/).first().waitFor();
+  await page.getByRole('button', { name: '検索キーワードをクリア' }).click();
+  await page.getByRole('button', { name: '参戦・視聴を記録する' }).first().click();
+  await page.getByRole('button', { name: /参戦・視聴済みのみ（1）/ }).click();
+  assert.equal(await page.locator('article').count(), 1);
+  await page.getByRole('button', { name: /参戦・視聴済みのみ（1）/ }).click();
+
+  await page.goto(`${root}tour-archive/`, { waitUntil: 'load' });
+  await page.getByRole('heading', { name: '歴代ツアー・公演記録', exact: true }).waitFor();
+  await page.getByLabel('日付・会場を探す').fill('2025-05-31');
+  await page.getByRole('button', { name: /セットリストを見る（22曲）/ }).first().click();
+  await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').getByRole('button', { name: 'この公演の曲でMYセトリを作成' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'MYセトリに読み込む' }).click();
+  await page.getByRole('heading', { name: 'MYセトリ作成', exact: true }).waitFor();
+  assert.ok(await page.locator('li[data-song-id="same-blue"]').count() === 1);
+
   await context.close();
-  console.log('320/390px・PCで歴代ツアー記録の内蔵セトリ展開・検索・楽曲解説との往復を確認');
+  console.log('320/390px・PCで歴代ツアー記録の内蔵セトリ展開・曲名検索・参戦絞込・MYセトリ化・静的URL・楽曲解説との往復を確認');
 }
 
 async function verifyReferenceLibrary(browser) {

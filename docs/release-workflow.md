@@ -13,7 +13,7 @@
 
 ## 2. 公開ビルド同期（`katakata0522/katakatalab-web`）
 
-1. `higedanfan` の `main` で `npm ci && npm run lint && npm test && npm run build && npm run test:browser` を確認したうえで、`dist/` の `index.html`、`third-party-licenses.txt`、`songs/*/index.html`、`assets/*` を `katakatalab-web` の `higedanfan/` へ反映します。
+1. `higedanfan` の `main` で `npm ci && npm run lint && npm test && npm run build && npm run test:browser` を確認したうえで、`dist/` の `index.html`、`third-party-licenses.txt`、各コーナーディレクトリ（`discography/`, `vocal-range/`, `tour-archive/`, `sacred-map/`, `setlist/`, `mood/`, `quiz/`, `quiz-archive/`）、`songs/*/index.html`、`assets/*` を `katakatalab-web` の `higedanfan/` へ反映します。
    - **重要**: 旧HTMLタブを開いたままの利用者が遅延読み込みできるよう、`higedanfan/assets/` の既存ハッシュ付きアセットファイルは上書き以外削除せず維持します。
    - **重要**: `robots.txt` と `sitemap.xml` は `katakatalab-web` のルート側で一括管理しているため、`higedanfan/` サブディレクトリには置かないでください。
    - `brand/` に新しい画像やバッジ SVG を追加した場合は、Public の `.gitignore` と `qa/published-dependencies.json`（SHA-256 / サイズ / CI用ダミー指定）へ登録します。

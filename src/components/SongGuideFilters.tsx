@@ -18,7 +18,7 @@ export const DEFAULT_GUIDE_FILTERS: SongGuideFilterValues = {
 };
 
 const ERA_TABS: { id: EraTag | 'all'; label: string; shortLabel: string }[] = [
-  { id: 'all', label: 'すべて（全90曲）', shortLabel: '全90曲' },
+  { id: 'all', label: 'すべて（掲載90曲）', shortLabel: '掲載90曲' },
   { id: 'indies_escaparade', label: '初期〜エスカパレード', shortLabel: '初期〜エスカパレード' },
   { id: 'traveler', label: 'Traveler期', shortLabel: 'Traveler期' },
   { id: 'editorial', label: 'Editorial期', shortLabel: 'Editorial期' },
@@ -27,7 +27,7 @@ const ERA_TABS: { id: EraTag | 'all'; label: string; shortLabel: string }[] = [
 ];
 
 const ALBUM_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'すべての収録アルバム・EP（全90曲）' },
+  { id: 'all', label: 'すべての収録アルバム・EP（掲載90曲）' },
   { id: 'ラブとピースは君の中', label: '1st Mini『ラブとピースは君の中』(2015・全8曲)' },
   { id: 'MAN IN THE MIRROR', label: '2nd Mini『MAN IN THE MIRROR』(2016・全6曲)' },
   { id: "What's Going On? EP", label: "1st EP『What's Going On?』(2016・全4曲)" },

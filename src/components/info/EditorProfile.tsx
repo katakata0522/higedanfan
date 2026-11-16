@@ -42,10 +42,19 @@ export function EditorProfile() {
             MYセトリや参戦・聖地訪問の記録はアカウント登録なしで、お使いのブラウザにそのまま保存・書き出しできます。
           </li>
           <li>
-            <strong>全90曲それぞれの背景をていねいに：</strong>
-            代表曲からインディーズ期・アルバム収録曲まで、曲調・テンポ・聴きどころを1曲ずつ見返せる形を目指しています。
+            <strong>掲載90曲それぞれの背景をていねいに：</strong>
+            代表曲からインディーズ期・アルバム収録曲まで、音域やテンポの目安・曲調・聴きどころを1曲ずつ見返せる形を目指しています。
           </li>
         </ul>
+      </section>
+
+      <section className="rounded-xl border border-[#dfd7c7] bg-[#fffdf8] p-5 sm:p-6 space-y-2">
+        <h2 className="font-note-serif text-lg font-bold text-[#253331]">
+          運営・訂正のご連絡について
+        </h2>
+        <p className="text-sm sm:text-base leading-relaxed text-[#292524]">
+          当サイトは <a href="https://katakatalab.com/who-is-katakata.html" target="_blank" rel="noopener noreferrer" className="font-bold text-[#1E3A5F] underline underline-offset-2 hover:text-[#C83E2B]">KatakataLab（かたかた）</a> が個人で制作・管理している非公式ファンサイトです。表記の誤りや出典の補足・削除依頼などがございましたら、<a href="https://katakatalab.com/contact.html" target="_blank" rel="noopener noreferrer" className="font-bold text-[#1E3A5F] underline underline-offset-2 hover:text-[#C83E2B]">KatakataLabのお問い合わせ窓口</a>よりお知らせください。
+        </p>
       </section>
 
       <section className="rounded-xl border border-[#dfd7c7] bg-[#fffdf8] p-5 sm:p-6 space-y-2">
@@ -53,13 +62,22 @@ export function EditorProfile() {
           おすすめの楽しみ方
         </h2>
         <p className="text-sm sm:text-base leading-relaxed text-[#292524]">
-          ピアノがきらめく王道ポップから、重厚なブラス＆ファンク、心に寄り添うバラードやスタジアムロックまで——気分や場面に合わせて「今日の1曲診断」で1曲を見つけたり、「音域・発売日比較表」で自分の声に合う曲を探したり、「MYセトリ作成」で夢のライブを組んだりして、ご自身のペースで楽しんでいただけたらうれしいです。
+          ピアノがきらめく王道ポップから、重厚なブラス＆ファンク、心に寄り添うバラードやスタジアムロックまで——気分や場面に合わせて「今日の1曲診断」で1曲を見つけたり、「掲載90曲の音域・発売日一覧」で自分の声に合う曲を探したり、「MYセトリ作成」で夢のライブを組んだりして、ご自身のペースで楽しんでいただけたらうれしいです。
         </p>
       </section>
 
-      <nav aria-label="関連ページ" className="flex flex-wrap gap-4 pt-2 text-sm">
+      <nav aria-label="関連ページ" className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm">
         <a href="#discography" className="font-bold text-[#1E3A5F] underline underline-offset-4 hover:text-[#C83E2B]">
           楽曲ガイドを見る
+        </a>
+        <a href="#sources" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
+          参考資料・謝辞
+        </a>
+        <a href="#privacy" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
+          プライバシーポリシー
+        </a>
+        <a href="#terms" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
+          利用規約
         </a>
         <a href="#home" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
           トップページへ戻る

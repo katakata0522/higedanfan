@@ -1,4 +1,5 @@
 import { prepareSongSearch } from '../utils/songSearch';
+import { ConfirmDialog } from './ConfirmDialog';
 import { SetlistImageModal } from './SetlistImageModal';
 import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
 import { songPagePath } from '../songPages/publishedSongPageIds';
@@ -66,7 +67,8 @@ interface SetlistBuilderSectionProps {
   onRemoveSong: (songId: string) => void;
   onMoveSong: (index: number, direction: 'up' | 'down' | 'top') => void;
   onToggleEncore?: (index: number) => void;
-  onLoadPresetSetlist: (entries: SetlistEntry[], title: string) => boolean;
+  onLoadPresetSetlist: (entries: SetlistEntry[], title: string, options?: { skipConfirm?: boolean }) => boolean;
+  onCreateSetlistFromTour?: (entries: SetlistEntry[], title: string) => void;
   onReplaceSetlistSilently: (entries: SetlistEntry[], title: string) => void;
   attendedTourIds: string[];
   onToggleAttendedTour: (tourId: string) => void;
@@ -91,6 +93,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onRemoveSong,
   onMoveSong,
   onLoadPresetSetlist,
+  onCreateSetlistFromTour,
   onReplaceSetlistSilently,
   attendedTourIds,
   onToggleAttendedTour,
@@ -111,6 +114,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [showAllSongMatches, setShowAllSongMatches] = useState(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
+  const [pendingDeleteSaved, setPendingDeleteSaved] = useState<{ id: string; title: string } | null>(null);
+  const [isPresetConfirmOpen, setIsPresetConfirmOpen] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
   const setlistPaperRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -319,9 +324,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     scrollToSetlistPaper();
   };
 
-  const handleDeleteSavedSetlist = (targetId: string, targetTitle: string) => {
+  const confirmDeleteSavedSetlist = (targetId: string) => {
     if (savedSetlists.items.length <= 1) return;
-    if (!window.confirm(`保存したセットリスト「${targetTitle}」を削除しますか？`)) return;
     const { state, nextActive, deleted } = deleteSavedSetlist(savedSetlists, targetId);
     if (!deleted) return;
     deletedIdsRef.current.add(targetId);
@@ -342,6 +346,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       persistSavedSetlists(state, persistOpts);
       setSavedSetlists(state);
     }
+  };
+
+  const handleDeleteSavedSetlist = (targetId: string, targetTitle: string) => {
+    if (savedSetlists.items.length <= 1) return;
+    setPendingDeleteSaved({ id: targetId, title: targetTitle });
   };
 
   const handleCopySetlist = async () => {
@@ -435,6 +444,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               id="setlist-song-filter"
               ref={songSearchInputRef}
               type="search"
+              enterKeyHint="search"
               maxLength={40}
               value={songSearchFilter}
               onChange={(e) => {
@@ -451,8 +461,22 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 }
               }}
               placeholder="曲名・読み・アルバム名"
-              className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-9 pr-3 py-2 text-base sm:text-sm text-[#1C1917] min-h-[44px]"
+              className="w-full rounded-lg border border-[#D5CEC2] bg-white pl-9 pr-10 py-2 text-base sm:text-sm text-[#1C1917] min-h-[44px] [&::-webkit-search-cancel-button]:appearance-none"
             />
+            {songSearchFilter && (
+              <button
+                type="button"
+                aria-label="曲検索をクリア"
+                onClick={() => {
+                  setSongSearchFilter('');
+                  setShowAllSongMatches(false);
+                  songSearchInputRef.current?.focus();
+                }}
+                className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-lg text-[#57534E] hover:text-[#1C1917] cursor-pointer"
+              >
+                <X aria-hidden="true" className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -461,8 +485,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         <div className="rounded-lg border border-[#E6E1D6] bg-white p-2" aria-label="追加できる代表曲">
           <p className="px-2 py-1 text-xs font-bold text-[#57534E]">
             {initialSuggestedSongs.length
-              ? '文字を入力して全90曲から検索（未入力時はまだ入っていない代表曲を表示中）'
-              : '全90曲がすでにセットリストに追加されています。'}
+              ? '文字を入力して掲載90曲から検索（未入力時はまだ入っていない代表曲を表示中）'
+              : '掲載90曲がすでにセットリストに追加されています。'}
           </p>
           {initialSuggestedSongs.length > 0 && (
             <div className="max-h-60 overflow-y-auto">
@@ -723,7 +747,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </h1>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
-                ? '公演日や会場、セトリの資料をたどりながら、参戦・視聴をツアーごとに記録できます。'
+                ? '公演日や会場、各公演のセットリストをたどりながら、参戦・視聴をツアーごとに記録できます。'
                 : 'ライブで聴きたい曲を好きな順に並べて、自分だけのステージを組み立てよう。曲順の流れや熱量の変化もそのまま味わえます。'}
             </p>
           </div>
@@ -876,7 +900,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   </button>
                   <button
                     type="button"
-                    onClick={() => onLoadPresetSetlist(ROYAL_ROAD_PRESET, 'スタジアム王道ベストセトリ')}
+                    onClick={() => {
+                      if (setlist.length > 0) {
+                        setIsPresetConfirmOpen(true);
+                      } else {
+                        onLoadPresetSetlist(ROYAL_ROAD_PRESET, 'スタジアム王道ベストセトリ', { skipConfirm: true });
+                      }
+                    }}
                     className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-1 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer"
                   >
                     <RotateCcw aria-hidden="true" className="h-3 w-3 text-[#1E3A5F]" />
@@ -998,6 +1028,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <TourArchiveSection
                 attendedTourIds={attendedTourIds}
                 onToggleAttendedTour={onToggleAttendedTour}
+                validSongIds={validSongIds}
+                hasSetlistItems={setlist.length > 0}
+                currentSetlistTitle={safeDisplayTitle}
+                onCreateSetlistFromTour={onCreateSetlistFromTour}
                 resetEpoch={resetEpoch}
               />
             </React.Suspense>
@@ -1019,6 +1053,39 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         mainTracks={posterMainTracks}
         encoreTracks={posterEncoreTracks}
         formattedDuration={stats.formattedDuration}
+      />
+
+      <ConfirmDialog
+        isOpen={pendingDeleteSaved !== null}
+        title="保存したMYセトリを削除しますか？"
+        description={
+          pendingDeleteSaved
+            ? `保存したセットリスト「${pendingDeleteSaved.title}」を削除します。この操作は取り消せません。`
+            : ''
+        }
+        confirmLabel="削除する"
+        cancelLabel="もどる"
+        tone="danger"
+        onConfirm={() => {
+          if (pendingDeleteSaved) {
+            confirmDeleteSavedSetlist(pendingDeleteSaved.id);
+          }
+          setPendingDeleteSaved(null);
+        }}
+        onCancel={() => setPendingDeleteSaved(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={isPresetConfirmOpen}
+        title="王道ベストセトリを読み込みますか？"
+        description={`今のMYセトリ「${safeDisplayTitle}」の曲順を、「スタジアム王道ベストセトリ」の選曲に置き換えます。残したい場合は「新しいセトリ」または「複製」をご利用ください。`}
+        confirmLabel="読み込む"
+        cancelLabel="もどる"
+        onConfirm={() => {
+          setIsPresetConfirmOpen(false);
+          onLoadPresetSetlist(ROYAL_ROAD_PRESET, 'スタジアム王道ベストセトリ', { skipConfirm: true });
+        }}
+        onCancel={() => setIsPresetConfirmOpen(false)}
       />
     </section>
   );

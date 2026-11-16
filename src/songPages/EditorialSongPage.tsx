@@ -198,7 +198,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   className="cover-apple-badge"
                   href={appleArtwork?.appleUrl ?? fact.apple}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   aria-label={`Apple Musicで「${fact.recording}」を聴く`}
                 >
                   <img
@@ -272,7 +272,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             </div>
             <p className="overview-sources">参考にした資料：{' '}
               {page.sources.slice(0, 2).map((source, index) => (
-                <span key={`${source.label}-${index}`}>{index > 0 && '、'}<a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noreferrer">{source.label}</a></span>
+                <span key={`${source.label}-${index}`}>{index > 0 && '、'}<a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noopener noreferrer">{source.label}</a></span>
               ))}
               {' '}<a href="#song-sources" onClick={() => { if (sourcesRef.current) sourcesRef.current.open = true; }}>ほかの資料を見る</a>
             </p>
@@ -326,9 +326,9 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               )
             ) : null}
             <div className="listen-links">
-              <a href={fact.apple} target="_blank" rel="noreferrer">Apple Musicで聴く <span aria-hidden="true">↗</span></a>
+              <a href={fact.apple} target="_blank" rel="noopener noreferrer">Apple Musicで聴く <span aria-hidden="true">↗</span></a>
               {video && (!videoId || !isExternalOnlyVideo) && (
-                <a href={video} target="_blank" rel="noreferrer">
+                <a href={video} target="_blank" rel="noopener noreferrer">
                   YouTubeで開く{videoDescription && `（${videoDescription}）`} <span aria-hidden="true">↗</span>
                 </a>
               )}
@@ -355,25 +355,25 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               </dl>
               {page.vocalVariants?.map(variant => (
                 <p className="vocal-variant" key={variant.label}>
-                  <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noreferrer">{variant.sourceLabel}</a>の採譜）
+                  <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noopener noreferrer">{variant.sourceLabel}</a>の採譜）
                 </p>
               ))}
               {fact.otherRange && !page.vocalVariants?.length && (
                 <p className="vocal-variant">
-                  <strong>別の採譜：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noreferrer">音域データ！＠ウィキ</a>の採譜）
+                  <strong>別の採譜：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noopener noreferrer">音域データ！＠ウィキ</a>の採譜）
                 </p>
               )}
               <ul className="source-list">
                 {page.sources.map((source, index) => (
                   <li key={`${source.label}-${index}`}>
-                    <a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noreferrer">{source.label}</a>：{source.purpose}
+                    <a href={source.evidence ? fact[source.evidence] : source.url} target="_blank" rel="noopener noreferrer">{source.label}</a>：{source.purpose}
                   </li>
                 ))}
               </ul>
-              {tempoUnderReview && <p className="source-caveat">資料によって数値が異なるため、テンポは調査中です。参考資料には<a href={fact.tempoSource} target="_blank" rel="noreferrer">約{fact.tempo} BPM</a>との表記があります。</p>}
+              {tempoUnderReview && <p className="source-caveat">資料によって数値が異なるため、テンポは調査中です。参考資料には<a href={fact.tempoSource} target="_blank" rel="noopener noreferrer">約{fact.tempo} BPM</a>との表記があります。</p>}
               {otherTempos && (
                 <p className="source-caveat">別の資料では{otherTempos.map((tempo, index) => (
-                  <span key={`${tempo.url}-${tempo.value}`}>{index > 0 && '、'}<a href={tempo.url} target="_blank" rel="noreferrer">約{tempo.value} BPM</a></span>
+                  <span key={`${tempo.url}-${tempo.value}`}>{index > 0 && '、'}<a href={tempo.url} target="_blank" rel="noopener noreferrer">約{tempo.value} BPM</a></span>
                 ))}との表記もあります。拍の数え方や計測方法などによって数値が異なる場合があります。</p>
               )}
               <p className="source-caveat">{page.sourceCaveat}</p>

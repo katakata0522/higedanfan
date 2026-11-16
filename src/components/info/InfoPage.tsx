@@ -10,7 +10,7 @@ interface InfoPageProps {
   page: InfoPageId;
   onExportRecords?: () => void;
   onImportRecords?: (file: File) => Promise<void>;
-  onResetAllUserData?: () => void;
+  onResetAllUserData?: (options?: { skipConfirm?: boolean }) => void | Promise<void>;
   onBackHome?: () => void;
 }
 

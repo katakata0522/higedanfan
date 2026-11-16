@@ -123,7 +123,7 @@ export interface FanReview {
   likes: number;
 }
 
-export { QUIZ_QUESTIONS, type QuizQuestion, type QuizSourceItem } from './quizData';
+export type { QuizQuestion, QuizSourceItem } from './quizData';
 
 export { verifiedSongs as HIGEDAN_SONGS } from './fullCatalogSongs';
 

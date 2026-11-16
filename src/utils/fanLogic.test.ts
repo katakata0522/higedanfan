@@ -1,7 +1,8 @@
 import { songEvidence, pitchNumber } from '../data/fullCatalogSongs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { HIGEDAN_SONGS, QUIZ_QUESTIONS, TOUR_ARCHIVES } from '../data/higedanData';
+import { HIGEDAN_SONGS, TOUR_ARCHIVES } from '../data/higedanData';
+import { QUIZ_QUESTIONS } from '../data/quizData';
 import { publishedSongPageIds } from '../songPages/publishedSongPageIds';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import {

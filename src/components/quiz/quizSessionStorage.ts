@@ -7,7 +7,14 @@ import {
   readCurrentQuizRecordEpoch as recordEpoch,
   type QuizSessionStore as Store,
 } from './quizSessionClear';
-import { getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter } from './quizCourses';
+import {
+  ensureQuestionSetLoaded,
+  getCourseQuestions,
+  isQuestionSetLoaded,
+  type CourseDifficulty,
+  type QuestionScopeFilter,
+  type QuestionSet,
+} from './quizCourses';
 import type { QuizAnswer, QuizSession } from './quizSession';
 
 export { clearStaleQuizSession };
@@ -83,6 +90,42 @@ export function readQuizSession(
     // A saved selection is not an in-progress attempt and can use the new picker.
     return currentRaw === null && session.stage === 'select' ? null : session;
   } catch { return null; }
+}
+
+const HISTORICAL_QUESTION_SETS: readonly QuestionSet[] = ['published', 'recent', 'prior', 'previous', 'legacy'];
+
+/** Loads historical quiz datasets on demand when sessionStorage holds an older revision. */
+export async function readQuizSessionAsync(
+  sessionStore: Store | null = browserStore('sessionStorage'),
+  recordStore: Store | null = browserStore('localStorage'),
+): Promise<QuizSession | null> {
+  const immediate = readQuizSession(sessionStore, recordStore);
+  if (immediate) return immediate;
+  const epoch = recordEpoch(recordStore);
+  if (!sessionStore || epoch === null) return null;
+  let currentRaw: string | null = null;
+  let legacyRaw: string | null = null;
+  try {
+    currentRaw = sessionStore.getItem(QUIZ_SESSION_KEY);
+    legacyRaw = currentRaw === null ? sessionStore.getItem(LEGACY_SESSION_KEY) : null;
+  } catch { return null; }
+  const raw = currentRaw ?? legacyRaw;
+  if (!raw || raw.length > 100_000) return null;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch { return null; }
+  if (!isObject(parsed) || parsed.resetEpoch !== epoch || !isObject(parsed.session)) return null;
+
+  const candidates: readonly QuestionSet[] = currentRaw === null ? ['legacy'] : HISTORICAL_QUESTION_SETS;
+  for (const questionSet of candidates) {
+    if (!isQuestionSetLoaded(questionSet)) {
+      await ensureQuestionSetLoaded(questionSet);
+    }
+    const restored = readQuizSession(sessionStore, recordStore);
+    if (restored) return restored;
+  }
+  return null;
 }
 
 export function saveQuizSession(

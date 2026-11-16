@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { STORAGE_KEY } from '../../hooks/fanRecordStorage';
-import { getCourseQuestions } from './quizCourses';
+import { ensureQuestionSetLoaded, getCourseQuestions } from './quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quizSession';
-import { clearStaleQuizSession, readQuizSession, saveQuizSession } from './quizSessionStorage';
+import { clearStaleQuizSession, readQuizSession, readQuizSessionAsync, saveQuizSession } from './quizSessionStorage';
 
 const QUIZ_KEY = 'higedanfan:quiz-session:v2';
 const LEGACY_KEY = 'higedanfan:quiz-session:v1';
@@ -129,7 +129,8 @@ test('ignores malformed, incompatible and impossible sessions without overwritin
   assert.equal(saveQuizSession(progress, 'generation-a', sessionStore, unreadableRecords), false);
 });
 
-test('continues an older attempt against its original questions without overwriting the old save', () => {
+test('continues an older attempt against its original questions without overwriting the old save', async () => {
+  await ensureQuestionSetLoaded('legacy');
   const recordStore = records('generation-a');
   const oldSession = {
     stage: 'playing', difficulty: 'beginner', scope: 'full', currentIndex: 3, correctBefore: 2,
@@ -155,7 +156,8 @@ test('continues an older attempt against its original questions without overwrit
   assert.equal(sessionStore.getItem(LEGACY_KEY), oldRaw);
 });
 
-test('resumes an in-progress v2 attempt against the question and answer from before the refresh', () => {
+test('resumes an in-progress v2 attempt against the question and answer from before the refresh', async () => {
+  await ensureQuestionSetLoaded('previous');
   const recordStore = records('generation-a');
   const previousQuestions = getCourseQuestions('beginner', 'vol1', 'previous');
   const priorSession: QuizSession = {
@@ -194,7 +196,8 @@ test('resumes a partially selected ordering question from a previous v2 volume',
   assert.deepEqual(readQuizSession(sessionStore, recordStore), { ...oldSession, questionSet: 'previous' });
 });
 
-test('keeps the most recently published question and checked answer when that course is revised', () => {
+test('keeps the most recently published question and checked answer when that course is revised', async () => {
+  await ensureQuestionSetLoaded('prior');
   const recordStore = records('generation-a');
   const oldQuestions = getCourseQuestions('beginner', 'vol1', 'prior');
   const oldSession: QuizSession = {
@@ -218,7 +221,8 @@ test('keeps the most recently published question and checked answer when that co
   assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
 });
 
-test('restores the last published ordering questions after their course or question type changes', () => {
+test('restores the last published ordering questions after their course or question type changes', async () => {
+  await ensureQuestionSetLoaded('recent');
   const recordStore = records('generation-a');
   for (const [difficulty, scope, index, id] of [
     ['intermediate', 'vol2', 1, 'q41'],
@@ -247,7 +251,8 @@ test('restores the last published ordering questions after their course or quest
   }
 });
 
-test('a revised ordering question restores the original in-progress answer and options', () => {
+test('a revised ordering question restores the original in-progress answer and options via async loader', async () => {
+  await ensureQuestionSetLoaded('published');
   const recordStore = records('generation-a');
   const oldQuestions = getCourseQuestions('intermediate', 'vol2', 'published');
   const oldSession: QuizSession = {
@@ -261,7 +266,7 @@ test('a revised ordering question restores the original in-progress answer and o
   ]));
   const oldRaw = JSON.stringify({ version: 2, resetEpoch: 'generation-a', courseSignature: signature, session: oldSession });
   const sessionStore = memoryStore({ [QUIZ_KEY]: oldRaw });
-  const restored = readQuizSession(sessionStore, recordStore);
+  const restored = await readQuizSessionAsync(sessionStore, recordStore);
   assert.deepEqual(restored, { ...oldSession, questionSet: 'published' });
   assert.equal(sessionStore.getItem(QUIZ_KEY), oldRaw);
   assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);

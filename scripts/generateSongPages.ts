@@ -9,12 +9,14 @@ import { officialVideoDescription, officialVideos, relatedSongs } from '../src/s
 import { songAppleArtwork } from '../src/data/songAppleArtwork';
 import { songwriterInfo } from '../src/utils/songCatalog';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
+import { generateFeaturePages } from './generateFeaturePages';
 import { CSP_MARKER, escapeHtml } from './siteHtml';
 
 const root = join(import.meta.dirname, '..');
 const dataDir = join(root, 'src/songPages/data');
 const evidence = JSON.parse(readFileSync(join(root, 'src/data/songEvidence.json'), 'utf8')) as Record<string, {
   recording: string;
+  release: string;
   seconds: number;
   apple: string;
   cdSource: string;
@@ -64,11 +66,12 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   const description = buildSongDescription(title, page.overview[0] ?? '');
   const credit = songwriterInfo({ id: page.id, title });
   const paragraphs = page.overview.map(paragraph => `            <p>${escapeHtml(paragraph)}</p>`).join('\n');
-  const listening = `<a href="${escapeHtml(fact.apple)}" target="_blank" rel="noreferrer">Apple Musicで聴く</a>`;
+  const listening = `<a href="${escapeHtml(fact.apple)}" target="_blank" rel="noopener noreferrer">Apple Musicで聴く</a>`;
   const video = officialVideos[page.id]
-    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noreferrer">YouTubeで聴く${officialVideoDescription(page.id) ? `（${escapeHtml(officialVideoDescription(page.id) ?? '')}）` : ''}</a>` : '';
+    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noopener noreferrer">YouTubeで聴く${officialVideoDescription(page.id) ? `（${escapeHtml(officialVideoDescription(page.id) ?? '')}）` : ''}</a>` : '';
   const related = relatedSongs(page.id).map(item =>
     `<li><a href="/higedanfan/songs/${escapeHtml(item.id)}/">${escapeHtml(item.title)}</a>：${escapeHtml(item.reason)}</li>`).join('');
+  const releaseIso = /^\d{4}\.\d{2}\.\d{2}$/.test(fact.release) ? fact.release.replace(/\./g, '-') : undefined;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -78,6 +81,11 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
         name: '115万キロのファンノート',
         url: 'https://katakatalab.com/higedanfan/',
         inLanguage: 'ja',
+        publisher: {
+          '@type': 'Organization',
+          name: 'KatakataLab',
+          url: 'https://katakatalab.com/',
+        },
       },
       {
         '@type': 'BreadcrumbList',
@@ -92,8 +100,8 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
           {
             '@type': 'ListItem',
             position: 2,
-            name: '楽曲ガイド・音域',
-            item: 'https://katakatalab.com/higedanfan/#discography',
+            name: '楽曲ガイド（掲載90曲）',
+            item: 'https://katakatalab.com/higedanfan/discography/',
           },
           {
             '@type': 'ListItem',
@@ -108,6 +116,7 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
         '@id': `${url}#recording`,
         name: title,
         duration: formatIsoDuration(fact.seconds),
+        ...(releaseIso ? { datePublished: releaseIso } : {}),
         byArtist: {
           '@type': 'MusicGroup',
           name: 'Official髭男dism',
@@ -132,6 +141,16 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
         mainEntityOfPage: url,
         isPartOf: { '@id': 'https://katakatalab.com/higedanfan/#website' },
         about: { '@id': `${url}#recording` },
+        author: {
+          '@type': 'Person',
+          name: 'かたかた',
+          url: 'https://katakatalab.com/higedanfan/#editor',
+        },
+        publisher: {
+          '@type': 'Organization',
+          name: 'KatakataLab',
+          url: 'https://katakatalab.com/',
+        },
         image: 'https://katakatalab.com/higedanfan/social-cover.png?v=8d2a973',
       },
     ],
@@ -257,8 +276,11 @@ const routesPath = join(root, 'src/songPages/publishedSongPageIds.ts');
 const routes = `// scripts/generateSongPages.ts から生成。掲載曲は catalogEntries と songEvidence に追加する。\nexport const publishedSongPageIds = new Set<string>(${JSON.stringify(ids)});\n\nexport function songPagePath(id: string): string | null {\n  return publishedSongPageIds.has(id) ? \`songs/\${id}/\` : null;\n}\n`;
 if (!existsSync(routesPath) || readFileSync(routesPath, 'utf8') !== routes) writeFileSync(routesPath, routes);
 
+const featureUrls = generateFeaturePages(root);
+
 const siteUrls = [
   'https://katakatalab.com/higedanfan/',
+  ...featureUrls,
   ...ids.map(id => `https://katakatalab.com/higedanfan/songs/${id}/`),
 ];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${siteUrls
@@ -271,4 +293,4 @@ const robots = `User-agent: *\nAllow: /\nSitemap: https://katakatalab.com/higeda
 const robotsPath = join(root, 'brand/robots.txt');
 if (!existsSync(robotsPath) || readFileSync(robotsPath, 'utf8') !== robots) writeFileSync(robotsPath, robots);
 
-console.log(`楽曲ページ ${ids.length} 件のHTMLと導線・サイトマップを生成しました`);
+console.log(`楽曲ページ ${ids.length} 件・コーナー ${featureUrls.length} 件のHTMLとサイトマップを生成しました`);

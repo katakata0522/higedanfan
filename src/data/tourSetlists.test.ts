@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { HIGEDAN_SONGS, TOUR_ARCHIVES } from './higedanData';
-import { getTourEventSetlist } from './tourSetlists';
+import { extractCatalogSetlistEntries, getTourEventSetlist } from './tourSetlists';
 import { publishedSongPageIds } from '../songPages/publishedSongPageIds';
 
 test('every tour archive event with hasSetlist resolves to valid catalog song IDs and accurate trackCount', () => {
@@ -82,4 +82,14 @@ test('cross-checked fact fixes are applied across Rejoice, 2026 tour, and ASIA T
       }
     }
   }
+});
+
+test('extractCatalogSetlistEntries preserves main/encore order and skips non-catalog interludes', () => {
+  const validIds = new Set(HIGEDAN_SONGS.map(song => song.id));
+  const toyota = extractCatalogSetlistEntries('live-2025-toyota-arena-1', validIds);
+  assert.ok(toyota);
+  assert.equal(toyota.totalTracks, 19);
+  assert.equal(toyota.skippedCount, 1); // I'm home (Interlude)
+  assert.equal(toyota.entries.length, 18);
+  assert.ok(toyota.entries.some(e => e.isEncore));
 });

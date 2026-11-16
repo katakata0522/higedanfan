@@ -33,6 +33,7 @@ test('embeddable audio plays in place and restricted recordings link directly to
   assert.match(restricted, /youtube\.com\/watch\?v=l4gPIP2KLas/);
   assert.match(restricted, /i\.ytimg\.com\/vi\/l4gPIP2KLas\/hqdefault\.jpg/);
   assert.match(restricted, /YouTubeで聴く/);
+  assert.match(restricted, /Apple Musicで聴く/);
   const live = renderToStaticMarkup(createElement(MoodListen, { song: liveSong }));
   assert.match(live, /ライブ音源/);
   assert.match(live, /Apple Musicで聴く/);

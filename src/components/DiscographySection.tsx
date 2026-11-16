@@ -14,6 +14,7 @@ import {
   BookOpen,
   MapPin,
   Mic2,
+  Music2,
   Plus,
   Check,
   ChevronDown,
@@ -60,6 +61,36 @@ const VOICE_OPTIONS = Array.from({ length: 49 }, (_, index) => {
   const octave = Math.floor(midi / 12) - 1;
   return { value: String(midi), label: `${PITCH_NAMES[midi % 12]}${octave}（${PITCH_JA[midi % 12]}${octave}）` };
 });
+
+function SongArtworkThumb({ src }: { src?: string }) {
+  const [failed, setFailed] = useState(false);
+  useEffect(() => {
+    setFailed(false);
+  }, [src]);
+
+  if (!src || failed) {
+    return (
+      <div
+        aria-hidden="true"
+        className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-lg border border-[#e5dccb] bg-[#f4efe4] text-[#78716C] shadow-2xs"
+      >
+        <Music2 className="h-5 w-5" />
+      </div>
+    );
+  }
+  return (
+    <img
+      src={src}
+      alt=""
+      width={52}
+      height={52}
+      loading="lazy"
+      decoding="async"
+      onError={() => setFailed(true)}
+      className="h-[52px] w-[52px] shrink-0 rounded-lg border border-[#e5dccb] bg-[#f4efe4] object-cover shadow-2xs"
+    />
+  );
+}
 
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
   songs,
@@ -251,7 +282,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 ? '聖地巡礼マップ'
                 : activeSubView === 'vocal_range'
                 ? '掲載90曲の音域・発売日一覧'
-                : '楽曲ガイド（全90曲）'}
+                : '楽曲ガイド（掲載90曲）'}
             </h1>
             <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
               {activeSubView === 'sacred_map'
@@ -298,7 +329,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
         {activeSubView !== 'sacred_map' && epCoverage && (
           <p className="mt-3 notebook-paper rounded-lg p-3 text-sm text-[#57534E]">
-            {epCoverage.note} <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={epCoverage.source} target="_blank" rel="noreferrer">公式の収録曲 ↗</a>
+            {epCoverage.note} <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={epCoverage.source} target="_blank" rel="noopener noreferrer">公式の収録曲 ↗</a>
           </p>
         )}
 
@@ -324,17 +355,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       >
                         <div>
                           <div className="flex items-start gap-3">
-                            {artwork && (
-                              <img
-                                src={artwork.artworkUrl}
-                                alt=""
-                                width={52}
-                                height={52}
-                                loading="lazy"
-                                decoding="async"
-                                className="h-[52px] w-[52px] shrink-0 rounded-lg border border-[#e5dccb] bg-[#f4efe4] object-cover shadow-2xs"
-                              />
-                            )}
+                            {artwork && <SongArtworkThumb src={artwork.artworkUrl} />}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
                                 <span className="min-w-0 wrap-anywhere whitespace-normal">{albumBadgeText}</span>
@@ -363,7 +384,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {searchQuery.trim() && matchedSongContexts(searchQuery, song)
                             .filter(item => item.label !== '収録作品' || item.text !== albumBadgeText)
                             .map(item => <p key={item.label + item.text} className="mt-1 text-xs leading-relaxed text-[#1E3A5F] wrap-anywhere">
-                              {item.label}：{item.text}{item.source && <> <a className="underline" href={item.source} target="_blank" rel="noreferrer">{item.label}の出典 ↗</a></>}
+                              {item.label}：{item.text}{item.source && <> <a className="underline" href={item.source} target="_blank" rel="noopener noreferrer">{item.label}の出典 ↗</a></>}
                             </p>)}
 
                           {/* Vocal Range & High-Note Section Mini Box */}
@@ -388,7 +409,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
                           {/* Clean Unboxed Metadata Line */}
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#78716C]">
-                            <span>収録音源 {formatDuration(song.durationSec)}</span>
+                            <span>収録音源 <span className="font-mono-num">{formatDuration(song.durationSec)}</span></span>
                             <span aria-hidden="true">·</span>
                             <span className="font-mono-num">
                               {isTempoUnderReview(song.id) ? 'テンポ 調査中' : `BPM ${formatSongBpm(song.id, song.bpm)}`}
@@ -518,9 +539,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           <td className="min-w-[120px] px-3 py-3">{f.album}</td>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a></td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
-                          <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple}>{f.release}</a></td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
+                          <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
                         </tr>;
                       })}
                     </tbody>
@@ -582,7 +603,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
             {mapSpot && (
               <section
-                className="fusen-memo-card"
+                id="sacred-map-viewer"
+                className="fusen-memo-card scroll-mt-24"
                 style={{ '--tape-bg': '#bce3f8' } as CSSProperties}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -607,7 +629,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1d5a7a] underline underline-offset-4 hover:text-[#C83E2B]"
                     href={'https://www.google.com/maps/search/?api=1&query=' + mapQuery}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     Google マップで開く・経路検索 ↗
                   </a>
@@ -672,22 +694,28 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               className="inline-flex min-h-[28px] items-center py-0.5 font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
                               onClick={() => {
                                 setMapSpotId(spot.id);
-                                document.getElementById('map-place')?.focus();
+                                window.requestAnimationFrame(() => {
+                                  document.getElementById('sacred-map-viewer')?.scrollIntoView({
+                                    behavior: 'smooth',
+                                    block: 'nearest',
+                                  });
+                                  document.getElementById('map-place')?.focus({ preventScroll: true });
+                                });
                               }}
                             >
                               {spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}
                             </button>
                           )}
-                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noreferrer">
+                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noopener noreferrer">
                             場所・作品の情報 ↗
                           </a>
                           {spot.historySource && (
-                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noreferrer">
+                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noopener noreferrer">
                               {spot.historySourceLabel ?? 'つながりの出典'} ↗
                             </a>
                           )}
                           {spot.additionalSources?.map(source => (
-                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
+                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer">
                               {source.label} ↗
                             </a>
                           ))}
@@ -744,7 +772,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       </div>
                       <div className="mt-3 flex flex-wrap gap-3 border-t border-[#ece3d2] pt-3 text-xs">
                         {spot.sources.map(source => (
-                          <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
+                          <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer">
                             {source.label} ↗
                           </a>
                         ))}

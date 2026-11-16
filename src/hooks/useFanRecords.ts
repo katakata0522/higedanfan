@@ -98,12 +98,16 @@ export function useFanRecords(showToast: (message: string) => void) {
     if (current) void change(r => ({...r, setlist: normalizeSetlistOrder(r.setlist.map(e =>
       e.songId === current.songId ? {...e, isEncore: !current.isEncore} : e))}));
   };
-  const loadPresetSetlist = (entries: SetlistEntry[], title: string) => {
+  const loadPresetSetlist = (
+    entries: SetlistEntry[],
+    title: string,
+    { skipConfirm = false }: { skipConfirm?: boolean } = {},
+  ) => {
     const setlist = sanitizeSetlistEntries(entries, songIds);
     if (!setlist) return false;
     const setlistTitle = sanitizeUserText(title, SETLIST_TITLE_LIMIT) || 'MYセトリ';
     const custom = records.setlistTitle.trim();
-    if ((records.setlist.length > 0 || (custom && custom !== DEFAULT_SETLIST_TITLE)) &&
+    if (!skipConfirm && (records.setlist.length > 0 || (custom && custom !== DEFAULT_SETLIST_TITLE)) &&
         !window.confirm(`今のセトリの名前と曲順を「${setlistTitle}」の選曲に置き換えますか？`)) return false;
     const previousOrder = JSON.stringify(records.setlist);
     void change(r => r.setlistTitle === records.setlistTitle && JSON.stringify(r.setlist) === previousOrder
@@ -164,8 +168,8 @@ export function useFanRecords(showToast: (message: string) => void) {
     const setlistTitle = sanitizeSetlistTitle(title) || 'MYセトリ';
     void change(r => ({...r, setlist, setlistTitle}));
   };
-  const resetAllUserData = async () => {
-    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nMYセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。')) return;
+  const resetAllUserData = async ({ skipConfirm = false }: { skipConfirm?: boolean } = {}) => {
+    if (!skipConfirm && !window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nMYセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。')) return;
     if (await store.reset(records.resetEpoch)) {
       clearSavedSetlistsStorage();
       showToast('保存データを初期状態にリセットしました。');

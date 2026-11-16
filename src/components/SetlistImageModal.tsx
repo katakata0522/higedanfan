@@ -97,8 +97,8 @@ export function renderSetlistPosterDataUrl({
   if (!ctx) return '';
 
   const fontDisplay = '"Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", serif';
-  const fontBody = '"Noto Sans JP", "Hiragino Sans", sans-serif';
-  const fontMono = '"JetBrains Mono", "Roboto Mono", monospace';
+  const fontBody = '"Hiragino Sans", "Yu Gothic", system-ui, sans-serif';
+  const fontMono = 'ui-monospace, "SFMono-Regular", Consolas, monospace';
 
   ctx.font = `500 50px ${fontDisplay}`;
   const titleLines = wrapTextLines(ctx, title, CONTENT_WIDTH - 24, 2);

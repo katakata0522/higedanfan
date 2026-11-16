@@ -1,7 +1,10 @@
+import { useState } from 'react';
+import { ConfirmDialog } from '../ConfirmDialog';
+
 interface PrivacyPolicyProps {
   onExportRecords?: () => void;
   onImportRecords?: (file: File) => Promise<void>;
-  onResetAllUserData?: () => void;
+  onResetAllUserData?: (options?: { skipConfirm?: boolean }) => void | Promise<void>;
 }
 
 export function PrivacyPolicy({
@@ -9,6 +12,8 @@ export function PrivacyPolicy({
   onImportRecords,
   onResetAllUserData,
 }: PrivacyPolicyProps) {
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+
   return (
     <article aria-labelledby="privacy-title" className="space-y-4 text-base leading-7 text-[#292524] [&_a]:text-[#1E3A5F] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold">
       <h1 id="privacy-title" className="font-note-serif text-2xl font-bold tracking-[.04em] text-[#253331] sm:text-3xl">プライバシーポリシー</h1>
@@ -85,7 +90,7 @@ export function PrivacyPolicy({
         <div className="border-t border-[#e5dccb] pt-4">
           <button
             type="button"
-            onClick={onResetAllUserData}
+            onClick={() => setIsResetConfirmOpen(true)}
             disabled={!onResetAllUserData}
             className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-4 py-2 text-xs font-bold text-[#9B3021] hover:border-[#9B3021] hover:bg-[#FDF3F1] transition-colors cursor-pointer disabled:opacity-50"
           >
@@ -93,6 +98,20 @@ export function PrivacyPolicy({
           </button>
         </div>
       </section>
+
+      <ConfirmDialog
+        isOpen={isResetConfirmOpen}
+        title="保存記録をすべて初期化しますか？"
+        description={'MYセトリの名前と曲順は初期の見本に戻ります。\n聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。残しておきたい場合は、先に「記録を書き出す」をお試しください。'}
+        confirmLabel="すべて初期化する"
+        cancelLabel="もどる"
+        tone="danger"
+        onConfirm={() => {
+          setIsResetConfirmOpen(false);
+          void onResetAllUserData?.({ skipConfirm: true });
+        }}
+        onCancel={() => setIsResetConfirmOpen(false)}
+      />
     </article>
   );
 }

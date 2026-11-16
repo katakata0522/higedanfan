@@ -5,6 +5,7 @@ import path from 'path';
 import evidence from './src/data/songEvidence.json' with { type: 'json' };
 import { isTempoUnderReview } from './src/data/tempoReviewStatus.ts';
 import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
+import { PUBLIC_CORNERS } from './src/config/siteFeatures.ts';
 import { formatDuration, formatSongBpm } from './src/utils/format.ts';
 import { contentSecurityPolicy, CSP_MARKER, escapeHtml as escape } from './scripts/siteHtml.ts';
 function renderCatalog() {
@@ -27,6 +28,9 @@ export default defineConfig(({ command }) => {
       rolldownOptions: {
         input: {
           main: path.resolve(import.meta.dirname, 'index.html'),
+          ...Object.fromEntries(PUBLIC_CORNERS.map(corner => [
+            `corner-${corner.slug}`, path.resolve(import.meta.dirname, `${corner.slug}/index.html`),
+          ])),
           ...Object.fromEntries([...publishedSongPageIds].map(id => [
             `song-${id}`, path.resolve(import.meta.dirname, `songs/${id}/index.html`),
           ])),

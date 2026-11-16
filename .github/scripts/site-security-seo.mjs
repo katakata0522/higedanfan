@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
+import { PUBLIC_CORNERS } from '../../src/config/siteFeatures.ts';
 import songEvidence from '../../src/data/songEvidence.json' with { type: 'json' };
 import { formatSongBpm } from '../../src/utils/format.ts';
 
@@ -11,16 +12,32 @@ export async function verifyStaticSeo(browser, root, ids) {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   const descriptions = new Set();
+  const cornerSlugs = PUBLIC_CORNERS.map(corner => corner.slug);
+  const targets = [null, ...cornerSlugs.map(slug => ({ kind: 'corner', slug })), ...ids.map(id => ({ kind: 'song', id }))];
   try {
-    for (const id of [null, ...ids]) {
-      const relative = id ? `songs/${id}/index.html` : 'index.html';
+    for (const target of targets) {
+      const relative = !target
+        ? 'index.html'
+        : target.kind === 'corner'
+        ? `${target.slug}/index.html`
+        : `songs/${target.id}/index.html`;
       const html = await readFile(path.resolve('dist', relative), 'utf8');
       assert.doesNotMatch(html, /__HIGEDAN_CONTENT_SECURITY_POLICY__|<!--verified-songs-->/, `${relative}: 生成が未完了です`);
-      const response = await page.goto(id ? `${root}songs/${id}/` : root);
+      const targetUrl = !target
+        ? root
+        : target.kind === 'corner'
+        ? `${root}${target.slug}/`
+        : `${root}songs/${target.id}/`;
+      const response = await page.goto(targetUrl);
       assert.equal(response?.status(), 200);
       assert.equal(await page.locator('h1').count(), 1);
       assert.equal(await page.locator('html').getAttribute('lang'), 'ja');
-      const canonical = `https://katakatalab.com/higedanfan/${id ? `songs/${id}/` : ''}`;
+      const canonicalSuffix = !target
+        ? ''
+        : target.kind === 'corner'
+        ? `${target.slug}/`
+        : `songs/${target.id}/`;
+      const canonical = `https://katakatalab.com/higedanfan/${canonicalSuffix}`;
       assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), canonical);
       const description = await page.locator('meta[name="description"]').getAttribute('content');
       assert.ok(description && !descriptions.has(description), `${relative}: 説明が空または重複しています`);
@@ -43,23 +60,28 @@ export async function verifyStaticSeo(browser, root, ids) {
         const parsed = JSON.parse(block.text);
         assert.equal(parsed['@context'], 'https://schema.org', `${relative}: JSON-LDの@contextが不正です`);
       }
-      if (id) {
+      if (target?.kind === 'song') {
+        const id = target.id;
         assert.match(await page.title(), /Official髭男dism/);
         assert.equal(await page.locator('meta[property="og:description"]').getAttribute('content'), description);
         assert.equal(await page.locator('meta[name="twitter:description"]').getAttribute('content'), description);
         const recording = jsonLdScripts.flatMap(block => JSON.parse(block.text)['@graph'] ?? [])
           .find(node => node['@type'] === 'MusicRecording');
         assert.ok(recording?.lyricist?.length > 0 && recording?.composer?.length > 0, `${id}: JSON-LDの作詞・作曲が欠落しています`);
+        assert.match(recording?.datePublished ?? '', /^\d{4}-\d{2}-\d{2}$/, `${id}: JSON-LDのdatePublishedが不正です`);
         const related = await page.locator('a[href^="/higedanfan/songs/"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
         assert.ok(related.length > 0, `${id}: 次の曲へのリンクがありません`);
         for (const href of related) {
           const destination = href.split('/').at(-2);
           assert.ok(destination !== id && ids.includes(destination), `${id}: 関連曲のリンク先が不正です`);
         }
-      } else {
+      } else if (!target) {
         const sitemap = await readFile(path.resolve('dist/sitemap.xml'), 'utf8');
         const robots = await readFile(path.resolve('dist/robots.txt'), 'utf8');
         assert.ok(sitemap.includes('<loc>https://katakatalab.com/higedanfan/</loc>'), 'sitemap.xmlにトップURLがありません');
+        for (const slug of cornerSlugs) {
+          assert.ok(sitemap.includes(`<loc>https://katakatalab.com/higedanfan/${slug}/</loc>`), `sitemap.xmlに${slug}がありません`);
+        }
         for (const songId of ids) {
           assert.ok(sitemap.includes(`<loc>https://katakatalab.com/higedanfan/songs/${songId}/</loc>`), `sitemap.xmlに${songId}がありません`);
         }
@@ -73,7 +95,7 @@ export async function verifyStaticSeo(browser, root, ids) {
       }
     }
   } finally { await context.close(); }
-  console.log('JavaScriptなしで91ページの曲リンク・見出し・canonical・固有の説明・本番CSPを確認');
+  console.log(`JavaScriptなしで${targets.length}ページ（トップ・コーナー${cornerSlugs.length}種・楽曲${ids.length}曲）の見出し・canonical・固有説明・本番CSPを確認`);
 }
 
 export async function verifyInputAndScriptBoundaries(browser, root) {

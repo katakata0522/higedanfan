@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { HIGEDAN_SONGS, SACRED_SPOTS, type EraTag } from './data/higedanData';
+import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
+import { CORNER_BY_ID, HOME_PAGE_META, SITE_FULL_TITLE, tabFromPathname } from './config/siteFeatures';
 import { HomePage } from './components/home/HomePage';
 import {
   KurunIntroOverlay,
@@ -39,50 +40,23 @@ const QuizSection = React.lazy(() =>
 const InfoPage = React.lazy(() => import('./components/info/InfoPage'));
 
 const FEATURE_TAB_META: Record<ActiveFeatureTab, { title: string; description: string }> = {
-  home: {
-    title: '115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dismの楽曲ガイド・音域一覧、今日の1曲診断、聖地巡礼マップ、MYセトリ作成、歴代ツアー公演記録、Official髭男dism検定を楽しめる非公式ファンサイト。',
-  },
-  mood: {
-    title: '今日の1曲診断｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: '5つの質問から今の気分にぴったりのOfficial髭男dismの3曲を診断。曲調や聴きどころとあわせて楽しめます。',
-  },
-  discography: {
-    title: '楽曲ガイド（全90曲）｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dismの全90曲を網羅した楽曲ガイド。タイアップ・収録アルバム・演奏時間・音域・曲別解説を検索できます。',
-  },
-  vocal_range: {
-    title: '音域一覧・カラオケ選曲ガイド｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dism全90曲の地声最高音・ファルセット最高音・最低音を一覧比較。カラオケで歌いやすい曲探しもできます。',
-  },
-  sacred_map: {
-    title: '聖地巡礼マップ｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: `島根・松江・米子から東京・海外ロケ地まで、Official髭男dismゆかりの聖地${SACRED_SPOTS.length}か所を地図とエピソードで辿る巡礼ガイド。`,
-  },
-  setlist: {
-    title: 'MYセトリ作成｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dismの楽曲で自分だけの理想のライブセットリストを作成。本編・アンコール構成や合計演奏時間を自動計算します。',
-  },
-  tour_archive: {
-    title: '歴代ツアー・公演記録｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dismの2015年以降のワンマンツアー・単独公演・配信ライブの日程・会場とセットリスト記録を年代順に辿れます。',
-  },
+  home: HOME_PAGE_META,
+  mood: CORNER_BY_ID.get('mood')!,
+  discography: CORNER_BY_ID.get('discography')!,
+  vocal_range: CORNER_BY_ID.get('vocal_range')!,
+  sacred_map: CORNER_BY_ID.get('sacred_map')!,
+  setlist: CORNER_BY_ID.get('setlist')!,
+  tour_archive: CORNER_BY_ID.get('tour_archive')!,
   community: {
-    title: '人気曲ランキング投票｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    title: `人気曲ランキング投票｜${SITE_FULL_TITLE}`,
     description: 'お使いのブラウザ内でOfficial髭男dismの推し曲に投票・記録できるファン投票コーナー。',
   },
   fan_reviews: {
-    title: '感想・考察ノート｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    title: `感想・考察ノート｜${SITE_FULL_TITLE}`,
     description: '好きな曲の感想やライブの思い出をお使いのブラウザ内に書き残せるメモノート。',
   },
-  quiz: {
-    title: 'Official髭男dism検定｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: '楽曲エピソードから制作秘話まで、解説と出典を読みながらOfficial髭男dismの歩みを楽しく深掘りできる検定コーナー。',
-  },
-  quiz_archive: {
-    title: '参考記事・インタビュー｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
-    description: 'Official髭男dismの楽曲ガイドや検定で参照した公式インタビュー、ディスクレビュー、メディア記事を媒体・曲名別に探せる資料集。',
-  },
+  quiz: CORNER_BY_ID.get('quiz')!,
+  quiz_archive: CORNER_BY_ID.get('quiz_archive')!,
 };
 
 function updateMetaContent(selector: string, content: string) {
@@ -94,19 +68,31 @@ function isUnpublishedHash(feature: string) {
     (feature === 'fan_reviews' && !PUBLIC_FEATURES.reviews);
 }
 
-function readLocation() {
+function readLocation(): { tab: SiteTab; songId: string | null } {
   const [feature, song] = window.location.hash.slice(1).split('/');
-  if (isUnpublishedHash(feature)) return {tab: 'home' as const, songId: null};
-  if (isInfoPage(feature)) return {tab: feature, songId: null};
-  const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
-  const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
-  return {tab, songId};
+  if (feature) {
+    if (isUnpublishedHash(feature)) return {tab: 'home' as const, songId: null};
+    if (isInfoPage(feature)) return {tab: feature, songId: null};
+    const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
+    const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
+    return {tab, songId};
+  }
+  const initialDataTab = typeof document !== 'undefined'
+    ? document.getElementById('root')?.dataset.initialTab
+    : undefined;
+  if (initialDataTab && SITE_NAV_ITEMS.some(item => item.id === initialDataTab)) {
+    return { tab: initialDataTab as ActiveFeatureTab, songId: null };
+  }
+  const pathTab = tabFromPathname(window.location.pathname, import.meta.env.BASE_URL);
+  return { tab: pathTab ?? 'home', songId: null };
 }
 
 export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
   const prevTabRef = React.useRef<SiteTab>(activeFeatureTab);
+  const pendingFocusTabRef = React.useRef<SiteTab | null>(null);
+  const mainRef = React.useRef<HTMLElement>(null);
   const [discographyEraPreset, setDiscographyEraPreset] = useState<EraTag | 'all'>('all');
   const [isIntroOpen, setIsIntroOpen] = useState<boolean>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -152,6 +138,13 @@ export default function App() {
       if (isUnpublishedHash(window.location.hash.slice(1).split('/')[0])) {
         window.history.replaceState(null, '', '#home');
       }
+      if (
+        window.location.hash.length > 1 &&
+        window.location.pathname !== import.meta.env.BASE_URL &&
+        tabFromPathname(window.location.pathname, import.meta.env.BASE_URL)
+      ) {
+        window.history.replaceState(null, '', `${import.meta.env.BASE_URL}${window.location.hash}`);
+      }
       const {tab, songId} = readLocation();
       const pagePath = songId ? songPagePath(songId) : null;
       if (pagePath) {
@@ -176,6 +169,9 @@ export default function App() {
       }
       const tabChanged = prevTabRef.current !== tab;
       prevTabRef.current = tab;
+      if (tabChanged && !songId) {
+        pendingFocusTabRef.current = tab;
+      }
       setActiveFeatureTab(tab);
       if (tabChanged && !songId) {
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -207,9 +203,14 @@ export default function App() {
   const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
     clearGuideReturnState();
     prevTabRef.current = tab;
+    pendingFocusTabRef.current = tab;
     setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
-    window.location.hash = tab;
+    if (window.location.pathname !== import.meta.env.BASE_URL) {
+      window.history.replaceState(null, '', `${import.meta.env.BASE_URL}#${tab}`);
+    } else {
+      window.location.hash = tab;
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -230,6 +231,35 @@ export default function App() {
 
   const records = useFanRecords(showToast);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  useEffect(() => {
+    if (pendingFocusTabRef.current !== activeFeatureTab || isIntroOpen || isMenuOpen) return undefined;
+    let attempts = 0;
+    let timerId: number | null = null;
+    const focusHeadingOrMain = () => {
+      const container = mainRef.current;
+      if (!container) return;
+      const heading = container.querySelector<HTMLElement>('h1');
+      if (heading) {
+        heading.tabIndex = -1;
+        heading.focus({ preventScroll: true });
+        pendingFocusTabRef.current = null;
+        return;
+      }
+      if (attempts < 15) {
+        attempts += 1;
+        timerId = window.setTimeout(focusHeadingOrMain, 50);
+      } else {
+        container.focus({ preventScroll: true });
+        pendingFocusTabRef.current = null;
+      }
+    };
+    const rafId = window.requestAnimationFrame(focusHeadingOrMain);
+    return () => {
+      window.cancelAnimationFrame(rafId);
+      if (timerId !== null) window.clearTimeout(timerId);
+    };
+  }, [activeFeatureTab, isIntroOpen, isMenuOpen]);
   const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist, votedKeys } = records;
@@ -273,6 +303,7 @@ export default function App() {
       {/* Main Content Area Protected by ErrorBoundary */}
       <ErrorBoundary onResetApp={() => handleSelectTab('home', 'all')}>
         <main
+          ref={mainRef}
           id="top"
           tabIndex={-1}
           aria-hidden={isMenuOpen || undefined}
@@ -349,6 +380,11 @@ export default function App() {
                     onMoveSong={records.moveSetlistSong}
                     onToggleEncore={records.toggleEncore}
                     onLoadPresetSetlist={records.loadPresetSetlist}
+                    onCreateSetlistFromTour={(entries, title) => {
+                      if (records.loadPresetSetlist(entries, title, { skipConfirm: true })) {
+                        handleSelectTab('setlist');
+                      }
+                    }}
                     onReplaceSetlistSilently={records.replaceSetlistSilently}
                     attendedTourIds={records.attendedTourIds}
                     onToggleAttendedTour={records.toggleAttendedTour}

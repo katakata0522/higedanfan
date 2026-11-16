@@ -6,9 +6,10 @@ import { QuizCoursePicker } from './quiz/QuizCoursePicker';
 import { QuizQuestionCard } from './quiz/QuizQuestionCard';
 import { QuizResultCard } from './quiz/QuizResultCard';
 import { QuizSourceArchive } from './quiz/QuizSourceArchive';
+import { ConfirmDialog } from './ConfirmDialog';
 import { getCourseLabel, getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter, type QuestionSet } from './quiz/quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
-import { readQuizSession, saveQuizSession } from './quiz/quizSessionStorage';
+import { readQuizSession, readQuizSessionAsync, saveQuizSession } from './quiz/quizSessionStorage';
 
 interface QuizSectionProps {
   sessionRef: RefObject<QuizSession | null>;
@@ -26,7 +27,22 @@ export function QuizSection({
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
+  const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
+
+  useEffect(() => {
+    if (sessionRef.current && sessionRef.current.stage !== 'select') return undefined;
+    let cancelled = false;
+    void readQuizSessionAsync().then((restored) => {
+      if (!cancelled && restored && restored.stage !== 'select') {
+        sessionRef.current = restored;
+        setSession(restored);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sessionRef, resetEpoch]);
   const { stage: quizStage, difficulty, scope, questionSet, currentIndex, correctBefore, answer } = session;
   const questions = useMemo(() => getCourseQuestions(difficulty, scope, questionSet), [difficulty, scope, questionSet]);
   const question = questions[currentIndex];
@@ -73,7 +89,8 @@ export function QuizSection({
   function chooseCourse() {
     const hasAnswerInput = answer.selectedOption !== null || answer.selectedOrder.length > 0;
     if (quizStage === 'playing' && (currentIndex > 0 || hasAnswerInput)) {
-      if (!window.confirm('今回の検定を終了して、コース選択に戻りますか？\nもう一度挑戦すると、第1問から始まります。')) return;
+      setIsExitConfirmOpen(true);
+      return;
     }
     updateSession(INITIAL_SESSION);
   }
@@ -182,6 +199,19 @@ export function QuizSection({
         )}
         <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} resetEpoch={resetEpoch} />
       </div>
+
+      <ConfirmDialog
+        isOpen={isExitConfirmOpen}
+        title="検定を終了してコース選択に戻りますか？"
+        description={'今回の回答はここでリセットされます。\nもう一度挑戦すると、第1問から始まります。'}
+        confirmLabel="コース選択に戻る"
+        cancelLabel="検定を続ける"
+        onConfirm={() => {
+          setIsExitConfirmOpen(false);
+          updateSession(INITIAL_SESSION);
+        }}
+        onCancel={() => setIsExitConfirmOpen(false)}
+      />
     </section>
   );
 }

@@ -1,13 +1,54 @@
 import { QUIZ_QUESTIONS, type QuizQuestion } from '../../data/quizData';
-import { QUIZ_QUESTIONS as LEGACY_QUIZ_QUESTIONS } from '../../data/quizDataLegacy';
-import { QUIZ_QUESTIONS as PREVIOUS_QUIZ_QUESTIONS } from '../../data/quizDataPrevious';
-import { QUIZ_QUESTIONS as PRIOR_QUIZ_QUESTIONS } from '../../data/quizDataPriorRevision';
-import { QUIZ_QUESTIONS as RECENT_QUIZ_QUESTIONS } from '../../data/quizDataRecent';
-import { QUIZ_QUESTIONS as PUBLISHED_QUIZ_QUESTIONS } from '../../data/quizDataPublishedRevision';
 
 export type CourseDifficulty = 'all' | QuizQuestion['difficulty'];
 export type QuestionScopeFilter = 'full' | 'new_variation' | 'ordering_only' | 'classic' | 'vol1' | 'vol2' | 'vol3' | 'vol4' | 'vol5' | 'vol6';
 export type QuestionSet = 'current' | 'published' | 'recent' | 'prior' | 'previous' | 'legacy';
+
+type QuestionBank = {
+  questions: QuizQuestion[];
+  byId: Map<string, QuizQuestion>;
+};
+
+const CURRENT_BANK: QuestionBank = {
+  questions: QUIZ_QUESTIONS,
+  byId: new Map(QUIZ_QUESTIONS.map(question => [question.id, question])),
+};
+
+const loadedBanks: Partial<Record<QuestionSet, QuestionBank>> = {
+  current: CURRENT_BANK,
+};
+
+const pendingLoads: Partial<Record<QuestionSet, Promise<QuestionBank>>> = {};
+
+const LEGACY_BANK_LOADERS: Record<Exclude<QuestionSet, 'current'>, () => Promise<{ QUIZ_QUESTIONS: QuizQuestion[] }>> = {
+  published: () => import('../../data/quizDataPublishedRevision'),
+  recent: () => import('../../data/quizDataRecent'),
+  prior: () => import('../../data/quizDataPriorRevision'),
+  previous: () => import('../../data/quizDataPrevious'),
+  legacy: () => import('../../data/quizDataLegacy'),
+};
+
+/** Dynamically loads historical quiz revisions only when restoring a saved in-progress session. */
+export async function ensureQuestionSetLoaded(questionSet: QuestionSet): Promise<void> {
+  if (loadedBanks[questionSet]) return;
+  if (questionSet === 'current') return;
+  if (!pendingLoads[questionSet]) {
+    pendingLoads[questionSet] = LEGACY_BANK_LOADERS[questionSet]()
+      .then((mod) => {
+        const bank: QuestionBank = {
+          questions: mod.QUIZ_QUESTIONS,
+          byId: new Map(mod.QUIZ_QUESTIONS.map(question => [question.id, question])),
+        };
+        loadedBanks[questionSet] = bank;
+        return bank;
+      });
+  }
+  await pendingLoads[questionSet];
+}
+
+export function isQuestionSetLoaded(questionSet: QuestionSet): boolean {
+  return Boolean(loadedBanks[questionSet]);
+}
 
 export const QUIZ_COURSES: {
   id: CourseDifficulty;
@@ -105,34 +146,23 @@ const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   ],
 };
 
-const CURRENT_BY_ID = new Map(QUIZ_QUESTIONS.map(question => [question.id, question]));
-const PUBLISHED_BY_ID = new Map(PUBLISHED_QUIZ_QUESTIONS.map(question => [question.id, question]));
-const PRIOR_BY_ID = new Map(PRIOR_QUIZ_QUESTIONS.map(question => [question.id, question]));
-const RECENT_BY_ID = new Map(RECENT_QUIZ_QUESTIONS.map(question => [question.id, question]));
-
 export function getCourseQuestions(difficulty: CourseDifficulty, scope: QuestionScopeFilter, questionSet: QuestionSet = 'current'): QuizQuestion[] {
-  const bank: QuizQuestion[] = questionSet === 'legacy'
-    ? LEGACY_QUIZ_QUESTIONS
-    : questionSet === 'previous' ? PREVIOUS_QUIZ_QUESTIONS
-    : questionSet === 'prior' ? PRIOR_QUIZ_QUESTIONS
-    : questionSet === 'recent' ? RECENT_QUIZ_QUESTIONS
-    : questionSet === 'published' ? PUBLISHED_QUIZ_QUESTIONS : QUIZ_QUESTIONS;
+  const bankEntry = loadedBanks[questionSet];
+  if (!bankEntry) return [];
+  const { questions: bank, byId } = bankEntry;
   if (scope.startsWith('vol')) {
     if (questionSet === 'legacy') return [];
     const volume = Number(scope.slice(3));
     if (!Number.isInteger(volume) || volume < 1 || volume > (difficulty === 'all' ? 6 : 2)) return [];
     const tierQuestions = (tier: QuizQuestion['difficulty']) => {
-      if (questionSet === 'current') {
-        return VOLUME_QUESTION_IDS[tier].map(id => CURRENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
-      }
-      if (questionSet === 'published') {
-        return PUBLISHED_VOLUME_QUESTION_IDS[tier].map(id => PUBLISHED_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
-      }
-      if (questionSet === 'recent') {
-        return RECENT_VOLUME_QUESTION_IDS[tier].map(id => RECENT_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
-      }
-      if (questionSet === 'prior') {
-        return PRIOR_VOLUME_QUESTION_IDS[tier].map(id => PRIOR_BY_ID.get(id)).filter((q): q is QuizQuestion => q !== undefined);
+      const orderIds = questionSet === 'current'
+        ? VOLUME_QUESTION_IDS[tier]
+        : questionSet === 'published' ? PUBLISHED_VOLUME_QUESTION_IDS[tier]
+        : questionSet === 'recent' ? RECENT_VOLUME_QUESTION_IDS[tier]
+        : questionSet === 'prior' ? PRIOR_VOLUME_QUESTION_IDS[tier]
+        : null;
+      if (orderIds) {
+        return orderIds.map(id => byId.get(id)).filter((q): q is QuizQuestion => q !== undefined);
       }
       // 更新前に始めたコースは、出題順も含めて元のまま再開する。
       const questions = bank.filter(question => question.difficulty === tier);

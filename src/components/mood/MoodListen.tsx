@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { ExternalLink, Music2, Play } from 'lucide-react';
 import { songEvidence } from '../../data/fullCatalogSongs';
 import { officialVideoDescription, officialVideoId, officialVideos, youtubeExternalOnlySongs } from '../../songPages/songConnections';
@@ -10,6 +11,11 @@ export function MoodListen({ song }: { song: SongItem }) {
   const appleUrl = songEvidence[song.id as keyof typeof songEvidence]?.apple;
   const searchUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`Official髭男dism ${song.title}`)}`;
   const description = officialVideoDescription(song.id);
+  const [thumbFailed, setThumbFailed] = useState(false);
+
+  useEffect(() => {
+    setThumbFailed(false);
+  }, [videoId]);
 
   return (
     <div className="space-y-2">
@@ -26,13 +32,21 @@ export function MoodListen({ song }: { song: SongItem }) {
             aria-label={`${song.title}をYouTubeで聴く${description ? `（${description}）` : ''}（新しいタブ）`}
             className="group relative flex aspect-video min-h-[200px] w-full items-center justify-center overflow-hidden rounded-xl bg-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B]"
           >
-            <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100" />
+            {!thumbFailed && (
+              <img
+                src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`}
+                alt=""
+                decoding="async"
+                onError={() => setThumbFailed(true)}
+                className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100"
+              />
+            )}
             <span className="relative inline-flex items-center gap-2 rounded-full bg-[#1C1917]/90 px-4 py-2.5 text-sm font-bold text-white shadow-md">
               <Play aria-hidden="true" className="h-4 w-4 fill-current" /> YouTubeで聴く <ExternalLink aria-hidden="true" className="h-3.5 w-3.5" />
             </span>
           </a>
           {description && <p className="text-xs text-[#57534E]">{description}</p>}
-          {song.id === 'bad-for-me' && appleUrl && <a href={appleUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1E3A5F] underline underline-offset-2">Apple Musicで聴く <ExternalLink aria-hidden="true" className="h-3 w-3" /></a>}
+          {appleUrl && <a href={appleUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1E3A5F] underline underline-offset-2">Apple Musicで聴く <ExternalLink aria-hidden="true" className="h-3 w-3" /></a>}
         </>
       ) : videoId ? (
         <>

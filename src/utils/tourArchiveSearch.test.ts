@@ -18,3 +18,13 @@ test('tour search preserves title, venue, empty and no-match searches', () => {
   assert.equal(search('').length, TOUR_ARCHIVES.length);
   assert.deepEqual(search('該当しない会場名'), []);
 });
+
+test('tour search finds concerts by performed song title and kana reading', () => {
+  const search = createTourArchiveSearch(TOUR_ARCHIVES);
+  const byTitle = search('エルダーフラワー');
+  assert.ok(byTitle.some(r => r.events.some(e => e.id === 'live-2026-one-man-fukuoka-1')));
+  const byHiragana = search('えるだーふらわー');
+  const fukuokaMatch = byHiragana.find(r => r.events.some(e => e.id === 'live-2026-one-man-fukuoka-1'));
+  assert.ok(fukuokaMatch);
+  assert.deepEqual(fukuokaMatch.matchedSongsByEventId.get('live-2026-one-man-fukuoka-1'), ['エルダーフラワー']);
+});

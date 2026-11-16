@@ -1,5 +1,8 @@
 // 複数の資料で異なる数値が見つかった曲。掲載値が公式の指定テンポとは限らない。
 export const tempoAlternatives: Readonly<Record<string, readonly { value: number; url: string }[]>> = {
+  "115man-kilo": [
+    { value: 194, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=115%E4%B8%87%E3%82%AD%E3%83%AD%E3%81%AE%E3%83%95%E3%82%A3%E3%83%AB%E3%83%A0" },
+  ],
   "pretender": [
     { value: 184, url: "https://khufrudamonotes.com/officialhigedism-data#:~:text=Pretender" },
   ],
