@@ -1024,7 +1024,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
         ) : (
           <>
-            <React.Suspense fallback={<p role="status" className="py-6 text-sm text-[#57534E]">公演記録を読み込み中…</p>}>
+            <React.Suspense fallback={<div role="status" aria-label="公演記録を読み込み中" className="py-12 min-h-[40vh]"><span className="sr-only">公演記録を読み込み中…</span></div>}>
               <TourArchiveSection
                 attendedTourIds={attendedTourIds}
                 onToggleAttendedTour={onToggleAttendedTour}

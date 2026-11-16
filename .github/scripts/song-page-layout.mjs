@@ -365,13 +365,14 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.goto(`${root}#vocal_range`, { waitUntil: 'load' });
   const table = page.getByRole('table', { name: /音域・発売日比較表/ });
   await table.waitFor();
-  assert.equal(await table.locator('tbody tr').count(), 18);
-  await page.getByRole('button', { name: /全 90 曲をすべて表示/ }).click();
-  assert.equal(await table.locator('tbody tr').count(), 90, 'PCで全曲を縦に比較できません');
+  assert.equal(await table.locator('tbody tr').count(), 90, '音域比較表で最初から全90曲を比較できません');
+  const colWidthsBefore = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
   await page.getByRole('button', { name: /条件を絞る・並べ替える/ }).click();
   await page.getByLabel('並び替え', { exact: true }).selectOption('highest_note');
   assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/, '地声最高音順に並びません');
   assert.equal(await table.locator('tbody tr').count(), 90, '並び替えた後に表示曲数が減っています');
+  const colWidthsAfter = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
+  assert.deepEqual(colWidthsAfter, colWidthsBefore, '並べ替えで比較表の列幅が変わっています');
   const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
   assert.match(await subtitle.innerText(), /記載なし/, '採譜にない値を誤表示しています');
   assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域出典/ }).count(), 1);
@@ -379,6 +380,15 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.doesNotMatch(await table.innerText(), /(?:^|\s)採譜 ↗/);
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
+  assert.equal(await page.locator('#section-discography article').count(), 24, '楽曲ガイドの1ページ目は24曲表示が必要です');
+  await page.getByRole('navigation', { name: '楽曲ガイドのページ切り替え' }).getByRole('button', { name: '2ページ目を表示' }).click();
+  await page.getByText(/全 90 曲中 25〜48 曲目/).waitFor();
+  const secondPageTitle = await page.locator('#section-discography article h2 a').first().innerText();
+  await page.locator('#section-discography article h2 a').first().click();
+  await page.getByRole('heading', { name: secondPageTitle, exact: true }).waitFor();
+  await page.getByRole('link', { name: '曲一覧に戻る', exact: true }).first().click();
+  await page.getByText(/全 90 曲中 25〜48 曲目/).waitFor();
+
   await page.getByLabel('曲名・読み・タイアップで検索').fill('Pretender');
   const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
   assert.match(await pretender.innerText(), /配信掲載\s*2019\.04\.17/);

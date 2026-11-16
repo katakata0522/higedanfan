@@ -22,7 +22,8 @@ export async function verifyStaticSeo(browser, root, ids) {
         ? `${target.slug}/index.html`
         : `songs/${target.id}/index.html`;
       const html = await readFile(path.resolve('dist', relative), 'utf8');
-      assert.doesNotMatch(html, /__HIGEDAN_CONTENT_SECURITY_POLICY__|<!--verified-songs-->/, `${relative}: 生成が未完了です`);
+      assert.doesNotMatch(html, /__HIGEDAN_CONTENT_SECURITY_POLICY__|<!--verified-songs-->|<!--initial-paint-style-->/, `${relative}: 生成が未完了です`);
+      assert.doesNotMatch(html, /約約/, `${relative}: 二重の「約」が残っています`);
       const targetUrl = !target
         ? root
         : target.kind === 'corner'

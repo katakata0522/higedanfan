@@ -7,7 +7,7 @@ import { isTempoUnderReview } from './src/data/tempoReviewStatus.ts';
 import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
 import { PUBLIC_CORNERS } from './src/config/siteFeatures.ts';
 import { formatDuration, formatSongBpm } from './src/utils/format.ts';
-import { contentSecurityPolicy, CSP_MARKER, escapeHtml as escape } from './scripts/siteHtml.ts';
+import { contentSecurityPolicy, CSP_MARKER, escapeHtml as escape, INITIAL_PAINT_STYLE } from './scripts/siteHtml.ts';
 function renderCatalog() {
   return Object.entries(evidence).map(([id, f]) => {
     const duration = formatDuration(f.seconds);
@@ -41,6 +41,7 @@ export default defineConfig(({ command }) => {
       name: 'static-song-guide',
       transformIndexHtml: html => html
         .replace(CSP_MARKER, contentSecurityPolicy(command === 'serve'))
+        .replace('<!--initial-paint-style-->', `<style>${INITIAL_PAINT_STYLE}</style>`)
         .replace('<!--verified-songs-->', renderCatalog()),
       closeBundle() {
         fs.rmSync(path.resolve(import.meta.dirname, 'dist/song-art'), { recursive: true, force: true });

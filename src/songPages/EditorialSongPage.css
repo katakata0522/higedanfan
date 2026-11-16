@@ -1,7 +1,7 @@
 :root {
   font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
   color: #1c1917;
-  background: #e8e4dc;
+  background: #faf6eb;
   font-synthesis: none;
   -webkit-text-size-adjust: 100%;
 }
@@ -10,7 +10,7 @@
 
 html { scroll-behavior: smooth; }
 
-body { margin: 0; }
+body { margin: 0; background-color: #faf6eb; }
 
 button, a { -webkit-tap-highlight-color: transparent; }
 
@@ -411,7 +411,7 @@ a { color: inherit; }
 .hero-content h1 {
   position: relative;
   margin: 0;
-  padding: 0 48px 0 20px;
+  padding: 0 48px 0 0;
   font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
   font-size: 62px;
   font-weight: 900;
@@ -420,9 +420,7 @@ a { color: inherit; }
   overflow-wrap: anywhere;
 }
 
-.hero-content h1::before { content: ""; position: absolute; top: 8%; bottom: 7%; left: 0; width: 6px; background: #c7212b; }
-
-.recording { margin: 5px 0 12px 6px; font-size: 18px; letter-spacing: .04em; }
+.recording { margin: 6px 0 12px 0; font-size: 18px; letter-spacing: .04em; }
 
 .recording span { font-family: "Noto Serif JP", "Hiragino Mincho ProN", "Yu Mincho", serif; font-weight: 600; font-size: 22px; font-variant-numeric: lining-nums tabular-nums; }
 

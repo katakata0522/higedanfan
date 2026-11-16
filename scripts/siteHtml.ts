@@ -1,5 +1,13 @@
 export const CSP_MARKER = '__HIGEDAN_CONTENT_SECURITY_POLICY__';
 
+// 初期描画で無JS用フォールバックHTMLが一瞬見えるチラつき（FOUC）を防ぐ。
+export const INITIAL_PAINT_STYLE = [
+  'html,body{margin:0;background-color:#faf6eb;',
+  'background-image:radial-gradient(rgba(160,148,128,.22) 1.1px,transparent 1.1px),linear-gradient(90deg,rgba(160,148,128,.04) 1px,transparent 1px);',
+  'background-size:26px 26px,26px 100%;color:#253331;}',
+  '@media (scripting:enabled){#root>[data-static-fallback]{display:none;}}',
+].join('');
+
 export function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, character => ({
     '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',

@@ -17,7 +17,8 @@ import {
   Music2,
   Plus,
   Check,
-  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import {
   EraTag,
@@ -50,7 +51,7 @@ interface DiscographySectionProps {
 
 const SPOT_TAPE_COLORS = ['#f3d2a8', '#f5c6be', '#bce3f8', '#c0e6c7', '#dfcaf6', '#f6e39c'] as const;
 
-const INITIAL_VISIBLE_COUNT = 18;
+const CARDS_PER_PAGE = 24;
 const SPOT_CATEGORIES: (SacredSpotCategory | 'all')[] = [
   'all', 'MVロケ地', 'メンバーの思い出', 'メンバーのおすすめ', 'ライブ会場', '街とヒゲダン',
 ];
@@ -109,12 +110,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery } = filters;
   const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>('all');
-  const [visibleCount, setVisibleCount] = useState<number>(() => restored?.visibleCount ?? INITIAL_VISIBLE_COUNT);
+  const [cardPage, setCardPage] = useState<number>(() =>
+    restored ? Math.max(1, Math.ceil(restored.visibleCount / CARDS_PER_PAGE)) : 1
+  );
   const [voiceLow, setVoiceLow] = useState(() => restored?.voice?.low ?? '');
   const [voiceHigh, setVoiceHigh] = useState(() => restored?.voice?.high ?? '');
   const [keyShift, setKeyShift] = useState(() => restored?.voice?.keyShift ?? 0);
   const skipInitialPaginationReset = useRef(Boolean(restored));
   const previousEraPreset = useRef(initialEraFilter);
+  const resultsTopRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (previousEraPreset.current === initialEraFilter) return;
@@ -122,18 +126,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     setFilters(current => ({ ...current, era: initialEraFilter, album: 'all' }));
   }, [initialEraFilter]);
 
-  // Keep the expanded list when only its ordering changes.
+  // 絞り込み・並び替え・表示切り替え時は先頭ページへ戻す（戻り復元の初回のみ維持）。
   useEffect(() => {
     if (skipInitialPaginationReset.current) {
       skipInitialPaginationReset.current = false;
       return;
     }
-    setVisibleCount(
-      albumFilter !== 'all' || searchQuery.trim().length > 0 ? songs.length : INITIAL_VISIBLE_COUNT
-    );
-  }, [eraFilter, albumFilter, soundFilter, searchQuery, activeSubView, voiceLow, voiceHigh, keyShift, songs.length]);
-
-  const rememberGuide = () => saveGuideReturnState({ filters, visibleCount, view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography', voice: { low: voiceLow, high: voiceHigh, keyShift } });
+    setCardPage(1);
+  }, [eraFilter, albumFilter, soundFilter, searchQuery, filters.sortBy, activeSubView, voiceLow, voiceHigh, keyShift]);
 
   const voiceRangeInvalid = Boolean(voiceLow && voiceHigh && Number(voiceLow) > Number(voiceHigh));
   const filteredSongs = useMemo(() => {
@@ -154,10 +154,36 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     return filterAndSortDiscography(songs, { ...DEFAULT_GUIDE_FILTERS, searchQuery }).length;
   }, [songs, filteredSongs.length, searchQuery, eraFilter, albumFilter, soundFilter]);
 
+  const totalPages = Math.max(1, Math.ceil(filteredSongs.length / CARDS_PER_PAGE));
+  const safeCardPage = Math.min(cardPage, totalPages);
+  const cardRangeStart = (safeCardPage - 1) * CARDS_PER_PAGE;
+
   const displayedSongs = useMemo(
-    () => filteredSongs.slice(0, visibleCount),
-    [filteredSongs, visibleCount]
+    () =>
+      activeSubView === 'vocal_range'
+        ? filteredSongs
+        : filteredSongs.slice(cardRangeStart, cardRangeStart + CARDS_PER_PAGE),
+    [activeSubView, filteredSongs, cardRangeStart]
   );
+
+  const rememberGuide = () => {
+    const restoredCount = activeSubView === 'vocal_range'
+      ? Math.max(1, Math.min(songs.length, filteredSongs.length))
+      : Math.min(Math.max(1, songs.length), Math.max(1, safeCardPage * CARDS_PER_PAGE));
+    saveGuideReturnState({
+      filters,
+      visibleCount: restoredCount,
+      view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography',
+      voice: { low: voiceLow, high: voiceHigh, keyShift },
+    });
+  };
+
+  const handleChangeCardPage = (nextPage: number) => {
+    const bounded = Math.max(1, Math.min(totalPages, nextPage));
+    setCardPage(bounded);
+    const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    resultsTopRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+  };
 
   const filteredSpots = useMemo(
     () =>
@@ -335,10 +361,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
         {/* Sub-View 1: Song Guide Cards */}
         {activeSubView === 'discography' && (
-          <div>
+          <div ref={resultsTopRef} className="scroll-mt-20">
             {filteredSongs.length === 0 ? emptyResults : (
               <>
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))] gap-4">
                   {displayedSongs.map((song) => {
                     const inSetlist = setlistSongIds.includes(song.id);
                     const pagePath = songPagePath(song.id);
@@ -351,7 +377,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     return (
                       <article
                         key={song.id}
-                        className="flex flex-col justify-between notebook-paper rounded-xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:border-[#253331]/40"
+                        className="min-w-0 flex flex-col justify-between notebook-paper rounded-xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:border-[#253331]/40"
                       >
                         <div>
                           <div className="flex items-start gap-3">
@@ -465,25 +491,52 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   })}
                 </div>
 
-                {/* Progressive Pagination Controls */}
-                {filteredSongs.length > visibleCount && (
-                  <div className="mt-6 flex flex-col sm:flex-row items-center justify-center gap-3 notebook-paper rounded-xl p-4">
-                    <button
-                      type="button"
-                      onClick={() => setVisibleCount((prev) => prev + 24)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-[#253331] px-5 py-2.5 text-xs font-bold text-[#faf6eb] hover:bg-[#C83E2B] transition-colors cursor-pointer min-h-[42px]"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                      さらに{Math.min(24, filteredSongs.length - visibleCount)}曲を表示（残り {filteredSongs.length - visibleCount} 曲）
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleCount(filteredSongs.length)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-4 py-2.5 text-xs font-bold text-[#253331] hover:border-[#253331] transition-colors cursor-pointer min-h-[42px]"
-                    >
-                      全 {filteredSongs.length} 曲をすべて表示
-                    </button>
-                  </div>
+                {/* Numbered Pagination Controls */}
+                {totalPages > 1 && (
+                  <nav
+                    aria-label="楽曲ガイドのページ切り替え"
+                    className="mt-6 flex flex-col items-center justify-between gap-3 sm:flex-row notebook-paper rounded-xl p-4"
+                  >
+                    <p className="text-xs font-medium text-[#57534E] font-mono-num">
+                      全 {filteredSongs.length} 曲中 {cardRangeStart + 1}〜{Math.min(cardRangeStart + CARDS_PER_PAGE, filteredSongs.length)} 曲目（{safeCardPage} / {totalPages} ページ）
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-1.5">
+                      <button
+                        type="button"
+                        disabled={safeCardPage <= 1}
+                        onClick={() => handleChangeCardPage(safeCardPage - 1)}
+                        className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3.5 py-2 text-xs font-bold text-[#253331] transition-colors hover:border-[#253331] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                      >
+                        <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+                        前へ
+                      </button>
+                      {Array.from({ length: totalPages }, (_, index) => index + 1).map(page => (
+                        <button
+                          key={page}
+                          type="button"
+                          aria-current={page === safeCardPage ? 'page' : undefined}
+                          aria-label={`${page}ページ目を表示`}
+                          onClick={() => handleChangeCardPage(page)}
+                          className={`min-h-[40px] min-w-[40px] rounded-full border px-3 py-2 text-xs font-bold font-mono-num transition-colors cursor-pointer ${
+                            page === safeCardPage
+                              ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
+                              : 'border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4]'
+                          }`}
+                        >
+                          {page}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        disabled={safeCardPage >= totalPages}
+                        onClick={() => handleChangeCardPage(safeCardPage + 1)}
+                        className="inline-flex min-h-[40px] items-center gap-1 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3.5 py-2 text-xs font-bold text-[#253331] transition-colors hover:border-[#253331] disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer"
+                      >
+                        次へ
+                        <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                      </button>
+                    </div>
+                  </nav>
                 )}
 
                 <details className="mt-6 notebook-paper rounded-xl p-3.5 text-xs text-[#57534E]">
@@ -495,79 +548,69 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           </div>
         )}
 
-        {/* 画面幅によらず、曲名と音域を同じ表で比較する。 */}
+        {/* 画面幅によらず、曲名と音域を同じ表で比較する（並び替えても列幅が動かないよう固定）。 */}
         {activeSubView === 'vocal_range' && (
           <div className="mt-3 space-y-3 min-w-0">
             <p id="song-table-help" className="text-xs leading-5 text-[#57534E]">↔ 表は横にスクロールできます。見出しを押すと昇順・降順で並べ替えられます。</p>
             {filteredSongs.length === 0 ? emptyResults : (
-              <>
-                <div className="max-w-full overflow-x-auto notebook-paper rounded-xl" role="region" aria-label="音域・発売日比較表" aria-describedby="song-table-help" tabIndex={0}>
-                  <table className="w-full min-w-[1100px] border-collapse text-left text-xs leading-5 sm:text-[13px]">
-                    <caption className="sr-only">音域・発売日比較表。見出しで並べ替え、日付と音域の出典は各行から開けます。</caption>
-                    <thead className="bg-[#f4efe4] text-xs text-[#57534E]">
-                      <tr>
-                        {(['title', 'low', 'chest', 'falsetto', 'album', 'duration', 'bpm', 'release', 'cd'] as SongTableSortKey[]).map(key => {
-                          const direction = filters.tableSort?.key === key ? filters.tableSort.direction : undefined;
-                          const next = direction === 'ascending' ? 'descending' : 'ascending';
-                          return <th key={key} scope="col" aria-sort={direction} className={`whitespace-nowrap px-2 py-1 ${key === 'title' ? 'sticky left-0 z-20 min-w-[132px] sm:min-w-[160px] bg-[#f4efe4] border-r border-[#e5dccb] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)]' : ''}`}>
-                            <button type="button" className="flex min-h-10 w-full items-center gap-1 text-left font-bold text-[#253331] hover:text-[#C83E2B] cursor-pointer"
-                              aria-label={`${SONG_TABLE_SORT_LABELS[key]}を${next === 'ascending' ? '昇順' : '降順'}で並べ替え`}
-                              onClick={() => setFilters(current => ({ ...current, tableSort: { key, direction: next } }))}>
-                              {SONG_TABLE_SORT_LABELS[key]}<span aria-hidden="true">{direction === 'ascending' ? '↑' : direction === 'descending' ? '↓' : '↕'}</span>
-                            </button>
-                          </th>;
-                        })}
-                        <th scope="col" className="whitespace-nowrap px-3 py-3 text-[#253331]">音域出典</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#ece3d2]">
-                      {displayedSongs.map(song => {
-                        const f = songEvidence[song.id as keyof typeof songEvidence];
-                        return <tr key={song.id} className="group align-top hover:bg-[#faf6eb]">
-                          <th scope="row" className="sticky left-0 z-10 min-w-[132px] sm:min-w-[160px] max-w-[175px] sm:max-w-[220px] bg-[#fffdf8] group-hover:bg-[#faf6eb] border-r border-[#ece3d2] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)] px-2 py-3 font-note-serif font-bold text-[#253331]">
-                            <a
-                              href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
-                              onClick={rememberGuide}
-                              className="inline-flex min-h-[28px] items-center py-0.5 text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
-                            >
-                              {song.title}
-                            </a>
-                          </th>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.highestChestNote}</td>
-                          <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '記載なし' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
-                          <td className="min-w-[120px] px-3 py-3">{f.album}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple}>{f.release}</a></td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
-                          <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
-                        </tr>;
+              <div className="max-w-full overflow-x-auto notebook-paper rounded-xl" role="region" aria-label="音域・発売日比較表" aria-describedby="song-table-help" tabIndex={0}>
+                <table className="w-[1230px] sm:w-[1262px] table-fixed border-collapse text-left text-xs leading-5 sm:text-[13px]">
+                  <caption className="sr-only">音域・発売日比較表。見出しで並べ替え、日付と音域の出典は各行から開けます。</caption>
+                  <colgroup>
+                    <col className="w-[168px] sm:w-[200px]" />
+                    <col className="w-[110px]" />
+                    <col className="w-[110px]" />
+                    <col className="w-[116px]" />
+                    <col className="w-[186px]" />
+                    <col className="w-[82px]" />
+                    <col className="w-[88px]" />
+                    <col className="w-[106px]" />
+                    <col className="w-[106px]" />
+                    <col className="w-[158px]" />
+                  </colgroup>
+                  <thead className="bg-[#f4efe4] text-xs text-[#57534E]">
+                    <tr>
+                      {(['title', 'low', 'chest', 'falsetto', 'album', 'duration', 'bpm', 'release', 'cd'] as SongTableSortKey[]).map(key => {
+                        const direction = filters.tableSort?.key === key ? filters.tableSort.direction : undefined;
+                        const next = direction === 'ascending' ? 'descending' : 'ascending';
+                        return <th key={key} scope="col" aria-sort={direction} className={`whitespace-nowrap px-2 py-1 ${key === 'title' ? 'sticky left-0 z-20 w-[168px] sm:w-[200px] bg-[#f4efe4] border-r border-[#e5dccb] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)]' : ''}`}>
+                          <button type="button" className="flex min-h-10 w-full items-center gap-1 text-left font-bold text-[#253331] hover:text-[#C83E2B] cursor-pointer"
+                            aria-label={`${SONG_TABLE_SORT_LABELS[key]}を${next === 'ascending' ? '昇順' : '降順'}で並べ替え`}
+                            onClick={() => setFilters(current => ({ ...current, tableSort: { key, direction: next } }))}>
+                            {SONG_TABLE_SORT_LABELS[key]}<span aria-hidden="true">{direction === 'ascending' ? '↑' : direction === 'descending' ? '↓' : '↕'}</span>
+                          </button>
+                        </th>;
                       })}
-                    </tbody>
-                  </table>
-                </div>
-                {/* Progressive Pagination Controls */}
-                {filteredSongs.length > visibleCount && (
-                  <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-3 notebook-paper rounded-xl p-4">
-                    <button
-                      type="button"
-                      onClick={() => setVisibleCount((prev) => prev + 24)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-[#253331] px-5 py-2.5 text-xs font-bold text-[#faf6eb] hover:bg-[#C83E2B] transition-colors cursor-pointer min-h-[42px]"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                      さらに{Math.min(24, filteredSongs.length - visibleCount)}曲を表示（残り {filteredSongs.length - visibleCount} 曲）
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setVisibleCount(filteredSongs.length)}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-4 py-2.5 text-xs font-bold text-[#253331] hover:border-[#253331] transition-colors cursor-pointer min-h-[42px]"
-                    >
-                      全 {filteredSongs.length} 曲をすべて表示
-                    </button>
-                  </div>
-                )}
-              </>
+                      <th scope="col" className="whitespace-nowrap px-3 py-3 text-[#253331]">音域出典</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#ece3d2]">
+                    {displayedSongs.map(song => {
+                      const f = songEvidence[song.id as keyof typeof songEvidence];
+                      return <tr key={song.id} className="group align-top hover:bg-[#faf6eb]">
+                        <th scope="row" className="sticky left-0 z-10 w-[168px] sm:w-[200px] bg-[#fffdf8] group-hover:bg-[#faf6eb] border-r border-[#ece3d2] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)] px-2 py-3 font-note-serif font-bold text-[#253331] whitespace-normal wrap-anywhere">
+                          <a
+                            href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
+                            onClick={rememberGuide}
+                            className="inline-flex min-h-[28px] items-center py-0.5 text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
+                          >
+                            {song.title}
+                          </a>
+                        </th>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.highestChestNote}</td>
+                        <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '記載なし' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
+                        <td className="px-3 py-3 whitespace-normal wrap-anywhere">{f.album}</td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple}>{f.release}</a></td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
+                        <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
+                      </tr>;
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
             <details className="notebook-paper rounded-xl p-3.5 text-xs text-[#57534E]">
               <summary className="cursor-pointer font-bold text-[#253331]">音域・日付の見方</summary>

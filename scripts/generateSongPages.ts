@@ -10,7 +10,7 @@ import { songAppleArtwork } from '../src/data/songAppleArtwork';
 import { songwriterInfo } from '../src/utils/songCatalog';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
 import { generateFeaturePages } from './generateFeaturePages';
-import { CSP_MARKER, escapeHtml } from './siteHtml';
+import { CSP_MARKER, escapeHtml, INITIAL_PAINT_STYLE } from './siteHtml';
 
 const root = join(import.meta.dirname, '..');
 const dataDir = join(root, 'src/songPages/data');
@@ -161,6 +161,7 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="${CSP_MARKER}" />
+    <style>${INITIAL_PAINT_STYLE}</style>
     <title>${escapedTitle}｜Official髭男dism 楽曲ガイド｜115万キロのファンノート</title>
     <meta name="description" content="${escapeHtml(description)}" />
     <link rel="canonical" href="${url}" />
@@ -191,7 +192,7 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   </head>
   <body>
     <div id="root" data-song-id="${page.id}">
-      <main id="main" class="song-page page-main">
+      <main id="main" data-static-fallback class="song-page page-main">
         <article class="song-sheet" aria-labelledby="song-title">
           <h1 id="song-title">${escapedTitle}</h1>
           <section class="overview" aria-labelledby="overview-title">

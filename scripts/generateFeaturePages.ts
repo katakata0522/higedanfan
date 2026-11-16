@@ -11,7 +11,7 @@ import { REFERENCE_ARTICLES } from '../src/data/referenceArticles';
 import { SACRED_SPOTS, TOUR_ARCHIVES } from '../src/data/higedanData';
 import { isTempoUnderReview } from '../src/data/tempoReviewStatus';
 import { formatDuration, formatSongBpm } from '../src/utils/format';
-import { CSP_MARKER, escapeHtml } from './siteHtml';
+import { CSP_MARKER, escapeHtml, INITIAL_PAINT_STYLE } from './siteHtml';
 
 interface SongFactRow {
   recording: string;
@@ -44,7 +44,7 @@ function buildCornerBody(
       .map((entry) => {
         const fact = evidence[entry.id];
         if (!fact) return '';
-        const tempoText = isTempoUnderReview(entry.id) ? 'テンポ調査中' : `BPM 約${formatSongBpm(entry.id, fact.tempo)}`;
+        const tempoText = isTempoUnderReview(entry.id) ? 'テンポ調査中' : `BPM ${formatSongBpm(entry.id, fact.tempo)}`;
         return `<li><a href="/higedanfan/songs/${escapeHtml(entry.id)}/">${escapeHtml(fact.recording)}</a>（${escapeHtml(fact.album)}・${formatDuration(fact.seconds)}・${tempoText}・地声 ${escapeHtml(fact.low)}〜${escapeHtml(fact.chest)}・裏声最高 ${escapeHtml(fact.falsetto ?? '記載なし')}・配信 ${escapeHtml(fact.release)}）</li>`;
       })
       .join('\n');
@@ -72,7 +72,7 @@ function buildCornerBody(
     detailHtml = `<section aria-label="コーナー案内"><p>各機能のインタラクティブな操作（診断の回答、セットリスト並び替え・画像書き出し、検定の挑戦）はブラウザのJavaScript画面からすぐにご利用いただけます。</p></section>`;
   }
 
-  return `      <main id="main" class="mx-auto max-w-6xl p-5">
+  return `      <main id="main" data-static-fallback class="mx-auto max-w-6xl p-5">
         <p><a href="/higedanfan/">← ${escapeHtml(SITE_BRAND_NAME)} トップへ戻る</a></p>
         <h1>${escapeHtml(corner.heading)}</h1>
         <p>${escapeHtml(corner.summary)}</p>
@@ -151,6 +151,7 @@ export function generateFeaturePages(rootDir: string): string[] {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="Content-Security-Policy" content="${CSP_MARKER}" />
+    <style>${INITIAL_PAINT_STYLE}</style>
     <link rel="canonical" href="${escapeHtml(url)}" />
     <link rel="icon" href="/higedanfan/hige-mark-32.png?v=21cd698" type="image/png" sizes="32x32" />
     <link rel="icon" href="/higedanfan/hige-mark.svg?v=34b8cc7" type="image/svg+xml" sizes="any" />
