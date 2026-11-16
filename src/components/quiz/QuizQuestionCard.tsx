@@ -5,6 +5,8 @@ import { formatOrderingSequence } from '../../utils/fanLogic';
 import { isAnswerCorrect, type QuizAnswer } from './quizSession';
 import { DIFFICULTY_LABEL } from './quizCourses';
 import { visibleQuizSourceSummary } from './quizSourceSummary';
+import { songPagePath } from '../../songPages/publishedSongPageIds';
+import { saveSongReturnTab } from '../../utils/guideReturnState';
 
 interface Props {
   visible: boolean;
@@ -20,7 +22,7 @@ interface Props {
 }
 
 export function QuizQuestionCard({
-  visible, question, currentIndex, questionCount, score, answer, onAnswerChange, onNext, relatedSong, onSelectSong,
+  visible, question, currentIndex, questionCount, score, answer, onAnswerChange, onNext, relatedSong,
 }: Props) {
   const { selectedOption, selectedOrder, isOrderingSubmitted } = answer;
   const heading = useRef<HTMLHeadingElement>(null);
@@ -83,9 +85,9 @@ export function QuizQuestionCard({
         <span className="font-mono-num">現在 {score} 問正解</span>
       </div>
 
-      <h3 ref={heading} tabIndex={-1} className="mt-4 scroll-mt-20 text-base sm:text-xl font-bold text-[#1C1917] leading-relaxed">
+      <h2 ref={heading} tabIndex={-1} className="mt-4 scroll-mt-20 text-base sm:text-xl font-bold text-[#1C1917] leading-relaxed">
         Q{currentIndex + 1}. {question.prompt}
-      </h3>
+      </h2>
 
       <p className="mt-2 text-xs text-[#78716C]">
         ヒント: {question.hint}
@@ -233,15 +235,15 @@ export function QuizQuestionCard({
           </div>
 
           <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
-            {relatedSong && onSelectSong ? (
-              <button
-                type="button"
-                onClick={() => onSelectSong(relatedSong)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors cursor-pointer"
+            {relatedSong ? (
+              <a
+                href={`${import.meta.env.BASE_URL}${songPagePath(relatedSong.id) ?? ''}`}
+                onClick={() => saveSongReturnTab('quiz')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors"
               >
                 <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
                 『{relatedSong.title}』の楽曲解説を読む
-              </button>
+              </a>
             ) : (
               <span />
             )}

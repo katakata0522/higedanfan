@@ -1,4 +1,5 @@
-import { HIGEDAN_SONGS, type FanReview } from '../data/higedanData';
+import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import type { FanReview } from '../data/higedanData';
 import { normalizeSetlistOrder, type SetlistEntry } from '../utils/setlist';
 import { restoreFanRecords, STORAGE_KEY, type PersistedState } from './fanRecordStorage';
 import { readPendingSetlistAdds, writePendingSetlistAdd, type JournalStorage, type PendingSetlistAdd } from './setlistAddJournal';

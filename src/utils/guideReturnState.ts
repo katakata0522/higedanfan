@@ -3,17 +3,19 @@ import { ALBUM_CHRONOLOGY_RANK } from './songCatalog';
 import { SONG_TABLE_SORT_KEYS } from './songTableSort';
 
 const key = 'higedanfan:guide-return:v1';
+const archiveKey = 'higedanfan:archive-return:v1';
+const tourKey = 'higedanfan:tour-return:v1';
 const originTabKey = 'higedanfan:song-origin-tab:v1';
 const originTabs = new Set([
   'home', 'mood', 'discography', 'vocal_range', 'sacred_map', 'setlist', 'tour_archive', 'quiz', 'quiz_archive',
 ]);
 const ORIGIN_DESTINATIONS: Record<string, { hash: string; label: string }> = {
   home: { hash: 'home', label: 'トップページに戻る' },
-  mood: { hash: 'mood', label: 'マイソング診断に戻る' },
+  mood: { hash: 'mood', label: '今日の1曲診断に戻る' },
   discography: { hash: 'discography', label: '曲一覧に戻る' },
   vocal_range: { hash: 'vocal_range', label: '音域一覧に戻る' },
   sacred_map: { hash: 'sacred_map', label: '聖地巡礼マップに戻る' },
-  setlist: { hash: 'setlist', label: 'マイセトリに戻る' },
+  setlist: { hash: 'setlist', label: 'MYセトリに戻る' },
   tour_archive: { hash: 'tour_archive', label: '歴代ツアー記録に戻る' },
   quiz: { hash: 'quiz', label: 'Official髭男dism検定に戻る' },
   quiz_archive: { hash: 'quiz_archive', label: '参考記事一覧に戻る' },
@@ -30,6 +32,22 @@ export type GuideReturnState = {
   view: GuideReturnView;
   voice?: { low: string; high: string; keyShift: number };
 };
+export type ArchiveReturnState = {
+  publisher: string;
+  query: string;
+  order: 'newest' | 'oldest';
+  visibleCount: number;
+  resetEpoch?: string;
+};
+export type TourCategoryFilter = 'all' | 'tour' | 'one_man' | 'online_fc' | 'free_special';
+export type TourReturnState = {
+  query: string;
+  sortOrder: 'newest' | 'oldest';
+  category: TourCategoryFilter;
+  openTourId?: string;
+  openEventId?: string;
+  resetEpoch?: string;
+};
 
 function browserStore(): Store | null {
   try { return window.sessionStorage; } catch { return null; }
@@ -44,9 +62,23 @@ export function clearSongReturnTab(store: Store | null = browserStore()): void {
   try { store?.removeItem(originTabKey); } catch { /* ignore */ }
 }
 
+export function clearGuideListReturnState(store: Store | null = browserStore()): void {
+  try { store?.removeItem(key); } catch { /* ignore */ }
+}
+
+export function clearArchiveReturnState(store: Store | null = browserStore()): void {
+  try { store?.removeItem(archiveKey); } catch { /* ignore */ }
+}
+
+export function clearTourReturnState(store: Store | null = browserStore()): void {
+  try { store?.removeItem(tourKey); } catch { /* ignore */ }
+}
+
 export function clearGuideReturnState(store: Store | null = browserStore()): void {
   try {
     store?.removeItem(key);
+    store?.removeItem(archiveKey);
+    store?.removeItem(tourKey);
     store?.removeItem(originTabKey);
   } catch { /* ignore */ }
 }
@@ -101,4 +133,147 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     }
     return { filters, visibleCount: visibleCount!, view };
   } catch { return null; }
+}
+
+export function saveArchiveReturnState(
+  state: ArchiveReturnState,
+  store: Store | null = browserStore(),
+): void {
+  try {
+    store?.setItem(archiveKey, JSON.stringify({
+      publisher: state.publisher,
+      query: state.query,
+      order: state.order,
+      visibleCount: state.visibleCount,
+      resetEpoch: state.resetEpoch ?? '',
+    }));
+    store?.setItem(originTabKey, 'quiz_archive');
+  } catch { /* 保存できない環境では通常の参考記事一覧へ戻す。 */ }
+}
+
+export function readArchiveReturnState(
+  articleCount: number,
+  expectedEpoch = '',
+  allowedPublishers?: readonly string[],
+  store: Store | null = browserStore(),
+): ArchiveReturnState | null {
+  if (!store) return null;
+  try {
+    const raw = store.getItem(archiveKey);
+    if (!raw || raw.length > 10_000) return null;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const record = value as Record<string, unknown>;
+    const stateEpoch = typeof record.resetEpoch === 'string' ? record.resetEpoch : '';
+    if (stateEpoch !== expectedEpoch) return null;
+    if (
+      typeof record.publisher !== 'string' ||
+      record.publisher.length < 1 ||
+      record.publisher.length > 80 ||
+      /[\u0000-\u001F\u007F]/.test(record.publisher) ||
+      (allowedPublishers && record.publisher !== 'all' && !allowedPublishers.includes(record.publisher)) ||
+      typeof record.query !== 'string' ||
+      record.query.length > 60 ||
+      (record.order !== 'newest' && record.order !== 'oldest') ||
+      !Number.isInteger(record.visibleCount) ||
+      Number(record.visibleCount) < 1 ||
+      Number(record.visibleCount) > articleCount
+    ) {
+      return null;
+    }
+    return {
+      publisher: record.publisher,
+      query: record.query,
+      order: record.order,
+      visibleCount: Number(record.visibleCount),
+      resetEpoch: expectedEpoch,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function takeArchiveReturnState(
+  articleCount: number,
+  expectedEpoch = '',
+  allowedPublishers?: readonly string[],
+  store: Store | null = browserStore(),
+): ArchiveReturnState | null {
+  if (!store) return null;
+  const restored = readArchiveReturnState(articleCount, expectedEpoch, allowedPublishers, store);
+  try {
+    store.removeItem(archiveKey);
+    store.removeItem(originTabKey);
+  } catch { /* ignore */ }
+  return restored;
+}
+
+const tourCategories = new Set<TourCategoryFilter>(['all', 'tour', 'one_man', 'online_fc', 'free_special']);
+
+export function saveTourReturnState(
+  state: TourReturnState,
+  store: Store | null = browserStore(),
+): void {
+  try {
+    store?.setItem(tourKey, JSON.stringify({
+      query: state.query,
+      sortOrder: state.sortOrder,
+      category: state.category,
+      ...(state.openTourId ? { openTourId: state.openTourId } : {}),
+      ...(state.openEventId ? { openEventId: state.openEventId } : {}),
+      resetEpoch: state.resetEpoch ?? '',
+    }));
+    store?.setItem(originTabKey, 'tour_archive');
+  } catch { /* 保存できない環境では通常表示へ戻す。 */ }
+}
+
+export function readTourReturnState(
+  expectedEpoch = '',
+  store: Store | null = browserStore(),
+): TourReturnState | null {
+  if (!store) return null;
+  try {
+    const raw = store.getItem(tourKey);
+    if (!raw || raw.length > 10_000) return null;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+    const record = value as Record<string, unknown>;
+    const stateEpoch = typeof record.resetEpoch === 'string' ? record.resetEpoch : '';
+    if (stateEpoch !== expectedEpoch) return null;
+    const validOptionalId = (val: unknown) =>
+      val === undefined || (typeof val === 'string' && val.length > 0 && val.length <= 80 && !/[\u0000-\u001F\u007F]/.test(val));
+    if (
+      typeof record.query !== 'string' ||
+      record.query.length > 60 ||
+      (record.sortOrder !== 'newest' && record.sortOrder !== 'oldest') ||
+      !tourCategories.has(record.category as TourCategoryFilter) ||
+      !validOptionalId(record.openTourId) ||
+      !validOptionalId(record.openEventId)
+    ) {
+      return null;
+    }
+    return {
+      query: record.query,
+      sortOrder: record.sortOrder,
+      category: record.category as TourCategoryFilter,
+      ...(typeof record.openTourId === 'string' ? { openTourId: record.openTourId } : {}),
+      ...(typeof record.openEventId === 'string' ? { openEventId: record.openEventId } : {}),
+      resetEpoch: expectedEpoch,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export function takeTourReturnState(
+  expectedEpoch = '',
+  store: Store | null = browserStore(),
+): TourReturnState | null {
+  if (!store) return null;
+  const restored = readTourReturnState(expectedEpoch, store);
+  try {
+    store.removeItem(tourKey);
+    store.removeItem(originTabKey);
+  } catch { /* ignore */ }
+  return restored;
 }

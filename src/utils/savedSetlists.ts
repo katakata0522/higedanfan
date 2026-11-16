@@ -1,3 +1,4 @@
+import { restoreFanRecords, STORAGE_KEY } from '../hooks/fanRecordStorage';
 import {
   SETLIST_TITLE_LIMIT,
   SetlistEntry,
@@ -9,6 +10,21 @@ import { sanitizeSafeId, sanitizeUserText } from './userInput';
 export const SAVED_SETLISTS_STORAGE_KEY = 'higedan_saved_setlists_v1';
 export const DEFAULT_SAVED_SETLIST_TITLE = 'マイ・ドリームライブ';
 export const MAX_SAVED_SETLISTS = 30;
+
+export interface SavedSetlistsStoreLike {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
+
+export interface SavedSetlistsAccessOptions {
+  expectedEpoch?: string;
+  validSongIds?: Set<string>;
+  deletedIds?: ReadonlySet<string>;
+  replace?: boolean;
+  storage?: SavedSetlistsStoreLike | null;
+  recordStorage?: SavedSetlistsStoreLike | null;
+}
 
 export interface SavedSetlistItem {
   id: string;
@@ -24,13 +40,30 @@ export interface SavedSetlistsState {
 
 const BLOCKED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
-function getStorage(): Storage | null {
+function getStorage(): SavedSetlistsStoreLike | null {
   try {
     if (typeof window === 'undefined' || !window.localStorage) return null;
     return window.localStorage;
   } catch {
     return null;
   }
+}
+
+function readCurrentResetEpoch(recordStorage: SavedSetlistsStoreLike | null): string {
+  if (!recordStorage) return '';
+  try {
+    const raw = recordStorage.getItem(STORAGE_KEY);
+    return raw === null ? '' : restoreFanRecords(raw).resetEpoch;
+  } catch {
+    return '';
+  }
+}
+
+function isMatchingEpochPayload(raw: unknown, currentEpoch: string): boolean {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return false;
+  const storedEpoch = (raw as Record<string, unknown>).resetEpoch;
+  if (typeof storedEpoch === 'string') return storedEpoch === currentEpoch;
+  return currentEpoch === '';
 }
 
 function createCleanRecord<T extends object>(obj: T): T {
@@ -115,13 +148,20 @@ export function createInitialSavedSetlistsState(
 
 export function readStoredSavedSetlists(
   validSongIds: Set<string>,
+  options: SavedSetlistsAccessOptions = {},
 ): SavedSetlistsState | null {
-  const storage = getStorage();
+  const storage = options.storage === undefined ? getStorage() : options.storage;
   if (!storage) return null;
+  const recordStorage = options.recordStorage === undefined ? storage : options.recordStorage;
+  const currentEpoch = readCurrentResetEpoch(recordStorage);
+  if (options.expectedEpoch !== undefined && options.expectedEpoch !== currentEpoch) {
+    return null;
+  }
   try {
     const raw = storage.getItem(SAVED_SETLISTS_STORAGE_KEY);
     if (!raw) return null;
     const parsed: unknown = JSON.parse(raw);
+    if (!isMatchingEpochPayload(parsed, currentEpoch)) return null;
     return sanitizeSavedSetlistsState(parsed, validSongIds);
   } catch {
     return null;
@@ -132,30 +172,109 @@ export function loadSavedSetlists(
   validSongIds: Set<string>,
   fallbackTitle: string,
   fallbackEntries: readonly SetlistEntry[],
+  options: SavedSetlistsAccessOptions = {},
 ): SavedSetlistsState {
   return (
-    readStoredSavedSetlists(validSongIds) ??
+    readStoredSavedSetlists(validSongIds, options) ??
     createInitialSavedSetlistsState(fallbackTitle, fallbackEntries, validSongIds)
   );
 }
 
-export function persistSavedSetlists(state: SavedSetlistsState): void {
-  const storage = getStorage();
-  if (!storage) return;
+/** Merge non-active/foreign setlists from existing storage so concurrent tabs cannot erase each other's lists. */
+export function mergeSavedSetlistsForPersist(
+  nextState: SavedSetlistsState,
+  existingState: SavedSetlistsState,
+  deletedIds?: ReadonlySet<string>,
+): SavedSetlistsState {
+  const existingById = new Map(existingState.items.map((item) => [item.id, item]));
+  const seenIds = new Set<string>();
+  const items: SavedSetlistItem[] = [];
+
+  for (const item of nextState.items) {
+    seenIds.add(item.id);
+    const storedItem = existingById.get(item.id);
+    if (item.id !== nextState.activeId && storedItem && storedItem.updatedAt > item.updatedAt) {
+      items.push(storedItem);
+    } else {
+      items.push(item);
+    }
+  }
+
+  for (const storedItem of existingState.items) {
+    if (items.length >= MAX_SAVED_SETLISTS) break;
+    if (seenIds.has(storedItem.id) || deletedIds?.has(storedItem.id)) continue;
+    seenIds.add(storedItem.id);
+    items.push(storedItem);
+  }
+
+  return {
+    activeId: items.some((item) => item.id === nextState.activeId) ? nextState.activeId : items[0].id,
+    items: items.slice(0, MAX_SAVED_SETLISTS),
+  };
+}
+
+export function persistSavedSetlists(
+  state: SavedSetlistsState,
+  options: SavedSetlistsAccessOptions = {},
+): boolean {
+  const storage = options.storage === undefined ? getStorage() : options.storage;
+  if (!storage) return false;
+  const recordStorage = options.recordStorage === undefined ? storage : options.recordStorage;
+  const currentEpoch = readCurrentResetEpoch(recordStorage);
+  if (options.expectedEpoch !== undefined && options.expectedEpoch !== currentEpoch) {
+    return false;
+  }
   try {
-    storage.setItem(SAVED_SETLISTS_STORAGE_KEY, JSON.stringify(state));
+    let toPersist = state;
+    if (!options.replace && options.validSongIds) {
+      const existing = readStoredSavedSetlists(options.validSongIds, {
+        expectedEpoch: options.expectedEpoch,
+        storage,
+        recordStorage,
+      });
+      if (existing) {
+        toPersist = mergeSavedSetlistsForPersist(state, existing, options.deletedIds);
+      }
+    }
+    storage.setItem(
+      SAVED_SETLISTS_STORAGE_KEY,
+      JSON.stringify({ activeId: toPersist.activeId, items: toPersist.items, resetEpoch: currentEpoch }),
+    );
+    return true;
   } catch {
-    // Ignore QuotaExceededError / strict browser storage errors gracefully.
+    return false;
   }
 }
 
-export function clearSavedSetlistsStorage(): void {
-  const storage = getStorage();
+export function clearSavedSetlistsStorage(
+  storage: SavedSetlistsStoreLike | null = getStorage(),
+): void {
   if (!storage) return;
   try {
     storage.removeItem(SAVED_SETLISTS_STORAGE_KEY);
   } catch {
     // Ignore storage removal errors in restricted environments.
+  }
+}
+
+export function clearStaleSavedSetlists(
+  expectedEpoch: string,
+  storage: SavedSetlistsStoreLike | null = getStorage(),
+  recordStorage: SavedSetlistsStoreLike | null = storage,
+): boolean {
+  if (!expectedEpoch || !storage) return false;
+  if (readCurrentResetEpoch(recordStorage) !== expectedEpoch) return false;
+  try {
+    const raw = storage.getItem(SAVED_SETLISTS_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed: unknown = JSON.parse(raw);
+    if (!isMatchingEpochPayload(parsed, expectedEpoch)) {
+      storage.removeItem(SAVED_SETLISTS_STORAGE_KEY);
+      return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
 }
 

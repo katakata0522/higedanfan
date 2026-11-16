@@ -1,19 +1,19 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
+import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'pretender',
   artwork: {
-    path: 'song-art/pretender-editorial.png',
+    theme: 'traveler',
     alt: '赤い劇場の客席、ピアノ、仮面を描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: '演じきれない恋の、その先へ。',
-    credit: '— 当サイト作成者による紹介文',
+    text: editorialArticles.pretender.feature,
+    credit: editorialArticles.pretender.featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialArticles.pretender.featureKind,
+    citeUrl: editorialArticles.pretender.featureCiteUrl,
   },
-  overview: [
-    '「Pretender」は、映画『コンフィデンスマンJP』の主題歌として制作され、2019年4月17日に先行配信された。同年5月15日にシングルとして発売され、10月9日発売のアルバム『Traveler』には12曲目として収録された。',
-    'バンドはシングルの特設サイトで、映画から感じ取った寂しさや儚さが制作の出発点になったと語っている。藤原聡は後の公式対談で、プロデューサーの提案を受けてUKロックの音作りを取り入れたとも振り返った。メロディーと歌詞にはJ-POPの感覚を残しながら、音の作り方を広げた曲だ。',
-  ],
+  overview: editorialArticles.pretender.paragraphs,
   albumTrack: 12,
   sources: [
     { label: '『Pretender』公式特設サイト', purpose: '映画主題歌、シングル発売日、アーティストコメント', url: 'https://pretender.ponycanyon.co.jp/' },

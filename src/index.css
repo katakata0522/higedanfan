@@ -157,12 +157,15 @@ body.kurun-intro-active {
   position: absolute;
   top: clamp(24px, 4.4vh, 46px);
   right: clamp(24px, 5vw, 68px);
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
   background: transparent;
   color: #1C1917;
   border: 0;
   border-bottom: 1px solid #57534E;
   cursor: pointer;
-  padding: 7px 2px;
+  padding: 7px 6px;
   font-size: 12px;
   letter-spacing: .04em;
   z-index: 3;

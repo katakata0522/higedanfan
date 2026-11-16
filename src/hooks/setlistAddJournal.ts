@@ -1,4 +1,4 @@
-import { HIGEDAN_SONGS } from '../data/higedanData';
+import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 
 // 同じタブの再読み込みを越えて、保存待ちの追加操作だけを復元する。
 const PREFIX = 'higedan_pending_setlist_add_v1:';

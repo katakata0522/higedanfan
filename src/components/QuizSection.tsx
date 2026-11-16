@@ -17,11 +17,12 @@ interface QuizSectionProps {
   onSelectSong?: (song: SongItem) => void;
   initialTab?: 'quiz' | 'archive';
   onBackHome?: () => void;
+  bestQuizScore?: number | null;
   onUpdateBestScore?: (percentage: number) => void;
 }
 
 export function QuizSection({
-  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome, onUpdateBestScore,
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome, bestQuizScore = null, onUpdateBestScore,
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
@@ -106,16 +107,7 @@ export function QuizSection({
               </span>
             </div>
 
-            {viewTab === 'quiz' && quizStage !== 'select' ? (
-              <button
-                type="button"
-                onClick={chooseCourse}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors shrink-0 cursor-pointer"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-                {quizStage === 'playing' ? '検定を終了してコース選択へ' : 'コース選択へ戻る'}
-              </button>
-            ) : viewTab === 'quiz' ? (
+            {viewTab === 'quiz' ? (
               <a
                 href="#quiz_archive"
                 className="text-xs font-bold text-[#5d554c] hover:text-[#1C1917] px-3 py-1.5 rounded-lg border border-[#d8ccb8] bg-[#fffdf8] transition-colors shrink-0"
@@ -132,12 +124,12 @@ export function QuizSection({
             )}
           </div>
           <div>
-            <h2
+            <h1
               id="quiz-heading"
               className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
             >
               {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
-            </h2>
+            </h1>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {viewTab === 'archive'
                 ? '曲の物語や検定で参考にした記事・インタビュー・公式資料。記事名・媒体・日付から、掲載元をたどれます。'
@@ -155,7 +147,7 @@ export function QuizSection({
         )}
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker onStart={startCourse} />
+          <QuizCoursePicker onStart={startCourse} bestQuizScore={bestQuizScore} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
@@ -188,7 +180,7 @@ export function QuizSection({
             onChooseCourse={chooseCourse}
           />
         )}
-        <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} />
+        <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} resetEpoch={resetEpoch} />
       </div>
     </section>
   );

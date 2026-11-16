@@ -367,7 +367,7 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
 
   const toursOldestFirst = sortTourArchives(TOUR_ARCHIVES, 'oldest');
   const toursNewestFirst = sortTourArchives(TOUR_ARCHIVES, 'newest');
-  assert.equal(toursOldestFirst[0].id, 'tour-oneman-2016');
+  assert.equal(toursOldestFirst[0].id, 'live-love-and-peace-2015');
   assert.equal(toursNewestFirst[0].id, 'tour-asia-2026');
 
   // Verify songwriter credits for member-composed songs
@@ -376,7 +376,8 @@ test('filterAndSortDiscography supports all 90 verified songs, album/EP filterin
   assert.equal(getSongwriterCredit({ id: 'tabi-wa-michizure' }), '作詞・作曲：楢﨑誠');
   assert.equal(getSongwriterCredit({ id: 'midori-no-amayoke' }), '作詞・作曲：楢﨑誠');
   assert.equal(getSongwriterCredit({ id: 'choral-a-song' }), '作詞・作曲：楢﨑誠');
-  assert.equal(getSongwriterCredit({ id: 'kanousei-song' }), '作者情報未確認');
+  assert.equal(getSongwriterCredit({ id: 'kanousei-song' }), '作詞・作曲：藤原聡');
+  assert.equal(getSongwriterCredit({ id: 'unlisted-song' }), '作者情報未確認');
   assert.equal(getSongwriterCredit({ id: 'filament-song' }), '作詞・作曲：松浦匡希・藤原聡');
   assert.equal(getSongwriterCredit({ id: 'pretender' }), '作詞・作曲：藤原聡');
 
@@ -451,18 +452,22 @@ test('all 90 setlist entries and encore assignments survive validation', () => {
     assert.equal(songEvidence['sharon'].cd,'2024.07.24');
 });
 
-test('tour archive contains dated public concert records and only links to listed setlists', () => {
-  assert.equal(TOUR_ARCHIVES.length, 16);
-  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 221);
+test('tour archive contains dated public concert records and valid in-site event metadata', () => {
+  assert.equal(TOUR_ARCHIVES.length, 37);
+  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 251);
   for (const tour of TOUR_ARCHIVES) {
     assert.ok(tour.events.length > 0, tour.tourTitle);
     assert.equal(tour.startDate, tour.events[0].date);
     assert.equal(tour.endDate, tour.events.at(-1)?.date);
+    if (tour.officialSourceUrl) {
+      assert.equal(new URL(tour.officialSourceUrl).protocol, 'https:');
+    }
     for (const event of tour.events) {
+      assert.match(event.id, /^[a-z0-9-]+$/);
       assert.match(event.date, /^\d{4}-\d{2}-\d{2}$/);
       assert.ok(event.venue.trim(), event.date);
-      assert.equal(new URL(event.liveRepoUrl).host, 'liverepo.katakatalab.com');
-      if (event.crossCheckSetlistUrl) assert.equal(new URL(event.crossCheckSetlistUrl).host, 'higedan-setlist.net');
+      assert.equal(typeof event.hasSetlist, 'boolean');
+      assert.ok(Number.isInteger(event.trackCount) && event.trackCount >= 0);
     }
   }
 });

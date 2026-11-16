@@ -38,3 +38,23 @@ test('verified alternate URLs for the same article appear once without losing th
     assert.match(sources[0].purpose, item.purpose);
   }
 });
+
+test('lyric quote songs preserve attribution while editorial songs keep default credit', () => {
+  const quoted = applySongEditorial(pretender);
+  assert.equal(quoted.feature.kind, 'lyric-quote');
+  assert.equal(quoted.feature.text, 'たったひとつ確かなことがあるとするのならば\n「君は綺麗だ」');
+  assert.equal(quoted.feature.credit, '— Official髭男dism「Pretender」（作詞：藤原聡）');
+  assert.equal(quoted.feature.citeUrl, 'https://www.uta-net.com/song/268710/');
+
+  const mixedQuoted = applySongEditorial(mixedNuts);
+  assert.equal(mixedQuoted.feature.kind, 'lyric-quote');
+  assert.equal(mixedQuoted.feature.credit, '— Official髭男dism「ミックスナッツ」（作詞：藤原聡）');
+
+  const ladyQuoted = applySongEditorial(autoSongPage('lady-song'));
+  assert.equal(ladyQuoted.feature.kind, 'lyric-quote');
+  assert.equal(ladyQuoted.feature.text, '僕らはマジックで 記憶を上書きし合った\n「初めて」を独り占めしたくて');
+  assert.equal(ladyQuoted.feature.credit, '— Official髭男dism「LADY」（作詞：藤原聡）');
+
+  const autoBase = autoSongPage('lady-song');
+  assert.equal(autoBase.feature.credit, '— 参考資料をもとに当サイトが要約した曲調');
+});

@@ -77,7 +77,7 @@ const groups: SourceGroup[] = [
     ],
   },
   {
-    title: "検定クイズ",
+    title: "Official髭男dism検定",
     body: "結成当時のことやメンバーについての出題には、本人が出演した番組やインタビュー、公演を取材した記事を参照しました。各問題の出典は解答後の解説にも載せています。",
     links: [
       ["LINEのメンバーインタビュー", "https://guide.line.me/ja/features-and-columns/interview001.html"],
@@ -92,7 +92,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "聖地巡礼マップ・ツアーの記録",
-    body: "場所とのつながりは、本人のインタビュー、施設や自治体の公表、撮影地を紹介する記事などを参照しました。撮影地が地域までしか確認できない場合は、地図をエリアの目安として案内しています。公演日・会場はLiveRepoの公開記録とヒゲダンセトリの公演一覧を照合し、2016年の3公演は公式告知とも照合しました。個別公演のセトリはリンク先の掲載情報を案内しています。",
+    body: "場所とのつながりは、本人のインタビュー、施設や自治体の公表、撮影地を紹介する記事などを参照しました。撮影地が地域までしか確認できない場合は、地図をエリアの目安として案内しています。公演日・会場およびセットリストはLiveRepoの公開記録とヒゲダンセトリ、公式特設・音楽メディア報道を突合確認したうえで、このサイト内に収録しています。",
     links: [
       ["松江観光協会の宍道湖夕日スポット案内", "https://www.kankou-matsue.jp/omoshiro/sunset/264"],
       ["DISK GARAGEの藤原聡インタビュー", "https://www.diskgarage.com/digaonline/pleasure/55307"],
@@ -143,7 +143,7 @@ export function SourcesAndThanks() {
     <article aria-labelledby="sources-title" className="my-4 text-[#1C1917]">
       <header className="mb-7 border-b border-[#D5CEC2] pb-6">
         <h1 id="sources-title" className="font-note-serif text-2xl font-bold tracking-[.04em] text-[#253331] sm:text-3xl">参考資料・謝辞</h1>
-        <p className="mt-3 text-base leading-7 text-[#57534E]">楽曲ガイド、検定クイズ、聖地巡礼マップ、ツアー記録で参照した資料を紹介します。</p>
+        <p className="mt-3 text-base leading-7 text-[#57534E]">楽曲ガイド、Official髭男dism検定、聖地巡礼マップ、ツアー記録で参照した資料を紹介します。</p>
       </header>
 
       <div className="space-y-4">

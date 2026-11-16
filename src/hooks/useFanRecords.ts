@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
-import { HIGEDAN_SONGS, type FanReview, type SongItem } from '../data/higedanData';
-import { formatDateDot, normalizeSetlistOrder, sanitizeSafeId, sanitizeSetlistEntries, sanitizeUserText, type SetlistEntry } from '../utils/fanLogic';
+import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import type { FanReview, SongItem } from '../data/higedanData';
+import { formatDateDot } from '../utils/format';
+import { sanitizeSafeId, sanitizeUserText } from '../utils/userInput';
 import { createFanRecordStore, DEFAULT_SETLIST_TITLE, songsWithVotes, type Change } from './fanRecordStore';
-import { SETLIST_TITLE_LIMIT, sanitizeSetlistTitle } from '../utils/setlist';
+import { normalizeSetlistOrder, sanitizeSetlistEntries, SETLIST_TITLE_LIMIT, sanitizeSetlistTitle, type SetlistEntry } from '../utils/setlist';
 import {
   clearSavedSetlistsStorage,
   persistSavedSetlists,
@@ -38,11 +40,11 @@ export function useFanRecords(showToast: (message: string) => void) {
     const song = HIGEDAN_SONGS.find(s => s.id === id);
     if (!song) return;
     if (records.setlist.some(s => s.songId === id)) {
-      showToast(`「${song.title}」はすでにマイセトリに入っています。`);
+      showToast(`「${song.title}」はすでにMYセトリに入っています。`);
       return;
     }
     const result = await store.addToSetlist(id, isEncore, records.resetEpoch);
-    if (result === 'saved') showToast(`「${song.title}」をマイセトリに追加しました！`);
+    if (result === 'saved') showToast(`「${song.title}」をMYセトリに追加しました！`);
   };
   const removeFromSetlist = (id: string) => {
     const song = HIGEDAN_SONGS.find(s => s.id === id);
@@ -99,7 +101,7 @@ export function useFanRecords(showToast: (message: string) => void) {
   const loadPresetSetlist = (entries: SetlistEntry[], title: string) => {
     const setlist = sanitizeSetlistEntries(entries, songIds);
     if (!setlist) return false;
-    const setlistTitle = sanitizeUserText(title, SETLIST_TITLE_LIMIT) || 'マイセットリスト';
+    const setlistTitle = sanitizeUserText(title, SETLIST_TITLE_LIMIT) || 'MYセトリ';
     const custom = records.setlistTitle.trim();
     if ((records.setlist.length > 0 || (custom && custom !== DEFAULT_SETLIST_TITLE)) &&
         !window.confirm(`今のセトリの名前と曲順を「${setlistTitle}」の選曲に置き換えますか？`)) return false;
@@ -159,18 +161,18 @@ export function useFanRecords(showToast: (message: string) => void) {
   const replaceSetlistSilently = (entries: SetlistEntry[], title: string) => {
     const validIds = new Set(HIGEDAN_SONGS.map(s => s.id));
     const setlist = sanitizeSetlistEntries(entries, validIds) ?? normalizeSetlistOrder(entries);
-    const setlistTitle = sanitizeSetlistTitle(title) || 'マイセットリスト';
+    const setlistTitle = sanitizeSetlistTitle(title) || 'MYセトリ';
     void change(r => ({...r, setlist, setlistTitle}));
   };
   const resetAllUserData = async () => {
-    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nマイセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。')) return;
+    if (!window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nMYセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。')) return;
     if (await store.reset(records.resetEpoch)) {
       clearSavedSetlistsStorage();
       showToast('保存データを初期状態にリセットしました。');
     }
   };
   const downloadRecords = () => {
-    const storedSetlists = readStoredSavedSetlists(songIds);
+    const storedSetlists = readStoredSavedSetlists(songIds, { expectedEpoch: records.resetEpoch });
     const syncedSetlists = storedSetlists
       ? syncActiveSavedSetlist(storedSetlists, records.setlistTitle || DEFAULT_SETLIST_TITLE, records.setlist)
       : null;
@@ -185,9 +187,9 @@ export function useFanRecords(showToast: (message: string) => void) {
     try {
       if (file.size > 2_000_000) throw new Error('記録ファイルが大きすぎます。');
       const { records: imported, savedSetlists } = parseFanRecordBackupWithSetlists(await file.text());
-      if (!window.confirm('このブラウザのマイセトリ、参戦・訪問、クイズなどの記録を、ファイルの内容に置き換えます。\n\n今の記録も残したい場合は、先に「記録を書き出す」を押してください。読み込みますか？')) return;
+      if (!window.confirm('このブラウザのMYセトリ、参戦・訪問、クイズなどの記録を、ファイルの内容に置き換えます。\n\n今の記録も残したい場合は、先に「記録を書き出す」を押してください。読み込みますか？')) return;
       if (await store.importBackup(imported, records)) {
-        if (savedSetlists) persistSavedSetlists(savedSetlists);
+        if (savedSetlists) persistSavedSetlists(savedSetlists, { validSongIds: songIds, replace: true });
         else clearSavedSetlistsStorage();
         showToast('記録を読み込みました。');
       }

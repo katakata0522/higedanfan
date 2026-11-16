@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://katakatalab.com/higedanfan/sitemap.xml

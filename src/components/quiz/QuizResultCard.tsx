@@ -61,9 +61,9 @@ export function QuizResultCard({
         Official髭男dism検定 認定結果（{activeCourseLabel}）
       </div>
 
-      <h3 ref={heading} tabIndex={-1} className="scroll-mt-20 text-xl sm:text-2xl font-bold text-[#1C1917]">
+      <h2 ref={heading} tabIndex={-1} className="scroll-mt-20 text-xl sm:text-2xl font-bold text-[#1C1917]">
         認定ランク：{quizSummary.rankTitle}
-      </h3>
+      </h2>
 
       <p className="font-mono-num text-base sm:text-lg font-bold text-[#C83E2B]">
         正解数 {quizSummary.score} / {quizSummary.total} 問（正答率{' '}
@@ -119,9 +119,9 @@ export function QuizResultCard({
       {isCertShareOpen && (
         <div className="mt-5 pt-5 border-t border-[#E6E1D6] text-left space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <h4 className="text-sm font-bold text-[#1C1917]">
+            <h3 className="text-sm font-bold text-[#1C1917]">
               Official髭男dism検定 認定証シェアカード
-            </h4>
+            </h3>
             <div className="flex items-center gap-2">
               <button
                 type="button"
@@ -152,20 +152,22 @@ export function QuizResultCard({
           </div>
 
           <div className="mx-auto max-w-2xl overflow-hidden rounded-2xl border border-[#1C1917] bg-[#1C1917] text-[#FBF9F5] shadow-lg">
-            <div className="flex items-center justify-between border-b border-white/15 bg-black/30 px-5 py-3 text-xs">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b border-white/15 bg-black/30 px-4 sm:px-5 py-3 text-xs">
               <span className="font-bold text-[#F5D0C9]">
-                115万キロのファンノート · Official髭男dism検定 認定証
+                <span className="whitespace-nowrap">115万キロのファンノート</span>
+                {' · '}
+                <span className="whitespace-nowrap">Official髭男dism検定 認定証</span>
               </span>
-              <span className="font-mono-num font-bold text-white">
+              <span className="whitespace-nowrap font-mono-num font-bold text-white">
                 {quizSummary.rankBadgeCode}
               </span>
             </div>
-            <div className="p-6 space-y-3">
+            <div className="p-4 sm:p-6 space-y-3">
               <div className="text-xs text-white/75">{activeCourseLabel}</div>
-              <div className="text-xl sm:text-2xl font-bold text-white">
+              <div className="text-lg sm:text-2xl font-bold text-white">
                 認定ランク：{quizSummary.rankTitle}
               </div>
-              <div className="font-mono-num text-base font-bold text-[#F5D0C9]">
+              <div className="font-mono-num text-sm sm:text-base font-bold text-[#F5D0C9]">
                 正解数 {quizSummary.score} / {quizSummary.total} 問（正答率{' '}
                 {quizSummary.percentage}%）
               </div>
@@ -173,9 +175,9 @@ export function QuizResultCard({
                 {quizSummary.editorialMessage}
               </p>
             </div>
-            <div className="flex items-center justify-between border-t border-white/10 bg-black/25 px-5 py-2.5 text-[11px] text-white/65">
+            <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-t border-white/10 bg-black/25 px-4 sm:px-5 py-2.5 text-[11px] text-white/65">
               <span>#115万キロのファンノート #Official髭男dism #Official髭男dism検定</span>
-              <span>今回の出題数：{quizSummary.total}問</span>
+              <span className="whitespace-nowrap">今回の出題数：{quizSummary.total}問</span>
             </div>
           </div>
         </div>

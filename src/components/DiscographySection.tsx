@@ -2,9 +2,11 @@ import { albumForSearch, matchedSongContexts } from '../utils/songSearch';
 import { partialEpCoverage } from '../utils/songCatalog';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { songEvidence } from '../data/fullCatalogSongs';
+import { songAppleArtwork } from '../data/songAppleArtwork';
 import { fitsVoiceRange } from '../utils/voiceRange';
 import { sortSongTable, SONG_TABLE_SORT_LABELS, type SongTableSortKey } from '../utils/songTableSort';
 import { songPagePath } from '../songPages/publishedSongPageIds';
+import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { saveGuideReturnState, takeGuideReturnState } from '../utils/guideReturnState';
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
@@ -28,6 +30,7 @@ import {
   filterAndSortDiscography,
   formatSongBpm,
   formatDuration,
+  getSongwriterCredit,
 } from '../utils/fanLogic';
 
 export type DiscographySubView = 'discography' | 'vocal_range' | 'sacred_map';
@@ -240,7 +243,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           </div>
 
           <div>
-            <h2
+            <h1
               id="discography-heading"
               className="font-note-serif text-xl sm:text-[28px] font-bold tracking-[.04em] text-[#253331]"
             >
@@ -249,7 +252,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 : activeSubView === 'vocal_range'
                 ? '掲載90曲の音域・発売日一覧'
                 : '楽曲ガイド（全90曲）'}
-            </h2>
+            </h1>
             <p className="mt-1.5 text-xs sm:text-sm leading-relaxed text-[#57534E]">
               {activeSubView === 'sacred_map'
                 ? '山陰の原点の地からライブ会場、MVの舞台になった景色まで、音と記憶をつないでたどります。'
@@ -267,7 +270,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             onReset={() => { setFilters(DEFAULT_GUIDE_FILTERS); setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }}>
             {activeSubView === 'vocal_range' && (
               <div className="mt-3 rounded-xl border border-[#dfd7c7] bg-[#fff9eb] p-4">
-                <h3 className="font-note-serif text-sm font-bold text-[#253331]">自分の声の範囲で探す</h3>
+                <h2 className="font-note-serif text-sm font-bold text-[#253331]">自分の声の範囲で探す</h2>
                 <p className="mt-1 text-xs leading-relaxed text-[#57534E]">出せる低い音と高い音を選ぶと、地声の音域が範囲に収まる曲を探せます。裏声や息継ぎは含まない、選曲の目安です。表に表示する音域は原曲キーの値です。</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-3">
                   <label className="text-xs font-bold text-[#57534E]">出せる低い音
@@ -295,7 +298,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
         {activeSubView !== 'sacred_map' && epCoverage && (
           <p className="mt-3 notebook-paper rounded-lg p-3 text-sm text-[#57534E]">
-            {epCoverage.note} <a className="underline hover:text-[#C83E2B]" href={epCoverage.source} target="_blank" rel="noreferrer">公式の収録曲 ↗</a>
+            {epCoverage.note} <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={epCoverage.source} target="_blank" rel="noreferrer">公式の収録曲 ↗</a>
           </p>
         )}
 
@@ -308,9 +311,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   {displayedSongs.map((song) => {
                     const inSetlist = setlistSongIds.includes(song.id);
                     const pagePath = songPagePath(song.id);
+                    const fact = songEvidence[song.id as keyof typeof songEvidence];
+                    const artwork = songAppleArtwork[song.id];
                     const albumBadgeText = resultAlbum && EP_TRACK_ORDER_MAP[resultAlbum]?.[song.id]
                       ? `${resultAlbum} (M${EP_TRACK_ORDER_MAP[resultAlbum][song.id]})`
-                      : `${song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
+                      : `${song.album === 'Single / 2024-2026 Collection' && !resultAlbum ? fact.album : song.album}${song.trackNumber ? ` (M${song.trackNumber})` : ''}`;
 
                     return (
                       <article
@@ -318,13 +323,24 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         className="flex flex-col justify-between notebook-paper rounded-xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:border-[#253331]/40"
                       >
                         <div>
-                          <div className="flex items-start">
+                          <div className="flex items-start gap-3">
+                            {artwork && (
+                              <img
+                                src={artwork.artworkUrl}
+                                alt=""
+                                width={52}
+                                height={52}
+                                loading="lazy"
+                                decoding="async"
+                                className="h-[52px] w-[52px] shrink-0 rounded-lg border border-[#e5dccb] bg-[#f4efe4] object-cover shadow-2xs"
+                              />
+                            )}
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
                                 <span className="min-w-0 wrap-anywhere whitespace-normal">{albumBadgeText}</span>
                                 <span className="shrink-0">配信掲載 {song.releaseDate}</span>
                               </div>
-                              <h3 className="mt-0.5 font-note-serif text-base sm:text-lg font-bold text-[#253331] min-w-0 wrap-anywhere whitespace-normal">
+                              <h2 className="mt-0.5 font-note-serif text-base sm:text-lg font-bold text-[#253331] min-w-0 wrap-anywhere whitespace-normal">
                                 {pagePath ? (
                                   <a href={`${import.meta.env.BASE_URL}${pagePath}`} onClick={rememberGuide}
                                     className="rounded-sm underline decoration-[#c6bba8] underline-offset-4 hover:decoration-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]">{song.title}</a>
@@ -332,9 +348,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                   <button type="button" onClick={() => onSelectSong(song)}
                                     className="rounded-sm text-left underline decoration-[#c6bba8] underline-offset-4 hover:decoration-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]">{song.title}</button>
                                 )}
-                              </h3>
-                              <p className="text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
-                                掲載音源：{songEvidence[song.id as keyof typeof songEvidence].album}
+                              </h2>
+                              <p className="mt-0.5 text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
+                                {getSongwriterCredit(song)}
+                                {!albumBadgeText.startsWith(fact.album) ? ` · 掲載音源：${fact.album}` : ''}
                               </p>
                             </div>
                           </div>
@@ -359,7 +376,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 地声最高 <strong className="text-[#C83E2B]">{song.vocalRange.highestChestNote}</strong>
                               </span>
                               <span className="text-[#57534E]">
-                                裏声 <strong className="text-[#9e6022]">{song.vocalRange.highestFalsettoNote}</strong>
+                                裏声{' '}
+                                {song.vocalRange.highestFalsettoNote === '記載なし' ? (
+                                  <span className="font-normal text-[#78716C]">記載なし</span>
+                                ) : (
+                                  <strong className="text-[#9e6022]">{song.vocalRange.highestFalsettoNote}</strong>
+                                )}
                               </span>
                             </div>
                           </div>
@@ -368,7 +390,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           <div className="mt-2.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#78716C]">
                             <span>収録音源 {formatDuration(song.durationSec)}</span>
                             <span aria-hidden="true">·</span>
-                            <span className="font-mono-num">BPM {formatSongBpm(song.id, song.bpm)}</span>
+                            <span className="font-mono-num">
+                              {isTempoUnderReview(song.id) ? 'テンポ 調査中' : `BPM ${formatSongBpm(song.id, song.bpm)}`}
+                            </span>
                           </div>
                         </div>
 
@@ -480,20 +504,23 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         const f = songEvidence[song.id as keyof typeof songEvidence];
                         return <tr key={song.id} className="group align-top hover:bg-[#faf6eb]">
                           <th scope="row" className="sticky left-0 z-10 min-w-[132px] sm:min-w-[160px] max-w-[175px] sm:max-w-[220px] bg-[#fffdf8] group-hover:bg-[#faf6eb] border-r border-[#ece3d2] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)] px-2 py-3 font-note-serif font-bold text-[#253331]">
-                            <button type="button" className="text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B] cursor-pointer" onClick={() => {
-                              if (songPagePath(song.id)) rememberGuide();
-                              onSelectSong(song);
-                            }}>{song.title}</button>
+                            <a
+                              href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
+                              onClick={rememberGuide}
+                              className="inline-flex min-h-[28px] items-center py-0.5 text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
+                            >
+                              {song.title}
+                            </a>
                           </th>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.highestChestNote}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.highestFalsettoNote}</td>
+                          <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '記載なし' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
                           <td className="min-w-[120px] px-3 py-3">{f.album}</td>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                           <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a></td>
-                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
-                          <td className="whitespace-nowrap px-3 py-3"><a className="underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.apple}>{f.release}</a></td>
+                          <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
+                          <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noreferrer" aria-label={`${song.title}の音域出典：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
                         </tr>;
                       })}
                     </tbody>
@@ -577,7 +604,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     </select>
                   </div>
                   <a
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#1d5a7a] underline underline-offset-4 hover:text-[#C83E2B]"
+                    className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1d5a7a] underline underline-offset-4 hover:text-[#C83E2B]"
                     href={'https://www.google.com/maps/search/?api=1&query=' + mapQuery}
                     target="_blank"
                     rel="noreferrer"
@@ -616,9 +643,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   >
                     <div>
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-note-serif text-base font-bold text-[#253331]">
+                        <h2 className="font-note-serif text-base font-bold text-[#253331]">
                           {spot.name}
-                        </h3>
+                        </h2>
                         {visited && (
                           <span className="shrink-0 rounded border border-[#2e6f40]/40 bg-[#eef9f0] px-1.5 py-0.5 text-[10px] font-bold text-[#2e6f40]">
                             訪問済
@@ -642,7 +669,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {spot.mapScope !== 'none' && (
                             <button
                               type="button"
-                              className="font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
+                              className="inline-flex min-h-[28px] items-center py-0.5 font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
                               onClick={() => {
                                 setMapSpotId(spot.id);
                                 document.getElementById('map-place')?.focus();
@@ -651,16 +678,16 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               {spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}
                             </button>
                           )}
-                          <a className="underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noreferrer">
+                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noreferrer">
                             場所・作品の情報 ↗
                           </a>
                           {spot.historySource && (
-                            <a className="underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noreferrer">
+                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noreferrer">
                               {spot.historySourceLabel ?? 'つながりの出典'} ↗
                             </a>
                           )}
                           {spot.additionalSources?.map(source => (
-                            <a key={source.url} className="underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
+                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
                               {source.label} ↗
                             </a>
                           ))}
@@ -695,9 +722,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
             {filteredHistoricalSpots.length > 0 && (
               <section aria-labelledby="historical-spots-heading" className="rounded-xl border border-[#dfd7c7] bg-[#f4efe4]/80 p-5 sm:p-6">
-                <h3 id="historical-spots-heading" className="font-note-serif text-base font-bold text-[#253331]">
+                <h2 id="historical-spots-heading" className="font-note-serif text-base font-bold text-[#253331]">
                   以前の場所・移転の記録
-                </h3>
+                </h2>
                 <p className="mt-1 text-xs leading-relaxed text-[#57534E]">
                   移転や閉店などで、当時とは場所や形が変わったスポットの記録です。
                 </p>
@@ -712,12 +739,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <p className="text-xs font-bold text-[#C83E2B]">
                           {spot.area} <span className="ml-2 text-[#57534E]">{spot.status}</span>
                         </p>
-                        <h4 className="mt-1.5 font-note-serif text-base font-bold text-[#253331]">{spot.name}</h4>
+                        <h3 className="mt-1.5 font-note-serif text-base font-bold text-[#253331]">{spot.name}</h3>
                         <p className="mt-2 text-xs leading-relaxed text-[#57534E]">{spot.description}</p>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-3 border-t border-[#ece3d2] pt-3 text-xs">
                         {spot.sources.map(source => (
-                          <a key={source.url} className="underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
+                          <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noreferrer">
                             {source.label} ↗
                           </a>
                         ))}

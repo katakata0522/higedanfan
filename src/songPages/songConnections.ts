@@ -123,6 +123,11 @@ export const youtubeExternalOnlySongs: ReadonlySet<string> = new Set([
   'fifty-percent', 'sanitizer', 'make-me-wonder', 'elderflower', 'stardust',
 ]);
 
+export function officialVideoId(songId: string): string | null {
+  const url = officialVideos[songId];
+  return url?.match(/^https:\/\/www\.youtube\.com\/watch\?v=([A-Za-z0-9_-]{11})$/)?.[1] ?? null;
+}
+
 export function officialVideoDescription(songId: string): string | null {
   if (songId === 'bad-for-me') return 'ライブ音源';
   if (songId === 'finder-song') return 'TV SPOT';

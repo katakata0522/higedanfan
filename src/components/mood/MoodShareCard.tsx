@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Copy, X } from 'lucide-react';
 import { GuideArtwork } from '../GuideArtwork';
+import { isTempoUnderReview } from '../../data/tempoReviewStatus';
 import {
   formatSongBpm,
   formatDiagnosisShareText,
@@ -66,9 +67,9 @@ export function MoodShareCard({
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm sm:text-base font-bold text-[#1C1917]">
-            マイソング診断 シェアカード
-          </h4>
+          <h3 className="text-sm sm:text-base font-bold text-[#1C1917]">
+            今日の1曲診断 シェアカード
+          </h3>
           <p className="text-xs text-[#57534E]">
             おすすめ1位〜3位の楽曲切り替えや、カード背景テーマの切り替えにも対応しています。
           </p>
@@ -126,14 +127,14 @@ export function MoodShareCard({
           ))}
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <span className="text-[11px] font-bold text-[#78716C]">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="shrink-0 whitespace-nowrap text-[11px] font-bold text-[#78716C]">
             配色：
           </span>
           <button
             type="button"
             onClick={() => onSelectTheme('dark')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+            className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
               theme === 'dark'
                 ? 'bg-[#1C1917] text-white'
                 : 'border border-[#D5CEC2] bg-white text-[#57534E]'
@@ -144,7 +145,7 @@ export function MoodShareCard({
           <button
             type="button"
             onClick={() => onSelectTheme('editorial')}
-            className={`rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
+            className={`whitespace-nowrap rounded-lg px-2.5 py-1 text-xs font-bold transition-colors cursor-pointer ${
               theme === 'editorial'
                 ? 'bg-[#1C1917] text-white'
                 : 'border border-[#D5CEC2] bg-white text-[#57534E]'
@@ -165,7 +166,7 @@ export function MoodShareCard({
       >
         {/* Card Top Strip */}
         <div
-          className={`flex items-center justify-between gap-2 border-b px-5 py-3 text-xs ${
+          className={`flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 border-b px-4 sm:px-5 py-3 text-xs ${
             theme === 'dark'
               ? 'border-white/15 bg-black/30'
               : 'border-[#E6E1D6] bg-[#F2EFE9]'
@@ -176,10 +177,12 @@ export function MoodShareCard({
               theme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
             }`}
           >
-            115万キロのファンノート · マイソング診断結果
+            <span className="whitespace-nowrap">115万キロのファンノート</span>
+            {' · '}
+            <span className="whitespace-nowrap">今日の1曲診断結果</span>
           </span>
           <span
-            className={`font-mono-num font-bold ${
+            className={`whitespace-nowrap font-mono-num font-bold ${
               theme === 'dark' ? 'text-white' : 'text-[#1C1917]'
             }`}
           >
@@ -281,9 +284,9 @@ export function MoodShareCard({
               : 'border-[#E6E1D6] bg-[#F2EFE9] text-[#57534E]'
           }`}
         >
-          <span>#115万キロのファンノート #Official髭男dism #マイソング診断</span>
+          <span>#115万キロのファンノート #Official髭男dism #今日の1曲診断</span>
           <span className="font-mono-num">
-            BPM {formatSongBpm(match.song.id, match.song.bpm)} · 最高音{' '}
+            {isTempoUnderReview(match.song.id) ? 'テンポ 調査中' : `BPM ${formatSongBpm(match.song.id, match.song.bpm)}`} · 最高音{' '}
             {match.song.vocalRange.highestChestNote}
           </span>
         </div>

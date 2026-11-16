@@ -11,7 +11,7 @@ export function createTourArchiveSearch(tours: readonly TourArchive[]) {
     tour,
     events: tour.events.map(event => ({
       event,
-      text: normalizeTourSearch(`${tour.tourTitle} ${event.date} ${event.venue}`),
+      text: normalizeTourSearch(`${tour.tourTitle} ${event.date} ${event.venue} ${event.label ?? ''}`),
     })),
   }));
 

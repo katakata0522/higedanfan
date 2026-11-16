@@ -4,6 +4,7 @@ import { STORAGE_KEY } from '../../hooks/fanRecordStorage';
 import {
   cancelMoodEdit, clearMoodSession, clearStaleMoodSession, editMoodAnswer, MOOD_SESSION_KEY,
   newMoodSession, previousMoodStep, restoreMoodSession, saveMoodSession, selectMoodAnswer,
+  type MoodSession,
   type MoodStorage,
 } from './moodSession';
 
@@ -105,4 +106,25 @@ test('corrupt or inaccessible browser storage never crashes or restores invalid 
   assert.equal(saveMoodSession(completedSession(), '', denied, records), false);
   assert.equal(saveMoodSession(completedSession(), '', sessions, denied), false);
   assert.doesNotThrow(() => clearMoodSession(denied));
+});
+
+test('page and theme survive restoration and invalid values are rejected', () => {
+  const sessions = memoryStore();
+  const records = memoryStore();
+  const paged: MoodSession = { ...completedSession(), page: 2, theme: 'editorial' };
+  assert.equal(saveMoodSession(paged, '', sessions, records), true);
+  assert.deepEqual(restoreMoodSession(sessions, records), paged);
+
+  // Finishing an edited answer resets result page while preserving chosen card theme.
+  const editing = editMoodAnswer(paged, 3);
+  const reAnswered = selectMoodAnswer(editing, 'gentle');
+  assert.equal(reAnswered.page, undefined);
+  assert.equal(reAnswered.theme, 'editorial');
+
+  for (const badPage of [-1, 1.5, 100, '2']) {
+    sessions.setItem(MOOD_SESSION_KEY, JSON.stringify({ ...completedSession(), page: badPage, resetEpoch: '' }));
+    assert.deepEqual(restoreMoodSession(sessions, records), newMoodSession());
+  }
+  sessions.setItem(MOOD_SESSION_KEY, JSON.stringify({ ...completedSession(), theme: 'neon', resetEpoch: '' }));
+  assert.deepEqual(restoreMoodSession(sessions, records), newMoodSession());
 });

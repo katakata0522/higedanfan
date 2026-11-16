@@ -1,19 +1,19 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
+import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'cry-baby',
   artwork: {
-    path: 'song-art/cry-baby-editorial.png',
+    theme: 'editorial',
     alt: '雨の練習室、赤いランプ、ピアノ、ドラムスティックを描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: '何度転んでも、音は前へ進む。',
-    credit: '— 当サイト作成者による紹介文',
+    text: editorialArticles['cry-baby'].feature,
+    credit: editorialArticles['cry-baby'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialArticles['cry-baby'].featureKind,
+    citeUrl: editorialArticles['cry-baby'].featureCiteUrl,
   },
-  overview: [
-    '「Cry Baby」は、TVアニメ『東京リベンジャーズ』のオープニング主題歌。2021年5月7日に配信され、同年8月発売のアルバム『Editorial』には6曲目として収録された。',
-    'アニメ公式サイトの対談で、藤原聡は繰り返す転調を物語のタイムリープに重ねたと話している。ある箇所では、ピアノの弾き間違いから生まれた意外な転調をそのまま曲に生かしたという。',
-  ],
+  overview: editorialArticles['cry-baby'].paragraphs,
   albumTrack: 6,
   sources: [
     { label: 'アニメ『東京リベンジャーズ』公式サイト', purpose: 'オープニング主題歌', url: 'https://tokyo-revengers-anime.com/news/archives/103' },

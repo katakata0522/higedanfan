@@ -20,14 +20,15 @@ export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
   // Keep the chosen card theme when the listener starts another diagnosis.
-  const [theme, setTheme] = useState<ShareTheme>('dark');
+  const theme: ShareTheme = session.theme ?? 'dark';
   const updateSession = (next: MoodSession) => {
     sessionRef.current = next;
     setSessionSaveUnavailable(!saveMoodSession(next, resetEpoch));
     setSession(next);
   };
   const restart = () => {
-    const next = newMoodSession();
+    const base = newMoodSession();
+    const next: MoodSession = session.theme ? { ...base, theme: session.theme } : base;
     updateSession(next);
   };
   const criteria = session.completed && isCompleteMoodCriteria(session.answers) ? session.answers : null;
@@ -60,12 +61,12 @@ export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props
             </span>
           </div>
           <div>
-            <h2
+            <h1
               id="mood-heading"
               className={criteria ? 'sr-only' : 'font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]'}
             >
-              マイソング診断
-            </h2>
+              今日の1曲診断
+            </h1>
             {!criteria && (
               <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
                 今の気分と一緒に、ヒゲダンの一曲を探そう。
@@ -81,7 +82,16 @@ export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props
         )}
 
         {criteria ? (
-          <MoodResults {...props} criteria={criteria} onEditAnswer={step => updateSession(editMoodAnswer(session, step))} onRestart={restart} theme={theme} onSelectTheme={setTheme} />
+          <MoodResults
+            {...props}
+            criteria={criteria}
+            page={session.page ?? 0}
+            onPageChange={page => updateSession({ ...session, page })}
+            onEditAnswer={step => updateSession(editMoodAnswer(session, step))}
+            onRestart={restart}
+            theme={theme}
+            onSelectTheme={nextTheme => updateSession({ ...session, theme: nextTheme })}
+          />
         ) : (
           <MoodQuestionnaire
             session={session}

@@ -32,7 +32,12 @@ export function applySongEditorial(page: EditorialSongPageData): EditorialSongPa
   }
   return {
     ...page,
-    feature: { text: article.feature, credit: '— 楽曲ガイドより' },
+    feature: {
+      text: article.feature,
+      credit: article.featureCredit ?? '— 楽曲ガイドより',
+      kind: article.featureKind ?? 'editorial',
+      ...(article.featureCiteUrl ? { citeUrl: article.featureCiteUrl } : {}),
+    },
     overview: article.paragraphs,
     sources,
   };

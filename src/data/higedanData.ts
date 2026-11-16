@@ -82,20 +82,33 @@ export interface HistoricalSacredSpot {
   sources: { label: string; url: string }[];
 }
 
+export interface TourSetlistTrack {
+  title: string;
+  songId?: string;
+  artist?: string;
+  isEncore?: boolean;
+  note?: string;
+}
+
+export interface TourEventRecord {
+  id: string;
+  date: string;
+  venue: string;
+  label?: string;
+  hasSetlist: boolean;
+  trackCount: number;
+}
+
+export type TourArchiveCategory = 'tour' | 'one_man' | 'online_fc' | 'free_special';
+
 export interface TourArchive {
   id: string;
   startDate: string; // YYYY-MM-DD
   endDate: string;
   tourTitle: string;
-  crossCheckUrl: string;
+  category?: TourArchiveCategory;
   officialSourceUrl?: string;
-  events: {
-    date: string;
-    venue: string;
-    liveRepoUrl: string;
-    liveRepoHasSetlist: boolean;
-    crossCheckSetlistUrl?: string;
-  }[];
+  events: TourEventRecord[];
 }
 
 export interface FanReview {
@@ -111,14 +124,6 @@ export interface FanReview {
 }
 
 export { QUIZ_QUESTIONS, type QuizQuestion, type QuizSourceItem } from './quizData';
-
-export const HERO_IMAGE_PATH = '/images/hero_magazine_collage_1793849692931.jpg';
-export const REJOICE_IMAGE_PATH = '/images/album_art_rejoice_vibe_1793849695153.jpg';
-export const EDITORIAL_IMAGE_PATH = '/images/album_art_editorial_vibe_1793849696589.jpg';
-export const TRAVELER_IMAGE_PATH = '/images/album_art_traveler_vibe_1793854124340.jpg';
-export const SAME_BLUE_IMAGE_PATH = '/images/album_art_same_blue_vibe_1793854124064.jpg';
-export const MATSUE_IMAGE_PATH = '/images/sacred_matsue_sunset_1793849698665.jpg';
-export const STADIUM_IMAGE_PATH = '/images/live_stadium_confetti_1793849699286.jpg';
 
 export { verifiedSongs as HIGEDAN_SONGS } from './fullCatalogSongs';
 
@@ -668,8 +673,8 @@ export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
 ];
 import tourArchiveRecords from './tourArchiveRecords.json';
 
-// 日付と会場を公開資料で照合したスナップショット（2026-11-08）。
-export const TOUR_ARCHIVES: TourArchive[] = tourArchiveRecords;
+// 日付・会場・公演セットリストを公式資料と公開記録で照合・収録したスナップショット（2026-11-16）。
+export const TOUR_ARCHIVES: TourArchive[] = tourArchiveRecords as TourArchive[];
 
 // QUIZ_QUESTIONS is exported from ./quizData above.
 

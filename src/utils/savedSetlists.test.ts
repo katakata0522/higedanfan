@@ -1,13 +1,19 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { STORAGE_KEY } from '../hooks/fanRecordStorage';
 import {
   MAX_SAVED_SETLISTS,
+  SAVED_SETLISTS_STORAGE_KEY,
+  clearStaleSavedSetlists,
   createInitialSavedSetlistsState,
   createNewSavedSetlist,
   deleteSavedSetlist,
+  persistSavedSetlists,
+  readStoredSavedSetlists,
   sanitizeSavedSetlistsState,
   switchSavedSetlist,
   syncActiveSavedSetlist,
+  type SavedSetlistsStoreLike,
 } from './savedSetlists';
 
 const VALID_IDS = new Set(['pretender', 'subtitle', 'cry-baby', 'universe']);
@@ -96,4 +102,102 @@ test('sanitizeSavedSetlistsState blocks tampered IDs, invalid songs, and excessi
   assert.equal(clean.activeId, 'list-1');
   assert.equal(clean.items[0].title, 'Livealert(1)');
   assert.deepEqual(clean.items[0].entries, [{ songId: 'pretender', isEncore: false }]);
+});
+
+function memoryStore(entries: Record<string, string> = {}): SavedSetlistsStoreLike {
+  const values = new Map(Object.entries(entries));
+  return {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => { values.set(key, value); },
+    removeItem: key => { values.delete(key); },
+  };
+}
+
+test('resetEpoch prevents stale writes and pre-reset saved setlist resurrection', () => {
+  const storage = memoryStore({
+    [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-1' }),
+  });
+  const base = createInitialSavedSetlistsState(
+    'セトリ1',
+    [{ songId: 'pretender', isEncore: false }],
+    VALID_IDS,
+    '2026-11-15T10:00:00.000Z',
+  );
+  assert.equal(persistSavedSetlists(base, { expectedEpoch: 'epoch-1', storage }), true);
+  assert.equal(readStoredSavedSetlists(VALID_IDS, { expectedEpoch: 'epoch-1', storage })?.items[0].title, 'セトリ1');
+
+  // Another tab resets records -> resetEpoch advances to epoch-2.
+  storage.setItem(STORAGE_KEY, JSON.stringify({ resetEpoch: 'epoch-2' }));
+  assert.equal(readStoredSavedSetlists(VALID_IDS, { storage }), null);
+  assert.equal(persistSavedSetlists(base, { expectedEpoch: 'epoch-1', storage }), false);
+  assert.equal(clearStaleSavedSetlists('epoch-1', storage), false);
+  assert.equal(clearStaleSavedSetlists('epoch-2', storage), true);
+  assert.equal(storage.getItem(SAVED_SETLISTS_STORAGE_KEY), null);
+
+  // Post-reset save under epoch-2 is kept intact.
+  const fresh = createInitialSavedSetlistsState(
+    'リセット後セトリ',
+    [{ songId: 'subtitle', isEncore: false }],
+    VALID_IDS,
+    '2026-11-15T11:00:00.000Z',
+  );
+  assert.equal(persistSavedSetlists(fresh, { expectedEpoch: 'epoch-2', storage }), true);
+  assert.equal(clearStaleSavedSetlists('epoch-2', storage), false);
+  assert.equal(readStoredSavedSetlists(VALID_IDS, { storage })?.items[0].title, 'リセット後セトリ');
+});
+
+test('concurrent tab persist merges unknown setlists without resurrecting deleted ones', () => {
+  const storage = memoryStore({
+    [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-1' }),
+  });
+  const initial = createInitialSavedSetlistsState(
+    '本編メイン',
+    [{ songId: 'pretender', isEncore: false }],
+    VALID_IDS,
+    '2026-11-15T10:00:00.000Z',
+  );
+
+  // Tab A creates a second setlist and writes it to storage.
+  const tabA = createNewSavedSetlist(
+    initial,
+    'Tab A 新規セトリ',
+    [{ songId: 'cry-baby', isEncore: false }],
+    '2026-11-15T10:05:00.000Z',
+  ).state;
+  assert.equal(persistSavedSetlists(tabA, { expectedEpoch: 'epoch-1', validSongIds: VALID_IDS, storage }), true);
+
+  // Tab B edits initial setlist without knowing Tab A's new list -> merge keeps both.
+  const tabBEdited = syncActiveSavedSetlist(
+    initial,
+    'Tab B 更新タイトル',
+    [{ songId: 'subtitle', isEncore: false }],
+    '2026-11-15T10:06:00.000Z',
+  );
+  assert.equal(
+    persistSavedSetlists(tabBEdited, {
+      expectedEpoch: 'epoch-1',
+      validSongIds: VALID_IDS,
+      storage,
+    }),
+    true,
+  );
+  const loaded = readStoredSavedSetlists(VALID_IDS, { storage });
+  assert.equal(loaded?.items.length, 2);
+  assert.equal(loaded?.items.find((i) => i.id === 'setlist-1')?.title, 'Tab B 更新タイトル');
+  assert.equal(loaded?.items.find((i) => i.id === tabA.activeId)?.title, 'Tab A 新規セトリ');
+
+  // Explicit deletion records deletedIds so persist does not resurrect the deleted list.
+  const deleted = deleteSavedSetlist(loaded!, tabA.activeId);
+  assert.equal(
+    persistSavedSetlists(deleted.state, {
+      expectedEpoch: 'epoch-1',
+      validSongIds: VALID_IDS,
+      deletedIds: new Set([tabA.activeId]),
+      storage,
+    }),
+    true,
+  );
+  const afterDelete = readStoredSavedSetlists(VALID_IDS, { storage });
+  assert.equal(afterDelete?.items.length, 1);
+  assert.equal(afterDelete?.items[0].id, 'setlist-1');
 });

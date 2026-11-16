@@ -47,28 +47,31 @@ async function waitForServer() {
 
 const appleCdnCache = new Map();
 
+async function routeWithCache(route) {
+  const url = route.request().url();
+  let cached = appleCdnCache.get(url);
+  if (!cached) {
+    const pending = route.fetch({ timeout: 20000 }).then(async res => ({
+      status: res.status(),
+      contentType: res.headers()['content-type'] || 'image/jpeg',
+      body: await res.body(),
+    }));
+    appleCdnCache.set(url, pending);
+    cached = pending;
+  }
+  try {
+    const entry = await cached;
+    await route.fulfill({ status: entry.status, contentType: entry.contentType, body: entry.body });
+  } catch {
+    appleCdnCache.delete(url);
+    await route.abort();
+  }
+}
+
 async function inspectAllPages(browser, scenario) {
   const context = await browser.newContext(scenario.context);
-  await context.route('https://*.mzstatic.com/**', async route => {
-    const url = route.request().url();
-    let cached = appleCdnCache.get(url);
-    if (!cached) {
-      const pending = route.fetch().then(async res => ({
-        status: res.status(),
-        contentType: res.headers()['content-type'] || 'image/jpeg',
-        body: await res.body(),
-      }));
-      appleCdnCache.set(url, pending);
-      cached = pending;
-    }
-    try {
-      const entry = await cached;
-      await route.fulfill({ status: entry.status, contentType: entry.contentType, body: entry.body });
-    } catch {
-      appleCdnCache.delete(url);
-      await route.abort();
-    }
-  });
+  await context.route('https://*.mzstatic.com/**', routeWithCache);
+  await context.route('https://i.ytimg.com/**', routeWithCache);
   const failures = [];
   let next = 0;
 
@@ -78,7 +81,7 @@ async function inspectAllPages(browser, scenario) {
     while (next < ids.length) {
       const id = ids[next++];
       try {
-        const response = await page.goto(`${root}songs/${id}/`, { waitUntil: 'load' });
+        const response = await page.goto(`${root}songs/${id}/`, { waitUntil: 'load', timeout: 25000 });
         assert.equal(response?.status(), 200, '楽曲ページに到達できません');
         await page.locator('.overview-copy p').first().waitFor();
         if (scenario.readable) {
@@ -204,15 +207,15 @@ async function verifyImmediateReload(browser) {
     await lockPage.evaluate(() => window.releaseTestLock());
   }
   await holdLock();
-  await page.getByRole('button', { name: 'マイセトリに追加' }).click();
-  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  await page.getByRole('button', { name: 'MYセトリに追加' }).click();
+  await page.getByRole('link', { name: 'MYセトリで確認' }).waitFor();
   assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'white-noise')), false, '保存が完了する前の状況を再現できません');
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor({ timeout: 10000 });
+  await page.getByRole('link', { name: 'MYセトリで確認' }).waitFor({ timeout: 10000 });
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'white-noise'));
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  await page.getByRole('link', { name: 'MYセトリで確認' }).waitFor();
 
   // セトリ作成画面からの追加も、アンコール設定ごと同じ条件で復元する。
   await page.goto(`${root}#setlist`, { waitUntil: 'load' });
@@ -248,7 +251,7 @@ async function verifyImmediateReload(browser) {
   await page.getByLabel('追加する曲を選択').selectOption('bedroom-talk');
   await page.getByRole('button', { name: '曲を追加', exact: true }).click();
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('button', { name: 'Bedroom Talk', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'Bedroom Talk', exact: true }).waitFor();
   await releaseLock();
   await page.waitForFunction(() => JSON.parse(localStorage.getItem('higedan_fan_magazine_state_v1')).setlist.some(item => item.songId === 'bedroom-talk' && item.isEncore));
   await context.close();
@@ -266,9 +269,9 @@ async function verifyStorageFailures(browser) {
     };
   });
   await page.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
-  await page.getByRole('button', { name: 'マイセトリに追加' }).click();
+  await page.getByRole('button', { name: 'MYセトリに追加' }).click();
   await page.getByRole('alert').getByText(/一時保存できません/).waitFor();
-  assert.equal(await page.getByRole('link', { name: 'マイセトリで確認' }).count(), 0);
+  assert.equal(await page.getByRole('link', { name: 'MYセトリで確認' }).count(), 0);
   await page.getByRole('button', { name: '画面上の記録を書き出す' }).waitFor();
   await context.close();
 
@@ -284,7 +287,7 @@ async function verifyStorageFailures(browser) {
   await retry.goto(`${root}songs/white-noise/`, { waitUntil: 'load' });
   await retry.waitForFunction(() => localStorage.getItem('higedan_fan_magazine_state_v1') !== null);
   await retry.evaluate(() => sessionStorage.setItem('test-block-primary', '1'));
-  await retry.getByRole('button', { name: 'マイセトリに追加' }).click();
+  await retry.getByRole('button', { name: 'MYセトリに追加' }).click();
   await retry.getByRole('alert').getByText(/この端末に保存できません/).waitFor();
   await retry.getByRole('button', { name: '画面上の記録を書き出す' }).waitFor();
   await retry.evaluate(() => sessionStorage.removeItem('test-block-primary'));
@@ -321,12 +324,12 @@ async function verifyInteractions(browser) {
   await page.getByRole('button', { name: '標準の文字に戻す' }).click();
   await page.waitForFunction(() => !document.querySelector('.sheet-frame--readable'));
 
-  await page.getByRole('button', { name: 'マイセトリに追加' }).click();
-  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  await page.getByRole('button', { name: 'MYセトリに追加' }).click();
+  await page.getByRole('link', { name: 'MYセトリで確認' }).waitFor();
   // 表示は先に更新されるため、保存完了の通知を待ってから再読み込みする。
-  await page.getByRole('status').filter({ hasText: 'マイセトリに追加しました' }).waitFor();
+  await page.getByRole('status').filter({ hasText: 'MYセトリに追加しました' }).waitFor();
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('link', { name: 'マイセトリで確認' }).waitFor();
+  await page.getByRole('link', { name: 'MYセトリで確認' }).waitFor();
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.waitForFunction(() => getComputedStyle(document.querySelector('.song-sheet')).transform === 'none');
@@ -353,9 +356,9 @@ async function verifyGuideAndSetlistUsability(browser) {
   });
   const page = await context.newPage();
   await page.goto(root, { waitUntil: 'load' });
-  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
+  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
   assert.equal(await page.getByText('図柄を選択', { exact: false }).count(), 0);
-  await page.getByRole('button', { name: /関連する楽曲ページ：『イエスタデイ』/ }).click();
+  await page.getByRole('link', { name: /関連する楽曲ページ：『イエスタデイ』/ }).click();
   await page.getByRole('heading', { name: 'イエスタデイ', exact: true }).waitFor();
   assert.match(await page.locator('.overview-copy').innerText(), /HELLO WORLD/);
 
@@ -401,8 +404,8 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'ascending');
   await page.getByRole('button', { name: '地声最高を降順で並べ替え', exact: true }).click();
   assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/);
-  const firstTitle = await table.locator('tbody th button').first().innerText();
-  await table.locator('tbody th button').first().click();
+  const firstTitle = await table.locator('tbody th a').first().innerText();
+  await table.locator('tbody th a').first().click();
   await page.getByRole('heading', { name: firstTitle, exact: true }).waitFor();
   await page.locator('.song-site-menu > summary').click();
   assert.equal(await page.getByRole('navigation', { name: 'サイト内メニュー' }).getByRole('link').count(), 13);
@@ -411,7 +414,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   await table.waitFor();
   assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'descending');
   await page.getByRole('button', { name: /^115万キロのファンノート/ }).click();
-  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
+  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
   const titleSearch = page.getByLabel('曲名・読み・タイアップで検索');
@@ -429,12 +432,12 @@ async function verifyGuideAndSetlistUsability(browser) {
   const search = page.getByLabel('曲を探して追加');
   await search.fill('ぷりてんだー');
   await page.getByRole('button', { name: 'Pretenderを本編に追加' }).click();
-  await page.getByRole('button', { name: 'Pretender', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'Pretender', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: 'Pretenderは追加済み' }).isDisabled(), true);
   await openSetlistEditor(page, 'search', 'encore');
   await search.fill('さぶたいとる');
   await page.getByRole('button', { name: 'Subtitleをアンコールに追加' }).click();
-  await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'Subtitle', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Subtitleを1つ上へ移動' }).click();
   await page.waitForFunction(() => {
     const value = localStorage.getItem('higedan_fan_magazine_state_v1');
@@ -448,7 +451,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   await openSetlistEditor(page, 'search', 'main');
   await search.fill('cry baby');
   await page.getByRole('button', { name: 'Cry Babyを本編に追加' }).click();
-  await page.getByRole('button', { name: 'Cry Baby', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'Cry Baby', exact: true }).waitFor();
   await page.getByRole('button', { name: 'Pretenderを1つ下へ移動' }).click();
   await page.waitForFunction(() => {
     const value = localStorage.getItem('higedan_fan_magazine_state_v1');
@@ -457,14 +460,14 @@ async function verifyGuideAndSetlistUsability(browser) {
     return items?.length === 3 && items[0].songId === 'cry-baby' && items[1].songId === 'pretender' && items[2].songId === 'subtitle' && items[2].isEncore;
   });
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('button', { name: 'Subtitle', exact: true }).waitFor();
+  await page.getByRole('link', { name: 'Subtitle', exact: true }).waitFor();
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'スマホのセトリ画面が横にはみ出しています');
   await page.setViewportSize({ width: 320, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxのセトリ画面が横にはみ出しています');
   await openSetlistEditor(page);
   await search.fill('いぬかきゃっとかでしぬまでけんかしよう');
   await page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！を本編に追加' }).click();
-  const longTitle = page.getByRole('button', { name: '犬かキャットかで死ぬまで喧嘩しよう！', exact: true });
+  const longTitle = page.getByRole('link', { name: '犬かキャットかで死ぬまで喧嘩しよう！', exact: true });
   await longTitle.waitFor();
   const titleBox = await longTitle.evaluate(el => {
     const bounds = el.getBoundingClientRect();
@@ -530,6 +533,36 @@ async function verifySetlistHierarchy(browser) {
   console.log('320/390px・PCで8曲を先に表示し、大きな曲名と枠外の小さな移動欄を確認');
 }
 
+async function verifyTourArchiveSetlists(browser) {
+  const context = await browser.newContext();
+  await context.addInitScript(() => localStorage.setItem('higedan_intro_seen_v1', '1'));
+  const page = await context.newPage();
+  for (const width of [320, 390, 1280]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`${root}#tour_archive`, { waitUntil: 'load' });
+    await page.getByLabel('日付・会場を探す').fill('2025-05-31');
+    const toggle = page.getByRole('button', { name: /セットリストを見る（22曲）/ }).first();
+    await toggle.click();
+    const drawer = page.locator('#setlist-panel-live-2025-stadium-kanagawa-1');
+    await drawer.waitFor();
+    assert.match(await drawer.innerText(), /Same Blue[\s\S]*ENCORE[\s\S]*Stand By You/);
+    assert.equal(await page.locator('a[href*="liverepo.katakatalab.com"]').count(), 0, 'LiveRepoへの外部リンクが残っています');
+    const widthCheck = await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+    assert.ok(widthCheck, `${width}pxで歴代ツアー記録が横にはみ出しています`);
+    if (width !== 1280) {
+      await page.getByRole('button', { name: 'セトリを閉じる' }).first().click();
+      await page.getByLabel('日付・会場を探す').fill('');
+    }
+  }
+  await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').getByRole('link', { name: 'Stand By You' }).click();
+  await page.getByRole('heading', { name: 'Stand By You', exact: true }).waitFor();
+  await page.getByRole('link', { name: '歴代ツアー記録に戻る', exact: true }).first().click();
+  await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').waitFor();
+  assert.equal(await page.getByLabel('日付・会場を探す').inputValue(), '2025-05-31');
+  await context.close();
+  console.log('320/390px・PCで歴代ツアー記録の内蔵セトリ展開・検索・楽曲解説との往復を確認');
+}
+
 async function verifyReferenceLibrary(browser) {
   const context = await browser.newContext();
   const page = await context.newPage();
@@ -588,7 +621,7 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   assert.equal(await page.evaluate(() => localStorage.getItem('higedan_intro_seen_v2')), '1', '閲覧済みフラグが保存されていません');
 
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('button', { name: 'マイソング診断をひらく' }).waitFor();
+  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
   assert.equal(await intro.count(), 0, '2回目以降のアクセスでオープニングが自動再生されました');
 
   await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
@@ -660,6 +693,7 @@ try {
   await verifyGuideAndSetlistUsability(browser);
   await verifySetlistHierarchy(browser);
   await verifyReferenceLibrary(browser);
+  await verifyTourArchiveSetlists(browser);
   if (!process.argv.includes('--ux-only')) {
     await verifyImmediateReload(browser);
     await verifyStorageFailures(browser);

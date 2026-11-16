@@ -1,19 +1,19 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
+import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'subtitle',
   artwork: {
-    path: 'song-art/subtitle-editorial.png',
+    theme: 'rejoice',
     alt: '冬の窓辺、ランプ、ピアノ、白い紙を描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: '届かない言葉にも、温度がある。',
-    credit: '— 当サイト作成者による紹介文',
+    text: editorialArticles.subtitle.feature,
+    credit: editorialArticles.subtitle.featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialArticles.subtitle.featureKind,
+    citeUrl: editorialArticles.subtitle.featureCiteUrl,
   },
-  overview: [
-    '「Subtitle」は、フジテレビ系ドラマ『silent』のために書き下ろされた主題歌。2022年10月12日に配信され、2024年発売のアルバム『Rejoice』には10曲目として収録された。',
-    'ドラマ公式サイトによると、バンドは企画書と台本を読んで作品の世界観に共感し、曲を制作した。藤原聡は、メンバーと細部までこだわって作り上げたと語っている。ピアノを中心とした伴奏に、言葉を細かく運ぶ歌が重なる。',
-  ],
+  overview: editorialArticles.subtitle.paragraphs,
   rangeNote: '※ 地声最低音mid1A#は瞬間的に現れる音で、採譜元も判定がやや曖昧だと説明しています。裏声最高音は採譜元に値がないため「記載なし」と表示しています。',
   albumTrack: 10,
   sources: [

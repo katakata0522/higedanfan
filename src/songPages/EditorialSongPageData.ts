@@ -11,7 +11,12 @@ export type EditorialSource = {
 export interface EditorialSongPageData {
   id: string;
   artwork: { path: string; alt: string } | { theme: string; alt: string };
-  feature: { text: string; credit: string };
+  feature: {
+    text: string;
+    credit: string;
+    kind?: 'editorial' | 'lyric-quote';
+    citeUrl?: string;
+  };
   overview: readonly string[];
   rangeNote?: string;
   vocalVariants?: readonly { label: string; value: string; sourceLabel: string; sourceUrl: string }[];

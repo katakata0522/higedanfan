@@ -63,6 +63,9 @@ type IntroPhase = 'idle' | 'playing' | 'static' | 'leaving';
 export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOverlayProps) {
   const [phase, setPhase] = useState<IntroPhase>('idle');
   const overlayRef = useRef<HTMLDivElement>(null);
+  const skipBtnRef = useRef<HTMLButtonElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+  const wasOpenRef = useRef(false);
   const crayonARef = useRef<SVGSVGElement>(null);
   const crayonBRef = useRef<SVGSVGElement>(null);
   const timersRef = useRef<Set<number>>(new Set());
@@ -185,17 +188,37 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
   }, [clearScheduledWork, isOpen, replayToken, scheduleTimer, startLeaving]);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (isOpen && !wasOpenRef.current) {
+      previousFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      skipBtnRef.current?.focus({ preventScroll: true });
+    } else if (!isOpen && wasOpenRef.current) {
+      const prev = previousFocusRef.current;
+      previousFocusRef.current = null;
+      if (prev && prev.isConnected && prev !== document.body && getComputedStyle(prev).visibility !== 'hidden') {
+        prev.focus({ preventScroll: true });
+      } else if (prev && !prev.isConnected) {
+        const fallback = document.querySelector<HTMLElement>('[aria-label="メニューを開く"], .song-site-menu > summary');
+        fallback?.focus({ preventScroll: true });
+      }
+    }
+    wasOpenRef.current = isOpen;
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || phase === 'leaving') return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         startLeaving();
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        skipBtnRef.current?.focus({ preventScroll: true });
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, startLeaving]);
+  }, [isOpen, phase, startLeaving]);
 
   if (!isOpen) return null;
 
@@ -220,6 +243,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
     >
       <button
         id="kurun-skip-btn"
+        ref={skipBtnRef}
         className="kurun-skip"
         type="button"
         onClick={(e) => {

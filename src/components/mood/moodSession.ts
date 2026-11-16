@@ -1,5 +1,6 @@
 import type { MoodCriteria } from '../../utils/fanLogic';
 import { STORAGE_KEY, restoreFanRecords } from '../../hooks/fanRecordStorage';
+import type { ShareTheme } from './MoodShareCard';
 
 export const MOOD_SESSION_KEY = 'higedanfan:mood-session:v1';
 export type MoodStep = 1 | 2 | 3 | 4 | 5;
@@ -12,6 +13,8 @@ export interface MoodSession {
   answers: MoodAnswers;
   completed: boolean;
   editing: boolean;
+  page?: number;
+  theme?: ShareTheme;
 }
 
 export interface MoodStorage {
@@ -90,7 +93,20 @@ export function restoreMoodSession(
     if (fields.slice(0, step - 1).some(field => !answers[field])) return newMoodSession();
     if ((data.completed || data.editing) && !isCompleteMoodCriteria(answers)) return newMoodSession();
     if (data.completed && data.editing) return newMoodSession();
-    return { version: 1, step, answers, completed: data.completed, editing: data.editing };
+    let page: number | undefined;
+    if (data.page !== undefined) {
+      if (!Number.isInteger(data.page) || Number(data.page) < 0 || Number(data.page) >= 100) return newMoodSession();
+      page = Number(data.page);
+    }
+    let theme: ShareTheme | undefined;
+    if (data.theme !== undefined) {
+      if (data.theme !== 'dark' && data.theme !== 'editorial') return newMoodSession();
+      theme = data.theme;
+    }
+    const restored: MoodSession = { version: 1, step, answers, completed: data.completed, editing: data.editing };
+    if (page !== undefined) restored.page = page;
+    if (theme !== undefined) restored.theme = theme;
+    return restored;
   } catch {
     return newMoodSession();
   }
@@ -147,7 +163,8 @@ export function selectMoodAnswer(session: MoodSession, answer: MoodAnswer): Mood
   if (session.completed || !validAnswer(field, answer)) return session;
   const answers = { ...session.answers, [field]: answer };
   if (session.editing || session.step === 5) {
-    return { ...session, answers, completed: isCompleteMoodCriteria(answers), editing: false };
+    const { page: _resetPage, ...rest } = session;
+    return { ...rest, answers, completed: isCompleteMoodCriteria(answers), editing: false };
   }
   return { ...session, answers, step: (session.step + 1) as MoodStep };
 }

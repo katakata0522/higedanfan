@@ -1,6 +1,9 @@
-import { HIGEDAN_SONGS, SACRED_SPOTS, TOUR_ARCHIVES, type FanReview, type SongItem } from '../data/higedanData';
-import { sanitizeSetlistTitle } from '../utils/setlist';
-import { sanitizeReviewsList, sanitizeSafeId, sanitizeSetlistEntries, type SetlistEntry } from '../utils/fanLogic';
+import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import { VALID_SPOT_IDS, VALID_TOUR_IDS } from '../data/recordValidationIds';
+import type { FanReview, SongItem } from '../data/higedanData';
+import { sanitizeSetlistEntries, sanitizeSetlistTitle, type SetlistEntry } from '../utils/setlist';
+import { sanitizeReviewsList } from '../utils/fanReviews';
+import { sanitizeSafeId } from '../utils/userInput';
 
 export const STORAGE_KEY = 'higedan_fan_magazine_state_v1';
 
@@ -19,7 +22,7 @@ export interface PersistedState {
   setlistMembershipVersions?: Record<string, number>;
 }
 
-function restoreIds(value: unknown, maxLength: number, validIds?: Set<string>) {
+function restoreIds(value: unknown, maxLength: number, validIds?: ReadonlySet<string>) {
   if (!Array.isArray(value)) return undefined;
   return value
     .map(id => sanitizeSafeId(id, maxLength))
@@ -45,8 +48,8 @@ export function restoreFanRecords(raw: string) {
   const setlistMembershipVersions = versions && typeof versions === 'object' && !Array.isArray(versions)
     ? Object.fromEntries(Object.entries(versions).filter(([id, version]) => validSongIds.has(id) &&
       typeof version === 'number' && Number.isSafeInteger(version) && version >= 0)) : {};
-  const validSpotIds = new Set(SACRED_SPOTS.map(spot => spot.id));
-  const validTourIds = new Set(TOUR_ARCHIVES.map(tour => tour.id));
+  const validSpotIds = VALID_SPOT_IDS;
+  const validTourIds = VALID_TOUR_IDS;
   const castVotes = new Set(Array.isArray(parsed.votedKeys) ? parsed.votedKeys : []);
   const likes = new Set(Array.isArray(parsed.likedReviewIds) ? parsed.likedReviewIds : []);
 

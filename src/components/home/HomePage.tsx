@@ -1,7 +1,9 @@
 import type { CSSProperties } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Mic2, Newspaper } from 'lucide-react';
 import { HIGEDAN_MEMBERS, type EraTag, type SongItem } from '../../data/higedanData';
 import type { ActiveFeatureTab } from '../SiteHeader';
+import { songPagePath } from '../../songPages/publishedSongPageIds';
+import { saveSongReturnTab } from '../../utils/guideReturnState';
 import { HOME_STICKY_NOTES } from './homeContent';
 
 const MEMBER_TAPE_COLORS = ['#f5c6be', '#f6e39c', '#bce3f8', '#c0e6c7'] as const;
@@ -12,7 +14,7 @@ interface HomePageProps {
   onSelectSong: (id: string) => void;
 }
 
-export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
+export function HomePage({ songs, onSelectTab }: HomePageProps) {
   return (
     <div className="mx-auto max-w-[960px] px-4 sm:px-6 pt-8 sm:pt-12 pb-16 sm:pb-20">
       {/* ノート机トップ：リードコピー ＋ 6枚のパステル付箋 */}
@@ -22,14 +24,11 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
             id="home-desk-heading"
             className="font-note-serif text-[23px] sm:text-[34px] font-medium tracking-[.04em] leading-[1.45] text-[#253331]"
           >
-            <span className="inline-block whitespace-nowrap">好きな音を、</span>
-            <span className="inline-block whitespace-nowrap">手元に集めた</span>
-            <span className="inline-block whitespace-nowrap">ファンノート。</span>
+            <span className="inline-block whitespace-nowrap">いつもの日常に</span>
+            <span className="inline-block whitespace-nowrap">ひとかけのヒゲダンを</span>
           </h1>
           <p className="mt-3 mx-auto max-w-xl text-xs sm:text-[13.5px] leading-[1.9] text-[#57534E]">
-            Official髭男dismの楽曲や思い出を、自由にめくって楽しむためのノートです。
-            <br className="hidden sm:inline" />
-            気になる付箋を開いて、好きなページをのぞいてみてください。
+            溢れる髭男への想いをあなたにも受け取ってほしくて<span className="inline-block whitespace-nowrap">形にしました。</span><span className="inline-block whitespace-nowrap">Have Fun!</span>
           </p>
         </header>
 
@@ -72,6 +71,47 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
             );
           })}
         </div>
+
+        {/* 音域比較表・資料一覧への直接索引（.fusen-card 数を6枚に維持） */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <button
+            type="button"
+            onClick={() => onSelectTab('vocal_range')}
+            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <Mic2 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#1d5a7a]" />
+              <span className="min-w-0">
+                <span className="block font-note-serif text-sm font-bold text-[#253331]">
+                  掲載90曲の音域・発売日一覧
+                </span>
+                <span className="block text-[11px] text-[#57534E]">
+                  カラオケ選曲・最高音／最低音・キー変更を比較
+                </span>
+              </span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onSelectTab('quiz_archive')}
+            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
+          >
+            <span className="flex min-w-0 items-center gap-3">
+              <Newspaper aria-hidden="true" className="h-4 w-4 shrink-0 text-[#265c34]" />
+              <span className="min-w-0">
+                <span className="block font-note-serif text-sm font-bold text-[#253331]">
+                  参考記事・インタビュー一覧
+                </span>
+                <span className="block text-[11px] text-[#57534E]">
+                  曲の背景や検定で参照した公式・取材記事を探す
+                </span>
+              </span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
+          </button>
+        </div>
       </section>
 
       {/* メンバー紹介（ノートの索引メモ風・控えめで落ち着いた佇まい） */}
@@ -79,17 +119,12 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
         aria-labelledby="members-heading"
         className="mt-16 sm:mt-20 pt-10 border-t border-[#e5dccb] space-y-6"
       >
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-1">
-          <h2
-            id="members-heading"
-            className="font-note-serif text-lg sm:text-xl font-bold tracking-[.04em] text-[#253331]"
-          >
-            Official髭男dism メンバー紹介
-          </h2>
-          <span className="text-xs text-[#78716C]">
-            2012年6月7日 島根・松江にて結成
-          </span>
-        </div>
+        <h2
+          id="members-heading"
+          className="font-note-serif text-lg sm:text-xl font-bold tracking-[.04em] text-[#253331]"
+        >
+          Official髭男dism メンバー紹介
+        </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           {HIGEDAN_MEMBERS.map((member, index) => {
@@ -131,7 +166,7 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                         href={source.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="underline underline-offset-2 hover:text-[#C83E2B]"
+                        className="inline-flex min-h-[28px] items-center py-1 underline underline-offset-2 hover:text-[#C83E2B]"
                       >
                         {source.label}
                       </a>
@@ -140,17 +175,17 @@ export function HomePage({ songs, onSelectTab, onSelectSong }: HomePageProps) {
                 </div>
 
                 {sigSong && (
-                  <div className="mt-4 pt-2.5 border-t border-[#ece3d2]">
-                    <button
-                      type="button"
-                      onClick={() => onSelectSong(sigSong.id)}
-                      className="w-full inline-flex items-center justify-between gap-2 text-xs font-bold text-[#253331] hover:text-[#C83E2B] transition-colors cursor-pointer"
+                  <div className="mt-3 pt-2 border-t border-[#ece3d2]">
+                    <a
+                      href={`${import.meta.env.BASE_URL}${songPagePath(sigSong.id) ?? ''}`}
+                      onClick={() => saveSongReturnTab('home')}
+                      className="w-full min-h-[32px] py-1 inline-flex items-center justify-between gap-2 text-xs font-bold text-[#253331] hover:text-[#C83E2B] transition-colors"
                     >
                       <span className="min-w-0 wrap-anywhere whitespace-normal text-left">
                         関連する楽曲ページ：『{member.signatureSongTitle}』
                       </span>
                       <ArrowRight className="h-3.5 w-3.5 shrink-0" />
-                    </button>
+                    </a>
                   </div>
                 )}
               </article>

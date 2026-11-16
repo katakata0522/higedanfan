@@ -30,11 +30,26 @@ export async function verifyStaticSeo(browser, root, ids) {
       assert.equal(script?.trim(), "script-src 'self'", `${relative}: 本番で直接書かれたコードを許可しています`);
       assert.match(policy, /script-src-attr 'none'/);
       assert.doesNotMatch(policy, /unsafe-eval|ws:|wss:/);
-      assert.equal(await page.locator('script:not([src])').count(), 0, `${relative}: 実行できないインラインスクリプトがあります`);
+      assert.equal(await page.locator('script:not([src]):not([type="application/ld+json"])').count(), 0, `${relative}: 実行できないインラインスクリプトがあります`);
+      const jsonLdScripts = await page.locator('script[type="application/ld+json"]').evaluateAll(nodes =>
+        nodes.map(node => ({
+          attrs: [...node.attributes].map(attr => [attr.name, attr.value]),
+          text: node.textContent || '',
+        })),
+      );
+      assert.ok(jsonLdScripts.length >= 1, `${relative}: 構造化データ(JSON-LD)がありません`);
+      for (const block of jsonLdScripts) {
+        assert.deepEqual(block.attrs, [['type', 'application/ld+json']], `${relative}: JSON-LDタグに不要な属性があります`);
+        const parsed = JSON.parse(block.text);
+        assert.equal(parsed['@context'], 'https://schema.org', `${relative}: JSON-LDの@contextが不正です`);
+      }
       if (id) {
         assert.match(await page.title(), /Official髭男dism/);
         assert.equal(await page.locator('meta[property="og:description"]').getAttribute('content'), description);
         assert.equal(await page.locator('meta[name="twitter:description"]').getAttribute('content'), description);
+        const recording = jsonLdScripts.flatMap(block => JSON.parse(block.text)['@graph'] ?? [])
+          .find(node => node['@type'] === 'MusicRecording');
+        assert.ok(recording?.lyricist?.length > 0 && recording?.composer?.length > 0, `${id}: JSON-LDの作詞・作曲が欠落しています`);
         const related = await page.locator('a[href^="/higedanfan/songs/"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
         assert.ok(related.length > 0, `${id}: 次の曲へのリンクがありません`);
         for (const href of related) {
@@ -42,6 +57,13 @@ export async function verifyStaticSeo(browser, root, ids) {
           assert.ok(destination !== id && ids.includes(destination), `${id}: 関連曲のリンク先が不正です`);
         }
       } else {
+        const sitemap = await readFile(path.resolve('dist/sitemap.xml'), 'utf8');
+        const robots = await readFile(path.resolve('dist/robots.txt'), 'utf8');
+        assert.ok(sitemap.includes('<loc>https://katakatalab.com/higedanfan/</loc>'), 'sitemap.xmlにトップURLがありません');
+        for (const songId of ids) {
+          assert.ok(sitemap.includes(`<loc>https://katakatalab.com/higedanfan/songs/${songId}/</loc>`), `sitemap.xmlに${songId}がありません`);
+        }
+        assert.match(robots, /Sitemap: https:\/\/katakatalab\.com\/higedanfan\/sitemap\.xml/, 'robots.txtにサイトマップ指定がありません');
         const links = await page.locator('a[href^="/higedanfan/songs/"]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')));
         assert.deepEqual([...new Set(links)].sort(), ids.map(songId => `/higedanfan/songs/${songId}/`).sort());
         for (const song of catalogEntries) {
@@ -87,7 +109,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
     }
     await page.goto(`${root}#discography`, { waitUntil: 'load' });
     await page.getByLabel('曲名・読み・タイアップで検索').fill(payload);
-    assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
+    assert.equal(await page.locator('img[onerror], script:not([src]):not([type="application/ld+json"])').count(), 0);
     await page.goto(`${root}#setlist`, { waitUntil: 'load' });
     await page.getByRole('button', { name: 'セットリスト名を編集', exact: true }).click();
     const title = page.getByLabel('マイセットリストのタイトル');
@@ -100,7 +122,7 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
     await page.reload({ waitUntil: 'load' });
     await page.getByRole('button', { name: 'セットリスト名を編集', exact: true }).click();
     assert.equal(await title.inputValue(), accepted);
-    assert.equal(await page.locator('img[onerror], script:not([src])').count(), 0);
+    assert.equal(await page.locator('img[onerror], script:not([src]):not([type="application/ld+json"])').count(), 0);
     assert.equal(await page.evaluate(() => window.__inputExecuted ?? 0), 0);
     assert.deepEqual(dialogs, []);
 

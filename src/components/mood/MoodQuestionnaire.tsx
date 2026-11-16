@@ -115,9 +115,9 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
       </div>
 
       <div key={step} className="mood-question-enter">
-      <h3 ref={headingRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-[#1C1917] focus:outline-none">
+      <h2 ref={headingRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-[#1C1917] focus:outline-none">
         {question.title}
-      </h3>
+      </h2>
       <p className="mt-1 text-xs sm:text-sm text-[#57534E]">{question.description}</p>
       {editing && <p className="mt-2 text-xs text-[#57534E]">選ぶと、この回答だけを変えて結果に戻ります。</p>}
 

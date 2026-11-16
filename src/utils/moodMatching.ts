@@ -233,7 +233,7 @@ export function formatDiagnosisShareText(
   criteria: MoodCriteria
 ): string {
   return [
-    `【マイソング診断結果：『${match.song.title}』】`,
+    `【今日の1曲診断結果：『${match.song.title}』】`,
     `診断条件：${[
       MOOD_CHOICE_LABELS[criteria.mood], SITUATION_CHOICE_LABELS[criteria.situation], SOUND_PREFERENCE_LABELS[criteria.sound],
       criteria.era && ERA_PREFERENCE_LABELS[criteria.era],
@@ -241,6 +241,6 @@ export function formatDiagnosisShareText(
     ].filter(Boolean).join(' ／ ')}`,
     `理由：${match.moodMatchExplanation}`,
     `曲調：${match.song.musicalHighlight}`,
-    '#115万キロのファンノート #Official髭男dism #マイソング診断',
+    '#115万キロのファンノート #Official髭男dism #今日の1曲診断',
   ].join('\n');
 }

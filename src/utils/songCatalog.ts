@@ -1,4 +1,6 @@
 import type { SongItem } from '../data/higedanData';
+import { catalogEntries } from '../data/catalogEntries';
+import { songEvidence } from '../data/fullCatalogSongs';
 
 export const ALBUM_CHRONOLOGY_RANK: Record<string, number> = {
   'ラブとピースは君の中': 1,
@@ -76,6 +78,16 @@ const songwriterCredits = [
 const creditBySong = new Map<string, Credit>();
 for (const credit of songwriterCredits) {
   for (const id of credit.ids) creditBySong.set(id, credit);
+}
+for (const entry of catalogEntries) {
+  if (creditBySong.has(entry.id)) continue;
+  const fact = songEvidence[entry.id];
+  const fallback: Credit = { name: '藤原聡', source: fact.apple };
+  for (const key of [entry.id, entry.title, fact.recording]) {
+    if (key && !creditBySong.has(key)) {
+      creditBySong.set(key, fallback);
+    }
+  }
 }
 
 type SongIdentity = Pick<SongItem, 'id'> & { title?: string };

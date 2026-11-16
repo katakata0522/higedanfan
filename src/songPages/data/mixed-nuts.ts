@@ -1,19 +1,19 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
+import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'mixed-nuts',
   artwork: {
-    path: 'song-art/mixed-nuts-editorial.png',
+    theme: 'rejoice',
     alt: 'ピアノ、トランペット、赤いランプを描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: '違いを抱えて、ひとつの家族になる。',
-    credit: '— 当サイト作成者による紹介文',
+    text: editorialArticles['mixed-nuts'].feature,
+    credit: editorialArticles['mixed-nuts'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialArticles['mixed-nuts'].featureKind,
+    citeUrl: editorialArticles['mixed-nuts'].featureCiteUrl,
   },
-  overview: [
-    '「ミックスナッツ」は、TVアニメ『SPY×FAMILY』第1クールのオープニング主題歌として書き下ろされた。2022年4月15日に配信され、のちにアルバム『Rejoice』の3曲目にも収録された。',
-    'Official髭男dismは作品の公式サイトで、ピーナッツが見た目の似たナッツとは異なる種類だと知ったことを、曲名の着想として語っている。その発見を、正体を隠して家族を演じるフォージャー家の物語に重ねた。メンバーのコメントには、本物かどうかより、そこで得られる幸せや喜びを大切にする視点も示されている。',
-  ],
+  overview: editorialArticles['mixed-nuts'].paragraphs,
   rangeNote: '※ 上記の裏声最高音はラストのフェイクを含む採譜値です。フェイクを除いた歌メロの音域は「データと出典」に分けて記載しています。',
   vocalVariants: [
     { label: 'フェイクを除いた歌メロ', value: '裏声最高 hiC#', sourceLabel: '音域データ！＠ウィキ', sourceUrl: 'https://w.atwiki.jp/saikouon_dokoda/pages/1008.html#:~:text=%E3%83%9F%E3%83%83%E3%82%AF%E3%82%B9%E3%83%8A%E3%83%83%E3%83%84' },

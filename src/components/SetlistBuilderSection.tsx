@@ -1,13 +1,17 @@
 import { prepareSongSearch } from '../utils/songSearch';
-import { TourArchiveSection } from './TourArchiveSection';
 import { SetlistImageModal } from './SetlistImageModal';
 import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
+import { songPagePath } from '../songPages/publishedSongPageIds';
+import { saveSongReturnTab } from '../utils/guideReturnState';
 import {
+  SAVED_SETLISTS_STORAGE_KEY,
   SavedSetlistsState,
   createNewSavedSetlist,
   deleteSavedSetlist,
   loadSavedSetlists,
+  mergeSavedSetlistsForPersist,
   persistSavedSetlists,
+  readStoredSavedSetlists,
   switchSavedSetlist,
   syncActiveSavedSetlist,
 } from '../utils/savedSetlists';
@@ -34,6 +38,10 @@ import {
   SetlistEntry,
 } from '../utils/fanLogic';
 
+const TourArchiveSection = React.lazy(() =>
+  import('./TourArchiveSection').then((module) => ({ default: module.TourArchiveSection })),
+);
+
 type PickerTarget = 'main' | 'encore' | null;
 
 const ROYAL_ROAD_PRESET: SetlistEntry[] = [
@@ -52,6 +60,7 @@ interface SetlistBuilderSectionProps {
   songs: SongItem[];
   setlist: SetlistEntry[];
   setlistTitle: string;
+  resetEpoch?: string;
   onChangeTitle: (title: string) => void;
   onAddSong: (songId: string, isEncore?: boolean) => void;
   onRemoveSong: (songId: string) => void;
@@ -76,6 +85,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   songs,
   setlist,
   setlistTitle,
+  resetEpoch = '',
   onChangeTitle,
   onAddSong,
   onRemoveSong,
@@ -84,7 +94,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onReplaceSetlistSilently,
   attendedTourIds,
   onToggleAttendedTour,
-  onSelectSong,
   initialSubTab = 'builder',
   onBackHome,
 }) => {
@@ -115,8 +124,9 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   };
 
   const validSongIds = useMemo(() => new Set(songs.map((s) => s.id)), [songs]);
+  const deletedIdsRef = useRef<Set<string>>(new Set());
   const [savedSetlists, setSavedSetlists] = useState<SavedSetlistsState>(() =>
-    loadSavedSetlists(validSongIds, setlistTitle, setlist),
+    loadSavedSetlists(validSongIds, setlistTitle, setlist, { expectedEpoch: resetEpoch }),
   );
   const switchingTargetRef = useRef<{ title: string; sig: string } | null>(null);
 
@@ -194,10 +204,24 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     }
     setSavedSetlists((prev) => {
       const next = syncActiveSavedSetlist(prev, safeDisplayTitle, setlist);
-      persistSavedSetlists(next);
+      persistSavedSetlists(next, {
+        expectedEpoch: resetEpoch,
+        validSongIds,
+        deletedIds: deletedIdsRef.current,
+      });
       return next;
     });
-  }, [safeDisplayTitle, setlist]);
+  }, [resetEpoch, safeDisplayTitle, setlist, validSongIds]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== SAVED_SETLISTS_STORAGE_KEY) return;
+      setSavedSetlists(loadSavedSetlists(validSongIds, setlistTitle, setlist, { expectedEpoch: resetEpoch }));
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, [resetEpoch, setlist, setlistTitle, validSongIds]);
 
   useEffect(() => {
     if (isEditingTitle) {
@@ -227,6 +251,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     }
   };
 
+  const latestMergedSavedSetlists = () => {
+    const stored = readStoredSavedSetlists(validSongIds, { expectedEpoch: resetEpoch });
+    return stored ? mergeSavedSetlistsForPersist(savedSetlists, stored, deletedIdsRef.current) : savedSetlists;
+  };
+
   const handleSwitchSavedSetlist = (targetId: string) => {
     const { state, target } = switchSavedSetlist(savedSetlists, targetId);
     if (!target || target.id === savedSetlists.activeId) return;
@@ -234,7 +263,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       title: target.title,
       sig: serializeSetlistEntries(target.entries),
     };
-    persistSavedSetlists(state);
+    persistSavedSetlists(state, {
+      expectedEpoch: resetEpoch,
+      validSongIds,
+      deletedIds: deletedIdsRef.current,
+    });
     setSavedSetlists(state);
     setPickerTarget(null);
     onReplaceSetlistSilently(target.entries, target.title);
@@ -242,17 +275,23 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   };
 
   const handleCreateBlankSetlist = () => {
-    const nextNum = savedSetlists.items.length + 1;
+    const base = latestMergedSavedSetlists();
+    const nextNum = base.items.length + 1;
     const { state, created } = createNewSavedSetlist(
-      savedSetlists,
-      `マイセットリスト ${nextNum}`,
+      base,
+      `MYセトリ ${nextNum}`,
       [],
     );
+    deletedIdsRef.current.delete(created.id);
     switchingTargetRef.current = {
       title: created.title,
       sig: serializeSetlistEntries(created.entries),
     };
-    persistSavedSetlists(state);
+    persistSavedSetlists(state, {
+      expectedEpoch: resetEpoch,
+      validSongIds,
+      deletedIds: deletedIdsRef.current,
+    });
     setSavedSetlists(state);
     setIsCompleteView(false);
     setIsEditingTitle(true);
@@ -262,13 +301,19 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   };
 
   const handleDuplicateCurrentSetlist = () => {
-    const copyTitle = sanitizeUserText(`${safeDisplayTitle} (コピー)`, SETLIST_TITLE_LIMIT) || 'マイセットリスト';
-    const { state, created } = createNewSavedSetlist(savedSetlists, copyTitle, setlist);
+    const base = latestMergedSavedSetlists();
+    const copyTitle = sanitizeUserText(`${safeDisplayTitle} (コピー)`, SETLIST_TITLE_LIMIT) || 'MYセトリ';
+    const { state, created } = createNewSavedSetlist(base, copyTitle, setlist);
+    deletedIdsRef.current.delete(created.id);
     switchingTargetRef.current = {
       title: created.title,
       sig: serializeSetlistEntries(created.entries),
     };
-    persistSavedSetlists(state);
+    persistSavedSetlists(state, {
+      expectedEpoch: resetEpoch,
+      validSongIds,
+      deletedIds: deletedIdsRef.current,
+    });
     setSavedSetlists(state);
     onReplaceSetlistSilently(created.entries, created.title);
     scrollToSetlistPaper();
@@ -279,16 +324,22 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     if (!window.confirm(`保存したセットリスト「${targetTitle}」を削除しますか？`)) return;
     const { state, nextActive, deleted } = deleteSavedSetlist(savedSetlists, targetId);
     if (!deleted) return;
+    deletedIdsRef.current.add(targetId);
+    const persistOpts = {
+      expectedEpoch: resetEpoch,
+      validSongIds,
+      deletedIds: deletedIdsRef.current,
+    };
     if (nextActive) {
       switchingTargetRef.current = {
         title: nextActive.title,
         sig: serializeSetlistEntries(nextActive.entries),
       };
-      persistSavedSetlists(state);
+      persistSavedSetlists(state, persistOpts);
       setSavedSetlists(state);
       onReplaceSetlistSilently(nextActive.entries, nextActive.title);
     } else {
-      persistSavedSetlists(state);
+      persistSavedSetlists(state, persistOpts);
       setSavedSetlists(state);
     }
   };
@@ -310,7 +361,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         return `${prefix} ${song ? song.title : entry.songId}`;
       }),
       '---',
-      '#Official髭男dism #マイセットリスト',
+      '#115万キロのファンノート #Official髭男dism #MYセトリ',
     ];
     try {
       await navigator.clipboard.writeText(lines.join('\n'));
@@ -552,19 +603,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           <span className={`font-mono-num text-[11px] font-medium ${entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'}`}>
             {trackBadge}
           </span>
-          {onSelectSong ? (
-            <button
-              type="button"
-              onClick={() => onSelectSong(song)}
-              className="setlist-track-title min-w-0 wrap-anywhere text-left text-[18px] font-semibold leading-6 text-[#1C1917] hover:text-[#C83E2B] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-xl sm:leading-7 cursor-pointer"
-            >
-              {song.title}
-            </button>
-          ) : (
-            <span className="setlist-track-title min-w-0 wrap-anywhere text-[18px] font-semibold leading-6 text-[#1C1917] sm:text-xl sm:leading-7">
-              {song.title}
-            </span>
-          )}
+          <a
+            href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
+            onClick={() => saveSongReturnTab('setlist')}
+            className="setlist-track-title min-w-0 wrap-anywhere text-left text-[18px] font-semibold leading-6 text-[#1C1917] hover:text-[#C83E2B] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 sm:text-xl sm:leading-7"
+          >
+            {song.title}
+          </a>
           {!isCompleteView && (
             <button
               type="button"
@@ -668,14 +713,14 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </span>
           </div>
           <div>
-            <h2
+            <h1
               id="setlist-heading"
               className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
             >
               {activeSubTab === 'tours'
                 ? '歴代ツアー・公演記録'
-                : 'マイセットリスト作成'}
-            </h2>
+                : 'MYセトリ作成'}
+            </h1>
             <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
               {activeSubTab === 'tours'
                 ? '公演日や会場、セトリの資料をたどりながら、参戦・視聴をツアーごとに記録できます。'
@@ -724,13 +769,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   </div>
                 ) : (
                   <div className="flex min-w-0 items-center gap-1 sm:flex-1">
-                    <h3
+                    <h2
                       id="setlist-tracks-heading"
                       title={safeDisplayTitle}
                       className="line-clamp-2 min-w-0 wrap-anywhere text-[15px] font-semibold leading-6 text-[#1C1917]"
                     >
                       {safeDisplayTitle}
-                    </h3>
+                    </h2>
                     <button
                       type="button"
                       onClick={() => setIsEditingTitle(true)}
@@ -795,7 +840,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   type="button"
                   disabled={setlist.length === 0}
                   onClick={() => setIsImageModalOpen(true)}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-center text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
                 >
                   <ImageIcon aria-hidden="true" className="h-4 w-4 text-[#C83E2B]" />
                   {setlist.length === 0
@@ -807,12 +852,12 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
 
             <div className="rounded-xl border border-[#E6E1D6] bg-white p-4 space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <h3 className="text-sm font-bold text-[#1C1917]">
-                  保存したマイセットリスト
+                <h2 className="text-sm font-bold text-[#1C1917]">
+                  保存したMYセトリ
                   <span className="ml-2 text-xs font-mono-num font-normal text-[#78716C]">
                     {savedSetlists.items.length}件
                   </span>
-                </h3>
+                </h2>
                 <div className="flex flex-wrap items-center gap-1.5">
                   <button
                     type="button"
@@ -840,7 +885,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 </div>
               </div>
 
-              <ul aria-label="保存したマイセットリスト一覧" className="space-y-1.5">
+              <ul aria-label="保存したMYセトリ一覧" className="space-y-1.5">
                 {savedSetlists.items.map((item) => {
                   const isActive = item.id === savedSetlists.activeId;
                   const itemStats = calculateSetlistStats(item.entries, songs);
@@ -949,7 +994,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           </div>
         ) : (
           <>
-            <TourArchiveSection attendedTourIds={attendedTourIds} onToggleAttendedTour={onToggleAttendedTour} />
+            <React.Suspense fallback={<p role="status" className="py-6 text-sm text-[#57534E]">公演記録を読み込み中…</p>}>
+              <TourArchiveSection
+                attendedTourIds={attendedTourIds}
+                onToggleAttendedTour={onToggleAttendedTour}
+                resetEpoch={resetEpoch}
+              />
+            </React.Suspense>
             <p className="mt-4 text-center text-[11px] text-[#78716C]">
               ※ 参戦・視聴の記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
               <a href="#privacy" className="underline underline-offset-2 hover:text-[#1C1917]">

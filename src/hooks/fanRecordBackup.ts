@@ -1,4 +1,4 @@
-import { HIGEDAN_SONGS } from '../data/higedanData';
+import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import {
   sanitizeSavedSetlistsState,
   type SavedSetlistsState,

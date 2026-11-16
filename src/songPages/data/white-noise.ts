@@ -1,14 +1,16 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
+import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'white-noise',
   artwork: { theme: '/images/live_stadium_confetti_1793849699286.jpg', alt: 'ホワイトノイズの当サイト制作の抽象的なイメージ図柄' },
-  feature: { text: 'ギターとストリングスを重ねたロック', credit: '— 曲別解説をもとに当サイトが要約した曲調' },
-  overview: [
-    '「ホワイトノイズ」は2023年1月11日に配信された。TVアニメ『東京リベンジャーズ』聖夜決戦編のオープニング主題歌として、「Cry Baby」に続いて起用された。2024年発売のアルバム『Rejoice』には12曲目として収録された。',
-    'アニメ公式サイトは、ヒナタや仲間を救おうとするタケミチに寄り添う歌詞として紹介している。2023年秋の天竺編でもオープニングに続投した。',
-    '曲別解説では、ギターとストリングスを重ねたロックサウンドとして紹介されている。公式MVにはカーアクションとバイクスタントが登場する。',
-  ],
+  feature: {
+    text: editorialArticles['white-noise'].feature,
+    credit: editorialArticles['white-noise'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialArticles['white-noise'].featureKind,
+    citeUrl: editorialArticles['white-noise'].featureCiteUrl,
+  },
+  overview: editorialArticles['white-noise'].paragraphs,
   albumTrack: 12,
   sources: [
     { label: '楽曲の公式特設サイト', purpose: '配信日と聖夜決戦編のタイアップ', url: 'https://whitenoise.ponycanyon.co.jp/' },

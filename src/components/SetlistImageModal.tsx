@@ -290,18 +290,42 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
   formattedDuration,
 }) => {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [theme, setTheme] = useState<PosterTheme>('notebook');
   const [previewUrl, setPreviewUrl] = useState<string>('');
 
   useEffect(() => {
     const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen && !dialog.open) {
+    if (!dialog || !isOpen) return;
+
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    if (!dialog.open) {
       dialog.showModal();
-    } else if (!isOpen && dialog.open) {
-      dialog.close();
     }
-  }, [isOpen]);
+    const timer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (dialog.open) {
+        dialog.close();
+      }
+      document.body.style.overflow = previousOverflow;
+      if (previousFocus?.isConnected) {
+        previousFocus.focus({ preventScroll: true });
+      }
+    };
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -356,10 +380,11 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
       className="fixed inset-0 m-auto max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-xl rounded-2xl border border-[#D5CEC2] bg-[#FFFDF8] p-0 text-[#1C1917] shadow-2xl backdrop:bg-black/55"
     >
       <div className="flex items-center justify-between border-b border-[#E6E1D6] px-5 py-3.5">
-        <h3 id="setlist-image-modal-title" className="font-editorial text-base font-bold text-[#1C1917]">
+        <h2 id="setlist-image-modal-title" className="font-editorial text-base font-bold text-[#1C1917]">
           シェア用セットリスト画像
-        </h3>
+        </h2>
         <button
+          ref={closeButtonRef}
           type="button"
           onClick={onClose}
           aria-label="閉じる"

@@ -46,15 +46,9 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
     icon: <Home className="h-4 w-4 shrink-0" />,
   },
   {
-    id: 'mood',
-    label: 'マイソング診断',
-    shortDesc: '今の気分や空気感に、しっくり寄り添う1曲と出会う',
-    icon: <Sparkles className="h-4 w-4 shrink-0" />,
-  },
-  {
     id: 'discography',
     label: '楽曲ガイド（掲載90曲）',
-    shortDesc: '曲が生まれた背景や音の聴きどころ、音域まで深掘り',
+    shortDesc: '一曲ごとの音域やテンポ、生まれた背景や聴きどころまで',
     icon: <Disc className="h-4 w-4 shrink-0" />,
   },
   {
@@ -64,6 +58,12 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
     icon: <Mic2 className="h-4 w-4 shrink-0" />,
   },
   {
+    id: 'tour_archive',
+    label: '歴代ツアー記録',
+    shortDesc: '記憶に残るツアーとセトリの歩み、参戦メモの記録',
+    icon: <Ticket className="h-4 w-4 shrink-0" />,
+  },
+  {
     id: 'sacred_map',
     label: '聖地巡礼マップ',
     shortDesc: '松江の原点やライブ会場、MVの景色をめぐる旅マップ',
@@ -71,15 +71,15 @@ export const SITE_NAV_ITEMS: NavMenuItem[] = ([
   },
   {
     id: 'setlist',
-    label: 'マイセトリ作成',
+    label: 'MYセトリ作成',
     shortDesc: '好きな曲順で夢のライブを編み、画像でも残せる工房',
     icon: <ListMusic className="h-4 w-4 shrink-0" />,
   },
   {
-    id: 'tour_archive',
-    label: '歴代ツアー記録',
-    shortDesc: '記憶に残るツアーとセトリの歩み、参戦メモの記録',
-    icon: <Ticket className="h-4 w-4 shrink-0" />,
+    id: 'mood',
+    label: '今日の1曲診断',
+    shortDesc: '今の気分や空気感に、しっくり寄り添う1曲と出会う',
+    icon: <Sparkles className="h-4 w-4 shrink-0" />,
   },
   {
     id: 'community',
@@ -116,32 +116,54 @@ interface SiteHeaderProps {
   activeTab: SiteTab;
   onSelectTab: (tab: ActiveFeatureTab) => void;
   onReplayIntro?: () => void;
+  onMenuOpenChange?: (open: boolean) => void;
 }
 
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
   activeTab,
   onSelectTab,
   onReplayIntro,
+  onMenuOpenChange,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButton = React.useRef<HTMLButtonElement>(null);
+  const menuDrawer = React.useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    onMenuOpenChange?.(isMenuOpen);
+  }, [isMenuOpen, onMenuOpenChange]);
 
   // Close drawer when activeTab changes from any trigger
   useEffect(() => {
     setIsMenuOpen(false);
   }, [activeTab]);
 
-  // Close drawer on Escape key
+  // Move focus into drawer when opened; close on Escape or outside pointerdown
   useEffect(() => {
     if (!isMenuOpen) return;
+    menuDrawer.current
+      ?.querySelector<HTMLElement>('button, a[href]')
+      ?.focus({ preventScroll: true });
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
         menuButton.current?.focus();
       }
     };
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+      if (menuDrawer.current?.contains(target) || menuButton.current?.contains(target)) {
+        return;
+      }
+      setIsMenuOpen(false);
+    };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('pointerdown', handlePointerDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
   }, [isMenuOpen]);
 
   const currentNav =
@@ -159,7 +181,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
         <button
           type="button"
           onClick={() => handleNavigate('home')}
-          aria-label="115万キロのファンノート"
           className="flex items-center gap-1.5 sm:gap-2.5 text-left min-w-0 group cursor-pointer"
         >
           <svg
@@ -178,12 +199,12 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               />
             </g>
           </svg>
-          <span aria-hidden="true" className="min-w-0">
+          <span className="min-w-0">
             <span className="block font-note-serif text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
-              <span className="inline-block whitespace-nowrap">115万キロの</span>
-              <span className="inline-block whitespace-nowrap">ファンノート</span>
+              <span className="whitespace-nowrap">115万キロの</span><wbr /><span className="whitespace-nowrap">ファンノート</span>
             </span>
-            <span className="hidden sm:block text-[10.5px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
+            {' '}
+            <span className="sr-only sm:not-sr-only sm:block text-[10.5px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
               Official髭男dism 非公式ファンサイト
             </span>
           </span>
@@ -202,9 +223,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             type="button"
             onClick={() => setIsMenuOpen((prev) => !prev)}
             ref={menuButton}
-            onBlur={(event) => {
-              if (!event.relatedTarget?.closest('#global-nav-drawer')) setIsMenuOpen(false);
-            }}
             aria-expanded={isMenuOpen}
             aria-controls="global-nav-drawer"
             aria-label={isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
@@ -237,17 +255,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               className="fixed inset-x-0 top-16 bottom-0 z-30 bg-[#253331]/25 backdrop-blur-[1px]"
             />
             <nav
+              ref={menuDrawer}
               id="global-nav-drawer"
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget) && event.relatedTarget !== menuButton.current) {
-                  setIsMenuOpen(false);
-                }
-              }}
               aria-label="サイト内メニュー"
               className="fixed sm:absolute right-0 sm:right-6 lg:right-8 top-16 z-40 w-full sm:w-[400px] max-h-[calc(100vh-4rem)] overflow-y-auto sm:rounded-b-2xl border-b sm:border border-[#dfd7c7] bg-[#faf6eb] shadow-xl"
             >
               <div className="p-3.5 sm:p-4">
-                <div className="flex items-center justify-between pb-2.5 mb-2.5 border-b border-[#e5dccb] px-1">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#e5dccb] px-1">
                   <span className="font-note-serif text-xs font-bold text-[#253331]">
                     ファンノートの目次
                   </span>

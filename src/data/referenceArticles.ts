@@ -1924,5 +1924,19 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "referencedUrls": [
       "https://higedan.com/news/detail/101603"
     ]
+  },
+  {
+    "title": "Official髭男dism Pretender 歌詞",
+    "publisher": "歌ネット",
+    "url": "https://www.uta-net.com/song/268710/",
+    "kind": "lyrics",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender"
+    ],
+    "referencedUrls": [
+      "https://www.uta-net.com/song/268710/"
+    ]
   }
 ];

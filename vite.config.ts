@@ -1,5 +1,6 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
+import fs from 'node:fs';
 import path from 'path';
 import evidence from './src/data/songEvidence.json' with { type: 'json' };
 import { isTempoUnderReview } from './src/data/tempoReviewStatus.ts';
@@ -37,6 +38,9 @@ export default defineConfig(({ command }) => {
       transformIndexHtml: html => html
         .replace(CSP_MARKER, contentSecurityPolicy(command === 'serve'))
         .replace('<!--verified-songs-->', renderCatalog()),
+      closeBundle() {
+        fs.rmSync(path.resolve(import.meta.dirname, 'dist/song-art'), { recursive: true, force: true });
+      },
     }],
     resolve: {
       alias: {

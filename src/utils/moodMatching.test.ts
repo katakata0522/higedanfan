@@ -66,7 +66,7 @@ test('a nonmatching condition is never presented as a match and legacy sharing s
   const text = formatDiagnosisShareText(match, criteria);
   assert.ok(text.includes('Rejoice期'));
   assert.ok(text.includes('５分以上'));
-  assert.ok(formatDiagnosisShareText(match, originalCriteria).includes('マイソング診断'));
+  assert.ok(formatDiagnosisShareText(match, originalCriteria).includes('今日の1曲診断'));
 });
 
 test('requested release years and duration are honoured, including Rejoice songs from 2024', () => {

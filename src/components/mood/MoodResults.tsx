@@ -14,6 +14,8 @@ import {
 import { MoodListen, officialVideoId } from './MoodListen';
 import { MoodShareCard, type ShareTheme } from './MoodShareCard';
 import { moodResultCopy } from './moodResultCopy';
+import { songPagePath } from '../../songPages/publishedSongPageIds';
+import { saveSongReturnTab } from '../../utils/guideReturnState';
 import type { CompleteMoodCriteria, MoodStep } from './moodSession';
 
 export interface MoodLibraryProps {
@@ -27,20 +29,24 @@ interface MoodResultsProps extends MoodLibraryProps {
   criteria: CompleteMoodCriteria;
   onEditAnswer: (step: MoodStep) => void;
   onRestart: () => void;
+  page?: number;
+  onPageChange?: (page: number) => void;
   theme: ShareTheme;
   onSelectTheme: (theme: ShareTheme) => void;
 }
 
 export function MoodResults({
-  songs, onSelectSong, onAddToSetlist, setlistSongIds,
-  criteria, onEditAnswer, onRestart, theme, onSelectTheme,
+  songs, onAddToSetlist, setlistSongIds,
+  criteria, onEditAnswer, onRestart, page = 0, onPageChange, theme, onSelectTheme,
 }: MoodResultsProps) {
   const [shareRank, setShareRank] = useState<number | null>(null);
-  const [page, setPage] = useState(0);
+  const [localPage, setLocalPage] = useState(page);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
 
   const recommendations = useMemo(() => recommendSongsByMood(songs, criteria), [songs, criteria]);
-  const matches = recommendations.slice(page * 3, page * 3 + 3);
+  const maxPage = Math.max(0, Math.ceil(recommendations.length / 3) - 1);
+  const activePage = Math.min(Math.max(0, onPageChange ? page : localPage), maxPage);
+  const matches = recommendations.slice(activePage * 3, activePage * 3 + 3);
   const [bestMatch, ...subMatches] = matches;
   const bestCopy = bestMatch ? moodResultCopy(bestMatch.song) : null;
   const recommendedSongId = bestMatch?.song.id;
@@ -59,19 +65,18 @@ export function MoodResults({
     { step: 5, name: '長さ', value: LENGTH_PREFERENCE_LABELS[criteria.length] },
   ];
 
-  const handleOpenSongDetail = (song: SongItem) => {
-    onSelectSong(song);
-  };
   const changePage = (next: number) => {
+    const clamped = Math.min(Math.max(0, next), maxPage);
     setShareRank(null);
-    setPage(next);
+    setLocalPage(clamped);
+    onPageChange?.(clamped);
   };
 
   return (
     <div className="space-y-6">
       {recommendations.length === 0 && (
         <div className="rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7">
-          <h3 ref={resultHeadingRef} tabIndex={-1} className="scroll-mt-28 text-base font-bold text-[#1C1917] focus:outline-none">ぴったりの曲が見つからなかったみたい。</h3>
+          <h2 ref={resultHeadingRef} tabIndex={-1} className="scroll-mt-28 text-base font-bold text-[#1C1917] focus:outline-none">ぴったりの曲が見つからなかったみたい。</h2>
           <p className="mt-2 text-sm leading-relaxed text-[#57534E]">時期か曲の長さを変えて、もう一度探してみよう。</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <button type="button" onClick={() => onEditAnswer(4)} className="rounded-lg border border-[#D5CEC2] px-3 py-2 text-sm font-bold hover:bg-[#F2EFE9]">時期を変える</button>
@@ -84,7 +89,7 @@ export function MoodResults({
       {bestMatch && bestCopy && (
         <article key={bestMatch.song.id} className="mood-result-enter rounded-2xl border border-[#D5CEC2] bg-white p-5 sm:p-7 shadow-[0_2px_16px_rgba(28,25,23,0.04)]">
           <p className="text-xs font-bold text-[#C83E2B]">今日のあなたへのおすすめ</p>
-          <h3 ref={resultHeadingRef} tabIndex={-1} className="mt-2 scroll-mt-28 text-2xl sm:text-3xl font-bold text-[#1C1917] focus:outline-none">{bestMatch.song.title}</h3>
+          <h2 ref={resultHeadingRef} tabIndex={-1} className="mt-2 scroll-mt-28 text-2xl sm:text-3xl font-bold text-[#1C1917] focus:outline-none">{bestMatch.song.title}</h2>
           <p className="mt-1 text-xs font-medium text-[#57534E]">{bestMatch.song.tieUp || bestMatch.song.englishSub}</p>
 
           <div className="mt-5 max-w-2xl space-y-4">
@@ -108,7 +113,7 @@ export function MoodResults({
           </div>
 
           <div className="mt-5 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-6">
-            {bestCopy.feature && <h4 className="text-base font-bold leading-relaxed text-[#1C1917]">{bestCopy.feature}</h4>}
+            {bestCopy.feature && <h3 className="text-base font-bold leading-relaxed text-[#1C1917]">{bestCopy.feature}</h3>}
             <p className="mt-2 text-sm leading-7 text-[#292524]">{bestCopy.introduction}</p>
             {bestCopy.invitation && <p className="mt-3 text-sm leading-7 text-[#57534E]">{bestCopy.invitation}</p>}
           </div>
@@ -141,14 +146,14 @@ export function MoodResults({
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => handleOpenSongDetail(bestMatch.song)}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              <a
+                href={`${import.meta.env.BASE_URL}${songPagePath(bestMatch.song.id) ?? ''}`}
+                onClick={() => saveSongReturnTab('mood')}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
               >
                 <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
                 詳しい解説を読む
-              </button>
+              </a>
               <button
                 type="button"
                 onClick={() => onAddToSetlist(bestMatch.song.id)}
@@ -167,7 +172,7 @@ export function MoodResults({
                 ) : (
                   <>
                     <Plus className="h-3.5 w-3.5" />
-                    マイセトリに追加
+                    MYセトリに追加
                   </>
                 )}
               </button>
@@ -188,9 +193,9 @@ export function MoodResults({
       {/* 2nd & 3rd Candidate Songs */}
       {subMatches.length > 0 && (
         <div>
-          <h4 className="text-xs font-bold tracking-wide text-[#78716C] mb-3">
+          <h2 className="text-xs font-bold tracking-wide text-[#78716C] mb-3">
             こんな曲もおすすめ
-          </h4>
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {subMatches.map(match => {
               const { song } = match;
@@ -204,9 +209,9 @@ export function MoodResults({
                 >
                   <div>
                     <div className="min-w-0">
-                      <h5 className="text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
+                      <h3 className="text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
                         {song.title}
-                      </h5>
+                      </h3>
                     </div>
 
                     <p className="mt-3 pt-2.5 border-t border-[#E6E1D6] text-xs text-[#57534E] leading-relaxed">
@@ -219,14 +224,14 @@ export function MoodResults({
 
                   <div className="mt-3.5 flex items-center justify-between gap-1.5 border-t border-[#E6E1D6] pt-3">
                     <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => handleOpenSongDetail(song)}
-                        className="inline-flex items-center gap-1 rounded-md border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#1C1917] hover:bg-[#F2EFE9] whitespace-nowrap shrink-0 cursor-pointer"
+                      <a
+                        href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
+                        onClick={() => saveSongReturnTab('mood')}
+                        className="inline-flex items-center gap-1 rounded-md border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-[11px] font-bold text-[#1C1917] hover:bg-[#F2EFE9] whitespace-nowrap shrink-0"
                       >
                         <BookOpen className="h-3 w-3 text-[#1E3A5F]" />
                         解説
-                      </button>
+                      </a>
                       <button
                         type="button"
                         onClick={() => onAddToSetlist(song.id)}
@@ -257,10 +262,10 @@ export function MoodResults({
           <RotateCcw aria-hidden="true" className="h-4 w-4" />
           最初から診断する
         </button>
-        {(page + 1) * 3 < recommendations.length && (
+        {(activePage + 1) * 3 < recommendations.length && (
           <button
             type="button"
-            onClick={() => changePage(page + 1)}
+            onClick={() => changePage(activePage + 1)}
             className="min-h-11 rounded-lg border border-[#C83E2B]/55 bg-[#FFFDF8] px-4 py-2.5 text-sm font-bold text-[#A93020] hover:border-[#C83E2B] hover:bg-[#FDF6EE] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
           >
             ほかの曲も見てみる

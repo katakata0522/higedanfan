@@ -39,7 +39,7 @@ const ALBUM_FILTERS: { id: string; label: string }[] = [
   { id: 'Editorial', label: 'Major 2nd『Editorial』(2021・全14曲)' },
   { id: 'ミックスナッツ EP', label: '4th EP『ミックスナッツ EP』(2022・掲載3曲／全4曲)' },
   { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・ボーカル15曲)' },
-  { id: 'Single / 2024-2026 Collection', label: '2024–2025 配信シングル（掲載5曲）' },
+  { id: 'Single / 2024-2026 Collection', label: '2024–2026 配信シングル（Same Blue〜Make Me Wonder・掲載5曲）' },
   { id: 'スターダスト/エルダーフラワー', label: '2026 両A面シングル『スターダスト/エルダーフラワー』（掲載2曲）' },
 ];
 

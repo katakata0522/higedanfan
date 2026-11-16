@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
+import { HIGEDAN_SONGS, SACRED_SPOTS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
 import { HomePage } from './components/home/HomePage';
 import {
@@ -14,14 +14,15 @@ import {
 } from './components/KurunIntroOverlay';
 import { useFanRecords } from './hooks/useFanRecords';
 import { SiteHeader, ActiveFeatureTab, type SiteTab, SITE_NAV_ITEMS } from './components/SiteHeader';
-import { isInfoPage } from './components/info/infoPages';
+import { infoPages, infoPageDescriptions, isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { DiscographySection } from './components/DiscographySection';
 import type { QuizSession } from './components/quiz/quizSession';
+import { clearStaleQuizSession } from './components/quiz/quizSessionClear';
 import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
-import { clearGuideReturnState, clearSongReturnTab, saveSongReturnTab } from './utils/guideReturnState';
+import { clearArchiveReturnState, clearGuideListReturnState, clearGuideReturnState, clearSongReturnTab, clearTourReturnState, saveSongReturnTab } from './utils/guideReturnState';
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -36,9 +37,57 @@ const QuizSection = React.lazy(() =>
   import('./components/QuizSection').then(module => ({default: module.QuizSection}))
 );
 const InfoPage = React.lazy(() => import('./components/info/InfoPage'));
-const SongDetailModal = React.lazy(() =>
-  import('./components/SongDetailModal').then(module => ({default: module.SongDetailModal}))
-);
+
+const FEATURE_TAB_META: Record<ActiveFeatureTab, { title: string; description: string }> = {
+  home: {
+    title: '115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dismの楽曲ガイド・音域一覧、今日の1曲診断、聖地巡礼マップ、MYセトリ作成、歴代ツアー公演記録、Official髭男dism検定を楽しめる非公式ファンサイト。',
+  },
+  mood: {
+    title: '今日の1曲診断｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: '5つの質問から今の気分にぴったりのOfficial髭男dismの3曲を診断。曲調や聴きどころとあわせて楽しめます。',
+  },
+  discography: {
+    title: '楽曲ガイド（全90曲）｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dismの全90曲を網羅した楽曲ガイド。タイアップ・収録アルバム・演奏時間・音域・曲別解説を検索できます。',
+  },
+  vocal_range: {
+    title: '音域一覧・カラオケ選曲ガイド｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dism全90曲の地声最高音・ファルセット最高音・最低音を一覧比較。カラオケで歌いやすい曲探しもできます。',
+  },
+  sacred_map: {
+    title: '聖地巡礼マップ｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: `島根・松江・米子から東京・海外ロケ地まで、Official髭男dismゆかりの聖地${SACRED_SPOTS.length}か所を地図とエピソードで辿る巡礼ガイド。`,
+  },
+  setlist: {
+    title: 'MYセトリ作成｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dismの楽曲で自分だけの理想のライブセットリストを作成。本編・アンコール構成や合計演奏時間を自動計算します。',
+  },
+  tour_archive: {
+    title: '歴代ツアー・公演記録｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dismの2015年以降のワンマンツアー・単独公演・配信ライブの日程・会場とセットリスト記録を年代順に辿れます。',
+  },
+  community: {
+    title: '人気曲ランキング投票｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'お使いのブラウザ内でOfficial髭男dismの推し曲に投票・記録できるファン投票コーナー。',
+  },
+  fan_reviews: {
+    title: '感想・考察ノート｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: '好きな曲の感想やライブの思い出をお使いのブラウザ内に書き残せるメモノート。',
+  },
+  quiz: {
+    title: 'Official髭男dism検定｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: '楽曲エピソードから制作秘話まで、解説と出典を読みながらOfficial髭男dismの歩みを楽しく深掘りできる検定コーナー。',
+  },
+  quiz_archive: {
+    title: '参考記事・インタビュー｜115万キロのファンノート — Official髭男dism 非公式ファンサイト',
+    description: 'Official髭男dismの楽曲ガイドや検定で参照した公式インタビュー、ディスクレビュー、メディア記事を媒体・曲名別に探せる資料集。',
+  },
+};
+
+function updateMetaContent(selector: string, content: string) {
+  document.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', content);
+}
 
 function isUnpublishedHash(feature: string) {
   return (feature === 'community' && !PUBLIC_FEATURES.ranking) ||
@@ -55,7 +104,6 @@ function readLocation() {
 }
 
 export default function App() {
-  const [selectedModalSongId, setSelectedModalSongId] = useState<string | null>(() => readLocation().songId);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
   const prevTabRef = React.useRef<SiteTab>(activeFeatureTab);
@@ -111,15 +159,24 @@ export default function App() {
         window.location.replace(`${import.meta.env.BASE_URL}${pagePath}`);
         return;
       }
-      if (tab !== 'discography' && tab !== 'vocal_range') {
+      if (tab !== 'discography' && tab !== 'vocal_range' && tab !== 'quiz_archive' && tab !== 'tour_archive') {
         clearGuideReturnState();
       } else {
         clearSongReturnTab();
+        if (tab === 'quiz_archive') {
+          clearGuideListReturnState();
+          clearTourReturnState();
+        } else if (tab === 'tour_archive') {
+          clearGuideListReturnState();
+          clearArchiveReturnState();
+        } else {
+          clearArchiveReturnState();
+          clearTourReturnState();
+        }
       }
       const tabChanged = prevTabRef.current !== tab;
       prevTabRef.current = tab;
       setActiveFeatureTab(tab);
-      setSelectedModalSongId(songId);
       if (tabChanged && !songId) {
         window.scrollTo({ top: 0, behavior: 'instant' });
       }
@@ -145,7 +202,6 @@ export default function App() {
     } else {
       window.history.pushState({songParent: activeFeatureTab}, '', '#' + activeFeatureTab + '/' + id);
     }
-    setSelectedModalSongId(id);
   };
 
   const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
@@ -153,12 +209,27 @@ export default function App() {
     prevTabRef.current = tab;
     setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
-    setSelectedModalSongId(null);
     window.location.hash = tab;
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    const meta = isInfoPage(activeFeatureTab)
+      ? {
+          title: `${infoPages[activeFeatureTab]}｜115万キロのファンノート — Official髭男dism 非公式ファンサイト`,
+          description: infoPageDescriptions[activeFeatureTab],
+        }
+      : FEATURE_TAB_META[activeFeatureTab];
+    document.title = meta.title;
+    updateMetaContent('meta[name="description"]', meta.description);
+    updateMetaContent('meta[property="og:title"]', meta.title);
+    updateMetaContent('meta[property="og:description"]', meta.description);
+    updateMetaContent('meta[name="twitter:title"]', meta.title);
+    updateMetaContent('meta[name="twitter:description"]', meta.description);
+  }, [activeFeatureTab]);
+
   const records = useFanRecords(showToast);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist, votedKeys } = records;
@@ -166,13 +237,10 @@ export default function App() {
   useEffect(() => {
     if (!records.resetEpoch) return;
     const epoch = records.resetEpoch;
-    void import('./components/quiz/quizSessionStorage').then(({ clearStaleQuizSession }) => clearStaleQuizSession(epoch));
+    clearStaleQuizSession(epoch);
     void import('./components/mood/moodSession').then(({ clearStaleMoodSession }) => clearStaleMoodSession(epoch));
+    void import('./utils/savedSetlists').then(({ clearStaleSavedSetlists }) => clearStaleSavedSetlists(epoch));
   }, [records.resetEpoch]);
-
-  const modalSong = selectedModalSongId
-    ? songs.find((s) => s.id === selectedModalSongId) || null
-    : null;
 
   const setlistSongIds = setlist.map((s) => s.songId);
 
@@ -183,6 +251,11 @@ export default function App() {
         replayToken={introReplayToken}
         onClose={handleCloseIntro}
       />
+      <div
+        className="flex flex-1 flex-col"
+        aria-hidden={isIntroOpen || undefined}
+        inert={isIntroOpen || undefined}
+      >
       <a href="#top" className="skip-link">本文へ移動</a>
       {records.storageNotice && (
         <p role="alert" className="bg-amber-100 p-3 text-sm">
@@ -194,11 +267,18 @@ export default function App() {
         activeTab={activeFeatureTab}
         onSelectTab={handleSelectTab}
         onReplayIntro={handleReplayIntro}
+        onMenuOpenChange={setIsMenuOpen}
       />
 
       {/* Main Content Area Protected by ErrorBoundary */}
       <ErrorBoundary onResetApp={() => handleSelectTab('home', 'all')}>
-        <main id="top" tabIndex={-1} className="flex-1 outline-none">
+        <main
+          id="top"
+          tabIndex={-1}
+          aria-hidden={isMenuOpen || undefined}
+          inert={isIntroOpen || isMenuOpen || undefined}
+          className="flex-1 outline-none"
+        >
           {activeFeatureTab === 'home' ? (
             <HomePage
               songs={songs}
@@ -258,9 +338,11 @@ export default function App() {
                 {(activeFeatureTab === 'setlist' ||
                   activeFeatureTab === 'tour_archive') && (
                   <SetlistBuilderSection
+                    key={`${activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'}:${records.resetEpoch}`}
                     songs={songs}
                     setlist={setlist}
                     setlistTitle={records.setlistTitle}
+                    resetEpoch={records.resetEpoch}
                     onChangeTitle={records.changeTitle}
                     onAddSong={records.addToSetlist}
                     onRemoveSong={records.removeFromSetlist}
@@ -314,6 +396,7 @@ export default function App() {
                       activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
                     }
                     onBackHome={() => handleSelectTab('home')}
+                    bestQuizScore={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}
                   />
                 )}
@@ -324,7 +407,11 @@ export default function App() {
       </ErrorBoundary>
 
       {/* Clean Archival Notebook Footer */}
-      <footer className="border-t border-[#e2d8c5] bg-[#f4efe4]/90 py-8 mt-8">
+      <footer
+        aria-hidden={isMenuOpen || undefined}
+        inert={isIntroOpen || isMenuOpen || undefined}
+        className="border-t border-[#e2d8c5] bg-[#f4efe4]/90 py-8 mt-8"
+      >
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 space-y-1.5 text-xs text-[#57534E]">
           <p className="font-note-serif text-sm font-bold text-[#253331]">
             © 115万キロのファンノート — Official髭男dism 非公式ファンサイト
@@ -333,22 +420,10 @@ export default function App() {
             ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
           </p>
           <p className="text-[11px] leading-relaxed text-[#57534E]">
-            ※マイセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href="#privacy" className="underline underline-offset-2 hover:text-[#C83E2B]">プライバシーポリシー</a>から行えます）。
+            ※MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href="#privacy" className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]">プライバシーポリシー</a>から行えます）。
           </p>
         </div>
       </footer>
-
-      {/* Song Liner Notes Modal */}
-      {modalSong && <React.Suspense fallback={null}><SongDetailModal
-        song={modalSong}
-        onClose={() => selectSong(null)}
-        onAddToSetlist={records.addToSetlist}
-        isInSetlist={modalSong ? setlistSongIds.includes(modalSong.id) : false}
-        onVoteSong={records.voteSong}
-        hasVoted={
-          modalSong ? votedKeys.includes(`${modalSong.id}:overall`) : false
-        }
-      /></React.Suspense>}
 
       {/* Toast Notification */}
       {toastMessage && (
@@ -360,6 +435,7 @@ export default function App() {
           {toastMessage}
         </div>
       )}
+      </div>
     </div>
   );
 }

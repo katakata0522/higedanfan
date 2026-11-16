@@ -5,10 +5,14 @@ import {
   clearGuideReturnState,
   clearSongReturnTab,
   guideReturnView,
+  saveArchiveReturnState,
   saveGuideReturnState,
   saveSongReturnTab,
+  saveTourReturnState,
   songReturnDestination,
+  takeArchiveReturnState,
   takeGuideReturnState,
+  takeTourReturnState,
 } from './guideReturnState';
 
 function memoryStore() {
@@ -58,10 +62,10 @@ test('楽曲ページの戻り先を直前のコーナーに応じて返し、�
   assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
 
   saveSongReturnTab('setlist', store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'setlist', label: 'マイセトリに戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'setlist', label: 'MYセトリに戻る' });
 
   saveSongReturnTab('mood', store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'mood', label: 'マイソング診断に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'mood', label: '今日の1曲診断に戻る' });
 
   saveSongReturnTab('home', store);
   assert.deepEqual(songReturnDestination(store), { hash: 'home', label: 'トップページに戻る' });
@@ -88,4 +92,67 @@ test('clearGuideReturnStateは一覧の絞り込み状態と戻り先タブの�
   clearGuideReturnState(store);
   assert.equal(takeGuideReturnState(90, store), null);
   assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+});
+
+test('参考記事一覧の状態は楽曲ページからの戻り時に1度だけ復元され、不正値やresetEpoch不一致は弾く', () => {
+  const store = memoryStore();
+  const state = {
+    publisher: '音楽ナタリー',
+    query: 'Pretender',
+    order: 'oldest' as const,
+    visibleCount: 48,
+    resetEpoch: 'epoch-1',
+  };
+  saveArchiveReturnState(state, store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'quiz_archive', label: '参考記事一覧に戻る' });
+
+  // Mismatched epoch cannot restore, and consumes cleanly.
+  assert.equal(takeArchiveReturnState(120, 'epoch-2', ['音楽ナタリー'], store), null);
+
+  saveArchiveReturnState(state, store);
+  assert.deepEqual(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), state);
+  assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
+
+  // Invalid values rejected
+  saveArchiveReturnState({ ...state, visibleCount: 121 }, store);
+  assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
+  saveArchiveReturnState({ ...state, query: 'q'.repeat(61) }, store);
+  assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
+  saveArchiveReturnState({ ...state, publisher: 'Unknown\nEvil' }, store);
+  assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
+
+  // clearGuideReturnState clears archive state too
+  saveArchiveReturnState(state, store);
+  clearGuideReturnState(store);
+  assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+});
+
+test('歴代ツアー記録の状態は楽曲ページからの戻り時に1度だけ復元され、不正値やresetEpoch不一致は弾く', () => {
+  const store = memoryStore();
+  const state = {
+    query: '日産スタジアム',
+    sortOrder: 'oldest' as const,
+    category: 'tour' as const,
+    openTourId: 'tour-stadium-2025',
+    openEventId: 'live-2025-stadium-kanagawa-1',
+    resetEpoch: 'epoch-1',
+  };
+  saveTourReturnState(state, store);
+  assert.deepEqual(songReturnDestination(store), { hash: 'tour_archive', label: '歴代ツアー記録に戻る' });
+
+  assert.equal(takeTourReturnState('epoch-2', store), null);
+
+  saveTourReturnState(state, store);
+  assert.deepEqual(takeTourReturnState('epoch-1', store), state);
+  assert.equal(takeTourReturnState('epoch-1', store), null);
+
+  saveTourReturnState({ ...state, query: 'q'.repeat(61) }, store);
+  assert.equal(takeTourReturnState('epoch-1', store), null);
+  saveTourReturnState({ ...state, openEventId: 'bad\nkey' }, store);
+  assert.equal(takeTourReturnState('epoch-1', store), null);
+
+  saveTourReturnState(state, store);
+  clearGuideReturnState(store);
+  assert.equal(takeTourReturnState('epoch-1', store), null);
 });
