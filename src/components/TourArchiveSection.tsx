@@ -281,7 +281,7 @@ export function TourArchiveSection({
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#ece4d6]">
             <p className="text-[11px] text-[#57534E]">
               {catalogLoad.skippedCount > 0
-                ? `カタログ掲載 ${catalogLoad.entries.length}曲を読み込みます（SE・カバー等 ${catalogLoad.skippedCount}曲を除く）`
+                ? `楽曲ガイドにある ${catalogLoad.entries.length}曲を読み込みます（SE・カバー等 ${catalogLoad.skippedCount}曲は除きます）`
                 : `この公演の ${catalogLoad.entries.length}曲をMYセトリに読み込めます`}
             </p>
             <button
@@ -497,7 +497,7 @@ export function TourArchiveSection({
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        公式特設・告知 ↗
+                        公式ツアー案内 ↗
                       </a>
                     </div>
                   )}
@@ -531,7 +531,7 @@ export function TourArchiveSection({
                       )}
                       {singleMatchedSongs.length > 0 && (
                         <p className="mt-1 text-xs font-medium text-[#9B3021]">
-                          演奏曲に一致：{singleMatchedSongs.join('・')}
+                          この公演で演奏：{singleMatchedSongs.join('・')}
                         </p>
                       )}
                     </div>
@@ -567,7 +567,7 @@ export function TourArchiveSection({
                               )}
                               {matchedSongs.length > 0 && (
                                 <p className="mt-1 text-xs font-medium text-[#9B3021]">
-                                  演奏曲に一致：{matchedSongs.join('・')}
+                                  この公演で演奏：{matchedSongs.join('・')}
                                 </p>
                               )}
                             </div>
@@ -595,7 +595,7 @@ export function TourArchiveSection({
           （2026年11月16日確認）。公式サイト・音楽メディア報道・公開セットリスト記録（LiveRepo・ヒゲダンセトリ）を突合確認したうえで、このサイト内でそのまま曲順を閲覧できるよう収録しています。
         </p>
         <p className="mt-2 leading-relaxed">
-          セットリストは初期状態で折りたたみ、選択した公演だけを確認できるようにしています。収録曲のうちカタログ掲載の90曲は楽曲解説ページへそのまま移動できます。初期のライブやFC限定公演など公開記録で全曲順を確認できない回は「セトリ未確認」と表記しています。「参戦・視聴」はシリーズ単位の個人メモです。
+          セットリストは初期状態で折りたたみ、選択した公演だけを確認できるようにしています。収録曲のうち楽曲ガイドに掲載している90曲は、曲ページへそのまま移動できます。初期のライブやFC限定公演など公開記録で全曲順を確認できない回は「セトリ未確認」と表記しています。「参戦・視聴」はシリーズ単位の個人メモです。
         </p>
       </details>
 
@@ -606,7 +606,7 @@ export function TourArchiveSection({
           pendingTourSetlist
             ? `現在のMYセトリ「${currentSetlistTitle || '作成中のセットリスト'}」を、「${pendingTourSetlist.title}」（${pendingTourSetlist.entries.length}曲）に置き換えてMYセトリ画面へ移動します。${
                 pendingTourSetlist.skippedCount > 0
-                  ? `\n※ カタログ外のSE・カバー曲など ${pendingTourSetlist.skippedCount}曲は除かれます。`
+                  ? `\n※ 楽曲ガイドに未登録のSE・カバー曲など ${pendingTourSetlist.skippedCount}曲は除かれます。`
                   : ''
               }\n今のセトリを残したい場合は、MYセトリ画面で「新しいセトリ」または「複製」を押してからご利用ください。`
             : ''

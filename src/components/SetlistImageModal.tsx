@@ -181,7 +181,7 @@ export function renderSetlistPosterDataUrl({
   ctx.fillStyle = textMuted;
   const totalCount = mainTracks.length + encoreTracks.length;
   ctx.fillText(
-    `全${totalCount}曲（本編 ${mainTracks.length} · EN ${encoreTracks.length}）  ／  演奏目安 ${formattedDuration}`,
+    `全${totalCount}曲（本編 ${mainTracks.length} · EN ${encoreTracks.length}）  ／  合計時間 ${formattedDuration}`,
     PADDING_X,
     cursorY + 6,
   );

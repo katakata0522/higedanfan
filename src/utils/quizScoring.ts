@@ -23,7 +23,7 @@ export function calculateQuizResult(
       total,
       percentage,
       rankTitle: '名誉編集長 / BROTHERS マスター',
-      rankBadgeCode: 'RANK S · EDITORIAL CHIEF',
+      rankBadgeCode: 'RANK S · HIGEDAN MASTER',
       editorialMessage:
         `今回挑戦した${total}問にすべて正解しました！楽曲の背景からメンバーの言葉まで、深い愛が光る見事な記録です。`,
     };
@@ -34,7 +34,7 @@ export function calculateQuizResult(
       total,
       percentage,
       rankTitle: 'グッドミュージック特派員',
-      rankBadgeCode: 'RANK A · SENIOR WRITER',
+      rankBadgeCode: 'RANK A · GOOD MUSIC FAN',
       editorialMessage:
         'たくさんの楽曲エピソードをご存じですね！気になった問題の背景は、参考記事・インタビュー一覧からさらに深くたどれます。',
     };
@@ -44,7 +44,7 @@ export function calculateQuizResult(
     total,
     percentage,
     rankTitle: 'ヒゲダン沼のルーキー読者',
-    rankBadgeCode: 'RANK B · MUSIC ROOKIE',
+    rankBadgeCode: 'RANK B · FAN NOTE ROOKIE',
     editorialMessage:
       'ここからさらに沼が深まる予感！知らなかったエピソードは、楽曲ガイドや参考記事からぜひ追いかけてみてください。',
   };

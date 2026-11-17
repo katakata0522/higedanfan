@@ -266,7 +266,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                     ファンノートの目次
                   </span>
                   <span className="text-[11px] text-[#78716C]">
-                    押すと各ページへ移動します
+                    コーナー一覧
                   </span>
                 </div>
 

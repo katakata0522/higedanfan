@@ -484,19 +484,6 @@ body.kurun-intro-active {
   border: 1px solid rgba(45, 60, 58, .12);
   box-shadow: 0 2px 8px rgba(45, 60, 58, .045);
 }
-.fusen-washi-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 3px 14px;
-  background: var(--tape-bg, #f6e39c);
-  color: #253331;
-  font-family: var(--font-note-serif);
-  font-size: 11px;
-  font-weight: 500;
-  font-synthesis-weight: none;
-  letter-spacing: .06em;
-  clip-path: polygon(2% 0%, 98% 2%, 100% 35%, 97% 65%, 99% 100%, 2% 98%, 0% 62%, 3% 28%);
-}
 .fusen-memo-card {
   position: relative;
   display: flex;

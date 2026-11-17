@@ -19,7 +19,7 @@ export function autoSongPage(id: string): EditorialSongPageData {
       : `「${fact.recording}」は${release}に配信されました。このページでは『${fact.album}』に収録された音源を紹介します。`,
     ...tieUps.map(item => {
       if (id === 'anarchy-song') {
-        return `${item.text.replace('（シングル版）', '')}に起用されたのはシングル版です。掲載音源とは別の録音です。`;
+        return `${item.text.replace('（シングル版）', '')}に起用されたのはシングル版です。このページで扱うアルバム収録版とは別の録音です。`;
       }
       if (id === 'last-song') {
         return `RAG Musicの楽曲解説では、${item.text.replace('（RAG Musicの楽曲解説による）', '')}と紹介されています。`;
@@ -30,14 +30,14 @@ export function autoSongPage(id: string): EditorialSongPageData {
 
   return {
     id,
-    artwork: { theme: song.jacketImage, alt: `${fact.recording}の当サイト制作の抽象的なイメージ図柄` },
-    feature: { text: fact.style, credit: '— 参考資料をもとに当サイトが要約した曲調' },
+    artwork: { theme: song.jacketImage, alt: `${fact.recording}をイメージしたアート` },
+    feature: { text: fact.style, credit: '— サウンドの特徴' },
     overview,
     albumTrack: song.album.startsWith('Single /') ? undefined : song.trackNumber,
     sources: [
       { label: '公式作品情報', purpose: '配信日・収録作品', evidence: 'cdSource' },
-      { label: 'Apple Music の掲載音源', purpose: '演奏時間', evidence: 'apple' },
-      { label: '曲調の参考資料', purpose: '紙面上の曲調表現', evidence: 'styleSource' },
+      { label: 'Apple Music 配信ページ', purpose: '演奏時間', evidence: 'apple' },
+      { label: '曲調の参考資料', purpose: '曲調の参考', evidence: 'styleSource' },
       { label: '歌の音域の参考資料', purpose: '地声・裏声の音域', evidence: 'rangeSource' },
       { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
       ...(id === '115man-kilo' ? [
@@ -47,7 +47,7 @@ export function autoSongPage(id: string): EditorialSongPageData {
       ...tieUps.map(item => ({ label: id === 'last-song' ? 'タイアップの参考記事' : 'タイアップの発表', purpose: item.text, url: item.source })),
     ],
     sourceCaveat: id === '115man-kilo'
-      ? 'テンポは四分音符を約97 BPMとするドラム譜・コード譜に合わせました。約194 BPMは倍取りの表記です。これは当サイトが採用した数え方で、公式の指定テンポではありません。音域も採譜によって異なる場合があります。'
-      : '曲調は参考資料からの要約です。音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+      ? 'テンポは四分音符を約97 BPMとするドラム譜・コード譜に合わせました。約194 BPMは倍取りの表記です。これは当サイトが採用した数え方で、公式の指定テンポではありません。音域も調査データによって異なる場合があります。'
+      : '曲調は参考資料からの要約です。音域とテンポは調査・計測方法で表記が異なる場合があります。',
   };
 }

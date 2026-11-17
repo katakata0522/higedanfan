@@ -100,3 +100,7 @@ export function getSongwriterCredit(song: SongIdentity): string {
   const credit = songwriterInfo(song);
   return credit ? '作詞・作曲：' + credit.name : '作者情報未確認';
 }
+
+export function formatAlbumDisplayName(album: string): string {
+  return album.replace(/\s-\sSingle$/, '（配信シングル）');
+}

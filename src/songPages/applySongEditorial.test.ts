@@ -56,5 +56,5 @@ test('lyric quote songs preserve attribution while editorial songs keep default 
   assert.equal(ladyQuoted.feature.credit, '— Official髭男dism「LADY」（作詞：藤原聡）');
 
   const autoBase = autoSongPage('lady-song');
-  assert.equal(autoBase.feature.credit, '— 参考資料をもとに当サイトが要約した曲調');
+  assert.equal(autoBase.feature.credit, '— サウンドの特徴');
 });

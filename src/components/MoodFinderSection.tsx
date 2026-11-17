@@ -1,5 +1,4 @@
-import { useLayoutEffect, useState, type CSSProperties, type RefObject } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { useLayoutEffect, useState, type RefObject } from 'react';
 import { MoodQuestionnaire } from './mood/MoodQuestionnaire';
 import { MoodResults, type MoodLibraryProps } from './mood/MoodResults';
 import type { ShareTheme } from './mood/MoodShareCard';
@@ -12,10 +11,9 @@ import {
 interface MoodFinderSectionProps extends MoodLibraryProps {
   resetEpoch: string;
   sessionRef: RefObject<MoodSession | null>;
-  onBackHome?: () => void;
 }
 
-export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props }: MoodFinderSectionProps) {
+export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFinderSectionProps) {
   const [session, setSession] = useState<MoodSession>(() => sessionRef.current ?? restoreMoodSession());
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
@@ -37,42 +35,17 @@ export function MoodFinderSection({ resetEpoch, sessionRef, onBackHome, ...props
     <section
       id="section-mood"
       aria-labelledby="mood-heading"
-      className={criteria ? 'py-4 sm:py-6' : 'py-6 sm:py-8'}
+      className="py-4 sm:py-5"
     >
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Section Title */}
-        <div className={criteria ? 'mb-3' : 'pb-5 border-b border-[#e5dccb] space-y-3'}>
-          <div className="flex flex-wrap items-center gap-2.5">
-            {onBackHome && (
-              <button
-                type="button"
-                onClick={onBackHome}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 text-[#C83E2B]" aria-hidden="true" />
-                <span>付箋一覧へ戻る</span>
-              </button>
-            )}
-            <span
-              className="fusen-washi-tag"
-              style={{ '--tape-bg': 'rgba(188, 227, 248, 0.78)' } as CSSProperties}
-            >
-              選曲メモ
-            </span>
-          </div>
-          <div>
-            <h1
-              id="mood-heading"
-              className={criteria ? 'sr-only' : 'font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]'}
-            >
-              今日の1曲診断
-            </h1>
-            {!criteria && (
-              <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-                今の気分と一緒に、ヒゲダンの一曲を探そう。
-              </p>
-            )}
-          </div>
+        <div className={criteria ? '' : 'pb-3 border-b border-[#e5dccb]'}>
+          <h1
+            id="mood-heading"
+            className={criteria ? 'sr-only' : 'font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]'}
+          >
+            今日の1曲診断
+          </h1>
         </div>
 
         {sessionSaveUnavailable && (

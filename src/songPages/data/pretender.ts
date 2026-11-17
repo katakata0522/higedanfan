@@ -19,11 +19,11 @@ const page = {
     { label: '『Pretender』公式特設サイト', purpose: '映画主題歌、シングル発売日、アーティストコメント', url: 'https://pretender.ponycanyon.co.jp/' },
     { label: 'Official髭男dism『Traveler』作品情報', purpose: '収録順とアルバム発売日', evidence: 'cdSource' },
     { label: 'アニメ『東京リベンジャーズ』公式対談', purpose: 'UKロックを参考にした音作り', url: 'https://tokyo-revengers-anime.com/special/taidan/' },
-    { label: 'Apple Music の掲載音源', purpose: '配信日と演奏時間', evidence: 'apple' },
+    { label: 'Apple Music 配信ページ', purpose: '配信日と演奏時間', evidence: 'apple' },
     { label: 'J-POP 音域の沼', purpose: '歌の音域と曲調', evidence: 'rangeSource' },
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
   ],
-  sourceCaveat: '演奏時間はApple Musicの掲載音源に基づきます。音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+  sourceCaveat: '演奏時間はApple Musicの配信版に基づきます。音域とテンポは調査・計測方法で表記が異なる場合があります。',
 } satisfies EditorialSongPageData;
 
 export default page;

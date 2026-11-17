@@ -34,17 +34,17 @@ const ALBUM_FILTERS: { id: string; label: string }[] = [
   { id: 'レポート', label: '3rd Mini『レポート』(2017・全7曲)' },
   { id: 'エスカパレード', label: '1st Full『エスカパレード』(2018・全13曲)' },
   { id: 'Stand By You EP', label: '2nd EP『Stand By You EP』(2018・掲載3曲／全4曲)' },
-  { id: 'Traveler', label: 'Major 1st『Traveler』(2019・ボーカル13曲)' },
+  { id: 'Traveler', label: 'Major 1st『Traveler』(2019・歌あり13曲／全14曲)' },
   { id: 'HELLO EP', label: '3rd EP『HELLO EP』(2020・全4曲)' },
   { id: 'Editorial', label: 'Major 2nd『Editorial』(2021・全14曲)' },
   { id: 'ミックスナッツ EP', label: '4th EP『ミックスナッツ EP』(2022・掲載3曲／全4曲)' },
-  { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・ボーカル15曲)' },
+  { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・歌あり15曲／全16曲)' },
   { id: 'Single / 2024-2026 Collection', label: '2024–2026 配信シングル（Same Blue〜Make Me Wonder・掲載5曲）' },
   { id: 'スターダスト/エルダーフラワー', label: '2026 両A面シングル『スターダスト/エルダーフラワー』（掲載2曲）' },
 ];
 
 const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
-  { id: 'all', label: 'すべてのおすすめ分類' },
+  { id: 'all', label: 'すべての曲調' },
   { id: 'piano_pop', label: '王道ピアノポップ' },
   { id: 'brass_funk', label: 'ブラス＆ファンク' },
   { id: 'emotional_ballad', label: 'バラード' },
@@ -54,11 +54,11 @@ const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [
 const SORT_OPTIONS: { id: DiscographySortOption; label: string }[] = [
   { id: 'guide_order', label: '並び順：代表曲→アルバム順（ガイド順）' },
   { id: 'album_track_order', label: '並び順：アルバム収録曲順（M1〜最終曲）' },
-  { id: 'release_oldest', label: '並び順：配信掲載日が古い順（2015年初期〜）' },
-  { id: 'newest', label: '並び順：配信掲載日が新しい順（最新曲〜）' },
+  { id: 'release_oldest', label: '並び順：配信日が古い順（2015年初期〜）' },
+  { id: 'newest', label: '並び順：配信日が新しい順（最新曲〜）' },
   { id: 'highest_note', label: '並び順：地声最高音が高い順' },
   { id: 'vocal_span', label: '並び順：音域が広い順（半音幅）' },
-  { id: 'bpm', label: '並び順：テンポ（BPM）の数値が大きい順' },
+  { id: 'bpm', label: '並び順：テンポが速い順（BPM順）' },
 ];
 
 interface Props {
@@ -158,7 +158,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
           })}
         </div>
         <div>
-          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="sound-filter-select">おすすめ分類（作成者）</label>
+          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="sound-filter-select">曲調・サウンド</label>
           <select id="sound-filter-select" className={selectClass} value={sound}
             onChange={e => onChange({ ...values, sound: e.target.value as SongGuideFilterValues['sound'] })}>
             {SOUND_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}

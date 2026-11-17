@@ -19,6 +19,7 @@ import {
 } from './songConnections';
 import { songAppleArtwork } from '../data/songAppleArtwork';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
+import { formatAlbumDisplayName } from '../utils/songCatalog';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
 const base = import.meta.env.BASE_URL;
@@ -125,7 +126,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             <nav className="song-menu-panel" aria-label="サイト内メニュー">
               <div className="song-menu-header">
                 <span className="song-menu-heading">ファンノートの目次</span>
-                <span className="song-menu-note">押すと各ページへ移動します</span>
+                <span className="song-menu-note">コーナー一覧</span>
               </div>
               <div className="song-menu-items">
                 {SITE_NAV_ITEMS.map(item => (
@@ -213,14 +214,14 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             </figure>
             <div className="hero-content">
               <h1 id="song-title">{song.title}</h1>
-              <p className="recording">収録作品：<span>{fact.album}</span></p>
+              <p className="recording">収録作品：<span>{formatAlbumDisplayName(fact.album)}</span></p>
 
               <dl className="song-facts">
                 <div className="fact-item"><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
                 <div className="fact-item"><dt>テンポ</dt><dd>{formatSongBpm(page.id, fact.tempo)}{!tempoUnderReview && <> <small>BPM</small></>}</dd></div>
                 <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
-                <div className="fact-item"><dt>裏声最高</dt><dd>{fact.falsetto ?? '記載なし'}</dd></div>
+                <div className={fact.falsetto ? 'fact-item' : 'fact-item fact-item--missing'}><dt>裏声最高</dt><dd>{fact.falsetto ?? '参考値なし'}</dd></div>
               </dl>
               {tempoUnderReview && <p className="tempo-explanation">テンポは資料によって値が異なるため、確認中です。</p>}
             </div>
@@ -281,7 +282,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           <section className="listen-section" aria-labelledby="listen-title">
             <div>
               <h2 id="listen-title">この曲を聴く</h2>
-              <p>紹介した音源を、もう一度聴いてみませんか。</p>
+              <p>気になったら、実際の楽曲も聴いてみませんか。</p>
             </div>
             {videoId && video && isExternalOnlyVideo ? (
               <a
@@ -349,18 +350,18 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             <div className="sources-body">
               <dl className="source-facts">
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
-                <div><dt>収録作品</dt><dd>{fact.album}{page.albumTrack ? `（${page.albumTrack}曲目）` : ''}</dd></div>
-                <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}（掲載音源）</dd></div>
-                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '記載なし'}</dd></div>
+                <div><dt>収録作品</dt><dd>{formatAlbumDisplayName(fact.album)}{page.albumTrack ? `（${page.albumTrack}曲目）` : ''}</dd></div>
+                <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
+                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '参考値なし'}</dd></div>
               </dl>
               {page.vocalVariants?.map(variant => (
                 <p className="vocal-variant" key={variant.label}>
-                  <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noopener noreferrer">{variant.sourceLabel}</a>の採譜）
+                  <strong>{variant.label}：</strong>{variant.value}（<a href={variant.sourceUrl} target="_blank" rel="noopener noreferrer">{variant.sourceLabel}</a>の調査）
                 </p>
               ))}
               {fact.otherRange && !page.vocalVariants?.length && (
                 <p className="vocal-variant">
-                  <strong>別の採譜：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noopener noreferrer">音域データ！＠ウィキ</a>の採譜）
+                  <strong>別サイトの音域データ：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2] === '記載なし' ? '参考値なし' : fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noopener noreferrer">音域データ！＠ウィキ</a>の調査）
                 </p>
               )}
               <ul className="source-list">

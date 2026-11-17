@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
 import { calculateQuizResult } from '../utils/fanLogic';
@@ -17,13 +17,12 @@ interface QuizSectionProps {
   songs?: SongItem[];
   onSelectSong?: (song: SongItem) => void;
   initialTab?: 'quiz' | 'archive';
-  onBackHome?: () => void;
   bestQuizScore?: number | null;
   onUpdateBestScore?: (percentage: number) => void;
 }
 
 export function QuizSection({
-  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', onBackHome, bestQuizScore = null, onUpdateBestScore,
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', bestQuizScore = null, onUpdateBestScore,
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
@@ -99,62 +98,22 @@ export function QuizSection({
     <section
       id="section-quiz"
       aria-labelledby="quiz-heading"
-      className="py-6 sm:py-8"
+      className="py-4 sm:py-5"
     >
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Clean Header */}
-        <div className="pb-5 border-b border-[#e5dccb] space-y-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              {onBackHome && (
-                <button
-                  type="button"
-                  onClick={onBackHome}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors cursor-pointer"
-                >
-                  <ArrowLeft className="h-3.5 w-3.5 text-[#C83E2B]" aria-hidden="true" />
-                  <span>付箋一覧へ戻る</span>
-                </button>
-              )}
-              <span
-                className="fusen-washi-tag"
-                style={{ '--tape-bg': 'rgba(192, 230, 199, 0.78)' } as CSSProperties}
-              >
-                {viewTab === 'archive' ? '制作とインタビューの記録' : 'ヒゲダン愛の力試し'}
-              </span>
-            </div>
-
-            {viewTab === 'quiz' ? (
-              <a
-                href="#quiz_archive"
-                className="text-xs font-bold text-[#5d554c] hover:text-[#1C1917] px-3 py-1.5 rounded-lg border border-[#d8ccb8] bg-[#fffdf8] transition-colors shrink-0"
-              >
-                参考記事・インタビュー
-              </a>
-            ) : (
-              <a
-                href="#quiz"
-                className="text-xs font-bold text-[#5d554c] hover:text-[#1C1917] px-3 py-1.5 rounded-lg border border-[#d8ccb8] bg-[#fffdf8] transition-colors shrink-0"
-              >
-                Official髭男dism検定へ
-              </a>
-            )}
-          </div>
-          <div>
-            <h1
-              id="quiz-heading"
-              className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
-            >
-              {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
-            </h1>
-            <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              {viewTab === 'archive'
-                ? '曲の物語や検定で参考にした記事・インタビュー・公式資料。記事名・媒体・日付から、掲載元をたどれます。'
-                : questionSet && questionSet !== 'current' && quizStage !== 'select'
-                ? '更新前に始めた検定を、当時の問題の続きから再開しています。'
-                : 'どの曲にも、思わず誰かに話したくなる背景がある。気になるコースを選んで挑戦しよう。'}
+        <div className="pb-3 border-b border-[#e5dccb]">
+          <h1
+            id="quiz-heading"
+            className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
+          >
+            {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
+          </h1>
+          {viewTab === 'quiz' && questionSet && questionSet !== 'current' && quizStage !== 'select' && (
+            <p className="mt-1.5 text-xs text-[#57534E]">
+              更新前に始めた検定を、当時の問題の続きから再開しています。
             </p>
-          </div>
+          )}
         </div>
 
         {viewTab === 'quiz' && sessionSaveUnavailable && (

@@ -141,7 +141,7 @@ export function MoodResults({
                 }`}
               >
                 <Share2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                <span>シェアカード生成</span>
+                <span>シェアカードを見る</span>
               </button>
             </div>
 
@@ -167,7 +167,7 @@ export function MoodResults({
                 {setlistSongIds.includes(bestMatch.song.id) ? (
                   <>
                     <Check className="h-3.5 w-3.5" />
-                    セトリ追加済
+                    MYセトリ追加済み
                   </>
                 ) : (
                   <>
@@ -242,7 +242,7 @@ export function MoodResults({
                             : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
                         }`}
                       >
-                        {inSetlist ? '追加済' : '+セトリ'}
+                        {inSetlist ? '追加済み' : '+ セトリへ'}
                       </button>
                     </div>
                   </div>

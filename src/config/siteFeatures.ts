@@ -43,7 +43,7 @@ export const PUBLIC_CORNERS: readonly PublicCornerMeta[] = [
     heading: '掲載90曲の音域・発売日一覧',
     title: `音域一覧・カラオケ選曲ガイド｜${SITE_FULL_TITLE}`,
     description:
-      'Official髭男dism掲載90曲の地声最低音・地声最高音・ファルセット最高音・BPM・配信掲載日・CD発売日を一覧比較。声域やキー変更から歌いやすい曲を探せます。',
+      'Official髭男dism掲載90曲の地声最低音・地声最高音・ファルセット最高音・BPM・配信日・CD発売日を一覧比較。声域やキー変更から歌いやすい曲を探せます。',
     summary: '地声最低音・地声最高音・裏声最高音やBPM・発売日を比較し、自分の声域やカラオケキーに合う曲を探せます。',
   },
   {

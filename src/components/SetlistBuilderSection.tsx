@@ -16,9 +16,8 @@ import {
   switchSavedSetlist,
   syncActiveSavedSetlist,
 } from '../utils/savedSetlists';
-import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ArrowLeft,
   ArrowUp,
   ArrowDown,
   Plus,
@@ -76,7 +75,6 @@ interface SetlistBuilderSectionProps {
   onImportRecords?: (file: File) => Promise<void>;
   onSelectSong?: (song: SongItem) => void;
   initialSubTab?: 'builder' | 'tours';
-  onBackHome?: () => void;
 }
 
 function serializeSetlistEntries(entries: readonly SetlistEntry[]): string {
@@ -98,7 +96,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   attendedTourIds,
   onToggleAttendedTour,
   initialSubTab = 'builder',
-  onBackHome,
 }) => {
   const activeSubTab = initialSubTab;
   const [songPickerMode, setSongPickerMode] = useState<'search' | 'album'>('search');
@@ -706,51 +703,19 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     <section
       id="section-setlist"
       aria-labelledby="setlist-heading"
-      className="py-6 sm:py-8"
+      className="py-4 sm:py-5"
     >
       <div className={`mx-auto ${activeSubTab === 'builder' ? 'max-w-4xl' : 'max-w-6xl'} px-4 sm:px-6 lg:px-8`}>
         {/* セクション見出し */}
-        <div className="pb-5 border-b border-[#e5dccb] space-y-3">
-          <div className="flex flex-wrap items-center gap-2.5">
-            {onBackHome && (
-              <button
-                type="button"
-                onClick={onBackHome}
-                className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors cursor-pointer"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 text-[#C83E2B]" aria-hidden="true" />
-                <span>付箋一覧へ戻る</span>
-              </button>
-            )}
-            <span
-              className="fusen-washi-tag"
-              style={
-                {
-                  '--tape-bg':
-                    activeSubTab === 'tours'
-                      ? 'rgba(223, 202, 246, 0.78)'
-                      : 'rgba(245, 198, 190, 0.78)',
-                } as CSSProperties
-              }
-            >
-              {activeSubTab === 'tours' ? 'ライブ参戦の記録' : '夢のライブ構想'}
-            </span>
-          </div>
-          <div>
-            <h1
-              id="setlist-heading"
-              className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
-            >
-              {activeSubTab === 'tours'
-                ? '歴代ツアー・公演記録'
-                : 'MYセトリ作成'}
-            </h1>
-            <p className="mt-1 text-xs sm:text-sm text-[#57534E]">
-              {activeSubTab === 'tours'
-                ? '公演日や会場、各公演のセットリストをたどりながら、参戦・視聴をツアーごとに記録できます。'
-                : 'ライブで聴きたい曲を好きな順に並べて、自分だけのステージを組み立てよう。曲順の流れや熱量の変化もそのまま味わえます。'}
-            </p>
-          </div>
+        <div className="pb-3 border-b border-[#e5dccb]">
+          <h1
+            id="setlist-heading"
+            className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
+          >
+            {activeSubTab === 'tours'
+              ? '歴代ツアー・公演記録'
+              : 'MYセトリ作成'}
+          </h1>
         </div>
 
         {activeSubTab === 'builder' ? (
@@ -910,7 +875,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     className="inline-flex min-h-[34px] items-center gap-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-1 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer"
                   >
                     <RotateCcw aria-hidden="true" className="h-3 w-3 text-[#1E3A5F]" />
-                    王道読込
+                    王道セトリを入れる
                   </button>
                 </div>
               </div>
@@ -973,7 +938,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   <div>
                     <h3 className="text-sm font-bold text-white/90">曲順で見る熱量の目安</h3>
                     <p className="mt-1 text-xs text-white/75 leading-relaxed">
-                      棒の高さは、編集者が各曲に付けた盛り上がりの目安です。
+                      棒の高さは、各曲の盛り上がりイメージ（10段階）を表しています。
                     </p>
 
                     <div className="mt-3 flex items-end overflow-x-auto gap-1.5 h-24 pt-3 px-2 rounded-lg bg-white/5 border border-white/10">

@@ -8,7 +8,7 @@ export type SongTableSortKey = typeof SONG_TABLE_SORT_KEYS[number];
 export type SongTableSort = { key: SongTableSortKey; direction: 'ascending' | 'descending' };
 export const SONG_TABLE_SORT_LABELS: Record<SongTableSortKey, string> = {
   title: '曲名', low: '地声最低', chest: '地声最高', falsetto: '裏声最高',
-  album: '収録作品', duration: '時間', bpm: 'BPM', release: '配信掲載日', cd: '収録作品CD',
+  album: '収録作品', duration: '演奏時間', bpm: 'BPM', release: '配信日', cd: 'CD発売日',
 };
 
 function sortValue(song: SongItem, key: SongTableSortKey): string | number | null {

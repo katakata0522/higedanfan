@@ -35,7 +35,7 @@ export function EditorProfile() {
         <ul className="list-disc pl-5 space-y-1.5 text-sm sm:text-base leading-relaxed text-[#292524]">
           <li>
             <strong>出典・公式資料への誠実さ：</strong>
-            作品情報・音域の採譜・インタビュー引用など、確認した原典をたどれるように出典リンクをできる限り明記しています。
+            作品情報・音域の調査データ・インタビュー引用など、確認した原典をたどれるように出典リンクをできる限り明記しています。
           </li>
           <li>
             <strong>ログイン不要で気楽に残せる手元ノート：</strong>

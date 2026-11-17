@@ -61,7 +61,7 @@ test('a nonmatching condition is never presented as a match and legacy sharing s
   const criteria: MoodCriteria = { ...originalCriteria, era: 'rejoice', length: 'fivePlus' };
   const match = scoreSongsByMood([song], criteria)[0];
   assert.deepEqual(match.matchReasons, []);
-  assert.ok(match.moodMatchExplanation.includes('一致する項目はありません'));
+  assert.ok(match.moodMatchExplanation.includes('今の気分に近い候補を選びました'));
   assert.ok(!match.moodMatchExplanation.includes('時期「'));
   const text = formatDiagnosisShareText(match, criteria);
   assert.ok(text.includes('Rejoice期'));

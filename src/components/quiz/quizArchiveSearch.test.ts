@@ -40,12 +40,12 @@ test('日付不明の資料は新しい順・古い順とも末尾に置き、�
   assert.deepEqual(input.map(article => article.title), ['不明', '古い', '新しい']);
 });
 
-test('記事公開日と、更新日・放送日・発行日・資料発売日を区別する', () => {
+test('記事公開日と、更新日・放送日・発行日・発売日を区別する', () => {
   const base = {...REFERENCE_ARTICLES[0], date: '2024-07-31'};
   assert.equal(referenceDateLabel({...base, dateKind: 'published'}), '2024/07/31 公開');
   assert.equal(referenceDateLabel({...base, dateKind: 'updated'}), '2024/07/31 更新');
   assert.equal(referenceDateLabel({...base, dateKind: 'broadcast'}), '2024/07/31 放送');
   assert.equal(referenceDateLabel({...base, dateKind: 'issued'}), '2024/07/31 発行');
-  assert.equal(referenceDateLabel({...base, dateKind: 'released'}), '2024/07/31 資料発売');
+  assert.equal(referenceDateLabel({...base, dateKind: 'released'}), '2024/07/31 発売');
   assert.equal(referenceDateLabel({...base, date: null}), '公開日未確認');
 });

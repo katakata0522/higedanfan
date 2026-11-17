@@ -72,7 +72,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           <span>{referenceKindLabel(article.kind)}</span>
           {article.date ? <time dateTime={article.date}>{referenceDateLabel(article)}</time> : <span>公開日未確認</span>}
         </div>
-        {article.unavailable && <p className="mt-2 text-xs text-[#78716C]">既存の出典名を記載しています。掲載元の記事名は未確認です。</p>}
+        {article.unavailable && <p className="mt-2 text-xs text-[#78716C]">参考サイト名のみ記録が残っている資料です（記事ページを確認できないためサイト名で表示しています）。</p>}
         <a href={article.url} target="_blank" rel="noopener noreferrer"
           className="group mt-2 block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
           <h2 className="text-base sm:text-lg font-bold leading-relaxed text-[#1C1917] group-hover:text-[#C83E2B] [overflow-wrap:anywhere]">
@@ -140,7 +140,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           {unavailable.map(renderArticle)}
         </details>}
       </>}
-      <p className="text-xs leading-relaxed text-[#78716C]">日付は掲載元で確認できたものです。更新日・放送日・発行日・資料発売日は区別して表示し、確認できないものは「公開日未確認」としています。</p>
+      <p className="text-xs leading-relaxed text-[#78716C]">日付は掲載元で確認できたものです。更新日・放送日・発行日・発売日は区別して表示し、確認できないものは「公開日未確認」としています。</p>
     </div>
   );
 }

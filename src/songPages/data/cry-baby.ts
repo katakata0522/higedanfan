@@ -20,11 +20,11 @@ const page = {
     { label: 'アニメ『東京リベンジャーズ』公式対談', purpose: '転調と制作背景', url: 'https://tokyo-revengers-anime.com/special/taidan/' },
     { label: 'Official髭男dism『Cry Baby』作品情報', purpose: '配信日', url: 'https://higedan.com/discography/detail/18/' },
     { label: 'Official髭男dism『Editorial』作品情報', purpose: '収録順とアルバム発売日', evidence: 'cdSource' },
-    { label: 'Apple Music の掲載音源', purpose: '演奏時間', evidence: 'apple' },
+    { label: 'Apple Music 配信ページ', purpose: '演奏時間', evidence: 'apple' },
     { label: 'J-POP 音域の沼', purpose: '歌の音域と曲調', evidence: 'rangeSource' },
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
   ],
-  sourceCaveat: '演奏時間はApple Musicの掲載音源に基づきます。音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+  sourceCaveat: '演奏時間はApple Musicの配信版に基づきます。音域とテンポは調査・計測方法で表記が異なる場合があります。',
 } satisfies EditorialSongPageData;
 
 export default page;

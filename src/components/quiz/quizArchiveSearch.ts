@@ -17,7 +17,7 @@ export function referenceKindLabel(kind: ReferenceKind): string {
 
 export function referenceDateLabel(article: ReferenceArticle): string {
   if (!article.date) return '公開日未確認';
-  const label = {published: '公開', updated: '更新', broadcast: '放送', issued: '発行', released: '資料発売'}[article.dateKind];
+  const label = {published: '公開', updated: '更新', broadcast: '放送', issued: '発行', released: '発売'}[article.dateKind];
   return `${article.date.replaceAll('-', '/')} ${label}`;
 }
 

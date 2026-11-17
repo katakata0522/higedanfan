@@ -85,7 +85,7 @@ export function QuizResultCard({
           }`}
         >
           <Share2 className="h-4 w-4 text-[#C83E2B]" />
-          シェアカード生成
+          シェアカードを見る
         </button>
 
         <button

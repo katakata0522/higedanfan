@@ -182,7 +182,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                       className="w-full min-h-[32px] py-1 inline-flex items-center justify-between gap-2 text-xs font-bold text-[#253331] hover:text-[#C83E2B] transition-colors"
                     >
                       <span className="min-w-0 wrap-anywhere whitespace-normal text-left">
-                        関連する楽曲ページ：『{member.signatureSongTitle}』
+                        『{member.signatureSongTitle}』の解説ページへ
                       </span>
                       <ArrowRight className="h-3.5 w-3.5 shrink-0" />
                     </a>

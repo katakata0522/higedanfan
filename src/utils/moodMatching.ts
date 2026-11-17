@@ -116,8 +116,8 @@ export function buildMoodMatchExplanation(
 ): string {
   const matched = matchedCriteria(song, criteria);
   const reason = matched.length
-    ? `${matched.join('・')}が選んだ条件と一致します。`
-    : '選んだ条件に一致する項目はありませんが、候補として紹介します。';
+    ? `${matched.join('・')}にぴったり重なる一曲です。`
+    : '選んだ時期や長さの中で、今の気分に近い候補を選びました。';
   return `${reason}この曲の聴きどころは「${song.musicalHighlight}」。`;
 }
 
@@ -184,7 +184,7 @@ export function scoreSongsByMood(
     const matchScore = Math.min(99, rawPoints);
     const moodMatchExplanation = buildMoodMatchExplanation(song, criteria);
     const matchBreakdown = buildMatchBreakdown(song, criteria);
-    const soundAnalysisReason = `掲載資料の曲調：${song.musicalHighlight}`;
+    const soundAnalysisReason = `曲調の特徴：${song.musicalHighlight}`;
 
     return {
       song,

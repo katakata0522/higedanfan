@@ -12,13 +12,13 @@ const originTabs = new Set([
 const ORIGIN_DESTINATIONS: Record<string, { hash: string; label: string }> = {
   home: { hash: 'home', label: 'トップページに戻る' },
   mood: { hash: 'mood', label: '今日の1曲診断に戻る' },
-  discography: { hash: 'discography', label: '曲一覧に戻る' },
+  discography: { hash: 'discography', label: '楽曲ガイドに戻る' },
   vocal_range: { hash: 'vocal_range', label: '音域一覧に戻る' },
   sacred_map: { hash: 'sacred_map', label: '聖地巡礼マップに戻る' },
-  setlist: { hash: 'setlist', label: 'MYセトリに戻る' },
+  setlist: { hash: 'setlist', label: 'MYセトリ作成に戻る' },
   tour_archive: { hash: 'tour_archive', label: '歴代ツアー記録に戻る' },
   quiz: { hash: 'quiz', label: 'Official髭男dism検定に戻る' },
-  quiz_archive: { hash: 'quiz_archive', label: '参考記事一覧に戻る' },
+  quiz_archive: { hash: 'quiz_archive', label: '参考記事・インタビューに戻る' },
 };
 const eras = new Set(['all', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026']);
 const sounds = new Set(['all', 'piano_pop', 'brass_funk', 'emotional_ballad', 'stadium_rock']);

@@ -8,7 +8,7 @@ export function GuideArtwork({src, className, alt}: ImgHTMLAttributes<HTMLImageE
     ['matsue','#e3a375','#355e70'], ['stadium','#e6a652','#69394b']
   ];
   const [,a,b] = themes.find(([key])=>String(src).includes(key)) ?? ['', '#af7251','#453841'];
-  return <span role="img" aria-label={String(alt || 'ファンノートのイメージ図柄')}
+  return <span role="img" aria-label={String(alt || 'ファンノートのイメージアート')}
     className={(className || '')+' block'} style={{backgroundColor:b,
     backgroundImage: 'radial-gradient(ellipse at 75% 22%, '+a+' 0 9%, transparent 10%), repeating-radial-gradient(ellipse at 10% 120%, transparent 0 8px, #ffffff30 9px 10px, transparent 11px 18px), linear-gradient(145deg,'+a+','+b+' 65%)'}} />;
 }

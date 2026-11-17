@@ -358,7 +358,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.goto(root, { waitUntil: 'load' });
   await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
   assert.equal(await page.getByText('図柄を選択', { exact: false }).count(), 0);
-  await page.getByRole('link', { name: /関連する楽曲ページ：『イエスタデイ』/ }).click();
+  await page.getByRole('link', { name: /『イエスタデイ』の解説ページへ/ }).click();
   await page.getByRole('heading', { name: 'イエスタデイ', exact: true }).waitFor();
   assert.match(await page.locator('.overview-copy').innerText(), /HELLO WORLD/);
 
@@ -374,8 +374,8 @@ async function verifyGuideAndSetlistUsability(browser) {
   const colWidthsAfter = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
   assert.deepEqual(colWidthsAfter, colWidthsBefore, '並べ替えで比較表の列幅が変わっています');
   const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
-  assert.match(await subtitle.innerText(), /記載なし/, '採譜にない値を誤表示しています');
-  assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域出典/ }).count(), 1);
+  assert.match(await subtitle.innerText(), /参考値なし/, '調査元にあるはずのない裏声値を誤表示しています');
+  assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域の参照元/ }).count(), 1);
   assert.match(await subtitle.innerText(), /J-POP 音域の沼 ↗/);
   assert.doesNotMatch(await table.innerText(), /(?:^|\s)採譜 ↗/);
 
@@ -386,13 +386,13 @@ async function verifyGuideAndSetlistUsability(browser) {
   const secondPageTitle = await page.locator('#section-discography article h2 a').first().innerText();
   await page.locator('#section-discography article h2 a').first().click();
   await page.getByRole('heading', { name: secondPageTitle, exact: true }).waitFor();
-  await page.getByRole('link', { name: '曲一覧に戻る', exact: true }).first().click();
+  await page.getByRole('link', { name: '楽曲ガイドに戻る', exact: true }).first().click();
   await page.getByText(/全 90 曲中 25〜48 曲目/).waitFor();
 
   await page.getByLabel('曲名・読み・タイアップで検索').fill('Pretender');
   const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
-  assert.match(await pretender.innerText(), /配信掲載\s*2019\.04\.17/);
-  assert.doesNotMatch(await pretender.innerText(), /BPM[^\n]*配信サービス掲載日/);
+  assert.match(await pretender.innerText(), /配信日\s*2019\.04\.17/);
+  assert.doesNotMatch(await pretender.innerText(), /収録音源|掲載音源|配信掲載|BPM|リズムの刻みが印象に残るバラード/);
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${root}#quiz`, { waitUntil: 'load' });
@@ -572,7 +572,7 @@ async function verifyTourArchiveSetlists(browser) {
 
   // 曲名でのツアー検索、参戦フィルター、公演セトリからMYセトリ作成、静的コーナーURLを確認。
   await page.getByLabel('日付・会場を探す').fill('えるだーふらわー');
-  await page.getByText(/演奏曲に一致：エルダーフラワー/).first().waitFor();
+  await page.getByText(/この公演で演奏：エルダーフラワー/).first().waitFor();
   await page.getByRole('button', { name: '検索キーワードをクリア' }).click();
   await page.getByRole('button', { name: '参戦・視聴を記録する' }).first().click();
   await page.getByRole('button', { name: /参戦・視聴済みのみ（1）/ }).click();
@@ -669,10 +669,19 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   await page.getByRole('button', { name: '聖地巡礼マップをひらく' }).click();
   await page.getByRole('heading', { name: '聖地巡礼マップ', exact: true }).waitFor();
   assert.ok(await page.locator('.fusen-memo-card').count() >= 5, '聖地巡礼マップのメモカードが表示されていません');
-  await page.getByRole('button', { name: '付箋一覧へ戻る' }).click();
+  await page.getByRole('button', { name: /^115万キロの\s*ファンノート/ }).click();
   await page.getByRole('button', { name: '楽曲ガイドをひらく' }).click();
+  await page.getByRole('heading', { name: '楽曲ガイド（掲載90曲）', exact: true }).waitFor();
+  assert.equal(await page.getByRole('button', { name: '付箋一覧へ戻る' }).count(), 0, '付箋一覧へ戻るボタンが残っています');
+  assert.equal(await page.locator('.fusen-washi-tag').count(), 0, '見出し上のマステタグが残っています');
+  const firstSongBox = await page.locator('#section-discography').getByText('Pretender').first().boundingBox();
+  assert.ok(firstSongBox && firstSongBox.y < 844, '楽曲ガイドの1曲目（Pretender）がファーストビューに入っていません');
   await page.getByRole('link', { name: '音域・発売日比較表' }).click();
   await page.getByRole('table', { name: /音域・発売日比較表/ }).waitFor();
+  await page.getByRole('button', { name: /^115万キロの\s*ファンノート/ }).click();
+  await page.getByRole('button', { name: 'Official髭男dism検定をひらく' }).click();
+  await page.getByRole('heading', { name: 'Official髭男dism検定', exact: true }).waitFor();
+  assert.equal(await page.locator('#section-quiz a[href="#quiz_archive"]').count(), 0, '検定見出しに参考記事ボタンが残っています');
 
   await page.goto(`${root}?intro=1`, { waitUntil: 'load' });
   await intro.waitFor({ state: 'visible' });

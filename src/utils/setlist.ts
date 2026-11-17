@@ -118,8 +118,8 @@ export function calculateSetlistStats(
   const mainCount = resolved.filter((r) => !r.isEncore).length;
   const encoreCount = resolved.filter((r) => r.isEncore).length;
 
-  const vibeTitle = avgEnergy >= 8.6 ? '高めの曲が中心' : avgEnergy <= 7.2 ? '穏やかな曲が中心' : '中間の構成';
-  const vibeDescription = '棒の高さは、編集時に各曲に付けた熱量の目安（10段階）です。選曲の平均は ' + avgEnergy.toFixed(1) + ' / 10。';
+  const vibeTitle = avgEnergy >= 8.6 ? 'アッパー・盛り上げ中心' : avgEnergy <= 7.2 ? 'しっとり聴かせる構成' : '緩急のあるバランス型';
+  const vibeDescription = '棒の高さは、各曲の盛り上がりイメージ（10段階）です。選曲の平均は ' + avgEnergy.toFixed(1) + ' / 10。';
 
   return {
     totalSongs: resolved.length,

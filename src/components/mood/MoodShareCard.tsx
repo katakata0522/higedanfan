@@ -140,7 +140,7 @@ export function MoodShareCard({
                 : 'border border-[#D5CEC2] bg-white text-[#57534E]'
             }`}
           >
-            ダーク仕様
+            ライブステージ（黒）
           </button>
           <button
             type="button"
@@ -151,7 +151,7 @@ export function MoodShareCard({
                 : 'border border-[#D5CEC2] bg-white text-[#57534E]'
             }`}
           >
-            マガジン紙面仕様
+            ファンノート（白）
           </button>
         </div>
       </div>
@@ -197,7 +197,7 @@ export function MoodShareCard({
               {isSafeAssetUrl(match.song.jacketImage) && (
                 <GuideArtwork
                   src={match.song.jacketImage}
-                  alt={`${match.song.title}  オリジナル図柄`}
+                  alt={`${match.song.title}をイメージしたアート`}
                   referrerPolicy="no-referrer"
                   className="h-full w-full object-cover"
                 />
@@ -253,7 +253,7 @@ export function MoodShareCard({
                   theme === 'dark' ? 'text-[#F5D0C9]' : 'text-[#C83E2B]'
                 }`}
               >
-                今の気分にマッチする理由
+                この曲が選ばれた理由
               </div>
               <p
                 className={`text-xs leading-relaxed ${

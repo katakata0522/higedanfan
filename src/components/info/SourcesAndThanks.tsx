@@ -9,15 +9,15 @@ interface SourceGroup {
 const groups: SourceGroup[] = [
   {
     title: "歌の音域",
-    body: "90曲の音域を掲載するにあたり、73曲は「J-POP 音域の沼」、17曲は「音域データ！＠ウィキ」の採譜を参照しました。「ミックスナッツ」のように、最後のフェイク（歌詞のない歌い回し）を含めるかどうかで裏声の最高音が変わる曲もあります。",
+    body: "90曲の音域を掲載するにあたり、73曲は「J-POP 音域の沼」、17曲は「音域データ！＠ウィキ」の音域調査データを参照しました。「ミックスナッツ」のように、最後のフェイク（歌詞のない歌い回し）を含めるかどうかで裏声の最高音が変わる曲もあります。",
     links: [
-      ["J-POP 音域の沼「ミックスナッツ」の採譜", "https://vocal-range.com/archives/post-6815.html"],
-      ["音域データ！＠ウィキ「Official髭男dism」の採譜表", "https://w.atwiki.jp/saikouon_dokoda/pages/1008.html"],
+      ["J-POP 音域の沼「ミックスナッツ」の音域調査", "https://vocal-range.com/archives/post-6815.html"],
+      ["音域データ！＠ウィキ「Official髭男dism」の音域データ表", "https://w.atwiki.jp/saikouon_dokoda/pages/1008.html"],
     ],
   },
   {
     title: "演奏時間・発売日・収録曲順",
-    body: "演奏時間と配信掲載日は、90曲それぞれの収録音源をApple Musicで確認しました。CDの発売日や曲順は、バンドとレーベルの公式作品情報に基づいています。",
+    body: "演奏時間と配信日は、90曲それぞれApple Musicの配信ページで確認しました。CDの発売日や曲順は、バンドとレーベルの公式作品情報に基づいています。",
     links: [
       ["Apple Music『Traveler』収録の「Pretender」", "https://music.apple.com/jp/album/pretender/1479397582?i=1479397873"],
       ["Official髭男dism『Rejoice』の作品情報", "https://higedan.com/news/detail/100958"],
@@ -27,7 +27,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "テンポと曲の聴きどころ",
-    body: "テンポは楽譜やコード譜、各種の楽曲データを参考にした目安です。拍の数え方によって倍・半分の表記があり、資料によって数値も異なるため、曲ごとに採用した出典と主な別表記を示しています。リズムやアレンジの解説には、採譜やメンバーのインタビュー、楽曲レビューも参照しました。",
+    body: "テンポは楽譜やコード譜、各種の楽曲データを参考にした目安です。拍の数え方によって倍・半分の表記があり、資料によって数値も異なるため、曲ごとに採用した出典と主な別表記を示しています。リズムやアレンジの解説には、楽譜や音域調査、メンバーのインタビュー、楽曲レビューも参照しました。",
     links: [
       ["KHUFRUDAMO NOTESのテンポ一覧", "https://khufrudamonotes.com/officialhigedism-data"],
       ["リンネのコードブック「Official髭男dism」の曲一覧", "https://www.chord-rinne.jp/artist_song_list.php?art_id=Official%E9%AB%AD%E7%94%B7dism"],
@@ -57,7 +57,7 @@ const groups: SourceGroup[] = [
   },
   {
     title: "作詞・作曲者とタイアップ",
-    body: "作詞・作曲者はメンバーの発言やJASRACの受賞記録で、主題歌やCMソングは作品の公式発表や取材記事で確認しました。曲ごとの出典は楽曲ガイドの「音域・解説を見る」から開けます。",
+    body: "作詞・作曲者はメンバーの発言やJASRACの受賞記録で、主題歌やCMソングは作品の公式発表や取材記事で確認しました。曲ごとの出典は楽曲ガイドの「曲のページを見る」から開けます。",
     links: [
       ["ポニーキャニオン『Traveler』メンバーインタビュー", "https://officialhigedandism.ponycanyon.co.jp/interview/index.html"],
       ["JASRAC賞「Pretender」の受賞記録", "https://www.jasrac.or.jp/magazine/jasrac-awards/21/210519.html"],
@@ -175,7 +175,7 @@ export function SourcesAndThanks() {
 
       <section className="mt-7 border-t border-[#D5CEC2] pt-5">
         <h2 className="text-lg font-bold sm:text-xl">謝辞</h2>
-        <p className="mt-2 text-sm leading-7 text-[#44403C] sm:text-base">一曲ずつ歌を聴き取り、採譜を公開してくださった「J-POP 音域の沼」の管理人の方と「音域データ！＠ウィキ」の編集者の皆さんに感謝します。作品や公演の記録を残してくださった皆さん、取材記事や会場案内の作成に携わった皆さんにもお礼を申し上げます。</p>
+        <p className="mt-2 text-sm leading-7 text-[#44403C] sm:text-base">一曲ずつ歌を聴き取り、音域データを公開してくださった「J-POP 音域の沼」の管理人の方と「音域データ！＠ウィキ」の編集者の皆さんに感謝します。作品や公演の記録を残してくださった皆さん、取材記事や会場案内の作成に携わった皆さんにもお礼を申し上げます。</p>
       </section>
     </article>
   );

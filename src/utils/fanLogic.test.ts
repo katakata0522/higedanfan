@@ -116,7 +116,7 @@ test('scoreSongsByMood prioritizes songs matching mood, situation, and sound and
   assert.equal(results[0].matchScore, 99);
   assert.ok(results[0].song.moods.includes('euphoric_drive'));
   assert.equal(results[0].matchReasons.length, 3);
-  assert.ok(results[0].moodMatchExplanation.includes('選んだ条件と一致します'));
+  assert.ok(results[0].moodMatchExplanation.includes('ぴったり重なる一曲です'));
   assert.ok(results[0].moodMatchExplanation.includes(results[0].song.musicalHighlight));
   assert.ok(results[0].soundAnalysisReason.length > 10);
   assert.ok(results[0].matchBreakdown.moodSyncPercent >= 90);

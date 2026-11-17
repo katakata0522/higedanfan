@@ -59,10 +59,10 @@ test('保存された表の並べ替えに不正な見出し・方向があれ�
 
 test('楽曲ページの戻り先を直前のコーナーに応じて返し、不正値は無視する', () => {
   const store = memoryStore();
-  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '楽曲ガイドに戻る' });
 
   saveSongReturnTab('setlist', store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'setlist', label: 'MYセトリに戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'setlist', label: 'MYセトリ作成に戻る' });
 
   saveSongReturnTab('mood', store);
   assert.deepEqual(songReturnDestination(store), { hash: 'mood', label: '今日の1曲診断に戻る' });
@@ -77,7 +77,7 @@ test('楽曲ページの戻り先を直前のコーナーに応じて返し、�
   assert.deepEqual(songReturnDestination(store), { hash: 'quiz', label: 'Official髭男dism検定に戻る' });
 
   clearSongReturnTab(store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '楽曲ガイドに戻る' });
 });
 
 test('clearGuideReturnStateは一覧の絞り込み状態と戻り先タブの両方を消去する', () => {
@@ -91,7 +91,7 @@ test('clearGuideReturnStateは一覧の絞り込み状態と戻り先タブの�
 
   clearGuideReturnState(store);
   assert.equal(takeGuideReturnState(90, store), null);
-  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '楽曲ガイドに戻る' });
 });
 
 test('参考記事一覧の状態は楽曲ページからの戻り時に1度だけ復元され、不正値やresetEpoch不一致は弾く', () => {
@@ -104,7 +104,7 @@ test('参考記事一覧の状態は楽曲ページからの戻り時に1度だ�
     resetEpoch: 'epoch-1',
   };
   saveArchiveReturnState(state, store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'quiz_archive', label: '参考記事一覧に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'quiz_archive', label: '参考記事・インタビューに戻る' });
 
   // Mismatched epoch cannot restore, and consumes cleanly.
   assert.equal(takeArchiveReturnState(120, 'epoch-2', ['音楽ナタリー'], store), null);
@@ -125,7 +125,7 @@ test('参考記事一覧の状態は楽曲ページからの戻り時に1度だ�
   saveArchiveReturnState(state, store);
   clearGuideReturnState(store);
   assert.equal(takeArchiveReturnState(120, 'epoch-1', ['音楽ナタリー'], store), null);
-  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '曲一覧に戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '楽曲ガイドに戻る' });
 });
 
 test('歴代ツアー記録の状態は楽曲ページからの戻り時に1度だけ復元され、不正値やresetEpoch不一致は弾く', () => {

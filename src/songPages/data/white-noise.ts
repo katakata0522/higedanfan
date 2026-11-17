@@ -3,7 +3,7 @@ import { editorialArticles } from '../editorialArticles';
 
 const page = {
   id: 'white-noise',
-  artwork: { theme: '/images/live_stadium_confetti_1793849699286.jpg', alt: 'ホワイトノイズの当サイト制作の抽象的なイメージ図柄' },
+  artwork: { theme: '/images/live_stadium_confetti_1793849699286.jpg', alt: 'ホワイトノイズをイメージしたアート' },
   feature: {
     text: editorialArticles['white-noise'].feature,
     credit: editorialArticles['white-noise'].featureCredit ?? '— 楽曲ガイドより',
@@ -17,13 +17,13 @@ const page = {
     { label: 'アニメ公式の楽曲紹介', purpose: '「Cry Baby」からの継続と歌詞の紹介', url: 'https://tokyo-revengers-anime.com/news/archives/2853' },
     { label: 'アニメ公式の天竺編発表', purpose: '天竺編での続投', url: 'https://tokyo-revengers-anime.com/news/archives/3768' },
     { label: 'Official髭男dism『Rejoice』収録情報', purpose: '収録順とアルバム発売日', evidence: 'cdSource' },
-    { label: 'Apple Music の掲載音源', purpose: '演奏時間', evidence: 'apple' },
+    { label: 'Apple Music 配信ページ', purpose: '演奏時間', evidence: 'apple' },
     { label: '曲別解説', purpose: 'ギターとストリングスを重ねた曲調', evidence: 'styleSource' },
     { label: '歌の音域の参考資料', purpose: '地声・裏声の音域', evidence: 'rangeSource' },
     { label: 'テンポの参考資料', purpose: 'BPM', evidence: 'tempoSource' },
     { label: 'レーベルのMVメイキング記事', purpose: 'カーアクションとバイクスタント', url: 'https://news.ponycanyon.co.jp/2023/01/80632' },
   ],
-  sourceCaveat: '音域とテンポは採譜・計測方法で表記が異なる場合があります。',
+  sourceCaveat: '音域とテンポは調査・計測方法で表記が異なる場合があります。',
 } satisfies EditorialSongPageData;
 
 export default page;

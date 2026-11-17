@@ -323,7 +323,6 @@ export default function App() {
                 onExportRecords={records.downloadRecords}
                 onImportRecords={records.importRecords}
                 onResetAllUserData={records.resetAllUserData}
-                onBackHome={() => handleSelectTab('home')}
               />
             </React.Suspense>
           ) : (
@@ -340,7 +339,6 @@ export default function App() {
                     onSelectSong={(song) => selectSong(song.id)}
                     onAddToSetlist={records.addToSetlist}
                     setlistSongIds={setlistSongIds}
-                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -362,7 +360,6 @@ export default function App() {
                         : 'discography'
                     }
                     initialEraFilter={discographyEraPreset}
-                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -394,7 +391,6 @@ export default function App() {
                     initialSubTab={
                       activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
                     }
-                    onBackHome={() => handleSelectTab('home')}
                   />
                 )}
 
@@ -431,7 +427,6 @@ export default function App() {
                     initialTab={
                       activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
                     }
-                    onBackHome={() => handleSelectTab('home')}
                     bestQuizScore={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}
                   />

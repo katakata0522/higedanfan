@@ -11,6 +11,7 @@ import { REFERENCE_ARTICLES } from '../src/data/referenceArticles';
 import { SACRED_SPOTS, TOUR_ARCHIVES } from '../src/data/higedanData';
 import { isTempoUnderReview } from '../src/data/tempoReviewStatus';
 import { formatDuration, formatSongBpm } from '../src/utils/format';
+import { formatAlbumDisplayName } from '../src/utils/songCatalog';
 import { CSP_MARKER, escapeHtml, INITIAL_PAINT_STYLE } from './siteHtml';
 
 interface SongFactRow {
@@ -45,7 +46,7 @@ function buildCornerBody(
         const fact = evidence[entry.id];
         if (!fact) return '';
         const tempoText = isTempoUnderReview(entry.id) ? 'テンポ調査中' : `BPM ${formatSongBpm(entry.id, fact.tempo)}`;
-        return `<li><a href="/higedanfan/songs/${escapeHtml(entry.id)}/">${escapeHtml(fact.recording)}</a>（${escapeHtml(fact.album)}・${formatDuration(fact.seconds)}・${tempoText}・地声 ${escapeHtml(fact.low)}〜${escapeHtml(fact.chest)}・裏声最高 ${escapeHtml(fact.falsetto ?? '記載なし')}・配信 ${escapeHtml(fact.release)}）</li>`;
+        return `<li><a href="/higedanfan/songs/${escapeHtml(entry.id)}/">${escapeHtml(fact.recording)}</a>（${escapeHtml(formatAlbumDisplayName(fact.album))}・${formatDuration(fact.seconds)}・${tempoText}・地声 ${escapeHtml(fact.low)}〜${escapeHtml(fact.chest)}・裏声最高 ${escapeHtml(fact.falsetto ?? '参考値なし')}・配信 ${escapeHtml(fact.release)}）</li>`;
       })
       .join('\n');
     detailHtml = `<section aria-label="掲載曲データ一覧"><ol>\n${items}\n</ol></section>`;
