@@ -2,6 +2,7 @@ import { prepareSongSearch } from '../utils/songSearch';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SetlistImageModal } from './SetlistImageModal';
 import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
+import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../utils/guideReturnState';
 import {
@@ -73,6 +74,7 @@ interface SetlistBuilderSectionProps {
   onToggleAttendedTour: (tourId: string) => void;
   onExportRecords?: () => void;
   onImportRecords?: (file: File) => Promise<void>;
+  onOpenPrivacy?: () => void;
   onSelectSong?: (song: SongItem) => void;
   initialSubTab?: 'builder' | 'tours';
 }
@@ -90,11 +92,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   onAddSong,
   onRemoveSong,
   onMoveSong,
+  onToggleEncore,
   onLoadPresetSetlist,
   onCreateSetlistFromTour,
   onReplaceSetlistSilently,
   attendedTourIds,
   onToggleAttendedTour,
+  onExportRecords,
+  onImportRecords,
+  onOpenPrivacy,
   initialSubTab = 'builder',
 }) => {
   const activeSubTab = initialSubTab;
@@ -429,6 +435,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
           <X aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
+      {onToggleEncore && (
+        <p className="text-[11px] leading-relaxed text-[#57534E]">
+          ※ 追加済みの曲は、左の曲番号（M01 / EN1）を押すと本編・アンコールを切り替えられます。
+        </p>
+      )}
 
       {songPickerMode === 'search' && (
         <div>
@@ -499,7 +510,9 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     <span className="block text-sm font-bold wrap-anywhere">{song.title}</span>
                     <span className="block text-xs text-[#57534E]">{song.album}</span>
                   </span>
-                  <span className="shrink-0 text-xs font-bold text-[#9B3021]">＋ 追加</span>
+                  <span className="inline-flex shrink-0 items-center justify-center rounded-md border border-[#E6E1D6] bg-[#FBF9F5] p-1 text-[#9B3021]" aria-hidden="true">
+                    <Plus className="h-3.5 w-3.5" />
+                  </span>
                 </button>
               ))}
             </div>
@@ -529,7 +542,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       <span className="block text-sm font-bold wrap-anywhere">{song.title}</span>
                       <span className="block text-xs text-[#57534E]">{song.album}</span>
                     </span>
-                    <span className="shrink-0 text-xs font-bold text-[#9B3021]">{alreadyIn ? '追加済み' : '＋ 追加'}</span>
+                    {alreadyIn ? (
+                      <span className="shrink-0 text-xs font-bold text-[#9B3021]">追加済み</span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center justify-center rounded-md border border-[#E6E1D6] bg-[#FBF9F5] p-1 text-[#9B3021]" aria-hidden="true">
+                        <Plus className="h-3.5 w-3.5" />
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -618,12 +637,28 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       >
         <div
           className={`setlist-track-card grid min-h-[52px] min-w-0 items-center gap-1.5 rounded-lg border border-[#E6E1D6] px-2 py-2 ${
-            isCompleteView ? 'grid-cols-[24px_minmax(0,1fr)]' : 'grid-cols-[24px_minmax(0,1fr)_28px]'
+            isCompleteView ? 'grid-cols-[26px_minmax(0,1fr)]' : 'grid-cols-[26px_minmax(0,1fr)_28px]'
           } ${entry.isEncore ? 'bg-[#FEF8EC]' : 'bg-white'}`}
         >
-          <span className={`font-mono-num text-[11px] font-medium ${entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'}`}>
-            {trackBadge}
-          </span>
+          {!isCompleteView && onToggleEncore ? (
+            <button
+              type="button"
+              onClick={() => onToggleEncore(idx)}
+              aria-label={`${song.title}を${entry.isEncore ? '本編' : 'アンコール'}へ切り替え`}
+              title={entry.isEncore ? '本編へ切り替え' : 'アンコールへ切り替え'}
+              className={`inline-flex h-7 w-[26px] items-center justify-center rounded font-mono-num text-[11px] font-bold underline decoration-dotted underline-offset-2 transition-colors cursor-pointer ${
+                entry.isEncore
+                  ? 'text-[#B45309] hover:bg-[#FDE68A]/40'
+                  : 'text-[#57534E] hover:bg-[#F2EFE9]'
+              }`}
+            >
+              {trackBadge}
+            </button>
+          ) : (
+            <span className={`font-mono-num text-[11px] font-medium ${entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'}`}>
+              {trackBadge}
+            </span>
+          )}
           <a
             href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
             onClick={() => saveSongReturnTab('setlist')}
@@ -697,6 +732,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         {pickerTarget === target && renderInlinePickerPanel(target)}
       </li>
     );
+  };
+
+  const handlePrivacyClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isPlainLeftClick(e) && onOpenPrivacy) {
+      e.preventDefault();
+      onOpenPrivacy();
+    }
   };
 
   return (
@@ -797,7 +839,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <ol aria-label="マイセットリストの曲順" className="list-none space-y-1.5 p-0">
                 {mainEntries.length === 0 && encoreEntries.length === 0 ? (
                   <li className="rounded-lg border border-[#E6E1D6] bg-white p-5 text-sm leading-relaxed text-[#57534E]">
-                    まだ曲がありません。「ここに曲を追加」から、聴きたい曲を選んでみましょう。
+                    <p>まだ曲がありません。「ここに曲を追加」から、聴きたい曲を選んでみましょう。</p>
+                    <button
+                      type="button"
+                      onClick={() => onLoadPresetSetlist(ROYAL_ROAD_PRESET, 'スタジアム王道ベストセトリ', { skipConfirm: true })}
+                      className="mt-3 inline-flex min-h-[38px] items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer"
+                    >
+                      <RotateCcw aria-hidden="true" className="h-3.5 w-3.5 text-[#1E3A5F]" />
+                      王道セトリ（9曲）を入れて試す
+                    </button>
                   </li>
                 ) : (
                   mainEntries.map((entry, mIdx) => renderTrackRow(entry, mIdx, false))
@@ -979,13 +1029,57 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               </div>
             </details>
 
-            <p className="text-center text-[11px] text-[#78716C]">
-              ※ 作成したセットリストや記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
-              <a href="#privacy" className="underline underline-offset-2 hover:text-[#1C1917]">
-                プライバシーポリシー
-              </a>{' '}
-              から）。
-            </p>
+            {onExportRecords && onImportRecords ? (
+              <details className="rounded-xl border border-[#E6E1D6] bg-white p-3.5 text-xs text-[#57534E]">
+                <summary className="cursor-pointer font-semibold text-[#253331]">
+                  記録の書き出し・読み込み（別端末への引き継ぎ）
+                </summary>
+                <p className="mt-2 leading-relaxed">
+                  MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます。機種変更時などのバックアップをここから行えます。
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onExportRecords}
+                    className="inline-flex min-h-[38px] items-center rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer"
+                  >
+                    記録をファイルに書き出す
+                  </button>
+                  <label className="inline-flex min-h-[38px] items-center rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer">
+                    <span>ファイルから記録を読み込む</span>
+                    <input
+                      type="file"
+                      accept=".json,application/json"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = '';
+                        if (file) void onImportRecords(file);
+                      }}
+                    />
+                  </label>
+                  <a
+                    href={tabPath('privacy', import.meta.env.BASE_URL)}
+                    onClick={handlePrivacyClick}
+                    className="inline-flex min-h-[38px] items-center px-1 underline underline-offset-2 hover:text-[#1C1917]"
+                  >
+                    全データの初期化・詳細
+                  </a>
+                </div>
+              </details>
+            ) : (
+              <p className="text-center text-[11px] text-[#78716C]">
+                ※ 作成したセットリストや記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
+                <a
+                  href={tabPath('privacy', import.meta.env.BASE_URL)}
+                  onClick={handlePrivacyClick}
+                  className="underline underline-offset-2 hover:text-[#1C1917]"
+                >
+                  プライバシーポリシー
+                </a>{' '}
+                から）。
+              </p>
+            )}
           </div>
         ) : (
           <>
@@ -1002,7 +1096,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             </React.Suspense>
             <p className="mt-4 text-center text-[11px] text-[#78716C]">
               ※ 参戦・視聴の記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
-              <a href="#privacy" className="underline underline-offset-2 hover:text-[#1C1917]">
+              <a
+                href={tabPath('privacy', import.meta.env.BASE_URL)}
+                onClick={handlePrivacyClick}
+                className="underline underline-offset-2 hover:text-[#1C1917]"
+              >
                 プライバシーポリシー
               </a>{' '}
               から）。

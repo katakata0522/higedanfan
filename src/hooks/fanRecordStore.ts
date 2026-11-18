@@ -27,9 +27,8 @@ export interface FanRecords {
 }
 
 export function initialRecords(resetEpoch = ''): FanRecords {
-  const ids = ['same-blue', 'mixed-nuts', '115man-kilo', 'subtitle', 'sharon', 'soulsoup', 'pretender', 'stand-by-you'];
   return {
-    setlist: ids.map((songId, i) => ({ songId, isEncore: i >= 6 })),
+    setlist: [],
     setlistTitle: DEFAULT_SETLIST_TITLE,
     visitedSpotIds: [], attendedTourIds: [], votedKeys: [], reviews: [], likedReviewIds: [],
     bestQuizScore: null, resetEpoch, setlistMembershipVersions: {},

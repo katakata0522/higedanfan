@@ -1,12 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import type { SongItem } from '../data/higedanData';
+import { tabFromPathname } from '../config/siteFeatures';
 import { calculateQuizResult } from '../utils/fanLogic';
 import { QuizCoursePicker } from './quiz/QuizCoursePicker';
 import { QuizQuestionCard } from './quiz/QuizQuestionCard';
 import { QuizResultCard } from './quiz/QuizResultCard';
-import { QuizSourceArchive } from './quiz/QuizSourceArchive';
 import { ConfirmDialog } from './ConfirmDialog';
+
+const QuizSourceArchive = lazy(() =>
+  import('./quiz/QuizSourceArchive').then(module => ({ default: module.QuizSourceArchive }))
+);
 import { getCourseLabel, getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter, type QuestionSet } from './quiz/quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
 import { readQuizSession, readQuizSessionAsync, saveQuizSession } from './quiz/quizSessionStorage';
@@ -27,7 +31,12 @@ export function QuizSection({
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
+  const [hasOpenedArchive, setHasOpenedArchive] = useState(() => viewTab === 'archive');
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
+
+  useEffect(() => {
+    if (viewTab === 'archive') setHasOpenedArchive(true);
+  }, [viewTab]);
 
   useEffect(() => {
     if (sessionRef.current && sessionRef.current.stage !== 'select') return undefined;
@@ -74,7 +83,9 @@ export function QuizSection({
 
   function startCourse(course: CourseDifficulty, nextScope: QuestionScopeFilter, set: QuestionSet = 'current') {
     updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope: nextScope, questionSet: set });
-    window.location.hash = 'quiz';
+    if (tabFromPathname(window.location.pathname, import.meta.env.BASE_URL) !== 'quiz') {
+      window.location.hash = 'quiz';
+    }
   }
 
   function nextQuestion() {
@@ -156,7 +167,11 @@ export function QuizSection({
             onChooseCourse={chooseCourse}
           />
         )}
-        <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} resetEpoch={resetEpoch} />
+        {hasOpenedArchive && (
+          <Suspense fallback={viewTab === 'archive' ? <div role="status" className="py-8 text-xs text-[#57534E]">参考資料を読み込み中…</div> : null}>
+            <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} resetEpoch={resetEpoch} />
+          </Suspense>
+        )}
       </div>
 
       <ConfirmDialog

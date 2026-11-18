@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { X } from 'lucide-react';
 
 interface ConfirmDialogProps {
@@ -23,6 +23,8 @@ export function ConfirmDialog({
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const titleId = useId();
+  const descId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
@@ -69,8 +71,8 @@ export function ConfirmDialog({
   return (
     <dialog
       ref={dialogRef}
-      aria-labelledby="confirm-dialog-title"
-      aria-describedby="confirm-dialog-desc"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
       onCancel={(event) => {
         event.preventDefault();
         onCancel();
@@ -82,7 +84,7 @@ export function ConfirmDialog({
     >
       <div className="flex items-start justify-between gap-3 border-b border-[#E6E1D6] px-5 py-3.5">
         <h2
-          id="confirm-dialog-title"
+          id={titleId}
           className="font-note-serif text-base font-bold leading-snug text-[#253331]"
         >
           {title}
@@ -97,7 +99,7 @@ export function ConfirmDialog({
         </button>
       </div>
 
-      <div id="confirm-dialog-desc" className="space-y-2 px-5 py-4 text-sm leading-relaxed text-[#57534E]">
+      <div id={descId} className="space-y-2 px-5 py-4 text-sm leading-relaxed text-[#57534E]">
         {paragraphs.map((line, index) => (
           <p key={index}>{line}</p>
         ))}

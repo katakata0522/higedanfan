@@ -201,7 +201,7 @@ ${paragraphs}
           </section>
           <section aria-label="この曲を聴く">${listening}${video}</section>
           ${related ? `<section aria-label="次に聴きたい曲"><ul>${related}</ul></section>` : ''}
-          <p><a href="/higedanfan/#discography">楽曲ガイドに戻る</a></p>
+          <p><a href="/higedanfan/discography/">楽曲ガイドに戻る</a></p>
         </article>
       </main>
     </div>

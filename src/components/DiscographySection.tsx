@@ -1,12 +1,13 @@
 import { albumForSearch, matchedSongContexts } from '../utils/songSearch';
 import { formatAlbumDisplayName, partialEpCoverage } from '../utils/songCatalog';
+import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { songAppleArtwork } from '../data/songAppleArtwork';
 import { fitsVoiceRange } from '../utils/voiceRange';
 import { sortSongTable, SONG_TABLE_SORT_LABELS, type SongTableSortKey } from '../utils/songTableSort';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { saveGuideReturnState, takeGuideReturnState } from '../utils/guideReturnState';
+import { saveGuideReturnState, saveSongReturnTab, takeGuideReturnState } from '../utils/guideReturnState';
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   BookOpen,
@@ -38,6 +39,7 @@ export type DiscographySubView = 'discography' | 'vocal_range' | 'sacred_map';
 interface DiscographySectionProps {
   songs: SongItem[];
   onSelectSong: (song: SongItem) => void;
+  onSelectView?: (view: 'discography' | 'vocal_range') => void;
   onAddToSetlist: (songId: string) => void;
   setlistSongIds: string[];
   visitedSpotIds: string[];
@@ -93,6 +95,7 @@ function SongArtworkThumb({ src }: { src?: string }) {
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
   songs,
   onSelectSong,
+  onSelectView,
   onAddToSetlist,
   setlistSongIds,
   visitedSpotIds,
@@ -101,6 +104,38 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   initialEraFilter = 'all',
 }) => {
   const activeSubView = initialSubView;
+  const titleToSong = useMemo(() => {
+    const map = new Map<string, SongItem>();
+    for (const song of songs) {
+      map.set(song.title, song);
+      map.set(song.title.replace(/・・・/g, '…'), song);
+    }
+    return map;
+  }, [songs]);
+
+  const renderSpotRelatedSongs = (raw: string) => {
+    const parts = raw.split(' / ');
+    return parts.map((part, idx) => {
+      const matched = titleToSong.get(part) ?? titleToSong.get(part.replace(/…/g, '・・・'));
+      const path = matched ? songPagePath(matched.id) : null;
+      return (
+        <React.Fragment key={`${part}-${idx}`}>
+          {idx > 0 && ' / '}
+          {path ? (
+            <a
+              href={`${import.meta.env.BASE_URL}${path}`}
+              onClick={() => saveSongReturnTab('sacred_map')}
+              className="font-medium text-[#253331] underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
+            >
+              {part}
+            </a>
+          ) : (
+            part
+          )}
+        </React.Fragment>
+      );
+    });
+  };
   const [returnState] = useState(() => (initialSubView === 'sacred_map' ? null : takeGuideReturnState(songs.length)));
   const restored = initialEraFilter === 'all' ? returnState : null;
   const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
@@ -249,8 +284,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           ) : (
             <div className="flex flex-wrap items-center gap-1 rounded-full border border-[#dfd7c7] bg-[#fffdf8] p-1 shrink-0">
               <a
-                href="#discography"
+                href={tabPath('discography', import.meta.env.BASE_URL)}
                 aria-current={activeSubView === 'discography' ? 'page' : undefined}
+                onClick={(e) => {
+                  if (isPlainLeftClick(e) && onSelectView) {
+                    e.preventDefault();
+                    onSelectView('discography');
+                  }
+                }}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors whitespace-nowrap ${
                   activeSubView === 'discography'
                     ? 'bg-[#253331] text-[#faf6eb]'
@@ -261,8 +302,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 <span>解説カード表示</span>
               </a>
               <a
-                href="#vocal_range"
+                href={tabPath('vocal_range', import.meta.env.BASE_URL)}
                 aria-current={activeSubView === 'vocal_range' ? 'page' : undefined}
+                onClick={(e) => {
+                  if (isPlainLeftClick(e) && onSelectView) {
+                    e.preventDefault();
+                    onSelectView('vocal_range');
+                  }
+                }}
                 className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold transition-colors whitespace-nowrap ${
                   activeSubView === 'vocal_range'
                     ? 'bg-[#253331] text-[#faf6eb]'
@@ -391,24 +438,27 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {pagePath ? (
                             <a
                               href={`${import.meta.env.BASE_URL}${pagePath}`}
+                              aria-label={`${song.title}：曲のページを見る`}
                               onClick={rememberGuide}
                               className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3 py-2 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors whitespace-nowrap shrink-0"
                             >
-                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" />
+                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" aria-hidden="true" />
                               曲のページを見る
                             </a>
                           ) : (
                             <button
                               type="button"
+                              aria-label={`${song.title}：曲のページを見る`}
                               onClick={() => onSelectSong(song)}
                               className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3 py-2 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                             >
-                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" />
+                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" aria-hidden="true" />
                               曲のページを見る
                             </button>
                           )}
                           <button
                             type="button"
+                            aria-label={inSetlist ? `${song.title}はセトリに追加済み` : `${song.title}をセトリに追加`}
                             onClick={() => onAddToSetlist(song.id)}
                             disabled={inSetlist}
                             className={`inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
@@ -419,12 +469,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           >
                             {inSetlist ? (
                               <>
-                                <Check className="h-3.5 w-3.5" />
+                                <Check className="h-3.5 w-3.5" aria-hidden="true" />
                                 追加済み
                               </>
                             ) : (
                               <>
-                                <Plus className="h-3.5 w-3.5" />
+                                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                                 セトリに追加
                               </>
                             )}
@@ -547,8 +597,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <td className="px-3 py-3 whitespace-normal wrap-anywhere">{formatAlbumDisplayName(f.album)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
-                        <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple}>{f.release}</a></td>
-                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource}>{f.cd}</a> : '—'}</td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple} aria-label={`${song.title}の配信日 ${f.release}（Apple Musicを新しいタブで開く）`}>{f.release}</a></td>
+                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource} aria-label={`${song.title}のCD発売日 ${f.cd}（出典を新しいタブで開く）`}>{f.cd}</a> : '—'}</td>
                         <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域の参照元：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
                       </tr>;
                     })}
@@ -665,7 +715,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       <p className="mt-0.5 text-xs font-bold text-[#1d5a7a]">{spot.categoryLabel ?? spot.categories.join(' / ')}</p>
                       {spot.relatedSong && spot.relatedSongLabel && (
                         <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
-                          {spot.relatedSongLabel}: {spot.relatedSong}
+                          {spot.relatedSongLabel}：{renderSpotRelatedSongs(spot.relatedSong)}
                         </p>
                       )}
                       <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
@@ -678,6 +728,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           {spot.mapScope !== 'none' && (
                             <button
                               type="button"
+                              aria-label={`${spot.name}${spot.mapScope === 'area' ? 'のエリアを地図で見る' : 'を地図で見る'}`}
                               className="inline-flex min-h-[28px] items-center py-0.5 font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
                               onClick={() => {
                                 setMapSpotId(spot.id);
@@ -693,21 +744,29 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               {spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}
                             </button>
                           )}
-                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noopener noreferrer">
+                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}の場所・作品の情報（新しいタブで開く）`}>
                             場所・作品の情報 ↗
                           </a>
                           {spot.historySource && (
-                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noopener noreferrer">
+                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${spot.historySourceLabel ?? 'つながりの出典'}（新しいタブで開く）`}>
                               {spot.historySourceLabel ?? 'つながりの出典'} ↗
                             </a>
                           )}
                           {spot.additionalSources?.map(source => (
-                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer">
+                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${source.label}（新しいタブで開く）`}>
                               {source.label} ↗
                             </a>
                           ))}
                         </div>
                       </div>
+                      {spot.relatedSong && !spot.relatedSongLabel && (
+                        <p className="mt-2.5 text-xs leading-relaxed text-[#57534E]">
+                          <strong className="text-[#253331]">
+                            {spot.categories.includes('ライブ会場') ? '会場ゆかりの曲' : 'あわせて聴きたい曲'}：
+                          </strong>
+                          {renderSpotRelatedSongs(spot.relatedSong)}
+                        </p>
+                      )}
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#ece3d2]">
@@ -719,13 +778,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           type="button"
                           onClick={() => onToggleVisitedSpot(spot.id)}
                           aria-pressed={visited}
+                          aria-label={visited ? `${spot.name}の訪問を取り消す` : `${spot.name}の訪問を記録`}
                           className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                             visited
                               ? 'bg-[#2e6f40] text-white'
                               : 'border border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4]'
                           }`}
                         >
-                          <MapPin className="h-3.5 w-3.5" />
+                          <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
                           {visited ? '訪問済み' : spot.mapScope === 'area' ? 'エリアに行った！' : '行った！を記録'}
                         </button>
                       )}

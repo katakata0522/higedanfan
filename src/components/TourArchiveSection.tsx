@@ -318,6 +318,11 @@ export function TourArchiveSection({
         type="button"
         aria-expanded={isExpanded}
         aria-controls={`setlist-panel-${event.id}`}
+        aria-label={
+          isExpanded
+            ? `${event.date} ${event.venue}のセトリを閉じる`
+            : `${event.date} ${event.venue}のセットリストを見る（${event.trackCount}曲）`
+        }
         onClick={() => toggleEventSetlist(tour.id, event.id)}
         className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
           isExpanded
@@ -507,6 +512,7 @@ export function TourArchiveSection({
                   type="button"
                   onClick={() => onToggleAttendedTour(tour.id)}
                   aria-pressed={attended}
+                  aria-label={attended ? `${tour.tourTitle}：参戦・視聴を記録済み` : `${tour.tourTitle}：参戦・視聴を記録する`}
                   className={`inline-flex min-h-10 shrink-0 self-start sm:self-auto items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-bold cursor-pointer transition-colors ${
                     attended
                       ? 'bg-[#15803D] text-white'

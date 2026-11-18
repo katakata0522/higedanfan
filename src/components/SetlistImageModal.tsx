@@ -28,28 +28,53 @@ function wrapTextLines(
   maxWidth: number,
   maxLines = 2,
 ): string[] {
-  const chars = Array.from(text);
+  const tokens = text.trim().match(/[A-Za-z0-9.,'’&/()-]+|\s+|./gu) ?? [];
   const lines: string[] = [];
   let current = '';
 
-  for (let i = 0; i < chars.length; i += 1) {
-    const test = current + chars[i];
-    if (ctx.measureText(test).width > maxWidth && current.length > 0) {
-      lines.push(current);
-      if (lines.length >= maxLines) {
-        let last = lines[maxLines - 1];
-        while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
-          last = last.slice(0, -1);
-        }
-        lines[maxLines - 1] = `${last}…`;
-        return lines;
+  const clampLastLine = (): string[] => {
+    let last = lines[maxLines - 1];
+    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
+      last = last.slice(0, -1);
+    }
+    lines[maxLines - 1] = `${last}…`;
+    return lines;
+  };
+
+  const pushWrappedCharByChar = (raw: string): boolean => {
+    for (const ch of Array.from(raw)) {
+      const test = current + ch;
+      if (ctx.measureText(test).width > maxWidth && current.length > 0) {
+        lines.push(current.trimEnd());
+        if (lines.length >= maxLines) return true;
+        current = ch;
+      } else {
+        current = test;
       }
-      current = chars[i];
+    }
+    return false;
+  };
+
+  for (const token of tokens) {
+    if (/^\s+$/.test(token) && current === '') continue;
+    const test = current + token;
+    if (current.length > 0 && ctx.measureText(test).width > maxWidth) {
+      lines.push(current.trimEnd());
+      if (lines.length >= maxLines) return clampLastLine();
+      current = '';
+      if (/^\s+$/.test(token)) continue;
+      if (ctx.measureText(token).width > maxWidth) {
+        if (pushWrappedCharByChar(token)) return clampLastLine();
+      } else {
+        current = token;
+      }
+    } else if (ctx.measureText(test).width > maxWidth) {
+      if (pushWrappedCharByChar(token)) return clampLastLine();
     } else {
       current = test;
     }
   }
-  if (current) lines.push(current);
+  if (current.trimEnd()) lines.push(current.trimEnd());
   return lines.length > 0 ? lines : ['マイ・ドリームライブ'];
 }
 
@@ -79,6 +104,57 @@ function drawMustacheEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: numbe
   ctx.restore();
 }
 
+type PosterRow =
+  | { kind: 'heading'; label: string }
+  | {
+      kind: 'track';
+      badge: string;
+      title: string;
+      durationSec: number;
+      isEncore: boolean;
+      badgeOffset: number;
+    };
+
+function drawPosterTrackRow(
+  ctx: CanvasRenderingContext2D,
+  row: PosterRow,
+  x: number,
+  cursorY: number,
+  colWidth: number,
+  colors: { accent: string; textPrimary: string; textMuted: string; divider: string },
+  fonts: { body: string; mono: string },
+) {
+  if (row.kind === 'heading') {
+    ctx.font = `700 20px ${fonts.mono}`;
+    ctx.fillStyle = colors.accent;
+    ctx.fillText(row.label, x, cursorY + 26);
+    return;
+  }
+
+  const y = cursorY + 28;
+  ctx.font = `700 ${row.isEncore ? 22 : 24}px ${fonts.mono}`;
+  ctx.fillStyle = colors.accent;
+  ctx.fillText(row.badge, x, y);
+
+  const durText = formatDuration(row.durationSec);
+  ctx.font = `600 22px ${fonts.mono}`;
+  const durW = ctx.measureText(durText).width;
+  ctx.fillStyle = colors.textMuted;
+  ctx.fillText(durText, x + colWidth - durW, y);
+
+  ctx.font = `700 28px ${fonts.body}`;
+  ctx.fillStyle = colors.textPrimary;
+  const safeSongTitle = truncateText(ctx, row.title, colWidth - durW - row.badgeOffset - 24);
+  ctx.fillText(safeSongTitle, x + row.badgeOffset, y);
+
+  ctx.strokeStyle = colors.divider;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x, y + 22);
+  ctx.lineTo(x + colWidth, y + 22);
+  ctx.stroke();
+}
+
 export function renderSetlistPosterDataUrl({
   title,
   mainTracks,
@@ -100,17 +176,61 @@ export function renderSetlistPosterDataUrl({
   const fontBody = '"Hiragino Sans", "Yu Gothic", system-ui, sans-serif';
   const fontMono = 'ui-monospace, "SFMono-Regular", Consolas, monospace';
 
+  const totalCount = mainTracks.length + encoreTracks.length;
+  const twoColumns = totalCount >= 13;
+  const canvasWidth = twoColumns ? 1440 : CANVAS_WIDTH;
+  const paddingX = twoColumns ? 84 : PADDING_X;
+  const columnGap = 56;
+  const contentWidth = canvasWidth - paddingX * 2;
+  const colWidth = twoColumns ? (contentWidth - columnGap) / 2 : contentWidth;
+
   ctx.font = `500 50px ${fontDisplay}`;
-  const titleLines = wrapTextLines(ctx, title, CONTENT_WIDTH - 24, 2);
+  const titleLines = wrapTextLines(ctx, title, contentWidth - 24, 2);
 
   const rowHeight = 62;
   const headerHeight = 200 + titleLines.length * 64;
+  const footerHeight = 132;
+
+  const combinedRows: PosterRow[] = [
+    ...mainTracks.map((item, index) => ({
+      kind: 'track' as const,
+      badge: String(index + 1).padStart(2, '0'),
+      title: item.song.title,
+      durationSec: item.song.durationSec,
+      isEncore: false,
+      badgeOffset: 64,
+    })),
+    ...(encoreTracks.length > 0
+      ? [
+          { kind: 'heading' as const, label: 'ENCORE' },
+          ...encoreTracks.map((item, index) => ({
+            kind: 'track' as const,
+            badge: `EN${index + 1}`,
+            title: item.song.title,
+            durationSec: item.song.durationSec,
+            isEncore: true,
+            badgeOffset: 82,
+          })),
+        ]
+      : []),
+  ];
+
+  let splitAt = Math.ceil(combinedRows.length / 2);
+  if (twoColumns && combinedRows[splitAt - 1]?.kind === 'heading') {
+    splitAt -= 1;
+  }
+  const leftRows = twoColumns ? combinedRows.slice(0, splitAt) : [];
+  const rightRows = twoColumns ? combinedRows.slice(splitAt) : [];
+  const twoColRowCount = Math.max(leftRows.length, rightRows.length);
+
   const mainSectionHeight = mainTracks.length > 0 ? 58 + mainTracks.length * rowHeight : 78;
   const encoreSectionHeight = encoreTracks.length > 0 ? 84 + encoreTracks.length * rowHeight : 0;
-  const footerHeight = 132;
-  const totalHeight = Math.max(760, headerHeight + mainSectionHeight + encoreSectionHeight + footerHeight);
+  const bodyHeight = twoColumns
+    ? 58 + twoColRowCount * rowHeight
+    : mainSectionHeight + encoreSectionHeight;
+  const totalHeight = Math.max(760, headerHeight + bodyHeight + footerHeight);
 
-  canvas.width = CANVAS_WIDTH;
+  canvas.width = canvasWidth;
   canvas.height = totalHeight;
 
   const isStage = theme === 'stage';
@@ -123,13 +243,13 @@ export function renderSetlistPosterDataUrl({
   const divider = isStage ? 'rgba(255, 255, 255, 0.12)' : '#E6E1D6';
 
   ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, CANVAS_WIDTH, totalHeight);
+  ctx.fillRect(0, 0, canvasWidth, totalHeight);
 
   // Subtle background motif: notebook grid vs soft ambient stage spotlight
   if (!isStage) {
     ctx.strokeStyle = 'rgba(155, 140, 115, 0.14)';
     ctx.lineWidth = 1;
-    for (let x = 24; x < CANVAS_WIDTH; x += 28) {
+    for (let x = 24; x < canvasWidth; x += 28) {
       ctx.beginPath();
       ctx.moveTo(x, 0);
       ctx.lineTo(x, totalHeight);
@@ -138,15 +258,15 @@ export function renderSetlistPosterDataUrl({
     for (let y = 24; y < totalHeight; y += 28) {
       ctx.beginPath();
       ctx.moveTo(0, y);
-      ctx.lineTo(CANVAS_WIDTH, y);
+      ctx.lineTo(canvasWidth, y);
       ctx.stroke();
     }
   } else {
-    const grad = ctx.createRadialGradient(CANVAS_WIDTH / 2, 120, 40, CANVAS_WIDTH / 2, 200, 760);
+    const grad = ctx.createRadialGradient(canvasWidth / 2, 120, 40, canvasWidth / 2, 200, 760);
     grad.addColorStop(0, 'rgba(217, 119, 6, 0.16)');
     grad.addColorStop(1, 'rgba(24, 24, 27, 0)');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, totalHeight);
+    ctx.fillRect(0, 0, canvasWidth, totalHeight);
   }
 
   // Outer poster frame
@@ -154,35 +274,34 @@ export function renderSetlistPosterDataUrl({
   ctx.strokeStyle = border;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.roundRect(44, 44, CANVAS_WIDTH - 88, totalHeight - 88, 28);
+  ctx.roundRect(44, 44, canvasWidth - 88, totalHeight - 88, 28);
   ctx.fill();
   ctx.stroke();
 
   // Top accent band
   ctx.fillStyle = accent;
-  ctx.fillRect(PADDING_X, 92, 64, 5);
-  drawMustacheEmblem(ctx, CANVAS_WIDTH - PADDING_X - 24, 96, accent);
+  ctx.fillRect(paddingX, 92, 64, 5);
+  drawMustacheEmblem(ctx, canvasWidth - paddingX - 24, 96, accent);
 
   ctx.font = `700 21px ${fontMono}`;
   ctx.fillStyle = accent;
-  ctx.fillText('MY LIVE SETLIST', PADDING_X + 82, 102);
+  ctx.fillText('MY LIVE SETLIST', paddingX + 82, 102);
 
   // Title
   let cursorY = 170;
   ctx.font = `500 50px ${fontDisplay}`;
   ctx.fillStyle = textPrimary;
   for (const line of titleLines) {
-    ctx.fillText(line, PADDING_X, cursorY);
+    ctx.fillText(line, paddingX, cursorY);
     cursorY += 64;
   }
 
   // Stats strip
   ctx.font = `700 23px ${fontBody}`;
   ctx.fillStyle = textMuted;
-  const totalCount = mainTracks.length + encoreTracks.length;
   ctx.fillText(
     `全${totalCount}曲（本編 ${mainTracks.length} · EN ${encoreTracks.length}）  ／  合計時間 ${formattedDuration}`,
-    PADDING_X,
+    paddingX,
     cursorY + 6,
   );
 
@@ -190,93 +309,97 @@ export function renderSetlistPosterDataUrl({
   ctx.strokeStyle = divider;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(PADDING_X, cursorY);
-  ctx.lineTo(CANVAS_WIDTH - PADDING_X, cursorY);
+  ctx.moveTo(paddingX, cursorY);
+  ctx.lineTo(canvasWidth - paddingX, cursorY);
   ctx.stroke();
 
   cursorY += 48;
 
-  // Main tracks
-  ctx.font = `700 20px ${fontMono}`;
-  ctx.fillStyle = textMuted;
-  ctx.fillText('MAIN SET', PADDING_X, cursorY);
-  cursorY += 34;
+  const colors = { accent, textPrimary, textMuted, divider };
+  const fonts = { body: fontBody, mono: fontMono };
 
-  if (mainTracks.length === 0) {
-    ctx.font = `500 24px ${fontBody}`;
-    ctx.fillStyle = textMuted;
-    ctx.fillText('（本編の曲はまだ選ばれていません）', PADDING_X, cursorY + 14);
-    cursorY += 56;
-  } else {
-    mainTracks.forEach((item, index) => {
-      const y = cursorY + 28;
-      ctx.font = `700 24px ${fontMono}`;
-      ctx.fillStyle = accent;
-      ctx.fillText(String(index + 1).padStart(2, '0'), PADDING_X, y);
-
-      const durText = formatDuration(item.song.durationSec);
-      ctx.font = `600 22px ${fontMono}`;
-      const durW = ctx.measureText(durText).width;
-      ctx.fillStyle = textMuted;
-      ctx.fillText(durText, CANVAS_WIDTH - PADDING_X - durW, y);
-
-      ctx.font = `700 28px ${fontBody}`;
-      ctx.fillStyle = textPrimary;
-      const safeSongTitle = truncateText(ctx, item.song.title, CONTENT_WIDTH - durW - 96);
-      ctx.fillText(safeSongTitle, PADDING_X + 64, y);
-
-      ctx.strokeStyle = divider;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(PADDING_X, y + 22);
-      ctx.lineTo(CANVAS_WIDTH - PADDING_X, y + 22);
-      ctx.stroke();
-
-      cursorY += rowHeight;
-    });
-  }
-
-  // Encore tracks
-  if (encoreTracks.length > 0) {
-    cursorY += 28;
+  if (twoColumns) {
     ctx.font = `700 20px ${fontMono}`;
-    ctx.fillStyle = accent;
-    ctx.fillText('ENCORE', PADDING_X, cursorY);
+    ctx.fillStyle = textMuted;
+    ctx.fillText('MAIN SET', paddingX, cursorY);
     cursorY += 34;
 
-    encoreTracks.forEach((item, index) => {
-      const y = cursorY + 28;
-      ctx.font = `700 22px ${fontMono}`;
-      ctx.fillStyle = accent;
-      ctx.fillText(`EN${index + 1}`, PADDING_X, y);
-
-      const durText = formatDuration(item.song.durationSec);
-      ctx.font = `600 22px ${fontMono}`;
-      const durW = ctx.measureText(durText).width;
-      ctx.fillStyle = textMuted;
-      ctx.fillText(durText, CANVAS_WIDTH - PADDING_X - durW, y);
-
-      ctx.font = `700 28px ${fontBody}`;
-      ctx.fillStyle = textPrimary;
-      const safeSongTitle = truncateText(ctx, item.song.title, CONTENT_WIDTH - durW - 110);
-      ctx.fillText(safeSongTitle, PADDING_X + 82, y);
-
-      ctx.strokeStyle = divider;
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(PADDING_X, y + 22);
-      ctx.lineTo(CANVAS_WIDTH - PADDING_X, y + 22);
-      ctx.stroke();
-
-      cursorY += rowHeight;
+    const rightX = paddingX + colWidth + columnGap;
+    leftRows.forEach((row, index) => {
+      drawPosterTrackRow(ctx, row, paddingX, cursorY + index * rowHeight, colWidth, colors, fonts);
     });
+    rightRows.forEach((row, index) => {
+      drawPosterTrackRow(ctx, row, rightX, cursorY + index * rowHeight, colWidth, colors, fonts);
+    });
+  } else {
+    // Main tracks
+    ctx.font = `700 20px ${fontMono}`;
+    ctx.fillStyle = textMuted;
+    ctx.fillText('MAIN SET', paddingX, cursorY);
+    cursorY += 34;
+
+    if (mainTracks.length === 0) {
+      ctx.font = `500 24px ${fontBody}`;
+      ctx.fillStyle = textMuted;
+      ctx.fillText('（本編の曲はまだ選ばれていません）', paddingX, cursorY + 14);
+      cursorY += 56;
+    } else {
+      mainTracks.forEach((item, index) => {
+        drawPosterTrackRow(
+          ctx,
+          {
+            kind: 'track',
+            badge: String(index + 1).padStart(2, '0'),
+            title: item.song.title,
+            durationSec: item.song.durationSec,
+            isEncore: false,
+            badgeOffset: 64,
+          },
+          paddingX,
+          cursorY,
+          colWidth,
+          colors,
+          fonts,
+        );
+        cursorY += rowHeight;
+      });
+    }
+
+    // Encore tracks
+    if (encoreTracks.length > 0) {
+      cursorY += 28;
+      ctx.font = `700 20px ${fontMono}`;
+      ctx.fillStyle = accent;
+      ctx.fillText('ENCORE', paddingX, cursorY);
+      cursorY += 34;
+
+      encoreTracks.forEach((item, index) => {
+        drawPosterTrackRow(
+          ctx,
+          {
+            kind: 'track',
+            badge: `EN${index + 1}`,
+            title: item.song.title,
+            durationSec: item.song.durationSec,
+            isEncore: true,
+            badgeOffset: 82,
+          },
+          paddingX,
+          cursorY,
+          colWidth,
+          colors,
+          fonts,
+        );
+        cursorY += rowHeight;
+      });
+    }
   }
 
   // Footer watermark
   const footerY = totalHeight - 76;
   ctx.font = `600 20px ${fontBody}`;
   ctx.fillStyle = textMuted;
-  ctx.fillText('115万キロのファンノート  |  Official髭男dism 非公式ファンサイト', PADDING_X, footerY);
+  ctx.fillText('115万キロのファンノート  |  Official髭男dism 非公式ファンサイト', paddingX, footerY);
 
   return canvas.toDataURL('image/png');
 }
@@ -335,8 +458,7 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
         if (document.fonts) {
           await Promise.allSettled([
             document.fonts.ready,
-            document.fonts.load('500 44px "Kiwi Maru"'),
-            document.fonts.load('600 44px "Shippori Mincho"'),
+            document.fonts.load('500 50px "Kiwi Maru"'),
           ]);
         }
       } catch {

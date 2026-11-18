@@ -6,7 +6,15 @@
 import React, { useEffect, useState } from 'react';
 import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
 import { sanitizeUserText } from './utils/fanLogic';
-import { CORNER_BY_ID, HOME_PAGE_META, SITE_FULL_TITLE, tabFromPathname } from './config/siteFeatures';
+import {
+  canonicalUrlForTab,
+  CORNER_BY_ID,
+  HOME_PAGE_META,
+  isPlainLeftClick,
+  SITE_FULL_TITLE,
+  tabFromPathname,
+  tabPath,
+} from './config/siteFeatures';
 import { HomePage } from './components/home/HomePage';
 import {
   KurunIntroOverlay,
@@ -30,9 +38,6 @@ const MoodFinderSection = React.lazy(() =>
 );
 const SetlistBuilderSection = React.lazy(() =>
   import('./components/SetlistBuilderSection').then(module => ({default: module.SetlistBuilderSection}))
-);
-const FanCommunitySection = React.lazy(() =>
-  import('./components/FanCommunitySection').then(module => ({default: module.FanCommunitySection}))
 );
 const QuizSection = React.lazy(() =>
   import('./components/QuizSection').then(module => ({default: module.QuizSection}))
@@ -70,12 +75,25 @@ function isUnpublishedHash(feature: string) {
 
 function readLocation(): { tab: SiteTab; songId: string | null } {
   const [feature, song] = window.location.hash.slice(1).split('/');
-  if (feature) {
+  if (feature && feature !== 'top') {
     if (isUnpublishedHash(feature)) return {tab: 'home' as const, songId: null};
     if (isInfoPage(feature)) return {tab: feature, songId: null};
     const tab = SITE_NAV_ITEMS.find(item => item.id === feature)?.id ?? 'home';
     const songId = HIGEDAN_SONGS.find(item => item.id === song)?.id ?? null;
     return {tab, songId};
+  }
+  const pathTab = tabFromPathname(window.location.pathname, import.meta.env.BASE_URL);
+  if (pathTab) {
+    return { tab: pathTab, songId: null };
+  }
+  const base = import.meta.env.BASE_URL.endsWith('/')
+    ? import.meta.env.BASE_URL
+    : `${import.meta.env.BASE_URL}/`;
+  const normalizedPath = window.location.pathname.endsWith('/')
+    ? window.location.pathname
+    : `${window.location.pathname}/`;
+  if (normalizedPath === base || window.location.pathname === `${base}index.html`) {
+    return { tab: 'home', songId: null };
   }
   const initialDataTab = typeof document !== 'undefined'
     ? document.getElementById('root')?.dataset.initialTab
@@ -83,8 +101,7 @@ function readLocation(): { tab: SiteTab; songId: string | null } {
   if (initialDataTab && SITE_NAV_ITEMS.some(item => item.id === initialDataTab)) {
     return { tab: initialDataTab as ActiveFeatureTab, songId: null };
   }
-  const pathTab = tabFromPathname(window.location.pathname, import.meta.env.BASE_URL);
-  return { tab: pathTab ?? 'home', songId: null };
+  return { tab: 'home', songId: null };
 }
 
 export default function App() {
@@ -136,14 +153,7 @@ export default function App() {
   useEffect(() => {
     const restore = () => {
       if (isUnpublishedHash(window.location.hash.slice(1).split('/')[0])) {
-        window.history.replaceState(null, '', '#home');
-      }
-      if (
-        window.location.hash.length > 1 &&
-        window.location.pathname !== import.meta.env.BASE_URL &&
-        tabFromPathname(window.location.pathname, import.meta.env.BASE_URL)
-      ) {
-        window.history.replaceState(null, '', `${import.meta.env.BASE_URL}${window.location.hash}`);
+        window.history.replaceState(null, '', `${import.meta.env.BASE_URL}#home`);
       }
       const {tab, songId} = readLocation();
       const pagePath = songId ? songPagePath(songId) : null;
@@ -178,8 +188,12 @@ export default function App() {
       }
     };
     window.addEventListener('hashchange', restore);
+    window.addEventListener('popstate', restore);
     restore();
-    return () => window.removeEventListener('hashchange', restore);
+    return () => {
+      window.removeEventListener('hashchange', restore);
+      window.removeEventListener('popstate', restore);
+    };
   }, []);
 
   const selectSong = (id: string | null) => {
@@ -200,16 +214,16 @@ export default function App() {
     }
   };
 
-  const handleSelectTab = (tab: ActiveFeatureTab, eraPreset: EraTag | 'all' = 'all') => {
+  const handleSelectTab = (tab: SiteTab, eraPreset: EraTag | 'all' = 'all') => {
     clearGuideReturnState();
     prevTabRef.current = tab;
     pendingFocusTabRef.current = tab;
     setDiscographyEraPreset(eraPreset);
     setActiveFeatureTab(tab);
-    if (window.location.pathname !== import.meta.env.BASE_URL) {
-      window.history.replaceState(null, '', `${import.meta.env.BASE_URL}#${tab}`);
-    } else {
-      window.location.hash = tab;
+    const nextUrl = tabPath(tab, import.meta.env.BASE_URL);
+    const currentUrl = `${window.location.pathname}${window.location.hash}`;
+    if (currentUrl !== nextUrl) {
+      window.history.pushState(null, '', nextUrl);
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -221,12 +235,15 @@ export default function App() {
           description: infoPageDescriptions[activeFeatureTab],
         }
       : FEATURE_TAB_META[activeFeatureTab];
+    const canonical = canonicalUrlForTab(activeFeatureTab);
     document.title = meta.title;
     updateMetaContent('meta[name="description"]', meta.description);
     updateMetaContent('meta[property="og:title"]', meta.title);
     updateMetaContent('meta[property="og:description"]', meta.description);
+    updateMetaContent('meta[property="og:url"]', canonical);
     updateMetaContent('meta[name="twitter:title"]', meta.title);
     updateMetaContent('meta[name="twitter:description"]', meta.description);
+    document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', canonical);
   }, [activeFeatureTab]);
 
   const records = useFanRecords(showToast);
@@ -262,7 +279,7 @@ export default function App() {
   }, [activeFeatureTab, isIntroOpen, isMenuOpen]);
   const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
-  const { songs, setlist, votedKeys } = records;
+  const { songs, setlist } = records;
 
   useEffect(() => {
     if (!records.resetEpoch) return;
@@ -320,6 +337,7 @@ export default function App() {
             <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="sr-only">読み込み中…</span></div>}>
               <InfoPage
                 page={activeFeatureTab}
+                onSelectTab={handleSelectTab}
                 onExportRecords={records.downloadRecords}
                 onImportRecords={records.importRecords}
                 onResetAllUserData={records.resetAllUserData}
@@ -348,6 +366,7 @@ export default function App() {
                   <DiscographySection
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
+                    onSelectView={(view) => handleSelectTab(view)}
                     onAddToSetlist={records.addToSetlist}
                     setlistSongIds={setlistSongIds}
                     visitedSpotIds={records.visitedSpotIds}
@@ -387,31 +406,10 @@ export default function App() {
                     onToggleAttendedTour={records.toggleAttendedTour}
                     onExportRecords={records.downloadRecords}
                     onImportRecords={records.importRecords}
+                    onOpenPrivacy={() => handleSelectTab('privacy')}
                     onSelectSong={(song) => selectSong(song.id)}
                     initialSubTab={
                       activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
-                    }
-                  />
-                )}
-
-                {(PUBLIC_FEATURES.ranking || PUBLIC_FEATURES.reviews) && (activeFeatureTab === 'community' ||
-                  activeFeatureTab === 'fan_reviews') && (
-                  <FanCommunitySection
-                    key={records.resetEpoch}
-                    songs={songs}
-                    votedSongIds={votedKeys}
-                    onVoteSong={records.voteSong}
-                    onSelectSong={(song) => selectSong(song.id)}
-                    reviews={records.reviews}
-                    likedReviewIds={records.likedReviewIds}
-                    onLikeReview={records.likeReview}
-                    onSubmitReview={records.submitReview}
-                    onExportRecords={records.downloadRecords}
-                    storageNotice={records.storageNotice}
-                    onEditReview={records.editReview}
-                    onDeleteReview={records.deleteReview}
-                    initialSubTab={
-                      activeFeatureTab === 'fan_reviews' ? 'reviews' : 'ranking'
                     }
                   />
                 )}
@@ -451,7 +449,7 @@ export default function App() {
             ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
           </p>
           <p className="text-[11px] leading-relaxed text-[#57534E]">
-            ※MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href="#privacy" className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]">プライバシーポリシー</a>から行えます）。
+            ※MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href={tabPath('privacy', import.meta.env.BASE_URL)} onClick={(e) => { if (isPlainLeftClick(e)) { e.preventDefault(); handleSelectTab('privacy'); } }} className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]">プライバシーポリシー</a>から行えます）。
           </p>
         </div>
       </footer>

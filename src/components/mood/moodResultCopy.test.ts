@@ -10,7 +10,10 @@ test('every song has its own introduction for the diagnosis result', () => {
   assert.equal(new Set(descriptions.map(copy => copy.introduction)).size, 90);
   assert.equal(new Set(descriptions.map(copy => copy.invitation)).size, 90);
   assert.deepEqual(Object.keys(moodSongCopy).sort(), HIGEDAN_SONGS.map(song => song.id).sort());
-  assert.ok(descriptions.every(copy => copy.feature && copy.introduction.length > 20 && copy.invitation));
+  assert.ok(descriptions.every(copy => copy.feature && !copy.feature.includes('\n') && copy.introduction.length > 20 && copy.invitation));
+  const pretender = HIGEDAN_SONGS.find(song => song.id === 'pretender');
+  assert.ok(pretender);
+  assert.equal(moodResultCopy(pretender).feature, '結ばれないと知りながら、その美しさから目を離せない。');
   const sweetTweet = HIGEDAN_SONGS.find(song => song.id === 'sweet-tweet');
   assert.ok(sweetTweet);
   assert.match(moodResultCopy(sweetTweet).introduction, /電話/);

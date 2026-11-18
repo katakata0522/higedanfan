@@ -1,8 +1,8 @@
 import type { SongItem } from '../../data/higedanData';
-import { editorialArticles } from '../../songPages/editorialArticles';
 import { moodSongCopy } from './moodSongCopy';
 
 const featureOverrides: Record<string, string> = {
+  'pretender': '結ばれないと知りながら、その美しさから目を離せない。',
   'subtitle': '言葉が届くまで、そばで待つ。',
   'mixed-nuts': 'ちがうからこそ、同じ食卓へ。',
   'cry-baby': '何度でも立ち上がるための転調。',
@@ -96,12 +96,11 @@ const featureOverrides: Record<string, string> = {
 
 /** 曲ごとの紹介と聴きどころを返す。 */
 export function moodResultCopy(song: SongItem) {
-  const article = editorialArticles[song.id];
   const copy = moodSongCopy[song.id];
   const cue = copy?.[1];
   return {
-    feature: featureOverrides[song.id] ?? article?.feature ?? '',
-    introduction: copy?.[0] ?? article?.paragraphs[0] ?? 'この曲から、ヒゲダンの音楽を楽しんでみてください。',
+    feature: featureOverrides[song.id] ?? '',
+    introduction: copy?.[0] ?? 'この曲から、ヒゲダンの音楽を楽しんでみてください。',
     invitation: cue ?? '',
   };
 }

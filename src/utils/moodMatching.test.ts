@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS } from '../data/higedanData';
-import { formatDiagnosisShareText, matchesEra, matchesLength, recommendSongsByMood, scoreSongsByMood, type MoodCriteria } from './moodMatching';
+import { formatDiagnosisShareText, isSoundMatch, matchesEra, matchesLength, recommendSongsByMood, scoreSongsByMood, type MoodCriteria } from './moodMatching';
 
 const originalCriteria: MoodCriteria = {
   mood: 'push_back', situation: 'morning_commute', sound: 'piano_pop',
@@ -88,6 +88,12 @@ test('the sound choices distinguish a quiet song from an energetic one without f
   const calm = { ...base, id: 'calm-example', energyLevel: 3 };
   assert.equal(recommendSongsByMood([calm, energetic], { ...originalCriteria, sound: 'rhythm' })[0].song.id, energetic.id);
   assert.equal(recommendSongsByMood([calm, energetic], { ...originalCriteria, sound: 'gentle' })[0].song.id, calm.id);
+
+  const gentleMatches = HIGEDAN_SONGS.filter(song => isSoundMatch(song, 'gentle'));
+  assert.ok(gentleMatches.length >= 10);
+  const subtitle = HIGEDAN_SONGS.find(song => song.id === 'subtitle');
+  assert.ok(subtitle && isSoundMatch(subtitle, 'gentle'));
+  assert.equal(isSoundMatch(subtitle, 'rhythm'), false);
 });
 
 test('all answer combinations keep results distinct and give every song a chance to appear', () => {

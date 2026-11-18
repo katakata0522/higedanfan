@@ -4,9 +4,11 @@ import { SourcesAndThanks } from './SourcesAndThanks';
 import { TermsOfUse } from './TermsOfUse';
 import { PrivacyPolicy } from './PrivacyPolicy';
 import { infoPages, infoPageDescriptions, type InfoPageId } from './infoPages';
+import type { SiteTab } from '../SiteHeader';
 
 interface InfoPageProps {
   page: InfoPageId;
+  onSelectTab?: (tab: SiteTab) => void;
   onExportRecords?: () => void;
   onImportRecords?: (file: File) => Promise<void>;
   onResetAllUserData?: (options?: { skipConfirm?: boolean }) => void | Promise<void>;
@@ -14,6 +16,7 @@ interface InfoPageProps {
 
 export default function InfoPage({
   page,
+  onSelectTab,
   onExportRecords,
   onImportRecords,
   onResetAllUserData,
@@ -40,7 +43,7 @@ export default function InfoPage({
   }, [page]);
   return (
     <div ref={region} className="mx-auto max-w-4xl px-4 pb-12 pt-4 sm:px-6 sm:pt-5">
-      {page === 'editor' && <EditorProfile />}
+      {page === 'editor' && <EditorProfile onSelectTab={onSelectTab} />}
       {page === 'sources' && <SourcesAndThanks />}
       {page === 'terms' && <TermsOfUse />}
       {page === 'privacy' && (

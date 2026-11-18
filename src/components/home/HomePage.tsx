@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react';
 import { ArrowRight, Mic2, Newspaper } from 'lucide-react';
 import { HIGEDAN_MEMBERS, type EraTag, type SongItem } from '../../data/higedanData';
+import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
 import type { ActiveFeatureTab } from '../SiteHeader';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../../utils/guideReturnState';
@@ -44,21 +45,25 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
             return (
               <article
                 key={note.id}
-                className="fusen-card fusen-note-lines"
+                className="fusen-card fusen-note-lines has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-[#253331]"
                 style={noteStyle}
               >
-                <button
-                  type="button"
-                  onClick={() => onSelectTab(note.id)}
+                <a
+                  href={tabPath(note.id, import.meta.env.BASE_URL)}
                   aria-label={`${note.title}をひらく`}
-                  className="absolute inset-0 z-[1] rounded-[4px] bg-transparent cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]"
-                />
-                <div className="pointer-events-none relative z-[2] flex h-full flex-col justify-between">
-                  <div>
+                  onClick={(e) => {
+                    if (isPlainLeftClick(e)) {
+                      e.preventDefault();
+                      onSelectTab(note.id);
+                    }
+                  }}
+                  className="flex flex-1 flex-col justify-between text-inherit no-underline focus-visible:outline-none after:absolute after:inset-0 after:z-[1] after:rounded-[4px] after:content-['']"
+                >
+                  <div className="relative z-[2] pointer-events-none">
                     <h2 className="fusen-title">{note.title}</h2>
                     <p className="fusen-desc">{note.description}</p>
                   </div>
-                  <div className="mt-1.5 flex items-center justify-end">
+                  <div className="relative z-[2] pointer-events-none mt-1.5 flex items-center justify-end">
                     <span
                       className="text-[12px] font-bold tracking-[0.04em]"
                       style={{ color: 'var(--accent)' }}
@@ -66,7 +71,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                       {note.ctaLabel}
                     </span>
                   </div>
-                </div>
+                </a>
               </article>
             );
           })}
@@ -74,10 +79,15 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
 
         {/* 音域比較表・資料一覧への直接索引（.fusen-card 数を6枚に維持） */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-          <button
-            type="button"
-            onClick={() => onSelectTab('vocal_range')}
-            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
+          <a
+            href={tabPath('vocal_range', import.meta.env.BASE_URL)}
+            onClick={(e) => {
+              if (isPlainLeftClick(e)) {
+                e.preventDefault();
+                onSelectTab('vocal_range');
+              }
+            }}
+            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left text-inherit no-underline transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]"
           >
             <span className="flex min-w-0 items-center gap-3">
               <Mic2 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#1d5a7a]" />
@@ -91,12 +101,17 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
               </span>
             </span>
             <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
-          </button>
+          </a>
 
-          <button
-            type="button"
-            onClick={() => onSelectTab('quiz_archive')}
-            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
+          <a
+            href={tabPath('quiz_archive', import.meta.env.BASE_URL)}
+            onClick={(e) => {
+              if (isPlainLeftClick(e)) {
+                e.preventDefault();
+                onSelectTab('quiz_archive');
+              }
+            }}
+            className="notebook-paper flex min-h-[52px] items-center justify-between gap-3 rounded-lg px-4 py-3 text-left text-inherit no-underline transition-colors hover:border-[#253331]/40 hover:bg-[#fffbf2] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]"
           >
             <span className="flex min-w-0 items-center gap-3">
               <Newspaper aria-hidden="true" className="h-4 w-4 shrink-0 text-[#265c34]" />
@@ -110,7 +125,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
               </span>
             </span>
             <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
-          </button>
+          </a>
         </div>
       </section>
 

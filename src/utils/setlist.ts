@@ -112,14 +112,26 @@ export function calculateSetlistStats(
   const avgBpm = confirmedTempos.length
     ? Math.round(confirmedTempos.reduce((acc, item) => acc + item.song.bpm, 0) / confirmedTempos.length)
     : null;
-  const avgEnergy =
-    resolved.reduce((acc, item) => acc + item.song.energyLevel, 0) / resolved.length;
+  const energies = resolved.map((item) => item.song.energyLevel);
+  const avgEnergy = energies.reduce((acc, value) => acc + value, 0) / resolved.length;
+  const energySpread = energies.length >= 2 ? Math.max(...energies) - Math.min(...energies) : 0;
 
   const mainCount = resolved.filter((r) => !r.isEncore).length;
   const encoreCount = resolved.filter((r) => r.isEncore).length;
 
-  const vibeTitle = avgEnergy >= 8.6 ? 'アッパー・盛り上げ中心' : avgEnergy <= 7.2 ? 'しっとり聴かせる構成' : '緩急のあるバランス型';
-  const vibeDescription = '棒の高さは、各曲の盛り上がりイメージ（10段階）です。選曲の平均は ' + avgEnergy.toFixed(1) + ' / 10。';
+  const vibeTitle =
+    avgEnergy >= 8.6
+      ? 'アッパー・盛り上げ中心'
+      : avgEnergy <= 7.2
+        ? 'しっとり聴かせる構成'
+        : energySpread >= 3
+          ? '緩急のあるバランス型'
+          : '安定感のあるミドル〜アッパー構成';
+  const vibeDescription =
+    (energySpread >= 3
+      ? '静かな曲から盛り上がる曲まで抑揚のある流れです。'
+      : '曲ごとのテンションが揃った一体感のある流れです。') +
+    `選曲の平均は ${avgEnergy.toFixed(1)} / 10。`;
 
   return {
     totalSongs: resolved.length,

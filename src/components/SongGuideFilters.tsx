@@ -176,10 +176,14 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
           className="scroll-mt-20 font-bold text-[#253331]">
           該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
         </span>
-        {hasActiveFilter && <button type="button" onClick={() => onReset ? onReset() : onChange(DEFAULT_GUIDE_FILTERS)}
-          className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline cursor-pointer">
-          <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />条件リセット
-        </button>}
+        {hasActiveFilter ? (
+          <button type="button" onClick={() => onReset ? onReset() : onChange(DEFAULT_GUIDE_FILTERS)}
+            className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline cursor-pointer">
+            <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />条件リセット
+          </button>
+        ) : (
+          <span className="text-[11px] text-[#78716C]">並び順：代表曲 → アルバム順</span>
+        )}
       </div>
     </div>
   );

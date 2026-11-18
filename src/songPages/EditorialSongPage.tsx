@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { ChevronRight, ExternalLink, Menu, Play } from 'lucide-react';
 import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import { songEvidence } from '../data/fullCatalogSongs';
@@ -7,7 +7,7 @@ import { formatSongBpm, formatDuration } from '../utils/format';
 import { tempoAlternatives } from '../data/tempoAlternatives';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
 import { songReturnDestination } from '../utils/guideReturnState';
-import { KurunIntroOverlay } from '../components/KurunIntroOverlay';
+import { tabPath } from '../config/siteFeatures';
 import { SITE_NAV_ITEMS } from '../components/SiteHeader';
 import { infoPages } from '../components/info/infoPages';
 import {
@@ -21,6 +21,10 @@ import { songAppleArtwork } from '../data/songAppleArtwork';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
 import { formatAlbumDisplayName } from '../utils/songCatalog';
 import type { EditorialSongPageData } from './EditorialSongPageData';
+
+const KurunIntroOverlay = lazy(() =>
+  import('../components/KurunIntroOverlay').then(module => ({ default: module.KurunIntroOverlay }))
+);
 
 const base = import.meta.env.BASE_URL;
 
@@ -82,11 +86,15 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
   return (
     <div className="song-page">
-      <KurunIntroOverlay
-        isOpen={isIntroOpen}
-        replayToken={introReplayToken}
-        onClose={() => setIsIntroOpen(false)}
-      />
+      <Suspense fallback={null}>
+        {isIntroOpen && (
+          <KurunIntroOverlay
+            isOpen={isIntroOpen}
+            replayToken={introReplayToken}
+            onClose={() => setIsIntroOpen(false)}
+          />
+        )}
+      </Suspense>
       <a className="skip-link" href="#main" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>本文へ移動</a>
       <header className="site-topbar" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>
         <div className="site-topbar-inner">
@@ -130,7 +138,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               </div>
               <div className="song-menu-items">
                 {SITE_NAV_ITEMS.map(item => (
-                  <a key={item.id} className="song-menu-card" href={`${base}#${item.id}`}>
+                  <a key={item.id} className="song-menu-card" href={tabPath(item.id, base)}>
                     <span className="song-menu-icon">{item.icon}</span>
                     <span className="song-menu-copy">
                       <span className="song-menu-label">{item.label}</span>
@@ -153,9 +161,11 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 >
                   オープニングをもう一度見る
                 </button>
-                {Object.entries(infoPages).map(([id, label]) => (
-                  <a key={id} className="song-menu-sublink" href={`${base}#${id}`}>{label}</a>
-                ))}
+                <div className="song-menu-info-grid">
+                  {Object.entries(infoPages).map(([id, label]) => (
+                    <a key={id} className="song-menu-sublink" href={tabPath(id, base)}>{label}</a>
+                  ))}
+                </div>
                 <button
                   className="reading-toggle"
                   type="button"
@@ -176,7 +186,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
       <main id="main" tabIndex={-1} className="page-main" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>
         <div className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`}>
         <article className="song-sheet" aria-labelledby="song-title">
-          <a className="sheet-close" href={`${base}#${returnDest.hash}`} aria-label={returnDest.label}>×</a>
+          <a className="sheet-close" href={tabPath(returnDest.hash, base)} aria-label={returnDest.label}>×</a>
           <header className="song-hero">
             <figure className="cover">
               {appleArtwork && !artworkFailed ? (
@@ -390,7 +400,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
           )}
           <div className="song-actions">
             {inSetlist ? (
-              <a className="add-button add-button--saved" href={`${base}#setlist`}>
+              <a className="add-button add-button--saved" href={tabPath('setlist', base)}>
                 <span aria-hidden="true">✓</span>MYセトリで確認
               </a>
             ) : (
@@ -398,7 +408,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <span aria-hidden="true">+</span>MYセトリに追加
               </button>
             )}
-            <a className="back-button" href={`${base}#${returnDest.hash}`}>{returnDest.label}</a>
+            <a className="back-button" href={tabPath(returnDest.hash, base)}>{returnDest.label}</a>
           </div>
           {toast && <p className="toast" role="status" aria-live="polite">{toast}</p>}
         </article>

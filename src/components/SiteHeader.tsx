@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
 import { infoPages, isInfoPage, type InfoPageId } from './info/infoPages';
 import {
@@ -114,7 +115,7 @@ export type SiteTab = ActiveFeatureTab | InfoPageId;
 
 interface SiteHeaderProps {
   activeTab: SiteTab;
-  onSelectTab: (tab: ActiveFeatureTab) => void;
+  onSelectTab: (tab: SiteTab) => void;
   onReplayIntro?: () => void;
   onMenuOpenChange?: (open: boolean) => void;
 }
@@ -148,6 +149,29 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
       if (e.key === 'Escape') {
         setIsMenuOpen(false);
         menuButton.current?.focus();
+        return;
+      }
+      if (e.key === 'Tab' && menuDrawer.current) {
+        const drawerFocusables = Array.from(
+          menuDrawer.current.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')
+        );
+        const focusables = [
+          ...(menuButton.current ? [menuButton.current] : []),
+          ...drawerFocusables,
+        ];
+        if (!focusables.length) return;
+        const first = focusables[0];
+        const last = focusables[focusables.length - 1];
+        const activeEl = document.activeElement;
+        if (e.shiftKey) {
+          if (activeEl === first || !focusables.includes(activeEl as HTMLElement)) {
+            e.preventDefault();
+            last.focus();
+          }
+        } else if (activeEl === last || !focusables.includes(activeEl as HTMLElement)) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
     const handlePointerDown = (e: PointerEvent) => {
@@ -169,7 +193,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   const currentNav =
     SITE_NAV_ITEMS.find((item) => item.id === activeTab) || SITE_NAV_ITEMS[0];
 
-  const handleNavigate = (tab: ActiveFeatureTab) => {
+  const handleNavigate = (tab: SiteTab) => {
     onSelectTab(tab);
     setIsMenuOpen(false);
   };
@@ -178,10 +202,15 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
     <header className="sticky top-0 z-40 border-b border-[#e7dfd0] bg-[#f9f5eb]/95 backdrop-blur-md">
       <div className="relative mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
         {/* Left: Hand-drawn Mustache Emblem & Kiwi Maru Brand */}
-        <button
-          type="button"
-          onClick={() => handleNavigate('home')}
-          className="flex items-center gap-1.5 sm:gap-2.5 text-left min-w-0 group cursor-pointer"
+        <a
+          href={tabPath('home', import.meta.env.BASE_URL)}
+          onClick={(e) => {
+            if (isPlainLeftClick(e)) {
+              e.preventDefault();
+              handleNavigate('home');
+            }
+          }}
+          className="flex items-center gap-1.5 sm:gap-2.5 text-left min-w-0 group no-underline text-inherit"
         >
           <svg
             viewBox="0 0 100 55"
@@ -208,7 +237,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               Official髭男dism 非公式ファンサイト
             </span>
           </span>
-        </button>
+        </a>
 
         {/* Right: Current Corner + Notebook Menu */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
@@ -258,10 +287,10 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               ref={menuDrawer}
               id="global-nav-drawer"
               aria-label="サイト内メニュー"
-              className="fixed sm:absolute right-0 sm:right-6 lg:right-8 top-16 z-40 w-full sm:w-[400px] max-h-[calc(100vh-4rem)] overflow-y-auto sm:rounded-b-2xl border-b sm:border border-[#dfd7c7] bg-[#faf6eb] shadow-xl"
+              className="fixed sm:absolute right-0 sm:right-6 lg:right-8 top-16 z-40 w-full sm:w-[424px] max-h-[calc(100vh-4rem)] overflow-y-auto sm:rounded-b-2xl border-b sm:border border-[#dfd7c7] bg-[#faf6eb] shadow-xl"
             >
-              <div className="p-3.5 sm:p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 mb-2.5 border-b border-[#e5dccb] px-1">
+              <div className="p-3.5 sm:p-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 sm:pb-1.5 mb-2.5 sm:mb-1.5 border-b border-[#e5dccb] px-1">
                   <span className="font-note-serif text-xs font-bold text-[#253331]">
                     ファンノートの目次
                   </span>
@@ -271,15 +300,23 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                 </div>
 
                 {/* Vertical Stack of Content Items */}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 sm:gap-1">
                   {SITE_NAV_ITEMS.map((item) => {
                     const isCurrent = activeTab === item.id;
                     return (
-                      <button
+                      <a
                         key={item.id}
-                        type="button"
-                        onClick={() => handleNavigate(item.id)}
-                        className={`group flex items-center justify-between gap-3 rounded-lg border px-3.5 py-2.5 text-left transition-all cursor-pointer ${
+                        href={tabPath(item.id, import.meta.env.BASE_URL)}
+                        aria-current={isCurrent ? 'page' : undefined}
+                        onClick={(e) => {
+                          if (isPlainLeftClick(e)) {
+                            e.preventDefault();
+                            handleNavigate(item.id);
+                          } else {
+                            setIsMenuOpen(false);
+                          }
+                        }}
+                        className={`group flex items-center justify-between gap-3 rounded-lg border px-3.5 sm:px-3 py-2.5 sm:py-1.5 text-left no-underline transition-all ${
                           isCurrent
                             ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
                             : 'border-[#e5dccb] bg-[#fffdf8] text-[#253331] hover:border-[#253331]/50 hover:bg-[#f4efe4]'
@@ -287,7 +324,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                       >
                         <div className="flex items-center gap-3 min-w-0">
                           <span
-                            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors ${
+                            className={`flex h-8 w-8 sm:h-7 sm:w-7 shrink-0 items-center justify-center rounded-md transition-colors ${
                               isCurrent
                                 ? 'bg-[#C83E2B] text-white'
                                 : 'bg-[#f4efe4] text-[#253331] group-hover:bg-[#C83E2B] group-hover:text-white'
@@ -323,11 +360,11 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                               : 'text-[#78716C] group-hover:text-[#253331]'
                           }`}
                         />
-                      </button>
+                      </a>
                     );
                   })}
                 </div>
-                <div className="mt-3 border-t border-[#e5dccb] pt-2">
+                <div className="mt-3 sm:mt-1.5 border-t border-[#e5dccb] pt-2 sm:pt-1.5">
                   {onReplayIntro && (
                     <button
                       id="kurun-replay-btn"
@@ -336,19 +373,29 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                         setIsMenuOpen(false);
                         onReplayIntro();
                       }}
-                      className="flex w-full min-h-11 items-center rounded-lg px-3 text-left text-sm font-medium text-[#253331] hover:bg-[#f4efe4] cursor-pointer"
+                      className="flex w-full min-h-11 sm:min-h-7 items-center rounded-lg px-3 sm:px-2.5 text-left text-sm sm:text-xs font-medium text-[#253331] hover:bg-[#f4efe4] cursor-pointer"
                     >
                       オープニングをもう一度見る
                     </button>
                   )}
-                  {Object.entries(infoPages).map(([id, label]) => (
-                    <a
-                      key={id} href={'#' + id}
-                      aria-current={id === activeTab ? 'page' : undefined}
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex min-h-11 items-center rounded-lg px-3 text-sm font-medium text-[#253331] hover:bg-[#f4efe4] aria-[current=page]:font-bold"
-                    >{label}</a>
-                  ))}
+                  <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-x-1">
+                    {Object.entries(infoPages).map(([id, label]) => (
+                      <a
+                        key={id}
+                        href={tabPath(id, import.meta.env.BASE_URL)}
+                        aria-current={id === activeTab ? 'page' : undefined}
+                        onClick={(e) => {
+                          if (isPlainLeftClick(e)) {
+                            e.preventDefault();
+                            handleNavigate(id as SiteTab);
+                          } else {
+                            setIsMenuOpen(false);
+                          }
+                        }}
+                        className="flex min-h-11 sm:min-h-7 items-center rounded-lg px-3 sm:px-2.5 text-sm sm:text-xs font-medium text-[#253331] hover:bg-[#f4efe4] aria-[current=page]:font-bold"
+                      >{label}</a>
+                    ))}
+                  </div>
                 </div>
               </div>
             </nav>

@@ -1,4 +1,15 @@
-export function EditorProfile() {
+import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
+import type { SiteTab } from '../SiteHeader';
+
+const RELATED_PAGE_LINKS: readonly { id: SiteTab; label: string; highlight?: boolean }[] = [
+  { id: 'discography', label: '楽曲ガイドを見る', highlight: true },
+  { id: 'sources', label: '参考資料・謝辞' },
+  { id: 'privacy', label: 'プライバシーポリシー' },
+  { id: 'terms', label: '利用規約' },
+  { id: 'home', label: 'トップページへ戻る' },
+];
+
+export function EditorProfile({ onSelectTab }: { onSelectTab?: (tab: SiteTab) => void }) {
   return (
     <article
       aria-labelledby="editor-title"
@@ -67,21 +78,23 @@ export function EditorProfile() {
       </section>
 
       <nav aria-label="関連ページ" className="flex flex-wrap gap-x-5 gap-y-2 pt-2 text-sm">
-        <a href="#discography" className="font-bold text-[#1E3A5F] underline underline-offset-4 hover:text-[#C83E2B]">
-          楽曲ガイドを見る
-        </a>
-        <a href="#sources" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
-          参考資料・謝辞
-        </a>
-        <a href="#privacy" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
-          プライバシーポリシー
-        </a>
-        <a href="#terms" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
-          利用規約
-        </a>
-        <a href="#home" className="font-bold text-[#253331] underline underline-offset-4 hover:text-[#C83E2B]">
-          トップページへ戻る
-        </a>
+        {RELATED_PAGE_LINKS.map((link) => (
+          <a
+            key={link.id}
+            href={tabPath(link.id, import.meta.env.BASE_URL)}
+            onClick={(e) => {
+              if (isPlainLeftClick(e) && onSelectTab) {
+                e.preventDefault();
+                onSelectTab(link.id);
+              }
+            }}
+            className={`font-bold underline underline-offset-4 hover:text-[#C83E2B] ${
+              link.highlight ? 'text-[#1E3A5F]' : 'text-[#253331]'
+            }`}
+          >
+            {link.label}
+          </a>
+        ))}
       </nav>
     </article>
   );

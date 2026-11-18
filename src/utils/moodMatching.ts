@@ -65,8 +65,23 @@ export function matchesEra(song: SongItem, preference: EraPreference): boolean {
 // 音の感じ方を楽曲分類と勢いの両方から捉える。ひとつのジャンルだけに限定しない。
 function soundPreferencePoints(song: SongItem, preference: MoodSoundPreference): number {
   switch (preference) {
-    case 'rhythm': return song.energyLevel * 3 + (song.sound === 'brass_funk' ? 3 : 0);
-    case 'gentle': return (11 - song.energyLevel) * 3 + (song.sound === 'emotional_ballad' ? 3 : 0);
+    case 'rhythm':
+      return (
+        song.energyLevel * 3 +
+        (song.sound === 'brass_funk' ? 3 : 0) +
+        (song.sound === 'emotional_ballad' && song.bpm < 95 ? -6 : 0)
+      );
+    case 'gentle':
+      return (
+        (11 - song.energyLevel) * 3 +
+        (song.sound === 'emotional_ballad'
+          ? song.bpm < 80
+            ? 12
+            : 9
+          : song.sound === 'piano_pop' && song.bpm < 115
+            ? 4
+            : 0)
+      );
     case 'melody': return song.sound === 'piano_pop' ? 24 : song.sound === 'emotional_ballad' ? 21 : 8;
     case 'powerful': return song.energyLevel * 3 + (song.sound === 'stadium_rock' ? 3 : 0);
     default: return song.sound === preference ? 10 : 0;
@@ -109,6 +124,8 @@ export interface ScoredSongMatch {
   matchBreakdown: MatchBreakdown;
 }
 
+const GENRE_STYLE_LABELS = /^(アップテンポ|ミドルテンポ|ミディアムロック|バラード|スローな曲|R&B|ファンク|ロック|ポップス)$/;
+
 /** Explain the actual matching criteria without claiming that a song will cause a feeling. */
 export function buildMoodMatchExplanation(
   song: SongItem,
@@ -118,7 +135,10 @@ export function buildMoodMatchExplanation(
   const reason = matched.length
     ? `${matched.join('・')}にぴったり重なる一曲です。`
     : '選んだ時期や長さの中で、今の気分に近い候補を選びました。';
-  return `${reason}この曲の聴きどころは「${song.musicalHighlight}」。`;
+  const styleNote = GENRE_STYLE_LABELS.test(song.musicalHighlight)
+    ? `「${song.musicalHighlight}」の曲調で楽しめる一曲です。`
+    : `この曲の聴きどころは「${song.musicalHighlight}」。`;
+  return `${reason}${styleNote}`;
 }
 
 export function buildMatchBreakdown(
@@ -147,10 +167,11 @@ export function buildMatchBreakdown(
 
   const tempoParameter = Math.min(100, Math.max(35, Math.round(((song.bpm - 75) / 95) * 100)));
   const liveEnergyParameter = Math.min(100, Math.max(40, song.energyLevel * 10));
-  const lyricDepthParameter = Math.min(
-    100,
-    Math.max(60, Math.round((song.votes.lyric / 500) * 100))
-  );
+  const lyricDepthParameter = song.moods.includes('deep_lyric')
+    ? 95
+    : song.moods.includes('heartbreak_night')
+      ? 88
+      : 78;
 
   return {
     moodSyncPercent,

@@ -4,6 +4,7 @@ import type { EditorialSongPageData, EditorialSource } from './EditorialSongPage
 // These pairs were checked against the publishers and lead to the same article.
 const sourceUrlAliases: Record<string, string> = {
   'https://music.fanplus.co.jp/liveReport/20160707916e0854e': 'https://music.fanplus.co.jp/news/20160707916e0854e',
+  'https://music.fanplus.co.jp/special/20170309557e046cb': 'https://music.fanplus.co.jp/news/20170309557e046cb',
   'https://realsound.jp/2016/10/post-9916_2.html/amp': 'https://realsound.jp/2016/10/post-9916_2.html',
 };
 

@@ -356,7 +356,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   });
   const page = await context.newPage();
   await page.goto(root, { waitUntil: 'load' });
-  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
+  await page.getByRole('link', { name: '今日の1曲診断をひらく' }).waitFor();
   assert.equal(await page.getByText('図柄を選択', { exact: false }).count(), 0);
   await page.getByRole('link', { name: /『イエスタデイ』の解説ページへ/ }).click();
   await page.getByRole('heading', { name: 'イエスタデイ', exact: true }).waitFor();
@@ -393,6 +393,19 @@ async function verifyGuideAndSetlistUsability(browser) {
   const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
   assert.match(await pretender.innerText(), /配信日\s*2019\.04\.17/);
   assert.doesNotMatch(await pretender.innerText(), /収録音源|掲載音源|配信掲載|BPM|リズムの刻みが印象に残るバラード/);
+  assert.equal(await pretender.getByRole('button', { name: 'Pretenderをセトリに追加' }).isDisabled(), false);
+
+  await page.goto(`${root}discography/`, { waitUntil: 'load' });
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://katakatalab.com/higedanfan/discography/');
+  await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
+  await page.getByRole('navigation', { name: 'サイト内メニュー' }).getByRole('link', { name: /^今日の1曲診断/ }).click();
+  await page.getByRole('heading', { name: '今日の1曲診断', exact: true }).waitFor();
+  assert.equal(new URL(page.url()).pathname, '/higedanfan/mood/');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://katakatalab.com/higedanfan/mood/');
+  await page.goBack({ waitUntil: 'domcontentloaded' });
+  await page.getByRole('heading', { name: '楽曲ガイド（掲載90曲）', exact: true }).waitFor();
+  assert.equal(new URL(page.url()).pathname, '/higedanfan/discography/');
+  assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), 'https://katakatalab.com/higedanfan/discography/');
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`${root}#quiz`, { waitUntil: 'load' });
@@ -401,8 +414,9 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await page.getByRole('group', { name: /の切り替え/ }).count(), 0);
   await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
   const menu = page.getByRole('navigation', { name: 'サイト内メニュー' });
-  assert.equal(await menu.getByRole('button').count(), 10, 'メニューに公開コンテンツが揃っていません');
-  await menu.getByRole('button', { name: /^掲載90曲の音域・発売日一覧/ }).click();
+  assert.equal(await menu.getByRole('link').count(), 13, 'メニューに公開コンテンツが揃っていません');
+  assert.equal(await menu.getByRole('button').count(), 1);
+  await menu.getByRole('link', { name: /^掲載90曲の音域・発売日一覧/ }).click();
   await page.getByRole('heading', { name: /音域・発売日一覧/ }).waitFor();
   assert.equal(await table.isVisible(), true, 'スマホでも比較表を使える必要があります');
   assert.equal(await page.getByLabel('収録アルバム・EPで絞り込み').isVisible(), false, '条件欄は最初は閉じます');
@@ -423,8 +437,8 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.getByRole('link', { name: '音域一覧に戻る', exact: true }).first().click();
   await table.waitFor();
   assert.equal(await table.getByRole('columnheader', { name: /地声最高/ }).getAttribute('aria-sort'), 'descending');
-  await page.getByRole('button', { name: /^115万キロのファンノート/ }).click();
-  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
+  await page.getByRole('link', { name: /^115万キロの\s*ファンノート/ }).click();
+  await page.getByRole('link', { name: '今日の1曲診断をひらく' }).waitFor();
 
   await page.goto(`${root}#discography`, { waitUntil: 'load' });
   const titleSearch = page.getByLabel('曲名・読み・タイアップで検索');
@@ -584,9 +598,15 @@ async function verifyTourArchiveSetlists(browser) {
   await page.getByLabel('日付・会場を探す').fill('2025-05-31');
   await page.getByRole('button', { name: /セットリストを見る（22曲）/ }).first().click();
   await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').getByRole('button', { name: 'この公演の曲でMYセトリを作成' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'MYセトリに読み込む' }).click();
   await page.getByRole('heading', { name: 'MYセトリ作成', exact: true }).waitFor();
   assert.ok(await page.locator('li[data-song-id="same-blue"]').count() === 1);
+
+  await page.goto(`${root}tour-archive/`, { waitUntil: 'load' });
+  await page.getByLabel('日付・会場を探す').fill('2025-05-31');
+  await page.getByRole('button', { name: /セットリストを見る（22曲）/ }).first().click();
+  await page.locator('#setlist-panel-live-2025-stadium-kanagawa-1').getByRole('button', { name: 'この公演の曲でMYセトリを作成' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'MYセトリに読み込む' }).click();
+  await page.getByRole('heading', { name: 'MYセトリ作成', exact: true }).waitFor();
 
   await context.close();
   console.log('320/390px・PCで歴代ツアー記録の内蔵セトリ展開・曲名検索・参戦絞込・MYセトリ化・静的URL・楽曲解説との往復を確認');
@@ -650,10 +670,17 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   assert.equal(await page.evaluate(() => localStorage.getItem('higedan_intro_seen_v2')), '1', '閲覧済みフラグが保存されていません');
 
   await page.reload({ waitUntil: 'load' });
-  await page.getByRole('button', { name: '今日の1曲診断をひらく' }).waitFor();
+  await page.getByRole('link', { name: '今日の1曲診断をひらく' }).waitFor();
   assert.equal(await intro.count(), 0, '2回目以降のアクセスでオープニングが自動再生されました');
 
+  await page.setViewportSize({ width: 1280, height: 752 });
   await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
+  const drawer = page.locator('#global-nav-drawer');
+  await drawer.waitFor({ state: 'visible' });
+  assert.ok(
+    await drawer.evaluate(el => el.scrollHeight <= el.clientHeight),
+    '1280x752でグローバルメニュー内に縦スクロールが発生しています',
+  );
   await page.locator('#kurun-replay-btn').click();
   await intro.waitFor({ state: 'visible' });
   await page.keyboard.press('Escape');
@@ -666,11 +693,13 @@ async function verifyKurunIntroAndStickyNotes(browser) {
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${width}pxでトップページが横にはみ出しています`);
   }
 
-  await page.getByRole('button', { name: '聖地巡礼マップをひらく' }).click();
+  await page.getByRole('link', { name: '聖地巡礼マップをひらく' }).click();
   await page.getByRole('heading', { name: '聖地巡礼マップ', exact: true }).waitFor();
   assert.ok(await page.locator('.fusen-memo-card').count() >= 5, '聖地巡礼マップのメモカードが表示されていません');
-  await page.getByRole('button', { name: /^115万キロの\s*ファンノート/ }).click();
-  await page.getByRole('button', { name: '楽曲ガイドをひらく' }).click();
+  const shinjiCard = page.locator('.fusen-memo-card').filter({ hasText: '宍道湖夕日スポット（とるぱ）' });
+  await shinjiCard.getByRole('link', { name: '115万キロのフィルム' }).waitFor();
+  await page.getByRole('link', { name: /^115万キロの\s*ファンノート/ }).click();
+  await page.getByRole('link', { name: '楽曲ガイドをひらく' }).click();
   await page.getByRole('heading', { name: '楽曲ガイド（掲載90曲）', exact: true }).waitFor();
   assert.equal(await page.getByRole('button', { name: '付箋一覧へ戻る' }).count(), 0, '付箋一覧へ戻るボタンが残っています');
   assert.equal(await page.locator('.fusen-washi-tag').count(), 0, '見出し上のマステタグが残っています');
@@ -678,10 +707,20 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   assert.ok(firstSongBox && firstSongBox.y < 844, '楽曲ガイドの1曲目（Pretender）がファーストビューに入っていません');
   await page.getByRole('link', { name: '音域・発売日比較表' }).click();
   await page.getByRole('table', { name: /音域・発売日比較表/ }).waitFor();
-  await page.getByRole('button', { name: /^115万キロの\s*ファンノート/ }).click();
-  await page.getByRole('button', { name: 'Official髭男dism検定をひらく' }).click();
+  await page.getByRole('link', { name: /^115万キロの\s*ファンノート/ }).click();
+  await page.getByRole('link', { name: 'Official髭男dism検定をひらく' }).click();
   await page.getByRole('heading', { name: 'Official髭男dism検定', exact: true }).waitFor();
   assert.equal(await page.locator('#section-quiz a[href="#quiz_archive"]').count(), 0, '検定見出しに参考記事ボタンが残っています');
+
+  await page.setViewportSize({ width: 1280, height: 752 });
+  await page.goto(`${root}songs/pretender/`, { waitUntil: 'load' });
+  await page.locator('.song-site-menu > summary').click();
+  const songMenu = page.locator('.song-menu-panel');
+  await songMenu.waitFor({ state: 'visible' });
+  assert.ok(
+    await songMenu.evaluate(el => el.scrollHeight <= el.clientHeight),
+    '1280x752で曲ページのメニュー内に縦スクロールが発生しています',
+  );
 
   await page.goto(`${root}?intro=1`, { waitUntil: 'load' });
   await intro.waitFor({ state: 'visible' });

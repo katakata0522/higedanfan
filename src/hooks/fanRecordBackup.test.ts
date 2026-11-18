@@ -6,7 +6,12 @@ import { createInitialSavedSetlistsState, createNewSavedSetlist } from '../utils
 import { SACRED_SPOTS, TOUR_ARCHIVES } from '../data/higedanData';
 
 test('backup round-trips a completed zero score and rejects invalid data', () => {
-  const records = { ...initialRecords('old'), bestQuizScore: 0, setlistTitle: '自分のセトリ' };
+  const records = {
+    ...initialRecords('old'),
+    setlist: [{ songId: 'pretender', isEncore: false }],
+    bestQuizScore: 0,
+    setlistTitle: '自分のセトリ',
+  };
   const backup = createFanRecordBackup(records);
   const restored = parseFanRecordBackup(backup);
   assert.deepEqual(restored.setlist, records.setlist);
@@ -68,7 +73,11 @@ test('import refuses stale snapshots and failed writes leave the saved records u
 });
 
 test('backup preserves multiple saved setlists and rejects tampered setlist entries', () => {
-  const records = { ...initialRecords('epoch-1'), setlistTitle: 'セトリ2' };
+  const records = {
+    ...initialRecords('epoch-1'),
+    setlist: [{ songId: 'subtitle', isEncore: false }],
+    setlistTitle: 'セトリ2',
+  };
   const baseSaved = createInitialSavedSetlistsState(
     'セトリ1',
     [{ songId: 'pretender', isEncore: false }],

@@ -169,6 +169,24 @@ test('calculateSetlistStats computes duration, BPM, key changes, and encore coun
   assert.equal(stats.encoreCount, 1);
   assert.equal(stats.totalDurationSec, 327 + 242 + 256);
   assert.equal(stats.energyCurve.length, 3);
+
+  const flatEightIds = HIGEDAN_SONGS.filter((s) => s.energyLevel === 8).slice(0, 4);
+  assert.equal(flatEightIds.length, 4);
+  const flatStats = calculateSetlistStats(
+    flatEightIds.map((s) => ({ songId: s.id, isEncore: false })),
+    HIGEDAN_SONGS
+  );
+  assert.equal(flatStats.vibeTitle, '安定感のあるミドル〜アッパー構成');
+
+  const mixedStats = calculateSetlistStats(
+    [
+      { songId: 'natsumoyou-no-neko', isEncore: false },
+      { songId: 'fire-ground', isEncore: false },
+      { songId: 'shukumei', isEncore: false },
+    ],
+    HIGEDAN_SONGS
+  );
+  assert.equal(mixedStats.vibeTitle, '緩急のあるバランス型');
 });
 
 test('調査中のテンポは曲一覧の末尾に置き、マイセトリの平均から除く', () => {

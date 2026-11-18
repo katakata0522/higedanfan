@@ -124,3 +124,35 @@ export function cornerUrl(id: PublicCornerId): string {
   const slug = CORNER_BY_ID.get(id)?.slug;
   return slug ? `${SITE_BASE_URL}${slug}/` : SITE_BASE_URL;
 }
+
+export function tabPath(tab: string, baseUrl = '/higedanfan/'): string {
+  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  if (tab === 'home') return base;
+  const corner = CORNER_BY_ID.get(tab as PublicCornerId);
+  if (corner) return `${base}${corner.slug}/`;
+  return `${base}#${tab}`;
+}
+
+export function canonicalUrlForTab(tab: string): string {
+  return CORNER_BY_ID.has(tab as PublicCornerId)
+    ? cornerUrl(tab as PublicCornerId)
+    : SITE_BASE_URL;
+}
+
+export function isPlainLeftClick(event: {
+  button: number;
+  metaKey: boolean;
+  ctrlKey: boolean;
+  shiftKey: boolean;
+  altKey: boolean;
+  defaultPrevented?: boolean;
+}): boolean {
+  return (
+    !event.defaultPrevented &&
+    event.button === 0 &&
+    !event.metaKey &&
+    !event.ctrlKey &&
+    !event.shiftKey &&
+    !event.altKey
+  );
+}

@@ -20,7 +20,7 @@ function SongPageErrorFallback() {
               <button type="button" className="song-error-btn" onClick={() => window.location.reload()}>
                 ページを再読み込み
               </button>
-              <a className="song-error-link" href="/higedanfan/#discography">
+              <a className="song-error-link" href="/higedanfan/discography/">
                 楽曲ガイドへ戻る
               </a>
             </div>
