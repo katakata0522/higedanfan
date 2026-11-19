@@ -2,7 +2,7 @@ import { QUIZ_QUESTIONS, type QuizQuestion } from '../../data/quizData';
 
 export type CourseDifficulty = 'all' | QuizQuestion['difficulty'];
 export type QuestionScopeFilter = 'full' | 'new_variation' | 'ordering_only' | 'classic' | 'vol1' | 'vol2' | 'vol3' | 'vol4' | 'vol5' | 'vol6';
-export type QuestionSet = 'current' | 'published' | 'recent' | 'prior' | 'previous' | 'legacy';
+export type QuestionSet = 'current' | 'pre_all4choice' | 'published' | 'recent' | 'prior' | 'previous' | 'legacy';
 
 type QuestionBank = {
   questions: QuizQuestion[];
@@ -21,6 +21,7 @@ const loadedBanks: Partial<Record<QuestionSet, QuestionBank>> = {
 const pendingLoads: Partial<Record<QuestionSet, Promise<QuestionBank>>> = {};
 
 const LEGACY_BANK_LOADERS: Record<Exclude<QuestionSet, 'current'>, () => Promise<{ QUIZ_QUESTIONS: QuizQuestion[] }>> = {
+  pre_all4choice: () => import('../../data/quizDataPreAll4Choice'),
   published: () => import('../../data/quizDataPublishedRevision'),
   recent: () => import('../../data/quizDataRecent'),
   prior: () => import('../../data/quizDataPriorRevision'),
@@ -131,7 +132,7 @@ const PUBLISHED_VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]
   brothers: RECENT_VOLUME_QUESTION_IDS.brothers,
 };
 
-const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+const PRE_ALL4CHOICE_VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   beginner: [
     'q1', 'q5', 'q19', 'q16', 'q36', 'q35', 'q2', 'q57', 'q37', 'q27',
     'q47', 'q31', 'q9', 'q25', 'q53', 'q7', 'q32', 'q49', 'q52', 'q10',
@@ -146,6 +147,16 @@ const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
   ],
 };
 
+const VOLUME_QUESTION_IDS: Record<QuizQuestion['difficulty'], string[]> = {
+  // q2解説が「雪の結晶」に言及するため、q37（Vol.1）のあとでq2（Vol.2）が出題される構成にする。
+  beginner: [
+    'q1', 'q5', 'q19', 'q16', 'q36', 'q35', 'q57', 'q47', 'q37', 'q27',
+    'q2', 'q31', 'q9', 'q25', 'q53', 'q7', 'q32', 'q49', 'q52', 'q10',
+  ],
+  intermediate: PRE_ALL4CHOICE_VOLUME_QUESTION_IDS.intermediate,
+  brothers: PRE_ALL4CHOICE_VOLUME_QUESTION_IDS.brothers,
+};
+
 export function getCourseQuestions(difficulty: CourseDifficulty, scope: QuestionScopeFilter, questionSet: QuestionSet = 'current'): QuizQuestion[] {
   const bankEntry = loadedBanks[questionSet];
   if (!bankEntry) return [];
@@ -157,6 +168,7 @@ export function getCourseQuestions(difficulty: CourseDifficulty, scope: Question
     const tierQuestions = (tier: QuizQuestion['difficulty']) => {
       const orderIds = questionSet === 'current'
         ? VOLUME_QUESTION_IDS[tier]
+        : questionSet === 'pre_all4choice' ? PRE_ALL4CHOICE_VOLUME_QUESTION_IDS[tier]
         : questionSet === 'published' ? PUBLISHED_VOLUME_QUESTION_IDS[tier]
         : questionSet === 'recent' ? RECENT_VOLUME_QUESTION_IDS[tier]
         : questionSet === 'prior' ? PRIOR_VOLUME_QUESTION_IDS[tier]

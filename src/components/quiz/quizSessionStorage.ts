@@ -19,17 +19,23 @@ import type { QuizAnswer, QuizSession } from './quizSession';
 
 export { clearStaleQuizSession };
 
+const HISTORICAL_QUESTION_SETS: readonly QuestionSet[] = ['pre_all4choice', 'published', 'recent', 'prior', 'previous', 'legacy'];
+
+function isHistoricalQuestionSet(value: unknown): value is Exclude<QuestionSet, 'current'> {
+  return typeof value === 'string' && (HISTORICAL_QUESTION_SETS as readonly string[]).includes(value);
+}
+
 function isQuizSession(value: unknown): value is QuizSession {
   if (!isObject(value) || !isObject(value.answer)) return false;
   const difficulties = ['all', 'beginner', 'intermediate', 'brothers'];
   const scopes = ['full', 'new_variation', 'ordering_only', 'classic', 'vol1', 'vol2', 'vol3', 'vol4', 'vol5', 'vol6'];
   if (!['select', 'playing', 'finished'].includes(value.stage as string) ||
       !difficulties.includes(value.difficulty as string) || !scopes.includes(value.scope as string) ||
-      (value.questionSet !== undefined && value.questionSet !== 'current' && value.questionSet !== 'published' && value.questionSet !== 'recent' && value.questionSet !== 'prior' && value.questionSet !== 'previous' && value.questionSet !== 'legacy') ||
+      (value.questionSet !== undefined && value.questionSet !== 'current' && !isHistoricalQuestionSet(value.questionSet)) ||
       !Number.isSafeInteger(value.currentIndex) || !Number.isSafeInteger(value.correctBefore)) return false;
 
   const questions = getCourseQuestions(value.difficulty as CourseDifficulty, value.scope as QuestionScopeFilter,
-    value.questionSet === 'legacy' || value.questionSet === 'previous' || value.questionSet === 'prior' || value.questionSet === 'recent' || value.questionSet === 'published' ? value.questionSet : 'current');
+    isHistoricalQuestionSet(value.questionSet) ? value.questionSet : 'current');
   const index = value.currentIndex as number;
   const correctBefore = value.correctBefore as number;
   if (!questions.length || index < 0 || index >= questions.length || correctBefore < 0 ||
@@ -86,7 +92,8 @@ export function readQuizSession(
     if ((!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) && currentRaw !== null &&
         (saved.session.questionSet === undefined || saved.session.questionSet === 'current')) {
       // 公開前に始めたセッションは、その時点の問題と出題順に戻す。
-      for (const questionSet of ['published', 'recent', 'prior', 'previous'] as const) {
+      for (const questionSet of HISTORICAL_QUESTION_SETS) {
+        if (questionSet === 'legacy') continue;
         const candidate = { ...saved.session, questionSet };
         if (isQuizSession(candidate) && saved.courseSignature === courseSignature(candidate)) {
           session = candidate;
@@ -99,8 +106,6 @@ export function readQuizSession(
     return currentRaw === null && session.stage === 'select' ? null : session;
   } catch { return null; }
 }
-
-const HISTORICAL_QUESTION_SETS: readonly QuestionSet[] = ['published', 'recent', 'prior', 'previous', 'legacy'];
 
 /** Loads historical quiz datasets on demand when sessionStorage holds an older revision. */
 export async function readQuizSessionAsync(

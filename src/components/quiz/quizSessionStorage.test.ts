@@ -273,6 +273,31 @@ test('a revised ordering question restores the original in-progress answer and o
   assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
 });
 
+test('restores a pre-all4choice binary q7 attempt via async loader after all questions became 4 choices', async () => {
+  await ensureQuestionSetLoaded('pre_all4choice');
+  const recordStore = records('generation-a');
+  const oldQuestions = getCourseQuestions('beginner', 'vol2', 'pre_all4choice');
+  const oldSession: QuizSession = {
+    ...INITIAL_SESSION, stage: 'playing', difficulty: 'beginner', scope: 'vol2', currentIndex: 5, correctBefore: 4,
+    answer: { selectedOption: 1, selectedOrder: [], isOrderingSubmitted: false },
+  };
+  assert.equal(oldQuestions[5].id, 'q7');
+  assert.equal(oldQuestions[5].options.length, 2);
+  assert.equal(isAnswerCorrect(oldQuestions[5], oldSession.answer), true);
+  assert.equal(getCourseQuestions('beginner', 'vol2')[5].id, 'q7');
+  assert.equal(getCourseQuestions('beginner', 'vol2')[5].options.length, 4);
+  const signature = JSON.stringify(oldQuestions.map(q => [
+    q.id, q.prompt, q.questionType ?? 'single_choice', q.options, q.correctIndex, q.correctOrder ?? null,
+  ]));
+  const oldRaw = JSON.stringify({ version: 2, resetEpoch: 'generation-a', courseSignature: signature, session: oldSession });
+  const sessionStore = memoryStore({ [QUIZ_KEY]: oldRaw });
+  const restored = await readQuizSessionAsync(sessionStore, recordStore);
+  assert.deepEqual(restored, { ...oldSession, questionSet: 'pre_all4choice' });
+  assert.equal(isAnswerCorrect(getCourseQuestions('beginner', 'vol2', restored!.questionSet)[5], restored!.answer), true);
+  assert.equal(saveQuizSession(restored!, 'generation-a', sessionStore, recordStore), true);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore), restored);
+});
+
 test('storage access or quota errors leave the in-memory quiz usable', () => {
   const recordStore = records('');
   const denied = {
