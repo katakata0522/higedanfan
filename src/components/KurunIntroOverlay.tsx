@@ -102,6 +102,14 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
     }, INTRO_LEAVE_MS);
   }, [clearScheduledWork, onClose, scheduleTimer]);
 
+  const skipIntro = useCallback(() => {
+    clearScheduledWork();
+    isClosingRef.current = true;
+    markKurunIntroSeen();
+    document.body.classList.remove('kurun-intro-active');
+    onClose();
+  }, [clearScheduledWork, onClose]);
+
   useLayoutEffect(() => {
     if (!isOpen) {
       clearScheduledWork();
@@ -205,10 +213,10 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
   }, [isOpen]);
 
   useEffect(() => {
-    if (!isOpen || phase === 'leaving') return;
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        startLeaving();
+        skipIntro();
       } else if (e.key === 'Tab') {
         e.preventDefault();
         skipBtnRef.current?.focus({ preventScroll: true });
@@ -218,7 +226,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, phase, startLeaving]);
+  }, [isOpen, skipIntro]);
 
   if (!isOpen) return null;
 
@@ -235,7 +243,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
     <div
       id="kurun-intro-overlay"
       ref={overlayRef}
-      onClick={startLeaving}
+      onClick={skipIntro}
       className={`kurun-intro kurun-paper-grain ${phaseClass}`.trim()}
       role="dialog"
       aria-modal="true"
@@ -248,7 +256,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
         type="button"
         onClick={(e) => {
           e.stopPropagation();
-          startLeaving();
+          skipIntro();
         }}
       >
         スキップする ↗

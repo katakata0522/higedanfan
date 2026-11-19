@@ -666,7 +666,7 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   await intro.waitFor({ state: 'visible' });
   assert.equal(await intro.locator('.kurun-doodle').count(), 4, 'オープニングの背景モチーフが4つ揃っていません');
   await page.locator('#kurun-skip-btn').click();
-  await intro.waitFor({ state: 'detached' });
+  await intro.waitFor({ state: 'detached', timeout: 500 });
   assert.equal(await page.evaluate(() => localStorage.getItem('higedan_intro_seen_v2')), '1', '閲覧済みフラグが保存されていません');
 
   await page.reload({ waitUntil: 'load' });
@@ -684,7 +684,7 @@ async function verifyKurunIntroAndStickyNotes(browser) {
   await page.locator('#kurun-replay-btn').click();
   await intro.waitFor({ state: 'visible' });
   await page.keyboard.press('Escape');
-  await intro.waitFor({ state: 'detached' });
+  await intro.waitFor({ state: 'detached', timeout: 500 });
 
   for (const width of [1280, 390]) {
     await page.setViewportSize({ width, height: 844 });
