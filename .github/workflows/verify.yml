@@ -11,6 +11,10 @@ permissions:
 jobs:
   verify:
     runs-on: ubuntu-24.04
+    # package-lock.json と同じ版の Chromium・フォント・OS依存を使う。
+    container:
+      image: mcr.microsoft.com/playwright:v1.60.0-noble@sha256:9bd26ad900bb5e0f4dee75839e957a89ae89c2b7ab1e76050e559790e946b948
+      options: --ipc=host
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,5 +26,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
-      - run: npx playwright install --with-deps chromium
+      - name: Verify the bundled Chromium matches the locked Playwright
+        run: |
+          node <<'NODE'
+          const assert = require('node:assert/strict');
+          const fs = require('node:fs');
+          const { driverVersion } = JSON.parse(fs.readFileSync('/ms-playwright/.docker-info', 'utf8'));
+          assert.equal(require('playwright/package.json').version, driverVersion);
+          fs.accessSync(require('playwright').chromium.executablePath(), fs.constants.X_OK);
+          NODE
       - run: npm run test:browser
