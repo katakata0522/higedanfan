@@ -1,13 +1,90 @@
-import type { CSSProperties } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { ArrowRight, Mic2, Newspaper } from 'lucide-react';
 import { HIGEDAN_MEMBERS, type EraTag, type SongItem } from '../../data/higedanData';
 import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
 import type { ActiveFeatureTab } from '../SiteHeader';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../../utils/guideReturnState';
-import { HOME_STICKY_NOTES } from './homeContent';
+import { HOME_STICKY_NOTES, type HomeStickyNote } from './homeContent';
 
 const MEMBER_TAPE_COLORS = ['#f5c6be', '#f6e39c', '#bce3f8', '#c0e6c7'] as const;
+
+function renderFusenMotif(id: HomeStickyNote['id']) {
+  let paths: ReactNode = null;
+  switch (id) {
+    case 'discography':
+      paths = (
+        <>
+          <path d="M18 35V14l18-4v21" />
+          <circle cx="14" cy="35" r="4" />
+          <circle cx="32" cy="31" r="4" />
+          <path d="M18 20l18-4" />
+        </>
+      );
+      break;
+    case 'tour_archive':
+      paths = (
+        <>
+          <path d="M8 16a2 2 0 0 1 2-2h28a2 2 0 0 1 2 2v4a3 3 0 0 0 0 6v4a2 2 0 0 1-2 2H10a2 2 0 0 1-2-2v-4a3 3 0 0 0 0-6Z" />
+          <path d="M28 14v18" strokeDasharray="2.5 2.5" />
+          <path d="M14 21h9M14 26h6" />
+        </>
+      );
+      break;
+    case 'sacred_map':
+      paths = (
+        <>
+          <path d="M24 38s10-9.6 10-18a10 10 0 1 0-20 0c0 8.4 10 18 10 18Z" />
+          <circle cx="24" cy="20" r="3.5" />
+          <path d="M10 40c5-2.5 9-2.5 14 0s9 2.5 14 0" opacity="0.7" />
+        </>
+      );
+      break;
+    case 'setlist':
+      paths = (
+        <>
+          <path d="M12 14h20M12 22h16M12 30h12" />
+          <path d="M32 25l1.6 3.5 3.8.5-2.8 2.6.7 3.8-3.3-1.8-3.3 1.8.7-3.8-2.8-2.6 3.8-.5z" />
+        </>
+      );
+      break;
+    case 'mood':
+      paths = (
+        <>
+          <path d="M12 22h18v7a9 9 0 0 1-18 0v-7Z" />
+          <path d="M30 24h3.5a3.5 3.5 0 0 1 0 7H30" />
+          <path d="M10 38h22" />
+          <path d="M17 16c0-2.5 2-3.5 1-6M23 16c0-2.5 2-3.5 1-6" />
+        </>
+      );
+      break;
+    case 'quiz':
+      paths = (
+        <>
+          <path d="M29 11l8 8-17 17-9 1 1-9Z" />
+          <path d="M25 15l8 8" />
+        </>
+      );
+      break;
+    default:
+      return null;
+  }
+
+  return (
+    <svg
+      className="fusen-motif"
+      viewBox="0 0 48 48"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {paths}
+    </svg>
+  );
+}
 
 interface HomePageProps {
   songs: SongItem[];
@@ -72,6 +149,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                     </span>
                   </div>
                 </a>
+                {renderFusenMotif(note.id)}
               </article>
             );
           })}
@@ -96,7 +174,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                   掲載90曲の音域・発売日一覧
                 </span>
                 <span className="block text-[11px] text-[#57534E]">
-                  カラオケ選曲・最高音／最低音・キー変更を比較
+                  カラオケ選曲の目安に、最高音／最低音・BPM・発売日を比較
                 </span>
               </span>
             </span>
@@ -132,8 +210,22 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
       {/* メンバー紹介（ノートの索引メモ風・控えめで落ち着いた佇まい） */}
       <section
         aria-labelledby="members-heading"
-        className="mt-16 sm:mt-20 pt-10 border-t border-[#e5dccb] space-y-6"
+        className="mt-14 sm:mt-16 space-y-6"
       >
+        <div className="relative flex items-center justify-center mb-6" aria-hidden="true">
+          <div className="absolute inset-x-0 top-1/2 h-px bg-[#e5dccb]" />
+          <span className="relative z-[1] inline-flex items-center justify-center bg-[#faf6eb] px-3">
+            <svg viewBox="0 0 100 55" width="32" height="18" className="overflow-visible">
+              <g transform="translate(50 28) scale(0.125) translate(-370 -125)">
+                <path
+                  fill="#78716C"
+                  d="M370 86 C356 66 338 62 316 62 C254 62 234 156 174 156 C138 156 112 142 112 120 C112 102 125 94 140 94 C153 94 160 103 160 114 C160 124 151 130 142 130 C136 130 132 126 132 121 C132 117 125 117 125 122 C125 132 133 139 144 139 C159 139 170 128 170 112 C170 94 155 82 136 82 C108 82 88 104 88 134 C88 172 144 188 214 188 C286 188 336 156 362 128 C366 124 368 122 370 122 C372 122 374 124 378 128 C404 156 454 188 526 188 C596 188 652 172 652 134 C652 104 632 82 604 82 C585 82 570 94 570 112 C570 128 581 139 596 139 C607 139 615 132 615 122 C615 117 608 117 608 121 C608 126 604 130 598 130 C589 130 580 124 580 114 C580 103 587 94 600 94 C615 94 628 102 628 120 C628 142 602 156 566 156 C506 156 486 62 424 62 C402 62 384 66 370 86 Z"
+                />
+              </g>
+            </svg>
+          </span>
+        </div>
+
         <h2
           id="members-heading"
           className="font-note-serif text-lg sm:text-xl font-bold tracking-[.04em] text-[#253331]"
@@ -173,20 +265,6 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                   <p className="mt-1.5 text-[13px] leading-relaxed text-[#57534E]">
                     {member.biography}
                   </p>
-                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#78716C]">
-                    <span>取材・出典：</span>
-                    {member.sourceLinks.map((source) => (
-                      <a
-                        key={source.url}
-                        href={source.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex min-h-[28px] items-center py-1 underline underline-offset-2 hover:text-[#C83E2B]"
-                      >
-                        {source.label}
-                      </a>
-                    ))}
-                  </div>
                 </div>
 
                 {sigSong && (

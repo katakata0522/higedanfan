@@ -286,3 +286,25 @@ test('storage access or quota errors leave the in-memory quiz usable', () => {
   assert.equal(progress.stage, 'playing');
   assert.equal(readQuizSession(memoryStore(), denied), null);
 });
+
+test('persists and validates per-question outcomes across quiz reload', () => {
+  const recordStore = records('generation-a');
+  const sessionStore = memoryStore();
+  const withOutcomes: QuizSession = {
+    ...INITIAL_SESSION,
+    stage: 'playing',
+    difficulty: 'beginner',
+    scope: 'vol1',
+    currentIndex: 2,
+    correctBefore: 1,
+    outcomes: ['correct', 'wrong'],
+  };
+  assert.equal(saveQuizSession(withOutcomes, 'generation-a', sessionStore, recordStore), true);
+  assert.deepEqual(readQuizSession(sessionStore, recordStore)?.outcomes, ['correct', 'wrong']);
+
+  const tampered: QuizSession = {
+    ...withOutcomes,
+    outcomes: ['correct', 'hacked' as 'correct'],
+  };
+  assert.equal(saveQuizSession(tampered, 'generation-a', sessionStore, recordStore), false);
+});

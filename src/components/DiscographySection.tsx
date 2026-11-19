@@ -4,13 +4,15 @@ import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { songAppleArtwork } from '../data/songAppleArtwork';
-import { fitsVoiceRange } from '../utils/voiceRange';
 import { sortSongTable, SONG_TABLE_SORT_LABELS, type SongTableSortKey } from '../utils/songTableSort';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveGuideReturnState, saveSongReturnTab, takeGuideReturnState } from '../utils/guideReturnState';
+import { SOUND_LABELS } from '../utils/songLabels';
+import { getSacredSpotRegion, SACRED_SPOT_REGIONS, type SacredSpotRegion } from '../utils/sacredSpotAreas';
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   BookOpen,
+  ChevronDown,
   MapPin,
   Mic2,
   Music2,
@@ -54,13 +56,6 @@ const CARDS_PER_PAGE = 24;
 const SPOT_CATEGORIES: (SacredSpotCategory | 'all')[] = [
   'all', 'MVロケ地', 'メンバーの思い出', 'メンバーのおすすめ', 'ライブ会場', '街とヒゲダン',
 ];
-const PITCH_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-const PITCH_JA = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ'];
-const VOICE_OPTIONS = Array.from({ length: 49 }, (_, index) => {
-  const midi = index + 36;
-  const octave = Math.floor(midi / 12) - 1;
-  return { value: String(midi), label: `${PITCH_NAMES[midi % 12]}${octave}（${PITCH_JA[midi % 12]}${octave}）` };
-});
 
 function SongArtworkThumb({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
@@ -86,6 +81,7 @@ function SongArtworkThumb({ src }: { src?: string }) {
       height={52}
       loading="lazy"
       decoding="async"
+      referrerPolicy="no-referrer"
       onError={() => setFailed(true)}
       className="h-[52px] w-[52px] shrink-0 rounded-lg border border-[#e5dccb] bg-[#f4efe4] object-cover shadow-2xs"
     />
@@ -138,15 +134,24 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   };
   const [returnState] = useState(() => (initialSubView === 'sacred_map' ? null : takeGuideReturnState(songs.length)));
   const restored = initialEraFilter === 'all' ? returnState : null;
-  const [filters, setFilters] = useState(() => restored?.filters ?? { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter });
+  const [filters, setFilters] = useState(() =>
+    restored?.filters
+      ? {
+          ...restored.filters,
+          era: initialEraFilter !== 'all' ? initialEraFilter : ('all' as const),
+          tableSort: restored.filters.tableSort?.key === 'cd' ? undefined : restored.filters.tableSort,
+        }
+      : { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter }
+  );
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery } = filters;
   const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>('all');
+  const [selectedSpotRegion, setSelectedSpotRegion] = useState<SacredSpotRegion>('all');
+  const [visitedSpotsOnly, setVisitedSpotsOnly] = useState(false);
+  const [isSpotFilterOpen, setIsSpotFilterOpen] = useState(false);
+  const [pinnedSpotId, setPinnedSpotId] = useState<string | null>(null);
   const [cardPage, setCardPage] = useState<number>(() =>
     restored ? Math.max(1, Math.ceil(restored.visibleCount / CARDS_PER_PAGE)) : 1
   );
-  const [voiceLow, setVoiceLow] = useState(() => restored?.voice?.low ?? '');
-  const [voiceHigh, setVoiceHigh] = useState(() => restored?.voice?.high ?? '');
-  const [keyShift, setKeyShift] = useState(() => restored?.voice?.keyShift ?? 0);
   const skipInitialPaginationReset = useRef(Boolean(restored));
   const previousEraPreset = useRef(initialEraFilter);
   const resultsTopRef = useRef<HTMLDivElement>(null);
@@ -164,19 +169,13 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       return;
     }
     setCardPage(1);
-  }, [eraFilter, albumFilter, soundFilter, searchQuery, filters.sortBy, activeSubView, voiceLow, voiceHigh, keyShift]);
+  }, [eraFilter, albumFilter, soundFilter, searchQuery, filters.sortBy, activeSubView]);
 
-  const voiceRangeInvalid = Boolean(voiceLow && voiceHigh && Number(voiceLow) > Number(voiceHigh));
   const filteredSongs = useMemo(() => {
-    let matching = filterAndSortDiscography(songs, filters);
+    const matching = filterAndSortDiscography(songs, filters);
     if (activeSubView !== 'vocal_range') return matching;
-    if (voiceRangeInvalid) return [];
-    if (voiceLow || voiceHigh) matching = matching.filter(song => {
-      const fact = songEvidence[song.id as keyof typeof songEvidence];
-      return fitsVoiceRange(fact, voiceLow ? Number(voiceLow) : undefined, voiceHigh ? Number(voiceHigh) : undefined, keyShift);
-    });
     return sortSongTable(matching, filters.tableSort ?? null);
-  }, [songs, filters, activeSubView, voiceLow, voiceHigh, keyShift, voiceRangeInvalid]);
+  }, [songs, filters, activeSubView]);
   const resultAlbum = albumFilter !== 'all' ? albumFilter : albumForSearch(searchQuery);
   const epCoverage = resultAlbum ? partialEpCoverage[resultAlbum] : undefined;
   const globalMatchCount = useMemo(() => {
@@ -205,7 +204,6 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       filters,
       visibleCount: restoredCount,
       view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography',
-      voice: { low: voiceLow, high: voiceHigh, keyShift },
     });
   };
 
@@ -218,30 +216,54 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
   const filteredSpots = useMemo(
     () =>
-      selectedSpotCategory === 'all'
-        ? SACRED_SPOTS
-        : SACRED_SPOTS.filter((s) => s.categories.includes(selectedSpotCategory)),
-    [selectedSpotCategory]
+      SACRED_SPOTS.filter((s) => {
+        if (selectedSpotCategory !== 'all' && !s.categories.includes(selectedSpotCategory)) return false;
+        if (selectedSpotRegion !== 'all' && getSacredSpotRegion(s.area) !== selectedSpotRegion) return false;
+        if (visitedSpotsOnly && (s.mapScope === 'none' || !visitedSpotIds.includes(s.id))) return false;
+        return true;
+      }),
+    [selectedSpotCategory, selectedSpotRegion, visitedSpotsOnly, visitedSpotIds]
   );
-  const filteredHistoricalSpots = selectedSpotCategory === 'all'
-    ? HISTORICAL_SACRED_SPOTS
-    : HISTORICAL_SACRED_SPOTS.filter(spot => spot.categories.includes(selectedSpotCategory));
+  const filteredHistoricalSpots = useMemo(
+    () =>
+      visitedSpotsOnly
+        ? []
+        : HISTORICAL_SACRED_SPOTS.filter((spot) => {
+            if (selectedSpotCategory !== 'all' && !spot.categories.includes(selectedSpotCategory)) return false;
+            if (selectedSpotRegion !== 'all' && getSacredSpotRegion(spot.area) !== selectedSpotRegion) return false;
+            return true;
+          }),
+    [selectedSpotCategory, selectedSpotRegion, visitedSpotsOnly]
+  );
 
   const [mapSpotId, setMapSpotId] = useState('');
+  const orderedSpots = useMemo(() => {
+    if (!pinnedSpotId) return filteredSpots;
+    const pinned = filteredSpots.find((s) => s.id === pinnedSpotId);
+    if (!pinned) return filteredSpots;
+    return [pinned, ...filteredSpots.filter((s) => s.id !== pinned.id)];
+  }, [filteredSpots, pinnedSpotId]);
   const mapSpots = filteredSpots.filter(s => s.mapScope !== 'none');
   const mapSpot = mapSpots.find(s => s.id === mapSpotId) ?? mapSpots[0];
   const mapQuery = mapSpot ? encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint) : '';
   const visitedSpotCount = SACRED_SPOTS.filter((s) => s.mapScope !== 'none' && visitedSpotIds.includes(s.id)).length;
   const totalCheckableSpotCount = SACRED_SPOTS.filter((s) => s.mapScope !== 'none').length;
+  const spotFilterChoices = [
+    selectedSpotCategory !== 'all' && selectedSpotCategory,
+    selectedSpotRegion !== 'all' && SACRED_SPOT_REGIONS.find((r) => r.id === selectedSpotRegion)?.label,
+    visitedSpotsOnly && '訪問済みのみ',
+  ].filter(Boolean);
+  const hasSpotFilter = spotFilterChoices.length > 0;
+  const resetSpotFilters = () => {
+    setSelectedSpotCategory('all');
+    setSelectedSpotRegion('all');
+    setVisitedSpotsOnly(false);
+    setPinnedSpotId(null);
+  };
   const emptyResults = (
     <div className="mt-4 notebook-paper rounded-xl p-6 text-center">
       <p className="font-note-serif text-sm font-bold text-[#253331]">条件に一致する楽曲が見つかりませんでした。</p>
-      {activeSubView === 'vocal_range' && (voiceLow || voiceHigh) ? (
-        <button type="button" onClick={() => { setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }}
-          className="mt-3 min-h-[44px] rounded-full bg-[#253331] px-5 py-2 text-sm font-bold text-[#faf6eb] cursor-pointer">
-          声の範囲をリセット
-        </button>
-      ) : globalMatchCount > 0 ? (
+      {globalMatchCount > 0 ? (
         <button type="button"
           onClick={() => setFilters({ ...DEFAULT_GUIDE_FILTERS, searchQuery })}
           className="mt-3 min-h-[44px] max-w-full wrap-anywhere rounded-full bg-[#253331] px-5 py-2 text-sm font-bold text-[#faf6eb] cursor-pointer">
@@ -324,36 +346,13 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         </div>
 
         {activeSubView !== 'sacred_map' && (
-          <SongGuideFilters values={{ ...filters, tableSort: activeSubView === 'vocal_range' ? filters.tableSort : undefined }} onChange={setFilters}
-            resultCount={filteredSongs.length} shownCount={displayedSongs.length}
-            voiceSummary={activeSubView === 'vocal_range' && (voiceLow || voiceHigh || keyShift !== 0) ? '声の範囲・キーを指定中' : undefined}
-            onReset={() => { setFilters(DEFAULT_GUIDE_FILTERS); setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }}>
-            {activeSubView === 'vocal_range' && (
-              <div className="mt-3 rounded-xl border border-[#dfd7c7] bg-[#fff9eb] p-4">
-                <h2 className="font-note-serif text-sm font-bold text-[#253331]">自分の声の範囲で探す</h2>
-                <p className="mt-1 text-xs leading-relaxed text-[#57534E]">出せる低い音と高い音を選ぶと、地声の音域が範囲に収まる曲を探せます。裏声や息継ぎは含まない、選曲の目安です。表に表示する音域は原曲キーの値です。</p>
-                <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                  <label className="text-xs font-bold text-[#57534E]">出せる低い音
-                    <select value={voiceLow} onChange={event => setVoiceLow(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-[#dfd7c7] bg-[#fffdf8] px-3 text-sm text-[#253331]">
-                      <option value="">指定しない</option>{VOICE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                  </label>
-                  <label className="text-xs font-bold text-[#57534E]">出せる高い音
-                    <select value={voiceHigh} onChange={event => setVoiceHigh(event.target.value)} className="mt-1 min-h-11 w-full rounded-lg border border-[#dfd7c7] bg-[#fffdf8] px-3 text-sm text-[#253331]">
-                      <option value="">指定しない</option>{VOICE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
-                  </label>
-                  <label className="text-xs font-bold text-[#57534E]">カラオケのキー
-                    <select value={keyShift} onChange={event => setKeyShift(Number(event.target.value))} className="mt-1 min-h-11 w-full rounded-lg border border-[#dfd7c7] bg-[#fffdf8] px-3 text-sm text-[#253331]">
-                      {Array.from({ length: 25 }, (_, index) => index - 12).map(value => <option key={value} value={value}>{value === 0 ? '原曲キー' : value > 0 ? `+${value}` : value}</option>)}
-                    </select>
-                  </label>
-                </div>
-                {voiceRangeInvalid && <p role="alert" className="mt-2 text-sm text-[#A3291C]">高い音には、低い音以上の高さを選んでください。</p>}
-                {(voiceLow || voiceHigh || keyShift !== 0) && <button type="button" onClick={() => { setVoiceLow(''); setVoiceHigh(''); setKeyShift(0); }} className="mt-3 min-h-10 text-xs font-bold text-[#A3291C] underline cursor-pointer">声の範囲とキーをリセット</button>}
-              </div>
-            )}
-          </SongGuideFilters>
+          <SongGuideFilters
+            values={{ ...filters, tableSort: activeSubView === 'vocal_range' ? filters.tableSort : undefined }}
+            onChange={setFilters}
+            resultCount={filteredSongs.length}
+            shownCount={displayedSongs.length}
+            onReset={() => setFilters(DEFAULT_GUIDE_FILTERS)}
+          />
         )}
 
         {activeSubView !== 'sacred_map' && epCoverage && (
@@ -392,18 +391,22 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 <span className="shrink-0">配信日 {song.releaseDate}</span>
                               </div>
                               <h2 className="mt-0.5 font-note-serif text-base sm:text-lg font-bold text-[#253331] min-w-0 wrap-anywhere whitespace-normal">
-                                {pagePath ? (
-                                  <a href={`${import.meta.env.BASE_URL}${pagePath}`} onClick={rememberGuide}
-                                    className="rounded-sm underline decoration-[#c6bba8] underline-offset-4 hover:decoration-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]">{song.title}</a>
-                                ) : (
-                                  <button type="button" onClick={() => onSelectSong(song)}
-                                    className="rounded-sm text-left underline decoration-[#c6bba8] underline-offset-4 hover:decoration-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331]">{song.title}</button>
-                                )}
+                                {song.title}
                               </h2>
                               <p className="mt-0.5 text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
                                 {getSongwriterCredit(song)}
                                 {!albumBadgeText.startsWith(displayFactAlbum) ? ` · 収録作：${displayFactAlbum}` : ''}
                               </p>
+                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                                <span className="inline-flex items-center rounded border border-[#e5dccb] bg-[#f4efe4] px-1.5 py-0.5 font-medium text-[#253331]">
+                                  {SOUND_LABELS[song.sound]}
+                                </span>
+                                {song.tieUp && (
+                                  <span className="min-w-0 flex-1 truncate text-[#1d5a7a]" title={song.tieUp}>
+                                    {song.tieUp}
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -424,8 +427,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               </span>
                               <span className="text-[#57534E]">
                                 裏声{' '}
-                                {song.vocalRange.highestFalsettoNote === '参考値なし' ? (
-                                  <span className="font-normal text-[#78716C]">参考値なし</span>
+                                {song.vocalRange.highestFalsettoNote === '—' ? (
+                                  <span className="font-normal text-[#78716C]">—</span>
                                 ) : (
                                   <strong className="text-[#9e6022]">{song.vocalRange.highestFalsettoNote}</strong>
                                 )}
@@ -440,9 +443,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               href={`${import.meta.env.BASE_URL}${pagePath}`}
                               aria-label={`${song.title}：曲のページを見る`}
                               onClick={rememberGuide}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3 py-2 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors whitespace-nowrap shrink-0"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#253331] bg-[#253331] px-3.5 py-2 text-xs font-bold text-[#faf6eb] hover:bg-[#1a2524] transition-colors whitespace-nowrap shrink-0"
                             >
-                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" aria-hidden="true" />
+                              <BookOpen className="h-3.5 w-3.5 text-[#f3d2a8]" aria-hidden="true" />
                               曲のページを見る
                             </a>
                           ) : (
@@ -450,9 +453,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               type="button"
                               aria-label={`${song.title}：曲のページを見る`}
                               onClick={() => onSelectSong(song)}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-3 py-2 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                              className="inline-flex items-center gap-1.5 rounded-full border border-[#253331] bg-[#253331] px-3.5 py-2 text-xs font-bold text-[#faf6eb] hover:bg-[#1a2524] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
                             >
-                              <BookOpen className="h-3.5 w-3.5 text-[#1d5a7a]" aria-hidden="true" />
+                              <BookOpen className="h-3.5 w-3.5 text-[#f3d2a8]" aria-hidden="true" />
                               曲のページを見る
                             </button>
                           )}
@@ -461,10 +464,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             aria-label={inSetlist ? `${song.title}はセトリに追加済み` : `${song.title}をセトリに追加`}
                             onClick={() => onAddToSetlist(song.id)}
                             disabled={inSetlist}
-                            className={`inline-flex items-center gap-1 rounded-full px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                            className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
                               inSetlist
-                                ? 'bg-[#253331] text-[#faf6eb]'
-                                : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
+                                ? 'border border-[#2e6f40]/40 bg-[#eef9f0] text-[#2e6f40]'
+                                : 'border border-[#C83E2B]/45 bg-[#fdf4f2] text-[#A93020] hover:border-[#C83E2B] hover:bg-[#fae8e4] cursor-pointer'
                             }`}
                           >
                             {inSetlist ? (
@@ -548,7 +551,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             <p id="song-table-help" className="text-xs leading-5 text-[#57534E]">↔ 表は横にスクロールできます。見出しを押すと昇順・降順で並べ替えられます。</p>
             {filteredSongs.length === 0 ? emptyResults : (
               <div className="max-w-full overflow-x-auto notebook-paper rounded-xl" role="region" aria-label="音域・発売日比較表" aria-describedby="song-table-help" tabIndex={0}>
-                <table className="w-[1230px] sm:w-[1262px] table-fixed border-collapse text-left text-xs leading-5 sm:text-[13px]">
+                <table className="w-[1124px] sm:w-[1156px] table-fixed border-collapse text-left text-xs leading-5 sm:text-[13px]">
                   <caption className="sr-only">音域・発売日比較表。見出しで並べ替え、日付と音域の出典は各行から開けます。</caption>
                   <colgroup>
                     <col className="w-[168px] sm:w-[200px]" />
@@ -559,12 +562,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     <col className="w-[82px]" />
                     <col className="w-[88px]" />
                     <col className="w-[106px]" />
-                    <col className="w-[106px]" />
                     <col className="w-[158px]" />
                   </colgroup>
                   <thead className="bg-[#f4efe4] text-xs text-[#57534E]">
                     <tr>
-                      {(['title', 'low', 'chest', 'falsetto', 'album', 'duration', 'bpm', 'release', 'cd'] as SongTableSortKey[]).map(key => {
+                      {(['title', 'low', 'chest', 'falsetto', 'album', 'duration', 'bpm', 'release'] as SongTableSortKey[]).map(key => {
                         const direction = filters.tableSort?.key === key ? filters.tableSort.direction : undefined;
                         const next = direction === 'ascending' ? 'descending' : 'ascending';
                         return <th key={key} scope="col" aria-sort={direction} className={`whitespace-nowrap px-2 py-1 ${key === 'title' ? 'sticky left-0 z-20 w-[168px] sm:w-[200px] bg-[#f4efe4] border-r border-[#e5dccb] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)]' : ''}`}>
@@ -592,13 +594,22 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           </a>
                         </th>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
-                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.highestChestNote}</td>
-                        <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '参考値なし' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
+                        <td
+                          className={`whitespace-nowrap px-2 py-3 font-mono-num ${
+                            song.vocalRange.chestSemitoneScore >= 74
+                              ? 'font-bold text-[#C83E2B]'
+                              : song.vocalRange.chestSemitoneScore >= 71
+                                ? 'font-semibold text-[#9e6022]'
+                                : 'font-semibold text-[#2e6f40]'
+                          }`}
+                        >
+                          {song.vocalRange.highestChestNote}
+                        </td>
+                        <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '—' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
                         <td className="px-3 py-3 whitespace-normal wrap-anywhere">{formatAlbumDisplayName(f.album)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple} aria-label={`${song.title}の配信日 ${f.release}（Apple Musicを新しいタブで開く）`}>{f.release}</a></td>
-                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{f.cd ? <a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.cdSource} aria-label={`${song.title}のCD発売日 ${f.cd}（出典を新しいタブで開く）`}>{f.cd}</a> : '—'}</td>
                         <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域の参照元：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
                       </tr>;
                     })}
@@ -608,52 +619,123 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             )}
             <details className="notebook-paper rounded-xl p-3.5 text-xs text-[#57534E]">
               <summary className="cursor-pointer font-bold text-[#253331]">音域・日付の見方</summary>
-              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日で、CD発売日欄は表示中の収録作品の発売日です。裏声の「参考値なし」は参照元に値がないことを示します。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中・未発売の値は並べ替えの方向にかかわらず末尾に表示します。</p>
+              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日です。裏声の「—」は音域データがない（地声中心など）ことを示します。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中の値は並べ替えの方向にかかわらず末尾に表示します。</p>
             </details>
           </div>
         )}
 
         {/* Sub-View 3: Sacred Spots Map & Pilgrimage Travel Notebook */}
         {activeSubView === 'sacred_map' && (
-          <div className="mt-5 space-y-6">
-            <div className="notebook-paper rounded-xl p-3 sm:p-4">
-              <div className="flex flex-wrap gap-2" role="group" aria-label="場所とのつながりで絞り込む">
-                {SPOT_CATEGORIES.map(
-                  (category) => (
-                    <button
-                      key={category}
-                      type="button"
-                      aria-pressed={selectedSpotCategory === category}
-                      onClick={() => setSelectedSpotCategory(category)}
-                      className={`min-h-[40px] rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                        selectedSpotCategory === category
-                          ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
-                          : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:text-[#253331] hover:bg-[#f4efe4]'
-                      }`}
-                    >
-                      {category === 'all' ? 'すべて' : category}
-                    </button>
-                  )
+          <div className="mt-3 space-y-4">
+            <div className="notebook-paper rounded-xl p-2.5 sm:p-3">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  aria-expanded={isSpotFilterOpen}
+                  aria-controls="sacred-map-filters"
+                  onClick={() => setIsSpotFilterOpen((current) => !current)}
+                  className="flex min-h-[40px] flex-1 items-center justify-between gap-2 rounded-lg border border-[#e5dccb] bg-[#faf6eb]/70 px-3 py-1.5 text-left text-xs font-bold text-[#253331] hover:bg-[#f4efe4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
+                >
+                  <span className="min-w-0">
+                    絞り込み条件
+                    <span className="ml-1.5 font-normal text-[#57534E]">
+                      （{hasSpotFilter
+                        ? `${spotFilterChoices.join(' ／ ')} · ${filteredSpots.length}か所`
+                        : `すべて ${filteredSpots.length}か所 ／ つながり・エリア・訪問済み`}）
+                    </span>
+                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    className={`h-4 w-4 shrink-0 transition-transform ${isSpotFilterOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+                {hasSpotFilter && (
+                  <button
+                    type="button"
+                    onClick={resetSpotFilters}
+                    className="min-h-[40px] shrink-0 rounded-lg border border-[#dfd7c7] bg-white px-3 py-1.5 text-xs font-bold text-[#C83E2B] hover:border-[#C83E2B] cursor-pointer"
+                  >
+                    リセット
+                  </button>
                 )}
+              </div>
+              <div
+                id="sacred-map-filters"
+                className={isSpotFilterOpen ? 'mt-2.5 space-y-2.5 pt-2.5 border-t border-[#ece3d2]' : 'hidden'}
+              >
+                <div className="flex flex-wrap gap-2" role="group" aria-label="場所とのつながりで絞り込む">
+                  {SPOT_CATEGORIES.map(
+                    (category) => (
+                      <button
+                        key={category}
+                        type="button"
+                        aria-pressed={selectedSpotCategory === category}
+                        onClick={() => setSelectedSpotCategory(category)}
+                        className={`min-h-[38px] rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                          selectedSpotCategory === category
+                            ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
+                            : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:text-[#253331] hover:bg-[#f4efe4]'
+                        }`}
+                      >
+                        {category === 'all' ? 'すべて' : category}
+                      </button>
+                    )
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#ece3d2]">
+                  <div className="flex flex-wrap gap-1.5" role="group" aria-label="エリアで絞り込む">
+                    {SACRED_SPOT_REGIONS.map((region) => (
+                      <button
+                        key={region.id}
+                        type="button"
+                        aria-pressed={selectedSpotRegion === region.id}
+                        onClick={() => setSelectedSpotRegion(region.id)}
+                        className={`min-h-[34px] rounded-full px-3 py-1 text-xs font-semibold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                          selectedSpotRegion === region.id
+                            ? 'border-[#1d5a7a] bg-[#1d5a7a] text-white'
+                            : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:text-[#253331] hover:bg-[#f4efe4]'
+                        }`}
+                      >
+                        {region.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    aria-pressed={visitedSpotsOnly}
+                    onClick={() => setVisitedSpotsOnly((current) => !current)}
+                    className={`min-h-[34px] inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
+                      visitedSpotsOnly
+                        ? 'border-[#2e6f40] bg-[#2e6f40] text-white'
+                        : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:border-[#2e6f40] hover:text-[#2e6f40]'
+                    }`}
+                  >
+                    <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>訪問済みのみ ({visitedSpotCount})</span>
+                  </button>
+                </div>
               </div>
             </div>
 
             {mapSpot && (
               <section
                 id="sacred-map-viewer"
-                className="fusen-memo-card scroll-mt-24"
+                className="fusen-memo-card scroll-mt-24 !p-3.5 sm:!p-4"
                 style={{ '--tape-bg': '#bce3f8' } as CSSProperties}
               >
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="font-note-serif text-sm font-bold text-[#253331]" htmlFor="map-place">
                       地図で見る場所
                     </label>
                     <select
                       id="map-place"
-                      className="min-h-[42px] max-w-full rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-3 py-1.5 text-xs sm:text-sm font-medium text-[#253331] focus:outline-none focus:ring-2 focus:ring-[#253331]"
+                      className="min-h-[38px] max-w-full rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-3 py-1 text-xs sm:text-sm font-medium text-[#253331] focus:outline-none focus:ring-2 focus:ring-[#253331]"
                       value={mapSpot.id}
-                      onChange={e => setMapSpotId(e.target.value)}
+                      onChange={e => {
+                        setMapSpotId(e.target.value);
+                        setPinnedSpotId(e.target.value);
+                      }}
                     >
                       {mapSpots.map(s => (
                         <option key={s.id} value={s.id}>
@@ -672,14 +754,13 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                   </a>
                 </div>
                 {mapSpot.mapScope === 'area' && (
-                  <p className="mt-2.5 text-xs leading-relaxed text-[#57534E]">
-                    {mapSpot.mapAreaNote ?? '地図は周辺エリアの目安で、具体的な撮影地点を示すものではありません。'}
+                  <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
+                    {mapSpot.mapAreaNote ?? '撮影が行われた街・エリア全体の位置を表示しています。'}
                   </p>
                 )}
-                <div className="mt-3 overflow-hidden rounded-lg border border-[#e5dccb] bg-[#f4efe4]">
+                <div className="mt-2.5 overflow-hidden rounded-lg border border-[#e5dccb] bg-[#f4efe4]">
                   <iframe
-                    className="block w-full"
-                    height="280"
+                    className="block h-[196px] sm:h-[220px] w-full"
                     title={mapSpot.name + 'の地図'}
                     loading="lazy"
                     src={'https://maps.google.com/maps?output=embed&q=' + mapQuery}
@@ -688,112 +769,150 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               </section>
             )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
-              {filteredSpots.map((spot, index) => {
-                const visited = visitedSpotIds.includes(spot.id);
-                const tapeStyle = {
-                  '--tape-bg': SPOT_TAPE_COLORS[index % SPOT_TAPE_COLORS.length],
-                } as CSSProperties;
-                return (
-                  <article
-                    key={spot.id}
-                    className="fusen-memo-card"
-                    style={tapeStyle}
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2">
-                        <h2 className="font-note-serif text-base font-bold text-[#253331]">
-                          {spot.name}
-                        </h2>
-                        {visited && (
-                          <span className="shrink-0 rounded border border-[#2e6f40]/40 bg-[#eef9f0] px-1.5 py-0.5 text-[10px] font-bold text-[#2e6f40]">
-                            訪問済み
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-xs font-bold text-[#C83E2B]">{spot.area}</p>
-                      <p className="mt-0.5 text-xs font-bold text-[#1d5a7a]">{spot.categoryLabel ?? spot.categories.join(' / ')}</p>
-                      {spot.relatedSong && spot.relatedSongLabel && (
-                        <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
-                          {spot.relatedSongLabel}：{renderSpotRelatedSongs(spot.relatedSong)}
+            {filteredSpots.length === 0 && filteredHistoricalSpots.length === 0 ? (
+              <div className="notebook-paper rounded-xl p-6 text-center">
+                <p className="font-note-serif text-sm font-bold text-[#253331]">
+                  {visitedSpotsOnly ? 'まだ訪問済みの場所がありません。' : '条件に一致する場所が見つかりませんでした。'}
+                </p>
+                <p className="mt-1.5 text-xs text-[#57534E]">
+                  {visitedSpotsOnly
+                    ? '気になったスポットカードの「行った！を記録」を押すと、ここにまとめて見返せます。'
+                    : 'つながりやエリアの条件を変えてお試しください。'}
+                </p>
+                <button
+                  type="button"
+                  onClick={resetSpotFilters}
+                  className="mt-4 inline-flex min-h-[38px] items-center justify-center rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-4 py-1.5 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] cursor-pointer"
+                >
+                  条件をリセット
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-1">
+                {orderedSpots.map((spot, index) => {
+                  const visited = visitedSpotIds.includes(spot.id);
+                  const isPinnedToMap = pinnedSpotId === spot.id;
+                  const tapeStyle = {
+                    '--tape-bg': SPOT_TAPE_COLORS[index % SPOT_TAPE_COLORS.length],
+                  } as CSSProperties;
+                  return (
+                    <article
+                      key={spot.id}
+                      className={`fusen-memo-card ${isPinnedToMap ? 'ring-2 ring-[#1d5a7a]/45' : ''}`}
+                      style={tapeStyle}
+                    >
+                      <div>
+                        <div className="flex items-start justify-between gap-2">
+                          <h2 className="font-note-serif text-base font-bold text-[#253331]">
+                            {spot.name}
+                          </h2>
+                          <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
+                            {isPinnedToMap && (
+                              <span className="shrink-0 rounded border border-[#1d5a7a]/40 bg-[#eef6fb] px-1.5 py-0.5 text-[10px] font-bold text-[#1d5a7a]">
+                                地図に表示中
+                              </span>
+                            )}
+                            {visited && (
+                              <span className="shrink-0 rounded border border-[#2e6f40]/40 bg-[#eef9f0] px-1.5 py-0.5 text-[10px] font-bold text-[#2e6f40]">
+                                訪問済み
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <p className="mt-1 text-xs font-bold text-[#C83E2B]">{spot.area}</p>
+                        <p className="mt-0.5 text-xs font-bold text-[#1d5a7a]">{spot.categoryLabel ?? spot.categories.join(' / ')}</p>
+                        <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
+                          {spot.description}
                         </p>
-                      )}
-                      <p className="mt-2 text-xs text-[#57534E] leading-relaxed">
-                        {spot.description}
-                      </p>
-                      <div className="mt-3 rounded-md border border-[#ebe2d2] bg-[#faf6eb] px-3 py-2.5 text-xs text-[#57534E] leading-relaxed">
-                        <strong className="text-[#253331]">スポットメモ：</strong>
-                        {spot.fanTip}
-                        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                          {spot.mapScope !== 'none' && (
-                            <button
-                              type="button"
-                              aria-label={`${spot.name}${spot.mapScope === 'area' ? 'のエリアを地図で見る' : 'を地図で見る'}`}
-                              className="inline-flex min-h-[28px] items-center py-0.5 font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
-                              onClick={() => {
-                                setMapSpotId(spot.id);
-                                window.requestAnimationFrame(() => {
-                                  document.getElementById('sacred-map-viewer')?.scrollIntoView({
-                                    behavior: 'smooth',
-                                    block: 'nearest',
+                        {spot.relatedSong && (
+                          <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
+                            <strong className="text-[#253331]">
+                              {spot.relatedSongLabel ?? (spot.categories.includes('ライブ会場') ? '会場ゆかりの曲' : 'あわせて聴きたい曲')}：
+                            </strong>
+                            {renderSpotRelatedSongs(spot.relatedSong)}
+                          </p>
+                        )}
+                        <div className="mt-3 rounded-md border border-[#ebe2d2] bg-[#faf6eb] px-3 py-2.5 text-xs text-[#57534E] leading-relaxed">
+                          {spot.fanTip && (
+                            <p className="mb-2">
+                              <strong className="text-[#253331]">スポットメモ：</strong>
+                              {spot.fanTip}
+                            </p>
+                          )}
+                          <div className="flex flex-wrap gap-x-3 gap-y-1">
+                            {spot.mapScope !== 'none' && (
+                              <button
+                                type="button"
+                                aria-label={`${spot.name}${spot.mapScope === 'area' ? 'のエリアを地図で見る' : 'を地図で見る'}`}
+                                className="inline-flex min-h-[28px] items-center py-0.5 font-bold text-[#1d5a7a] underline cursor-pointer hover:text-[#C83E2B]"
+                                onClick={() => {
+                                  setMapSpotId(spot.id);
+                                  setPinnedSpotId(spot.id);
+                                  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                                  window.requestAnimationFrame(() => {
+                                    document.getElementById('sacred-map-viewer')?.scrollIntoView({
+                                      behavior: reduced ? 'auto' : 'smooth',
+                                      block: 'start',
+                                    });
+                                    document.getElementById('map-place')?.focus({ preventScroll: true });
                                   });
-                                  document.getElementById('map-place')?.focus({ preventScroll: true });
-                                });
-                              }}
-                            >
-                              {spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}
-                            </button>
-                          )}
-                          <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}の場所・作品の情報（新しいタブで開く）`}>
-                            場所・作品の情報 ↗
-                          </a>
-                          {spot.historySource && (
-                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${spot.historySourceLabel ?? 'つながりの出典'}（新しいタブで開く）`}>
-                              {spot.historySourceLabel ?? 'つながりの出典'} ↗
+                                }}
+                              >
+                                {spot.mapScope === 'area' ? 'エリアを地図で見る' : '地図で見る'}
+                              </button>
+                            )}
+                            {isPinnedToMap && (
+                              <button
+                                type="button"
+                                onClick={() => setPinnedSpotId(null)}
+                                className="inline-flex min-h-[28px] items-center py-0.5 text-[#57534E] underline hover:text-[#253331] cursor-pointer"
+                              >
+                                並び順を戻す
+                              </button>
+                            )}
+                            <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.source} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}の場所・作品の情報（新しいタブで開く）`}>
+                              場所・作品の情報 ↗
                             </a>
-                          )}
-                          {spot.additionalSources?.map(source => (
-                            <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${source.label}（新しいタブで開く）`}>
-                              {source.label} ↗
-                            </a>
-                          ))}
+                            {spot.historySource && (
+                              <a className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={spot.historySource} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${spot.historySourceLabel ?? 'つながりの出典'}（新しいタブで開く）`}>
+                                {spot.historySourceLabel ?? 'つながりの出典'} ↗
+                              </a>
+                            )}
+                            {spot.additionalSources?.map(source => (
+                              <a key={source.url} className="inline-flex min-h-[28px] items-center py-0.5 underline hover:text-[#C83E2B]" href={source.url} target="_blank" rel="noopener noreferrer" aria-label={`${spot.name}：${source.label}（新しいタブで開く）`}>
+                                {source.label} ↗
+                              </a>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      {spot.relatedSong && !spot.relatedSongLabel && (
-                        <p className="mt-2.5 text-xs leading-relaxed text-[#57534E]">
-                          <strong className="text-[#253331]">
-                            {spot.categories.includes('ライブ会場') ? '会場ゆかりの曲' : 'あわせて聴きたい曲'}：
-                          </strong>
-                          {renderSpotRelatedSongs(spot.relatedSong)}
-                        </p>
-                      )}
-                    </div>
 
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#ece3d2]">
-                      <span className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
-                        {spot.addressHint}
-                      </span>
-                      {spot.mapScope !== 'none' && (
-                        <button
-                          type="button"
-                          onClick={() => onToggleVisitedSpot(spot.id)}
-                          aria-pressed={visited}
-                          aria-label={visited ? `${spot.name}の訪問を取り消す` : `${spot.name}の訪問を記録`}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                            visited
-                              ? 'bg-[#2e6f40] text-white'
-                              : 'border border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4]'
-                          }`}
-                        >
-                          <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
-                          {visited ? '訪問済み' : spot.mapScope === 'area' ? 'エリアに行った！' : '行った！を記録'}
-                        </button>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                      <div className="mt-4 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-[#ece3d2]">
+                        <span className="text-[11px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
+                          {spot.addressHint}
+                        </span>
+                        {spot.mapScope !== 'none' && (
+                          <button
+                            type="button"
+                            onClick={() => onToggleVisitedSpot(spot.id)}
+                            aria-pressed={visited}
+                            aria-label={visited ? `${spot.name}の訪問を取り消す` : `${spot.name}の訪問を記録`}
+                            className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                              visited
+                                ? 'bg-[#2e6f40] text-white'
+                                : 'border border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4]'
+                            }`}
+                          >
+                            <MapPin className="h-3.5 w-3.5" aria-hidden="true" />
+                            {visited ? '訪問済み' : spot.mapScope === 'area' ? 'エリアに行った！' : '行った！を記録'}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
 
             {filteredHistoricalSpots.length > 0 && (
               <section aria-labelledby="historical-spots-heading" className="rounded-xl border border-[#dfd7c7] bg-[#f4efe4]/80 p-5 sm:p-6">

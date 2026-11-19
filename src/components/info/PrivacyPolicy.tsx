@@ -1,13 +1,17 @@
 import { useState } from 'react';
+import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
 import { ConfirmDialog } from '../ConfirmDialog';
+import type { SiteTab } from '../SiteHeader';
 
 interface PrivacyPolicyProps {
+  onSelectTab?: (tab: SiteTab) => void;
   onExportRecords?: () => void;
   onImportRecords?: (file: File) => Promise<void>;
   onResetAllUserData?: (options?: { skipConfirm?: boolean }) => void | Promise<void>;
 }
 
 export function PrivacyPolicy({
+  onSelectTab,
   onExportRecords,
   onImportRecords,
   onResetAllUserData,
@@ -17,23 +21,32 @@ export function PrivacyPolicy({
   return (
     <article aria-labelledby="privacy-title" className="space-y-4 text-base leading-7 text-[#292524] [&_a]:text-[#1E3A5F] [&_a]:underline [&_a]:underline-offset-2 [&_h2]:mt-7 [&_h2]:text-xl [&_h2]:font-bold">
       <h1 id="privacy-title" className="font-note-serif text-2xl font-bold tracking-[.04em] text-[#253331] sm:text-3xl">プライバシーポリシー</h1>
-      <p><a href="#editor">編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html">KatakataLab</a>）が運営する「115万キロのファンノート」では、MYセトリなどの記録を、お使いのブラウザに保存します。人気投票と感想ノートは現在非公開です。過去に保存した投票・感想は、非公開にしただけでは消えません。</p>
+      <p><a
+        href={tabPath('editor', import.meta.env.BASE_URL)}
+        onClick={(e) => {
+          if (isPlainLeftClick(e) && onSelectTab) {
+            e.preventDefault();
+            onSelectTab('editor');
+          }
+        }}
+      >編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html">KatakataLab</a>）が運営する「115万キロのファンノート」では、MYセトリなどの記録を、お使いのブラウザに保存します。人気投票と感想ノートは現在非公開です。過去に保存した投票・感想は、非公開にしただけでは消えません。</p>
 
       <h2>ブラウザに保存する記録</h2>
       <p>次に開いたときも続きから使えるよう、以下の記録をブラウザの保存領域（ローカルストレージ）に残します。</p>
       <ul className="list-disc space-y-1 pl-6">
         <li>MYセトリの名前、曲順、本編とアンコールの区別、保存した複数のセットリスト一覧</li>
+        <li>マイノートのお名前、閲覧した楽曲ページや診断・資料室の探索スタンプ進捗</li>
         <li>過去の投票で選んだ曲と部門、感想に付けた「共感」</li>
         <li>過去に保存した感想のニックネーム、ファン歴、選んだ曲、分類、タイトル、本文、記録日</li>
-        <li>訪問した聖地、参戦・視聴したツアー、検定の最高正答率</li>
+        <li>訪問した聖地、参戦・視聴したツアー、検定の最高正答率・セット別の記録</li>
       </ul>
       <p>ファンノートはこれらの記録を運営者のサーバーに送りません。同じ端末でブラウザのプロフィールを共用している人は、記録を閲覧できます。</p>
       <p>MYセトリへの曲の追加は、再読み込みに備えて、保存が完了するまで同じタブの一時保存領域（セッションストレージ）にも記録します。</p>
       <p>診断の回答とクイズの途中経過も、ページを移動したり再読み込みしたりしても続きから使えるよう、同じタブに一時保存します。楽曲ガイドや参考記事一覧、歴代ツアー記録から曲ページへ移動するときは、元の画面へ戻るための絞り込み条件や開閉状態なども一時保存します。これらはタブを閉じると消えます。</p>
 
       <h2>記録の消去・書き出し・コピー</h2>
-      <p>このページの最下部にある「このブラウザの保存記録をすべて初期化」を選び、確認画面で実行すると、MYセトリは最初の見本に戻り、感想や投票などの記録、診断の回答とクイズの途中経過は消えます。</p>
-      <p>また、同じ欄から画面上の記録をJSONファイルとして書き出したり、保存したファイルから復元したりできます。ファイルには感想やニックネームも含まれます。初期化した後もファイルは端末に残るため、不要になったらダウンロード先から削除してください。</p>
+      <p>このページの最下部にある「このブラウザの保存記録をすべて初期化」を選び、確認画面で実行すると、MYセトリは初期状態に戻り、マイノートや聖地・ツアー・検定の記録、感想や投票などの記録、診断の回答とクイズの途中経過は消えます。</p>
+      <p>また、同じ欄から画面上の記録をファイルとして書き出したり、保存したファイルから復元したりできます。ファイルには感想やニックネームも含まれます。初期化した後もファイルは端末に残るため、不要になったらダウンロード先から削除してください。</p>
       <p>MYセトリ、診断結果、検定の認定証は、コピーや画像保存などで手元に残せます。SNSなどに共有したい場合は、ご自身で貼り付けて投稿してください。</p>
 
       <h2>ページの配信とアクセス解析</h2>
@@ -48,7 +61,7 @@ export function PrivacyPolicy({
       <h2>お問い合わせ</h2>
       <p>ファンノートでの情報の取り扱いについては、KatakataLabの窓口で受け付けています。フォームやメールでお知らせいただいた内容と連絡先は、お問い合わせに回答するために使います。<a href="https://katakatalab.com/contact.html">KatakataLabのお問い合わせ窓口</a></p>
       <p><a href="https://katakatalab.com/privacy.html">KatakataLab全体のプライバシーポリシー</a></p>
-      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-16">2026年11月16日更新</time></p>
+      <p className="text-sm text-[#57534E]"><time dateTime="2026-11-19">2026年11月19日更新</time></p>
 
       <section
         aria-labelledby="privacy-data-controls"
@@ -102,7 +115,7 @@ export function PrivacyPolicy({
       <ConfirmDialog
         isOpen={isResetConfirmOpen}
         title="保存記録をすべて初期化しますか？"
-        description={'MYセトリの名前と曲順は初期の見本に戻ります。\n聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。残しておきたい場合は、先に「記録を書き出す」をお試しください。'}
+        description={'MYセトリは初期状態に戻ります。\nマイノート（お名前・スタンプの進捗）、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率・セット別の記録、診断の回答とクイズの途中経過は消去されます。残しておきたい場合は、先に「記録を書き出す」をお試しください。'}
         confirmLabel="すべて初期化する"
         cancelLabel="もどる"
         tone="danger"

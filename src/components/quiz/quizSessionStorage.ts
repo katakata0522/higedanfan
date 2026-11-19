@@ -50,6 +50,14 @@ function isQuizSession(value: unknown): value is QuizSession {
   } else if (answer.selectedOrder.length || answer.isOrderingSubmitted ||
       (answer.selectedOption !== null && (!Number.isSafeInteger(answer.selectedOption) ||
         answer.selectedOption < 0 || answer.selectedOption >= question.options.length))) return false;
+  if (
+    value.outcomes !== undefined &&
+    (!Array.isArray(value.outcomes) ||
+      value.outcomes.length > questions.length ||
+      value.outcomes.some(item => item !== null && item !== 'correct' && item !== 'wrong'))
+  ) {
+    return false;
+  }
   return true;
 }
 

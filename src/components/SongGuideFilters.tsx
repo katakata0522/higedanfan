@@ -1,7 +1,8 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronDown, RotateCcw, Search, X } from 'lucide-react';
 import type { EraTag, SoundTag } from '../data/higedanData';
 import type { DiscographySortOption } from '../utils/discography';
+import { ERA_SHORT_LABELS } from '../utils/songLabels';
 import { SONG_TABLE_SORT_LABELS, type SongTableSort } from '../utils/songTableSort';
 
 export interface SongGuideFilterValues {
@@ -16,15 +17,6 @@ export interface SongGuideFilterValues {
 export const DEFAULT_GUIDE_FILTERS: SongGuideFilterValues = {
   era: 'all', album: 'all', sound: 'all', sortBy: 'guide_order', searchQuery: '',
 };
-
-const ERA_TABS: { id: EraTag | 'all'; label: string; shortLabel: string }[] = [
-  { id: 'all', label: 'すべて（掲載90曲）', shortLabel: '掲載90曲' },
-  { id: 'indies_escaparade', label: '初期〜エスカパレード', shortLabel: '初期〜エスカパレード' },
-  { id: 'traveler', label: 'Traveler期', shortLabel: 'Traveler期' },
-  { id: 'editorial', label: 'Editorial期', shortLabel: 'Editorial期' },
-  { id: 'rejoice', label: 'Rejoice期', shortLabel: 'Rejoice期' },
-  { id: 'latest_2025_2026', label: '2024–2026 新曲', shortLabel: '2024–2026 新曲' },
-];
 
 const ALBUM_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'すべての収録アルバム・EP（掲載90曲）' },
@@ -66,26 +58,23 @@ interface Props {
   onChange: (values: SongGuideFilterValues) => void;
   resultCount: number;
   shownCount: number;
-  children?: ReactNode;
-  voiceSummary?: string;
   onReset?: () => void;
 }
 
 const selectClass = 'w-full min-w-0 rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-2 text-xs font-medium text-[#253331] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#253331]';
 
-export function SongGuideFilters({ values, onChange, resultCount, shownCount, children, voiceSummary, onReset }: Props) {
+export function SongGuideFilters({ values, onChange, resultCount, shownCount, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultStatus = useRef<HTMLSpanElement>(null);
   const { era, album, sound, sortBy, searchQuery } = values;
   const secondaryChoices = [
+    era !== 'all' && ERA_SHORT_LABELS[era],
     album !== 'all' && album,
-    era !== 'all' && ERA_TABS.find(tab => tab.id === era)?.shortLabel,
     sound !== 'all' && SOUND_FILTERS.find(option => option.id === sound)?.label,
     values.tableSort ? `${SONG_TABLE_SORT_LABELS[values.tableSort.key]}・${values.tableSort.direction === 'ascending' ? '昇順' : '降順'}` : sortBy !== 'guide_order' && SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', ''),
-    voiceSummary,
   ].filter(Boolean);
-  const hasActiveFilter = album !== 'all' || Boolean(searchQuery.trim()) || secondaryChoices.length > 0;
+  const hasActiveFilter = album !== 'all' || era !== 'all' || sound !== 'all' || Boolean(searchQuery.trim()) || secondaryChoices.length > 0;
   const sortSelect = (
     <select id="discography-sort-select" className={selectClass} value={values.tableSort ? 'table' : sortBy}
       onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption, tableSort: undefined })}>
@@ -129,7 +118,12 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
       <button type="button" aria-expanded={expanded} aria-controls="song-guide-secondary"
         onClick={() => setExpanded(current => !current)}
         className="flex w-full min-h-[40px] items-center justify-between gap-2 rounded-lg border border-[#e5dccb] bg-[#faf6eb]/70 px-3 py-2 text-left text-xs font-bold text-[#253331] hover:bg-[#f4efe4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer">
-        <span>条件を絞る・並べ替える{secondaryChoices.length > 0 && <span className="mt-0.5 block font-normal text-[#57534E]">{secondaryChoices.join(' ／ ')}</span>}</span>
+        <span>
+          条件を絞る・並べ替える
+          <span className="ml-1.5 font-normal text-[#57534E]">
+            （{secondaryChoices.length > 0 ? secondaryChoices.join(' ／ ') : '収録アルバム・EP／曲調／並び順'}）
+          </span>
+        </span>
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
       <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2.5 sm:grid-cols-2 pt-1`}>
@@ -144,19 +138,6 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
             {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>
         </div>
-        <div role="group" aria-label="年代で絞り込み" className="flex flex-wrap items-center gap-1.5 sm:col-span-2">
-          {ERA_TABS.map(tab => {
-            const active = era === tab.id && album === 'all';
-            return (
-              <button key={tab.id} type="button" aria-pressed={active}
-                onClick={() => onChange({ ...values, era: tab.id, album: 'all' })}
-                className={`min-h-[32px] rounded-full border px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${active
-                  ? 'border-[#253331] bg-[#253331] text-[#faf6eb]' : 'border-[#dfd7c7] bg-[#faf6eb] text-[#57534E] hover:bg-[#f4efe4] hover:text-[#253331]'}`}>
-                <span className="sm:hidden">{tab.shortLabel}</span><span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
-        </div>
         <div>
           <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="sound-filter-select">曲調・サウンド</label>
           <select id="sound-filter-select" className={selectClass} value={sound}
@@ -169,7 +150,6 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, ch
           {sortSelect}
         </div>
         {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E] sm:col-span-2">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
-        {children && <div className="sm:col-span-2">{children}</div>}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#ece3d2] pt-2 text-xs">
         <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}

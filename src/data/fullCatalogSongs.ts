@@ -16,7 +16,7 @@ export function pitchNumber(note: string): number {
 }
 
 function displayPitch(note: string | null): string {
-  if (!note) return '参考値なし';
+  if (!note) return '—';
   const midi = pitchNumber(note);
   return note + ' (' + noteNames[midi % 12] + (Math.floor(midi / 12) - 1) + ')';
 }

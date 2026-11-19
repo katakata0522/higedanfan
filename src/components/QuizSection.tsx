@@ -14,6 +14,7 @@ const QuizSourceArchive = lazy(() =>
 import { getCourseLabel, getCourseQuestions, type CourseDifficulty, type QuestionScopeFilter, type QuestionSet } from './quiz/quizCourses';
 import { EMPTY_ANSWER, INITIAL_SESSION, isAnswerCorrect, type QuizSession } from './quiz/quizSession';
 import { readQuizSession, readQuizSessionAsync, saveQuizSession } from './quiz/quizSessionStorage';
+import { loadQuizVolumeScores, saveQuizVolumeScore, type QuizVolumeRecordMap } from './quiz/quizVolumeRecords';
 
 interface QuizSectionProps {
   sessionRef: RefObject<QuizSession | null>;
@@ -23,19 +24,27 @@ interface QuizSectionProps {
   initialTab?: 'quiz' | 'archive';
   bestQuizScore?: number | null;
   onUpdateBestScore?: (percentage: number) => void;
+  onOpenArchive?: () => void;
 }
 
 export function QuizSection({
-  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', bestQuizScore = null, onUpdateBestScore,
+  sessionRef, resetEpoch, songs = [], onSelectSong, initialTab: viewTab = 'quiz', bestQuizScore = null, onUpdateBestScore, onOpenArchive,
 }: QuizSectionProps) {
   const [session, setSession] = useState(() => sessionRef.current ?? readQuizSession() ?? INITIAL_SESSION);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
   const [isExitConfirmOpen, setIsExitConfirmOpen] = useState(false);
   const [hasOpenedArchive, setHasOpenedArchive] = useState(() => viewTab === 'archive');
+  const [volumeScores, setVolumeScores] = useState<QuizVolumeRecordMap>(() => loadQuizVolumeScores(resetEpoch));
   useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
 
   useEffect(() => {
-    if (viewTab === 'archive') setHasOpenedArchive(true);
+    setVolumeScores(loadQuizVolumeScores(resetEpoch));
+  }, [resetEpoch]);
+
+  useEffect(() => {
+    if (viewTab === 'archive') {
+      setHasOpenedArchive(true);
+    }
   }, [viewTab]);
 
   useEffect(() => {
@@ -67,6 +76,11 @@ export function QuizSection({
         lastRecordedKeyRef.current = recordKey;
         const summary = calculateQuizResult(score, questions);
         onUpdateBestScoreRef.current?.(summary.percentage);
+        if (/^vol[1-6]$/.test(scope)) {
+          setVolumeScores(
+            saveQuizVolumeScore(difficulty, scope, summary.score, summary.total, summary.percentage, resetEpoch),
+          );
+        }
       }
     } else if (quizStage !== 'finished') {
       lastRecordedKeyRef.current = null;
@@ -82,17 +96,21 @@ export function QuizSection({
   }
 
   function startCourse(course: CourseDifficulty, nextScope: QuestionScopeFilter, set: QuestionSet = 'current') {
-    updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope: nextScope, questionSet: set });
+    updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope: nextScope, questionSet: set, outcomes: [] });
     if (tabFromPathname(window.location.pathname, import.meta.env.BASE_URL) !== 'quiz') {
       window.location.hash = 'quiz';
     }
   }
 
   function nextQuestion() {
+    const nextOutcomes = [...(session.outcomes ?? [])];
+    if (question) {
+      nextOutcomes[currentIndex] = isAnswerCorrect(question, answer) ? 'correct' : 'wrong';
+    }
     if (currentIndex + 1 < questions.length) {
-      updateSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER });
+      updateSession({ ...session, currentIndex: currentIndex + 1, correctBefore: score, answer: EMPTY_ANSWER, outcomes: nextOutcomes });
     } else {
-      updateSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER });
+      updateSession({ ...session, stage: 'finished', correctBefore: score, answer: EMPTY_ANSWER, outcomes: nextOutcomes });
     }
   }
 
@@ -134,7 +152,7 @@ export function QuizSection({
         )}
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker onStart={startCourse} bestQuizScore={bestQuizScore} />
+          <QuizCoursePicker onStart={startCourse} bestQuizScore={bestQuizScore} volumeScores={volumeScores} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (
@@ -147,6 +165,7 @@ export function QuizSection({
               questionCount={questions.length}
               score={score}
               answer={answer}
+              questionOutcomes={session.outcomes}
               onAnswerChange={next => updateSession({ ...session, answer: next })}
               relatedSong={songs.find(song => song.id === question.relatedSongId)}
               onSelectSong={onSelectSong}
@@ -165,6 +184,7 @@ export function QuizSection({
             quizSummary={calculateQuizResult(score, questions)}
             onRestart={() => startCourse(difficulty, scope, questionSet)}
             onChooseCourse={chooseCourse}
+            onOpenArchive={onOpenArchive}
           />
         )}
         {hasOpenedArchive && (

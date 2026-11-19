@@ -37,4 +37,10 @@ test('embeddable audio plays in place and restricted recordings link directly to
   const live = renderToStaticMarkup(createElement(MoodListen, { song: liveSong }));
   assert.match(live, /ライブ音源/);
   assert.match(live, /Apple Musicで聴く/);
+
+  const lazy = renderToStaticMarkup(createElement(MoodListen, { song: videoSong, lazyFacade: true }));
+  assert.doesNotMatch(lazy, /<iframe/);
+  assert.match(lazy, /i\.ytimg\.com\/vi\/Qi_n6KHDklU\/hqdefault\.jpg/);
+  assert.match(lazy, /動画を読み込んで聴く/);
+  assert.match(lazy, /YouTubeで開く/);
 });

@@ -218,7 +218,7 @@ export function MoodResults({
                       {copy.feature || copy.introduction}
                     </p>
                     <div className="mt-4">
-                      <MoodListen song={song} />
+                      <MoodListen song={song} lazyFacade />
                     </div>
                   </div>
 

@@ -155,4 +155,16 @@ test('歴代ツアー記録の状態は楽曲ページからの戻り時に1度�
   saveTourReturnState(state, store);
   clearGuideReturnState(store);
   assert.equal(takeTourReturnState('epoch-1', store), null);
+
+  const extended = {
+    ...state,
+    year: '2025',
+    attendedOnly: true,
+    setlistOnly: true,
+  };
+  saveTourReturnState(extended, store);
+  assert.deepEqual(takeTourReturnState('epoch-1', store), extended);
+
+  store.setItem('higedanfan:tour-return:v1', JSON.stringify({ ...extended, year: '2025;alert(1)' }));
+  assert.equal(takeTourReturnState('epoch-1', store), null);
 });

@@ -1,8 +1,8 @@
-import { CheckCircle2, XCircle, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered, ChevronDown } from 'lucide-react';
-import { useLayoutEffect, useRef } from 'react';
+import { CheckCircle2, XCircle, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered, ChevronDown, Lightbulb } from 'lucide-react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import type { QuizQuestion, SongItem } from '../../data/higedanData';
 import { formatOrderingSequence } from '../../utils/fanLogic';
-import { isAnswerCorrect, type QuizAnswer } from './quizSession';
+import { isAnswerCorrect, type QuizAnswer, type QuizQuestionOutcome } from './quizSession';
 import { DIFFICULTY_LABEL } from './quizCourses';
 import { visibleQuizSourceSummary } from './quizSourceSummary';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
@@ -15,6 +15,7 @@ interface Props {
   questionCount: number;
   score: number;
   answer: QuizAnswer;
+  questionOutcomes?: readonly QuizQuestionOutcome[];
   onAnswerChange: (answer: QuizAnswer) => void;
   onNext: () => void;
   relatedSong?: SongItem;
@@ -22,9 +23,10 @@ interface Props {
 }
 
 export function QuizQuestionCard({
-  visible, question, currentIndex, questionCount, score, answer, onAnswerChange, onNext, relatedSong,
+  visible, question, currentIndex, questionCount, score, answer, questionOutcomes, onAnswerChange, onNext, relatedSong,
 }: Props) {
   const { selectedOption, selectedOrder, isOrderingSubmitted } = answer;
+  const [showHint, setShowHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const orderingResult = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -69,29 +71,69 @@ export function QuizQuestionCard({
   if (!visible) return null;
   return (
     <div className="mt-6 rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7 shadow-[0_2px_12px_rgba(28,25,23,0.03)]">
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C] border-b border-[#E6E1D6] pb-3.5">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-bold text-[#1C1917]">
-            第 {currentIndex + 1} 問 / 全 {questionCount} 問 ·{' '}
-            {DIFFICULTY_LABEL[question.difficulty]}
-          </span>
-          {isOrderingQuestion && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">
-              <ListOrdered className="h-3 w-3" />
-              順番に並べる問題
+      <div className="border-b border-[#E6E1D6] pb-3.5 space-y-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-bold text-[#1C1917]">
+              第 {currentIndex + 1} 問 / 全 {questionCount} 問 ·{' '}
+              {DIFFICULTY_LABEL[question.difficulty]}
             </span>
-          )}
+            {isOrderingQuestion && (
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">
+                <ListOrdered className="h-3 w-3" />
+                順番に並べる問題
+              </span>
+            )}
+          </div>
+          <span className="font-mono-num">現在 {score} 問正解</span>
         </div>
-        <span className="font-mono-num">現在 {score} 問正解</span>
+        <div className="flex items-center gap-1.5" aria-hidden="true">
+          {Array.from({ length: questionCount }, (_, idx) => {
+            let dotClass = 'bg-[#e5dccb]';
+            if (idx < currentIndex) {
+              const prior = questionOutcomes?.[idx];
+              dotClass =
+                prior === 'correct'
+                  ? 'bg-[#2e6f40]'
+                  : prior === 'wrong'
+                    ? 'bg-[#C83E2B]/70'
+                    : 'bg-[#a8a29e]';
+            } else if (idx === currentIndex) {
+              dotClass = isQuestionAnswered
+                ? isCurrentQuestionCorrect
+                  ? 'bg-[#2e6f40]'
+                  : 'bg-[#C83E2B]'
+                : 'bg-[#C83E2B] ring-2 ring-[#C83E2B]/25';
+            }
+            return <span key={idx} className={`h-2 flex-1 rounded-full transition-colors ${dotClass}`} />;
+          })}
+        </div>
       </div>
 
       <h2 ref={heading} tabIndex={-1} className="mt-4 scroll-mt-20 text-base sm:text-xl font-bold text-[#1C1917] leading-relaxed">
         Q{currentIndex + 1}. {question.prompt}
       </h2>
 
-      <p className="mt-2 text-xs text-[#78716C]">
-        ヒント: {question.hint}
-      </p>
+      <div className="mt-2.5">
+        <button
+          type="button"
+          aria-expanded={showHint}
+          aria-controls="quiz-question-hint"
+          onClick={() => setShowHint((prev) => !prev)}
+          className="inline-flex min-h-[34px] items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#FBF9F5] px-3 py-1 text-xs font-bold text-[#57534E] hover:border-[#253331] hover:text-[#253331] transition-colors cursor-pointer"
+        >
+          <Lightbulb className="h-3.5 w-3.5 text-[#B45309]" aria-hidden="true" />
+          <span>{showHint ? 'ヒントを隠す' : 'ヒントを見る'}</span>
+        </button>
+        {showHint && (
+          <p
+            id="quiz-question-hint"
+            className="mt-2 rounded-lg border border-[#ebe2d2] bg-[#FAF6EB] px-3 py-2 text-xs leading-relaxed text-[#57534E]"
+          >
+            {question.hint}
+          </p>
+        )}
+      </div>
 
       {/* ============================================================
           INTERACTIVE TAP-TO-ORDER SEQUENCE QUIZ UI

@@ -7,6 +7,7 @@ import {
   previousMoodStep, restoreMoodSession, saveMoodSession, selectMoodAnswer,
   type MoodSession,
 } from './mood/moodSession';
+import { recordMyNoteMoodCompleted } from '../utils/myNoteProfile';
 
 interface MoodFinderSectionProps extends MoodLibraryProps {
   resetEpoch: string;
@@ -39,10 +40,10 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
     >
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
         {/* Section Title */}
-        <div className={criteria ? '' : 'pb-3 border-b border-[#e5dccb]'}>
+        <div className="pb-3 border-b border-[#e5dccb]">
           <h1
             id="mood-heading"
-            className={criteria ? 'sr-only' : 'font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]'}
+            className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
           >
             今日の1曲診断
           </h1>
@@ -68,7 +69,13 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
         ) : (
           <MoodQuestionnaire
             session={session}
-            onChoose={answer => updateSession(selectMoodAnswer(session, answer))}
+            onChoose={answer => {
+              const next = selectMoodAnswer(session, answer);
+              if (!session.completed && next.completed && isCompleteMoodCriteria(next.answers)) {
+                recordMyNoteMoodCompleted(next.answers.mood, resetEpoch);
+              }
+              updateSession(next);
+            }}
             onBack={() => updateSession(previousMoodStep(session))}
             onCancelEdit={() => updateSession(cancelMoodEdit(session))}
           />

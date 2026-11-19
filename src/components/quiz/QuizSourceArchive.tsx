@@ -1,4 +1,4 @@
-import { ExternalLink, Search } from 'lucide-react';
+import { ExternalLink, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SongItem } from '../../data/higedanData';
 import { REFERENCE_ARTICLES, REFERENCE_CHECKED_ON, type ReferenceArticle } from '../../data/referenceArticles';
@@ -9,6 +9,14 @@ import { clearArchiveReturnState, readArchiveReturnState, saveArchiveReturnState
 const PAGE_SIZE = 24;
 const PUBLISHERS = Array.from(new Set(REFERENCE_ARTICLES.map(article => article.publisher)))
   .sort((a, b) => a.localeCompare(b, 'ja'));
+
+function formatSourceDomain(url: string, fallback: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '') || fallback;
+  } catch {
+    return fallback;
+  }
+}
 
 interface Props {
   visible: boolean;
@@ -31,6 +39,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
   const [query, setQuery] = useState(() => initialReturn?.query ?? '');
   const [order, setOrder] = useState<'newest' | 'oldest'>(() => initialReturn?.order ?? 'newest');
   const [visibleCount, setVisibleCount] = useState(() => initialReturn?.visibleCount ?? PAGE_SIZE);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const songsById = useMemo(() => new Map(songs.map(song => [song.id, song])), [songs]);
   const search = useMemo(() => prepareReferenceSearch(query, songs), [query, songs]);
   const articles = useMemo(() => visible ? sortReferenceArticles(REFERENCE_ARTICLES.filter(article =>
@@ -78,7 +87,9 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           <h2 className="text-base sm:text-lg font-bold leading-relaxed text-[#1C1917] group-hover:text-[#C83E2B] [overflow-wrap:anywhere]">
             {article.title}<ExternalLink aria-label="新しいタブで開く" className="ml-2 inline h-3.5 w-3.5 align-baseline text-[#78716C]" />
           </h2>
-          <p className="mt-1.5 break-all text-xs leading-relaxed text-[#78716C] group-hover:underline">{article.url}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-[#78716C] group-hover:underline">
+            {formatSourceDomain(article.url, article.publisher)}
+          </p>
         </a>
         {article.note && <p className="mt-2 text-xs leading-relaxed text-[#78716C]">{article.note}</p>}
         {onSelectSong && primarySongs.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-x-4 text-[#57534E]">
@@ -100,10 +111,29 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
         <div className="relative">
           <label htmlFor="quiz-archive-search" className="sr-only">記事名・媒体・曲名・年で検索</label>
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
-          <input id="quiz-archive-search" type="search" value={query}
+          <input
+            ref={searchInputRef}
+            id="quiz-archive-search"
+            type="search"
+            value={query}
             onChange={event => { setQuery(event.target.value); setVisibleCount(PAGE_SIZE); }}
             placeholder="記事名・媒体・曲名・年で検索"
-            className="min-h-11 w-full rounded-xl border border-[#D5CEC2] bg-white pl-9 pr-3 py-2 text-base text-[#1C1917] placeholder:text-[#78716C] focus:border-[#1C1917] focus:outline-none" />
+            className="min-h-11 w-full rounded-xl border border-[#D5CEC2] bg-white pl-9 pr-10 py-2 text-base text-[#1C1917] placeholder:text-[#78716C] focus:border-[#1C1917] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
+          />
+          {query && (
+            <button
+              type="button"
+              aria-label="記事検索をクリア"
+              onClick={() => {
+                setQuery('');
+                setVisibleCount(PAGE_SIZE);
+                searchInputRef.current?.focus();
+              }}
+              className="absolute inset-y-0 right-0 flex w-10 items-center justify-center rounded-r-xl text-[#57534E] hover:text-[#1C1917] cursor-pointer"
+            >
+              <X aria-hidden="true" className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)]">
           <div className="min-w-0">

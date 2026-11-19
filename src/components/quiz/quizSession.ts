@@ -8,6 +8,8 @@ export interface QuizAnswer {
   isOrderingSubmitted: boolean;
 }
 
+export type QuizQuestionOutcome = 'correct' | 'wrong' | null;
+
 export interface QuizSession {
   stage: 'select' | 'playing' | 'finished';
   difficulty: CourseDifficulty;
@@ -16,6 +18,7 @@ export interface QuizSession {
   currentIndex: number;
   correctBefore: number;
   answer: QuizAnswer;
+  outcomes?: QuizQuestionOutcome[];
 }
 
 export const EMPTY_ANSWER: QuizAnswer = { selectedOption: null, selectedOrder: [], isOrderingSubmitted: false };

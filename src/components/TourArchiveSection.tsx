@@ -39,6 +39,36 @@ const setlistEventCount = TOUR_ARCHIVES.reduce(
   0,
 );
 
+function tourMatchesYear(tour: TourArchive, year: string): boolean {
+  if (year === 'all') return true;
+  const startYear = Number(tour.startDate.slice(0, 4));
+  const endYear = Number(tour.endDate.slice(0, 4));
+  const target = Number(year);
+  if (Number.isInteger(startYear) && Number.isInteger(endYear) && Number.isInteger(target)) {
+    if (target >= startYear && target <= endYear) return true;
+  }
+  return tour.events.some(event => event.date.startsWith(`${year}-`));
+}
+
+const YEAR_OPTIONS: { year: string; count: number }[] = (() => {
+  const yearSet = new Set<string>();
+  for (const tour of TOUR_ARCHIVES) {
+    const startYear = Number(tour.startDate.slice(0, 4));
+    const endYear = Number(tour.endDate.slice(0, 4));
+    if (Number.isInteger(startYear) && Number.isInteger(endYear)) {
+      for (let y = startYear; y <= endYear; y += 1) yearSet.add(String(y));
+    }
+    for (const event of tour.events) yearSet.add(event.date.slice(0, 4));
+  }
+  return [...yearSet]
+    .filter(y => /^\d{4}$/.test(y))
+    .sort((a, b) => Number(b) - Number(a))
+    .map(year => ({
+      year,
+      count: TOUR_ARCHIVES.filter(tour => tourMatchesYear(tour, year)).length,
+    }));
+})();
+
 export function TourArchiveSection({
   attendedTourIds,
   onToggleAttendedTour,
@@ -69,11 +99,14 @@ export function TourArchiveSection({
 
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>(() => initialReturn?.sortOrder ?? 'newest');
   const [categoryFilter, setCategoryFilter] = useState<TourCategoryFilter>(() => initialReturn?.category ?? 'all');
-  const [attendedOnly, setAttendedOnly] = useState(false);
+  const [yearFilter, setYearFilter] = useState<string>(() => initialReturn?.year ?? 'all');
+  const [attendedOnly, setAttendedOnly] = useState(() => initialReturn?.attendedOnly ?? false);
+  const [setlistOnly, setSetlistOnly] = useState(() => initialReturn?.setlistOnly ?? false);
   const [query, setQuery] = useState(() => initialReturn?.query ?? '');
   const [openTourIds, setOpenTourIds] = useState<ReadonlySet<string>>(() =>
     initialReturn?.openTourId ? new Set([initialReturn.openTourId]) : new Set(),
   );
+  const [closedDuringSearchIds, setClosedDuringSearchIds] = useState<ReadonlySet<string>>(() => new Set());
   const [expandedEventIds, setExpandedEventIds] = useState<ReadonlySet<string>>(() =>
     initialReturn?.openEventId ? new Set([initialReturn.openEventId]) : new Set(),
   );
@@ -86,17 +119,37 @@ export function TourArchiveSection({
   const tours = useMemo(() => {
     const filtered = TOUR_ARCHIVES.filter(tour => {
       if (categoryFilter !== 'all' && (tour.category ?? 'tour') !== categoryFilter) return false;
+      if (!tourMatchesYear(tour, yearFilter)) return false;
       if (attendedOnly && !attendedTourIds.includes(tour.id)) return false;
+      if (setlistOnly && !tour.events.some(event => event.hasSetlist)) return false;
       return true;
     });
     return sortTourArchives(filtered, sortOrder);
-  }, [categoryFilter, attendedOnly, attendedTourIds, sortOrder]);
+  }, [categoryFilter, yearFilter, attendedOnly, setlistOnly, attendedTourIds, sortOrder]);
 
   const searchTours = useMemo(() => createTourArchiveSearch(tours), [tours]);
-  const matchingTours = useMemo(() => searchTours(query), [searchTours, query]);
-  const hasActiveFilter = categoryFilter !== 'all' || attendedOnly || query.trim() !== '';
+  const matchingTours = useMemo(() => {
+    const base = searchTours(query);
+    if (!setlistOnly) return base;
+    return base
+      .map(item => ({
+        ...item,
+        events: item.events.filter(event => event.hasSetlist),
+      }))
+      .filter(item => item.events.length > 0);
+  }, [searchTours, query, setlistOnly]);
+  const hasActiveFilter = categoryFilter !== 'all' || yearFilter !== 'all' || attendedOnly || setlistOnly || query.trim() !== '';
 
   const toggleTourDetails = (tourId: string, nextOpen: boolean) => {
+    if (query.trim()) {
+      setClosedDuringSearchIds(prev => {
+        const next = new Set(prev);
+        if (nextOpen) next.delete(tourId);
+        else next.add(tourId);
+        return next;
+      });
+      return;
+    }
     setOpenTourIds(prev => {
       const next = new Set(prev);
       if (nextOpen) next.add(tourId);
@@ -128,6 +181,9 @@ export function TourArchiveSection({
       query,
       sortOrder,
       category: categoryFilter,
+      year: yearFilter,
+      attendedOnly,
+      setlistOnly,
       openTourId: tourId,
       openEventId: eventId,
       resetEpoch,
@@ -162,7 +218,7 @@ export function TourArchiveSection({
             <a
               href={`${import.meta.env.BASE_URL}${pagePath}`}
               onClick={() => rememberAndOpenSong(tourId, eventId)}
-              className="font-bold text-[#253331] underline decoration-[#d8ccb8] underline-offset-4 hover:text-[#C83E2B] transition-colors"
+              className="font-bold text-[#253331] underline decoration-[#b5a48b] underline-offset-4 hover:text-[#C83E2B] hover:decoration-[#C83E2B] transition-colors"
             >
               {track.title}
             </a>
@@ -355,7 +411,10 @@ export function TourArchiveSection({
                 type="search"
                 enterKeyHint="search"
                 value={query}
-                onChange={event => setQuery(event.target.value)}
+                onChange={event => {
+                  setQuery(event.target.value);
+                  setClosedDuringSearchIds(new Set());
+                }}
                 placeholder="例：2025-05-31 / 日産スタジアム / Pretender"
                 className="min-w-0 w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-9 py-2 font-normal text-[#1C1917] [&::-webkit-search-cancel-button]:appearance-none"
               />
@@ -364,6 +423,7 @@ export function TourArchiveSection({
                   type="button"
                   onClick={() => {
                     setQuery('');
+                    setClosedDuringSearchIds(new Set());
                     searchInputRef.current?.focus();
                   }}
                   aria-label="検索キーワードをクリア"
@@ -398,8 +458,8 @@ export function TourArchiveSection({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#ece4d6]">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="公演の種類で絞り込み">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#ece4d6]">
+          <div className="flex flex-wrap gap-1.5" role="group" aria-label="公演の種類や条件で絞り込み">
             {CATEGORY_OPTIONS.map(option => {
               const active = categoryFilter === option.id;
               return (
@@ -408,7 +468,7 @@ export function TourArchiveSection({
                   type="button"
                   aria-pressed={active}
                   onClick={() => setCategoryFilter(option.id)}
-                  className={`rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  className={`min-h-8 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
                     active
                       ? 'bg-[#253331] text-[#faf6eb]'
                       : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#253331] hover:text-[#253331]'
@@ -420,9 +480,22 @@ export function TourArchiveSection({
             })}
             <button
               type="button"
+              aria-pressed={setlistOnly}
+              onClick={() => setSetlistOnly(prev => !prev)}
+              className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                setlistOnly
+                  ? 'bg-[#C83E2B] text-white'
+                  : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#C83E2B] hover:text-[#C83E2B]'
+              }`}
+            >
+              <ListMusic className="h-3 w-3 shrink-0" aria-hidden="true" />
+              <span>セトリありのみ</span>
+            </button>
+            <button
+              type="button"
               aria-pressed={attendedOnly}
               onClick={() => setAttendedOnly(prev => !prev)}
-              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+              className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
                 attendedOnly
                   ? 'bg-[#15803D] text-white'
                   : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#15803D] hover:text-[#15803D]'
@@ -432,11 +505,54 @@ export function TourArchiveSection({
               <span>参戦・視聴済みのみ（{attendedTourIds.length}）</span>
             </button>
           </div>
+
+          <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <label htmlFor="tour-year-filter" className="text-xs font-bold text-[#57534E] whitespace-nowrap">
+              開催年
+            </label>
+            <select
+              id="tour-year-filter"
+              value={yearFilter}
+              onChange={event => setYearFilter(event.target.value)}
+              className={`min-h-8 rounded-full border px-3 py-1 text-xs font-bold font-mono-num transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#253331] ${
+                yearFilter !== 'all'
+                  ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
+                  : 'border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331]'
+              }`}
+            >
+              <option value="all">すべての年</option>
+              {YEAR_OPTIONS.map(({ year, count }) => (
+                <option key={year} value={year}>
+                  {year}年（{count}）
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
           <p className="text-xs font-mono-num text-[#57534E]" role="status">
             {!hasActiveFilter
               ? `全${TOUR_ARCHIVES.length}シリーズ・${concertCount}公演（セトリ${setlistEventCount}公演）`
               : `${matchingTours.length}シリーズ・${matchingTours.reduce((sum, item) => sum + item.events.length, 0)}公演を表示`}
           </p>
+          {hasActiveFilter && (
+            <button
+              type="button"
+              onClick={() => {
+                setCategoryFilter('all');
+                setYearFilter('all');
+                setAttendedOnly(false);
+                setSetlistOnly(false);
+                setQuery('');
+                setClosedDuringSearchIds(new Set());
+              }}
+              className="inline-flex min-h-7 items-center gap-1 text-xs font-bold text-[#9B3021] hover:underline cursor-pointer"
+            >
+              <RotateCcw className="h-3 w-3" aria-hidden="true" />
+              <span>条件をリセット</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -452,8 +568,11 @@ export function TourArchiveSection({
               type="button"
               onClick={() => {
                 setCategoryFilter('all');
+                setYearFilter('all');
                 setAttendedOnly(false);
+                setSetlistOnly(false);
                 setQuery('');
+                setClosedDuringSearchIds(new Set());
               }}
               className="inline-flex min-h-9 items-center gap-1 rounded-full border border-[#D5CEC2] bg-white px-3.5 py-1.5 text-xs font-bold text-[#9B3021] hover:border-[#9B3021] cursor-pointer"
             >
@@ -470,7 +589,9 @@ export function TourArchiveSection({
           const totalSetlistCount = tour.events.filter(event => event.hasSetlist).length;
           const isSingleEventSeries = tour.events.length === 1 && events.length === 1;
           const singleEvent = isSingleEventSeries ? events[0] : null;
-          const isDetailsOpen = Boolean(query) || openTourIds.has(tour.id);
+          const isDetailsOpen = query.trim()
+            ? !closedDuringSearchIds.has(tour.id)
+            : openTourIds.has(tour.id);
           const singleMatchedSongs = singleEvent ? matchedSongsByEventId.get(singleEvent.id) ?? [] : [];
 
           return (
@@ -550,9 +671,7 @@ export function TourArchiveSection({
                 <details
                   className="mt-4 border-t border-[#ece4d6] pt-3"
                   open={isDetailsOpen}
-                  onToggle={e => {
-                    if (!query) toggleTourDetails(tour.id, e.currentTarget.open);
-                  }}
+                  onToggle={e => toggleTourDetails(tour.id, e.currentTarget.open)}
                 >
                   <summary className="cursor-pointer text-sm font-bold text-[#253331] hover:text-[#C83E2B] transition-colors">
                     公演日・会場とセトリを見る（{events.length}公演）
@@ -610,11 +729,11 @@ export function TourArchiveSection({
         title="この公演の曲でMYセトリを作成しますか？"
         description={
           pendingTourSetlist
-            ? `現在のMYセトリ「${currentSetlistTitle || '作成中のセットリスト'}」を、「${pendingTourSetlist.title}」（${pendingTourSetlist.entries.length}曲）に置き換えてMYセトリ画面へ移動します。${
+            ? `現在のMYセトリ「${currentSetlistTitle || '作成中のセットリスト'}」は「保存したMYセトリ」に残したまま、「${pendingTourSetlist.title}」（${pendingTourSetlist.entries.length}曲）を新しいMYセトリとして作成し、MYセトリ画面へ移動します。${
                 pendingTourSetlist.skippedCount > 0
                   ? `\n※ 楽曲ガイドに未登録のSE・カバー曲など ${pendingTourSetlist.skippedCount}曲は除かれます。`
                   : ''
-              }\n今のセトリを残したい場合は、MYセトリ画面で「新しいセトリ」または「複製」を押してからご利用ください。`
+              }`
             : ''
         }
         confirmLabel="MYセトリに読み込む"

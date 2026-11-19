@@ -65,7 +65,7 @@ test('a nonmatching condition is never presented as a match and legacy sharing s
   assert.ok(!match.moodMatchExplanation.includes('時期「'));
   const text = formatDiagnosisShareText(match, criteria);
   assert.ok(text.includes('Rejoice期'));
-  assert.ok(text.includes('５分以上'));
+  assert.ok(text.includes('長めにゆったり思いを馳せて'));
   assert.ok(formatDiagnosisShareText(match, originalCriteria).includes('今日の1曲診断'));
 });
 

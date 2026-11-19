@@ -1,8 +1,17 @@
 import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import {
+  sanitizeQuizVolumeRecordMap,
+  type QuizVolumeRecordMap,
+} from '../components/quiz/quizVolumeRecords';
+import {
   sanitizeSavedSetlistsState,
   type SavedSetlistsState,
 } from '../utils/savedSetlists';
+import {
+  isDefaultMyNoteProfile,
+  sanitizeMyNoteProfilePayload,
+  type MyNoteProfile,
+} from '../utils/myNoteProfile';
 import { restoreFanRecords } from './fanRecordStorage';
 import type { FanRecords } from './fanRecordStore';
 
@@ -20,12 +29,16 @@ function comparable(value: unknown): unknown {
 export function createFanRecordBackup(
   records: FanRecords,
   savedSetlists?: SavedSetlistsState | null,
+  quizVolumeScores?: QuizVolumeRecordMap | null,
+  myNoteProfile?: MyNoteProfile | null,
 ): string {
   const payload: {
     format: string;
     version: number;
     records: FanRecords & { hasQuizAttempt: boolean };
     savedSetlists?: SavedSetlistsState;
+    quizVolumeScores?: QuizVolumeRecordMap;
+    myNoteProfile?: MyNoteProfile;
   } = {
     format: BACKUP_FORMAT,
     version: 1,
@@ -33,6 +46,14 @@ export function createFanRecordBackup(
   };
   if (savedSetlists && savedSetlists.items.length > 0) {
     payload.savedSetlists = savedSetlists;
+  }
+  const cleanVolumes = quizVolumeScores ? sanitizeQuizVolumeRecordMap(quizVolumeScores) : null;
+  if (cleanVolumes && Object.keys(cleanVolumes).length > 0) {
+    payload.quizVolumeScores = cleanVolumes;
+  }
+  const cleanMyNote = myNoteProfile ? sanitizeMyNoteProfilePayload(myNoteProfile, validSongIds) : null;
+  if (cleanMyNote && !isDefaultMyNoteProfile(cleanMyNote)) {
+    payload.myNoteProfile = cleanMyNote;
   }
   return JSON.stringify(payload, null, 2);
 }
@@ -65,9 +86,71 @@ function validateSavedSetlistsBackup(raw: unknown): SavedSetlistsState {
   return sanitized;
 }
 
+function validateQuizVolumeScoresBackup(raw: unknown): QuizVolumeRecordMap {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new TypeError('検定のセット別記録を読み取れませんでした。');
+  }
+  const clean = sanitizeQuizVolumeRecordMap(raw);
+  if (
+    Object.keys(raw as object).length !== Object.keys(clean).length ||
+    JSON.stringify(comparable(clean)) !== JSON.stringify(comparable(raw))
+  ) {
+    throw new TypeError('検定のセット別記録を安全に読み込めませんでした。');
+  }
+  return clean;
+}
+
+const ALLOWED_MY_NOTE_KEYS = new Set([
+  'nickname',
+  'opened',
+  'readSongIds',
+  'completedMoods',
+  'moodCompletedCount',
+  'visitedVocalRange',
+  'visitedReferenceArchive',
+  'exportedBackup',
+]);
+
+function validateMyNoteProfileBackup(raw: unknown): MyNoteProfile {
+  if (
+    !raw ||
+    typeof raw !== 'object' ||
+    Array.isArray(raw) ||
+    (Object.getPrototypeOf(raw) !== Object.prototype && Object.getPrototypeOf(raw) !== null)
+  ) {
+    throw new TypeError('マイノートの記録を読み取れませんでした。');
+  }
+  const obj = raw as Record<string, unknown>;
+  const keys = Object.keys(obj);
+  if (
+    keys.length !== ALLOWED_MY_NOTE_KEYS.size ||
+    keys.some((key) => !ALLOWED_MY_NOTE_KEYS.has(key)) ||
+    typeof obj.nickname !== 'string' ||
+    typeof obj.opened !== 'boolean' ||
+    !Array.isArray(obj.readSongIds) ||
+    !obj.readSongIds.every((id) => typeof id === 'string' && validSongIds.has(id)) ||
+    !Array.isArray(obj.completedMoods) ||
+    !obj.completedMoods.every((m) => typeof m === 'string') ||
+    typeof obj.moodCompletedCount !== 'number' ||
+    !Number.isInteger(obj.moodCompletedCount) ||
+    typeof obj.visitedVocalRange !== 'boolean' ||
+    typeof obj.visitedReferenceArchive !== 'boolean' ||
+    typeof obj.exportedBackup !== 'boolean'
+  ) {
+    throw new TypeError('マイノートの記録を安全に読み込めませんでした。');
+  }
+  const clean = sanitizeMyNoteProfilePayload(raw, validSongIds);
+  if (JSON.stringify(comparable(clean)) !== JSON.stringify(comparable(raw))) {
+    throw new TypeError('マイノートの記録を安全に読み込めませんでした。');
+  }
+  return clean;
+}
+
 export function parseFanRecordBackupWithSetlists(raw: string): {
   records: FanRecords;
   savedSetlists?: SavedSetlistsState;
+  quizVolumeScores?: QuizVolumeRecordMap;
+  myNoteProfile?: MyNoteProfile;
 } {
   if (raw.length > MAX_BACKUP_BYTES) throw new TypeError('記録ファイルが大きすぎます。');
   const value: unknown = JSON.parse(raw);
@@ -92,6 +175,14 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
     'format' in outer && outer.savedSetlists !== undefined
       ? validateSavedSetlistsBackup(outer.savedSetlists)
       : undefined;
+  const quizVolumeScores =
+    'format' in outer && outer.quizVolumeScores !== undefined
+      ? validateQuizVolumeScoresBackup(outer.quizVolumeScores)
+      : undefined;
+  const myNoteProfile =
+    'format' in outer && outer.myNoteProfile !== undefined
+      ? validateMyNoteProfileBackup(outer.myNoteProfile)
+      : undefined;
   return {
     records: {
       setlist: restored.setlist, setlistTitle: restored.setlistTitle,
@@ -100,6 +191,8 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
       bestQuizScore: restored.bestQuizScore ?? null, resetEpoch: '', setlistMembershipVersions: {},
     },
     savedSetlists,
+    quizVolumeScores,
+    myNoteProfile,
   };
 }
 

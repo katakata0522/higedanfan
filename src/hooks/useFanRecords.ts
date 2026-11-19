@@ -13,6 +13,17 @@ import {
 } from '../utils/savedSetlists';
 import { STORAGE_KEY } from './fanRecordStorage';
 import { createFanRecordBackup, parseFanRecordBackupWithSetlists } from './fanRecordBackup';
+import {
+  clearQuizVolumeScoresStorage,
+  loadQuizVolumeScores,
+  persistQuizVolumeScores,
+} from '../components/quiz/quizVolumeRecords';
+import {
+  clearMyNoteProfileStorage,
+  loadMyNoteProfile,
+  persistMyNoteProfile,
+  recordMyNoteFeatureVisited,
+} from '../utils/myNoteProfile';
 
 type ReviewFields = Omit<FanReview, 'id' | 'postedAt' | 'likes'>;
 const songIds = new Set(HIGEDAN_SONGS.map(song => song.id));
@@ -163,24 +174,30 @@ export function useFanRecords(showToast: (message: string) => void) {
     void change(r => ({...r, bestQuizScore: Math.max(r.bestQuizScore ?? 0, score)}));
   };
   const replaceSetlistSilently = (entries: SetlistEntry[], title: string) => {
-    const validIds = new Set(HIGEDAN_SONGS.map(s => s.id));
-    const setlist = sanitizeSetlistEntries(entries, validIds) ?? normalizeSetlistOrder(entries);
+    const setlist = sanitizeSetlistEntries(entries, songIds) ?? normalizeSetlistOrder(entries);
     const setlistTitle = sanitizeSetlistTitle(title) || 'MYセトリ';
     void change(r => ({...r, setlist, setlistTitle}));
   };
   const resetAllUserData = async ({ skipConfirm = false }: { skipConfirm?: boolean } = {}) => {
-    if (!skipConfirm && !window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nMYセトリの名前と曲順は初期の見本に戻ります。非公開中の感想・共感・投票を含め、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率、診断の回答とクイズの途中経過は消去されます。')) return;
+    if (!skipConfirm && !window.confirm('このブラウザに保存した記録をすべて初期化しますか？\n\nMYセトリは初期状態に戻ります。非公開中の感想・共感・投票を含め、マイノート（お名前・楽曲ページの閲覧やスタンプの進捗）、聖地の訪問、ツアーの参戦・視聴、検定の最高正答率・セット別の記録、診断の回答とクイズの途中経過は消去されます。')) return;
     if (await store.reset(records.resetEpoch)) {
       clearSavedSetlistsStorage();
+      clearQuizVolumeScoresStorage();
+      clearMyNoteProfileStorage();
       showToast('保存データを初期状態にリセットしました。');
     }
   };
   const downloadRecords = () => {
+    recordMyNoteFeatureVisited('backup_export', records.resetEpoch);
+    const myNoteProfile = loadMyNoteProfile(records.resetEpoch);
     const storedSetlists = readStoredSavedSetlists(songIds, { expectedEpoch: records.resetEpoch });
     const syncedSetlists = storedSetlists
       ? syncActiveSavedSetlist(storedSetlists, records.setlistTitle || DEFAULT_SETLIST_TITLE, records.setlist)
       : null;
-    const url = URL.createObjectURL(new Blob([createFanRecordBackup(records, syncedSetlists)], {type: 'application/json'}));
+    const quizVolumeScores = loadQuizVolumeScores(records.resetEpoch);
+    const url = URL.createObjectURL(
+      new Blob([createFanRecordBackup(records, syncedSetlists, quizVolumeScores, myNoteProfile)], {type: 'application/json'}),
+    );
     const link = document.createElement('a');
     link.href = url;
     link.download = 'higedanfan-records.json';
@@ -190,11 +207,16 @@ export function useFanRecords(showToast: (message: string) => void) {
   const importRecords = async (file: File) => {
     try {
       if (file.size > 2_000_000) throw new Error('記録ファイルが大きすぎます。');
-      const { records: imported, savedSetlists } = parseFanRecordBackupWithSetlists(await file.text());
+      const { records: imported, savedSetlists, quizVolumeScores, myNoteProfile } = parseFanRecordBackupWithSetlists(await file.text());
       if (!window.confirm('このブラウザのMYセトリ、参戦・訪問、クイズなどの記録を、ファイルの内容に置き換えます。\n\n今の記録も残したい場合は、先に「記録を書き出す」を押してください。読み込みますか？')) return;
       if (await store.importBackup(imported, records)) {
-        if (savedSetlists) persistSavedSetlists(savedSetlists, { validSongIds: songIds, replace: true });
+        const nextEpoch = store.snapshot().records.resetEpoch;
+        if (savedSetlists) persistSavedSetlists(savedSetlists, { validSongIds: songIds, expectedEpoch: nextEpoch, replace: true });
         else clearSavedSetlistsStorage();
+        if (quizVolumeScores) persistQuizVolumeScores(quizVolumeScores, nextEpoch);
+        else clearQuizVolumeScoresStorage();
+        if (myNoteProfile) persistMyNoteProfile(myNoteProfile, nextEpoch);
+        else clearMyNoteProfileStorage();
         showToast('記録を読み込みました。');
       }
       else showToast('読み込めませんでした。別タブの変更や保存状態を確認してください。');
