@@ -121,20 +121,6 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     ]
   },
   {
-    "title": "Official髭男dism SOULSOUP 歌詞",
-    "publisher": "歌ネット",
-    "url": "https://www.uta-net.com/song/347498/",
-    "kind": "lyrics",
-    "date": null,
-    "dateKind": "published",
-    "relatedSongIds": [
-      "soulsoup"
-    ],
-    "referencedUrls": [
-      "https://www.uta-net.com/song/347498/"
-    ]
-  },
-  {
     "title": "Official髭男dism「もしバンドをやっていなかったら…」 意外な職業にメンバー大盛り上がり！",
     "publisher": "J-WAVE NEWS",
     "url": "https://news.j-wave.co.jp/2018/09/95-officialdism.html",
@@ -968,6 +954,20 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     ],
     "referencedUrls": [
       "https://thetv.jp/feature/drama-academy/104/awards/interview/6/"
+    ]
+  },
+  {
+    "title": "キャスト＆スタッフ｜TBSテレビ：火曜ドラマ『恋はつづくよどこまでも』",
+    "publisher": "TBSテレビ",
+    "url": "https://www.tbs.co.jp/koitsudu_tbs/caststaff/",
+    "kind": "official",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "i-love"
+    ],
+    "referencedUrls": [
+      "https://www.tbs.co.jp/koitsudu_tbs/caststaff/"
     ]
   },
   {

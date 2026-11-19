@@ -58,12 +58,31 @@ test('the six mixed volumes cover all 60 questions once and include all difficul
   assert.deepEqual(new Set(volumes.flat().map(q => q.id)), new Set(QUIZ_QUESTIONS.map(q => q.id)));
 });
 
-test('a previous explanation does not give away the later Subtitle question', () => {
-  const volume = getCourseQuestions('beginner', 'vol1');
-  const earlier = volume.find(q => q.id === 'q2')!;
-  const later = volume.find(q => q.id === 'q37')!;
-  assert.ok(volume.indexOf(earlier) < volume.indexOf(later));
-  const laterAnswer = later.options[later.correctIndex];
-  const earlierFeedback = [earlier.explanation, ...earlier.sources.flatMap(s => [s.title, s.summary])].join(' ');
-  assert.equal(earlierFeedback.includes(laterAnswer), false);
+test('no earlier explanation gives away a later answer in the same volume (including q37 and q2)', () => {
+  const beginnerVol1 = getCourseQuestions('beginner', 'vol1');
+  const beginnerVol2 = getCourseQuestions('beginner', 'vol2');
+  assert.ok(beginnerVol1.some(q => q.id === 'q37'));
+  assert.ok(beginnerVol2.some(q => q.id === 'q2'));
+
+  for (const difficulty of ['beginner', 'intermediate', 'brothers'] as const) {
+    for (const scope of ['vol1', 'vol2'] as const) {
+      const volume = getCourseQuestions(difficulty, scope);
+      for (let i = 0; i < volume.length; i++) {
+        const earlierFeedback = [
+          volume[i].explanation,
+          ...volume[i].sources.flatMap(s => [s.title, s.summary]),
+        ].join(' ');
+        for (let j = i + 1; j < volume.length; j++) {
+          const later = volume[j];
+          if (later.questionType === 'ordering') continue;
+          const laterAnswer = later.options[later.correctIndex];
+          assert.equal(
+            earlierFeedback.includes(laterAnswer),
+            false,
+            `${difficulty} ${scope}: ${volume[i].id} feedback must not spoil ${later.id} (${laterAnswer})`,
+          );
+        }
+      }
+    }
+  }
 });
