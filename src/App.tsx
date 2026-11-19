@@ -334,7 +334,7 @@ export default function App() {
               onSelectSong={selectSong}
             />
           ) : isInfoPage(activeFeatureTab) ? (
-            <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="sr-only">読み込み中…</span></div>}>
+            <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="text-sm text-[#57534E]">読み込み中…</span></div>}>
               <InfoPage
                 page={activeFeatureTab}
                 onSelectTab={handleSelectTab}
@@ -347,7 +347,7 @@ export default function App() {
             /* 各コンテンツの画面 */
             <div>
 
-              <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="sr-only">読み込み中…</span></div>}>
+              <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="text-sm text-[#57534E]">読み込み中…</span></div>}>
                 {activeFeatureTab === 'mood' && (
                   <MoodFinderSection
                     key={records.resetEpoch}
