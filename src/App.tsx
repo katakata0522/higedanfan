@@ -340,6 +340,7 @@ export default function App() {
           setHasLoadedMyNote(true);
           setIsMyNoteOpen(true);
         }}
+        onInstallFeedback={showToast}
         isMyNoteOpen={isMyNoteOpen}
         setlistCount={setlist.length}
       />

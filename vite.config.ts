@@ -8,6 +8,7 @@ import { publishedSongPageIds } from './src/songPages/publishedSongPageIds.ts';
 import { PUBLIC_CORNERS } from './src/config/siteFeatures.ts';
 import { formatDuration, formatSongBpm } from './src/utils/format.ts';
 import { contentSecurityPolicy, CSP_MARKER, escapeHtml as escape, INITIAL_PAINT_STYLE } from './scripts/siteHtml.ts';
+import { emitPwaServiceWorker } from './scripts/pwaWorker.ts';
 function renderCatalog() {
   return Object.entries(evidence).map(([id, f]) => {
     const duration = formatDuration(f.seconds);
@@ -44,7 +45,11 @@ export default defineConfig(({ command }) => {
         .replace('<!--initial-paint-style-->', `<style>${INITIAL_PAINT_STYLE}</style>`)
         .replace('<!--verified-songs-->', renderCatalog()),
       closeBundle() {
-        fs.rmSync(path.resolve(import.meta.dirname, 'dist/song-art'), { recursive: true, force: true });
+        const distDir = path.resolve(import.meta.dirname, 'dist');
+        fs.rmSync(path.join(distDir, 'song-art'), { recursive: true, force: true });
+        if (command === 'build') {
+          emitPwaServiceWorker(distDir);
+        }
       },
     }],
     resolve: {

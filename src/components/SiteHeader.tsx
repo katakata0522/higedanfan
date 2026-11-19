@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
+import { pwaInstallOutcomeMessage, usePwaInstall } from '../utils/pwaInstall';
 import { infoPages, isInfoPage, type InfoPageId } from './info/infoPages';
 import {
   Menu,
@@ -120,6 +121,7 @@ interface SiteHeaderProps {
   onReplayIntro?: () => void;
   onMenuOpenChange?: (open: boolean) => void;
   onOpenMyNote?: () => void;
+  onInstallFeedback?: (message: string) => void;
   isMyNoteOpen?: boolean;
   setlistCount?: number;
 }
@@ -130,12 +132,31 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   onReplayIntro,
   onMenuOpenChange,
   onOpenMyNote,
+  onInstallFeedback,
   isMyNoteOpen = false,
   setlistCount,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButton = React.useRef<HTMLButtonElement>(null);
   const menuDrawer = React.useRef<HTMLElement>(null);
+  const pwaInstall = usePwaInstall();
+
+  const handleInstallClick = async () => {
+    if (pwaInstall.isInstalling) return;
+    const outcome = await pwaInstall.install();
+    const message = pwaInstallOutcomeMessage(outcome);
+    if (message) onInstallFeedback?.(message);
+    if (outcome === 'accepted') {
+      setIsMenuOpen(false);
+      menuButton.current?.focus();
+    } else if (outcome !== 'unavailable') {
+      requestAnimationFrame(() => {
+        if (!document.getElementById('pwa-install-btn') && document.activeElement === document.body) {
+          document.getElementById('kurun-replay-btn')?.focus();
+        }
+      });
+    }
+  };
 
   useEffect(() => {
     onMenuOpenChange?.(isMenuOpen);
@@ -410,6 +431,19 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                       オープニングをもう一度見る
                     </button>
                   )}
+                  {pwaInstall.canInstall && (
+                    <button
+                      id="pwa-install-btn"
+                      type="button"
+                      aria-disabled={pwaInstall.isInstalling ? 'true' : undefined}
+                      onClick={() => {
+                        void handleInstallClick();
+                      }}
+                      className="flex w-full min-h-11 sm:min-h-7 items-center rounded-lg px-3 sm:px-2.5 text-left text-sm sm:text-xs font-medium text-[#253331] hover:bg-[#f4efe4] cursor-pointer"
+                    >
+                      スマホアプリとしてインストール
+                    </button>
+                  )}
                   <div className="flex flex-col sm:grid sm:grid-cols-2 sm:gap-x-1">
                     {Object.entries(infoPages).map(([id, label]) => (
                       <a
@@ -433,6 +467,9 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             </nav>
           </>
         )}
+        <p role="status" className="sr-only">
+          {pwaInstall.statusMessage ?? ''}
+        </p>
       </div>
     </header>
   );
