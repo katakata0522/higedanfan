@@ -40,6 +40,7 @@ export async function verifyStaticSeo(browser, root, ids) {
         : `songs/${target.id}/`;
       const canonical = `https://katakatalab.com/higedanfan/${canonicalSuffix}`;
       assert.equal(await page.locator('link[rel="canonical"]').getAttribute('href'), canonical);
+      assert.equal(await page.locator('link[rel="manifest"]').getAttribute('href'), '/higedanfan/manifest.webmanifest');
       const description = await page.locator('meta[name="description"]').getAttribute('content');
       assert.ok(description && !descriptions.has(description), `${relative}: 説明が空または重複しています`);
       descriptions.add(description);
@@ -247,4 +248,74 @@ export async function openSetlistEditor(page, method = 'search', target = 'main'
   }
   await page.getByRole('button', { name: method === 'album' ? 'アルバムから選ぶ' : '曲名で探す', exact: true }).click();
   await page.getByLabel(method === 'album' ? '追加する曲を選択' : '曲を探して追加').waitFor();
+}
+
+export async function verifyPwaReadinessAndInstall(browser, root) {
+  const originRoot = new URL(root);
+  const manifestRes = await fetch(`${root}manifest.webmanifest`);
+  assert.equal(manifestRes.status, 200, 'manifest.webmanifest が配信されていません');
+  const manifest = await manifestRes.json();
+  assert.equal(manifest.id, '/higedanfan/');
+  assert.equal(manifest.start_url, '/higedanfan/');
+  assert.equal(manifest.scope, '/higedanfan/');
+  assert.equal(manifest.display, 'standalone');
+  for (const size of ['192x192', '512x512']) {
+    const icon = manifest.icons?.find(entry => entry.type === 'image/png' && entry.sizes === size);
+    assert.ok(icon, `manifest に ${size} PNG アイコンがありません`);
+    const iconRes = await fetch(new URL(icon.src, originRoot));
+    assert.equal(iconRes.status, 200, `${icon.src} が配信されていません`);
+  }
+
+  const context = await browser.newContext();
+  await context.addInitScript(() => {
+    localStorage.setItem('higedan_kurun_intro_seen_v1', '1');
+  });
+  const page = await context.newPage();
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  try {
+    await page.goto(root, { waitUntil: 'load' });
+    const swScope = await page.evaluate(async () => {
+      const reg = await navigator.serviceWorker.ready;
+      return reg.scope;
+    });
+    assert.ok(swScope.endsWith('/higedanfan/'), `Service Worker の scope が不正です: ${swScope}`);
+    const cacheNames = await page.evaluate(() => caches.keys());
+    assert.ok(cacheNames.some(name => name.startsWith('higedanfan-pwa-')), 'Service Worker キャッシュが生成されていません');
+
+    await page.getByRole('button', { name: 'メニューを開く', exact: true }).click();
+    assert.equal(await page.locator('#pwa-install-btn').count(), 0, '非対応時にインストールボタンが残っています');
+    await page.keyboard.press('Escape');
+
+    for (const [targetUrl, openMenu, replayName] of [
+      [root, () => page.getByRole('button', { name: 'メニューを開く', exact: true }).click(), 'オープニングをもう一度見る'],
+      [`${root}songs/pretender/`, () => page.locator('.song-site-menu > summary').click(), 'オープニングをもう一度見る'],
+    ]) {
+      await page.goto(targetUrl, { waitUntil: 'load' });
+      await page.evaluate(() => {
+        window.__pwaPromptCalls = 0;
+        const event = new Event('beforeinstallprompt', { cancelable: true });
+        event.prompt = async () => { window.__pwaPromptCalls += 1; };
+        event.userChoice = Promise.resolve({ outcome: 'accepted', platform: 'web' });
+        window.dispatchEvent(event);
+      });
+      await openMenu();
+      const replayBtn = page.getByRole('button', { name: replayName, exact: true });
+      const installBtn = page.getByRole('button', { name: 'スマホアプリとしてインストール', exact: true });
+      await installBtn.waitFor({ state: 'visible' });
+      const replayBox = await replayBtn.boundingBox();
+      const installBox = await installBtn.boundingBox();
+      assert.ok(replayBox && installBox && installBox.y >= replayBox.y + replayBox.height - 2, '「スマホアプリとしてインストール」が「オープニングをもう一度見る」の下にありません');
+      await installBtn.click();
+      assert.equal(await page.evaluate(() => window.__pwaPromptCalls), 1, 'ボタンクリックでインストール確認が起動していません');
+      await page.getByText('スマホアプリとして追加しました。', { exact: true }).first().waitFor({ state: 'visible' });
+      assert.equal(await page.locator('#pwa-install-btn').count(), 0, 'インストール完了後もボタンが残っています');
+    }
+
+    assert.deepEqual(pageErrors, [], `PWA検証中のエラー: ${pageErrors.join('; ')}`);
+  } finally {
+    await context.close();
+  }
+  console.log('PWA（manifest・アイコン・Service Worker・メニュー内インストール導線）を確認');
 }

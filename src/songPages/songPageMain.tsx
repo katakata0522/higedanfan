@@ -4,6 +4,7 @@ import { EditorialSongPage } from './EditorialSongPage';
 import { autoSongPage } from './autoSongPage';
 import { applySongEditorial } from './applySongEditorial';
 import type { EditorialSongPageData } from './EditorialSongPageData';
+import { registerPwaServiceWorker } from '../utils/pwaInstall';
 import './EditorialSongPage.css';
 
 function SongPageErrorFallback() {
@@ -49,6 +50,7 @@ const pages = import.meta.glob<{ default: EditorialSongPageData }>('./data/*.ts'
 const loadPage = songId ? pages[`./data/${songId}.ts`] : undefined;
 
 if (songId) {
+  registerPwaServiceWorker();
   const reactRoot = createRoot(root);
   void (loadPage ? loadPage().then(module => module.default) : Promise.resolve(autoSongPage(songId))).then(page => {
     if (page.id !== songId) throw new Error('楽曲ページのIDが一致しません');

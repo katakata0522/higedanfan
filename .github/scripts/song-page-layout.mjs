@@ -10,7 +10,7 @@ import { songLatinReadings, songTitleAliases } from '../../src/data/songLatinRea
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
-import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor } from './site-security-seo.mjs';
+import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor, verifyPwaReadinessAndInstall } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
 const ids = [...publishedSongPageIds].sort();
@@ -914,6 +914,7 @@ try {
   await verifyReferenceLibrary(browser);
   await verifyTourArchiveSetlists(browser);
   await verifyMyNoteModal(browser);
+  await verifyPwaReadinessAndInstall(browser, root);
   if (!process.argv.includes('--ux-only')) {
     await verifyImmediateReload(browser);
     await verifyStorageFailures(browser);

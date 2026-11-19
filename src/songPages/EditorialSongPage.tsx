@@ -21,6 +21,7 @@ import { songAppleArtwork } from '../data/songAppleArtwork';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
 import { formatAlbumDisplayName } from '../utils/songCatalog';
 import { recordMyNoteSongRead } from '../utils/myNoteProfile';
+import { pwaInstallOutcomeMessage, usePwaInstall } from '../utils/pwaInstall';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
 const MyNoteModal = lazy(() =>
@@ -60,11 +61,30 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const sourcesRef = useRef<HTMLDetailsElement>(null);
   const siteMenuRef = useRef<HTMLDetailsElement>(null);
   const toastTimer = useRef<number | null>(null);
-  const records = useFanRecords(message => {
+  const showBanner = (message: string) => {
     setToast(message);
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
-  });
+  };
+  const records = useFanRecords(showBanner);
+  const pwaInstall = usePwaInstall();
+
+  const handleInstallClick = async () => {
+    if (pwaInstall.isInstalling) return;
+    const outcome = await pwaInstall.install();
+    const message = pwaInstallOutcomeMessage(outcome);
+    if (message) showBanner(message);
+    if (outcome === 'accepted') {
+      siteMenuRef.current?.removeAttribute('open');
+      siteMenuRef.current?.querySelector('summary')?.focus();
+    } else if (outcome !== 'unavailable') {
+      requestAnimationFrame(() => {
+        if (!document.getElementById('pwa-install-btn') && document.activeElement === document.body) {
+          document.getElementById('kurun-replay-btn')?.focus();
+        }
+      });
+    }
+  };
   const inSetlist = records.setlist.some(item => item.songId === song.id);
   const [returnDest] = useState(songReturnDestination);
 
@@ -188,6 +208,19 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 >
                   オープニングをもう一度見る
                 </button>
+                {pwaInstall.canInstall && (
+                  <button
+                    id="pwa-install-btn"
+                    type="button"
+                    className="song-menu-sublink"
+                    aria-disabled={pwaInstall.isInstalling ? 'true' : undefined}
+                    onClick={() => {
+                      void handleInstallClick();
+                    }}
+                  >
+                    スマホアプリとしてインストール
+                  </button>
+                )}
                 <div className="song-menu-info-grid">
                   {Object.entries(infoPages).map(([id, label]) => (
                     <a key={id} className="song-menu-sublink" href={tabPath(id, base)}>{label}</a>

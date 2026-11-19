@@ -24,6 +24,8 @@ export function contentSecurityPolicy(development = false): string {
     `script-src 'self'${development ? " 'unsafe-inline'" : ''}`,
     "script-src-attr 'none'",
     `connect-src 'self'${development ? ' ws: wss:' : ''}`,
+    "manifest-src 'self'",
+    "worker-src 'self'",
     'frame-src https://maps.google.com https://www.google.com https://www.youtube-nocookie.com',
     "object-src 'none'",
     "base-uri 'self'",
