@@ -105,7 +105,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
             <span className="inline-block whitespace-nowrap">いつもの日常に</span>
             <span className="inline-block whitespace-nowrap">ひとかけのヒゲダンを</span>
           </h1>
-          <p className="mt-3 mx-auto max-w-xl text-xs sm:text-[13.5px] leading-[1.9] text-[#57534E]">
+          <p className="mt-3 mx-auto max-w-3xl text-[14.5px] sm:text-[17px] font-bold leading-[1.75] text-[#57534E]">
             溢れる髭男への想いをあなたにも受け取ってほしくて<span className="inline-block whitespace-nowrap">形にしました。</span><span className="inline-block whitespace-nowrap">Have Fun!</span>
           </p>
         </header>
@@ -210,12 +210,12 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
       {/* メンバー紹介（ノートの索引メモ風・控えめで落ち着いた佇まい） */}
       <section
         aria-labelledby="members-heading"
-        className="mt-14 sm:mt-16 space-y-6"
+        className="mt-[47px] sm:mt-[55px]"
       >
-        <div className="relative flex items-center justify-center mb-6" aria-hidden="true">
-          <div className="absolute inset-x-0 top-1/2 h-px bg-[#e5dccb]" />
-          <span className="relative z-[1] inline-flex items-center justify-center bg-[#faf6eb] px-3">
-            <svg viewBox="0 0 100 55" width="32" height="18" className="overflow-visible">
+        <div className="relative flex items-center justify-center mb-[15px]" aria-hidden="true">
+          <div className="absolute inset-x-0 top-1/2 h-[2px] bg-[#e5dccb]" />
+          <span className="relative z-[1] inline-flex items-center justify-center bg-[#faf6eb] px-4">
+            <svg viewBox="0 0 100 55" width="64" height="36" className="overflow-visible">
               <g transform="translate(50 28) scale(0.125) translate(-370 -125)">
                 <path
                   fill="#78716C"
@@ -233,7 +233,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
           Official髭男dism メンバー紹介
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6 pt-1">
           {HIGEDAN_MEMBERS.map((member, index) => {
             const sigSong = songs.find((s) => s.id === member.signatureSongId);
             const tapeStyle = {
