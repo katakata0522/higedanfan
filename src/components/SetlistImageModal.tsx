@@ -20,7 +20,6 @@ interface SetlistImageModalProps {
 
 const CANVAS_WIDTH = 1080;
 const PADDING_X = 88;
-const CONTENT_WIDTH = CANVAS_WIDTH - PADDING_X * 2;
 
 function wrapTextLines(
   ctx: CanvasRenderingContext2D,

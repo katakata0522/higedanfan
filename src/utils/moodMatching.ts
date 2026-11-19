@@ -34,9 +34,9 @@ export const ERA_PREFERENCE_LABELS: Record<EraPreference, string> = {
 
 export const LENGTH_PREFERENCE_LABELS: Record<LengthPreference, string> = {
   any: '長さはこだわらない',
-  under4: '４分未満',
-  fourToFive: '４分以上５分未満',
-  fivePlus: '５分以上',
+  under4: '短めで爽快に',
+  fourToFive: 'ほどよい聴きごたえで',
+  fivePlus: '長めにゆったり思いを馳せて',
 };
 
 export interface MoodCriteria {

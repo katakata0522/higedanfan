@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Mic2,
   Newspaper,
+  NotebookPen,
 } from 'lucide-react';
 
 export type ActiveFeatureTab =
@@ -118,6 +119,9 @@ interface SiteHeaderProps {
   onSelectTab: (tab: SiteTab) => void;
   onReplayIntro?: () => void;
   onMenuOpenChange?: (open: boolean) => void;
+  onOpenMyNote?: () => void;
+  isMyNoteOpen?: boolean;
+  setlistCount?: number;
 }
 
 export const SiteHeader: React.FC<SiteHeaderProps> = ({
@@ -125,6 +129,9 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   onSelectTab,
   onReplayIntro,
   onMenuOpenChange,
+  onOpenMyNote,
+  isMyNoteOpen = false,
+  setlistCount,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButton = React.useRef<HTMLButtonElement>(null);
@@ -200,7 +207,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
 
   return (
     <header className="sticky top-0 z-40 border-b border-[#e7dfd0] bg-[#f9f5eb]/95 backdrop-blur-md">
-      <div className="relative mx-auto max-w-6xl px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
+      <div className="relative mx-auto max-w-6xl px-2.5 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-1.5 sm:gap-3">
         {/* Left: Hand-drawn Mustache Emblem & Kiwi Maru Brand */}
         <a
           href={tabPath('home', import.meta.env.BASE_URL)}
@@ -215,7 +222,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           <svg
             viewBox="0 0 100 55"
             aria-hidden="true"
-            className="h-6 w-9 sm:h-7 sm:w-11 shrink-0 overflow-visible transition-transform duration-300 ease-out group-hover:scale-105 group-hover:-rotate-3"
+            className="h-5 w-7 sm:h-7 sm:w-11 shrink-0 overflow-visible transition-transform duration-300 ease-out group-hover:scale-105 group-hover:-rotate-3"
           >
             <g transform="translate(50 28) scale(0.145) translate(-370 -125)">
               <path
@@ -229,7 +236,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             </g>
           </svg>
           <span className="min-w-0">
-            <span className="block font-note-serif text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
+            <span className="block font-note-serif text-[11px] min-[380px]:text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
               <span className="whitespace-nowrap">115万キロの</span><wbr /><span className="whitespace-nowrap">ファンノート</span>
             </span>
             {' '}
@@ -239,13 +246,29 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           </span>
         </a>
 
-        {/* Right: Current Corner + Notebook Menu */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+        {/* Right: Current Corner + My Note + Notebook Menu */}
+        <div className="flex items-center gap-1 min-[380px]:gap-1.5 sm:gap-2.5 shrink-0">
           {activeTab !== 'home' && (
             <div className="hidden lg:flex items-center gap-1.5 rounded-full border border-[#e7dfd0] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold text-[#253331]">
               {!isInfoPage(activeTab) && <span className="text-[#C83E2B]">{currentNav.icon}</span>}
               <span>{isInfoPage(activeTab) ? infoPages[activeTab] : currentNav.label}</span>
             </div>
+          )}
+
+          {onOpenMyNote && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsMenuOpen(false);
+                onOpenMyNote();
+              }}
+              aria-haspopup="dialog"
+              aria-expanded={isMyNoteOpen}
+              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffcf5] hover:border-[#253331] hover:bg-[#f2ece0] text-[#253331] px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] min-[380px]:text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer"
+            >
+              <NotebookPen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#C83E2B] shrink-0" aria-hidden="true" />
+              <span>マイノート</span>
+            </button>
           )}
 
           <button
@@ -255,7 +278,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             aria-expanded={isMenuOpen}
             aria-controls="global-nav-drawer"
             aria-label={isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
-            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-2.5 sm:px-3.5 py-2 text-xs sm:text-sm font-bold transition-colors min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] min-[380px]:text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
               isMenuOpen
                 ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
                 : 'border-[#dfd7c7] bg-[#fffcf5] text-[#253331] hover:border-[#253331] hover:bg-[#f2ece0]'
@@ -263,12 +286,12 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           >
             {isMenuOpen ? (
               <>
-                <X className="h-4 w-4 shrink-0" />
+                <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span>閉じる</span>
               </>
             ) : (
               <>
-                <Menu className="h-4 w-4 shrink-0" />
+                <Menu className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                 <span>メニュー</span>
               </>
             )}
@@ -336,6 +359,15 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-bold min-w-0 wrap-anywhere whitespace-normal">
                                 {item.label}
+                                {item.id === 'setlist' && typeof setlistCount === 'number' && setlistCount > 0 && (
+                                  <span
+                                    className={`ml-1 font-mono-num text-xs font-semibold ${
+                                      isCurrent ? 'text-[#f5d0c9]' : 'text-[#57534E]'
+                                    }`}
+                                  >
+                                    （{setlistCount}曲）
+                                  </span>
+                                )}
                               </span>
                               {isCurrent && (
                                 <span className="text-[10px] font-medium text-[#f5d0c9] whitespace-nowrap">

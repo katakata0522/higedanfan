@@ -3,7 +3,7 @@ import { EditorProfile } from './EditorProfile';
 import { SourcesAndThanks } from './SourcesAndThanks';
 import { TermsOfUse } from './TermsOfUse';
 import { PrivacyPolicy } from './PrivacyPolicy';
-import { infoPages, infoPageDescriptions, type InfoPageId } from './infoPages';
+import { type InfoPageId } from './infoPages';
 import type { SiteTab } from '../SiteHeader';
 
 interface InfoPageProps {
@@ -23,17 +23,6 @@ export default function InfoPage({
 }: InfoPageProps) {
   const region = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    const title = `${infoPages[page]}｜115万キロのファンノート — Official髭男dism 非公式ファンサイト`;
-    const description = infoPageDescriptions[page];
-    document.title = title;
-    const setMeta = (selector: string, content: string) => {
-      document.querySelector<HTMLMetaElement>(selector)?.setAttribute('content', content);
-    };
-    setMeta('meta[name="description"]', description);
-    setMeta('meta[property="og:title"]', title);
-    setMeta('meta[property="og:description"]', description);
-    setMeta('meta[name="twitter:title"]', title);
-    setMeta('meta[name="twitter:description"]', description);
     const heading = region.current?.querySelector('h1');
     if (heading) {
       heading.tabIndex = -1;
@@ -44,10 +33,11 @@ export default function InfoPage({
   return (
     <div ref={region} className="mx-auto max-w-4xl px-4 pb-12 pt-4 sm:px-6 sm:pt-5">
       {page === 'editor' && <EditorProfile onSelectTab={onSelectTab} />}
-      {page === 'sources' && <SourcesAndThanks />}
-      {page === 'terms' && <TermsOfUse />}
+      {page === 'sources' && <SourcesAndThanks onSelectTab={onSelectTab} />}
+      {page === 'terms' && <TermsOfUse onSelectTab={onSelectTab} />}
       {page === 'privacy' && (
         <PrivacyPolicy
+          onSelectTab={onSelectTab}
           onExportRecords={onExportRecords}
           onImportRecords={onImportRecords}
           onResetAllUserData={onResetAllUserData}

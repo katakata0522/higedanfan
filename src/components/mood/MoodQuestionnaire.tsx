@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { ArrowLeft, ChevronRight } from 'lucide-react';
-import { MOOD_CHOICE_LABELS, SITUATION_CHOICE_LABELS, SOUND_PREFERENCE_LABELS } from '../../utils/moodMatching';
+import {
+  ERA_PREFERENCE_LABELS,
+  LENGTH_PREFERENCE_LABELS,
+  MOOD_CHOICE_LABELS,
+  SITUATION_CHOICE_LABELS,
+  SOUND_PREFERENCE_LABELS,
+} from '../../utils/moodMatching';
 import type { MoodAnswer, MoodSession, MoodStep } from './moodSession';
 
 interface Choice {
@@ -48,24 +54,24 @@ const QUESTIONS: Record<MoodStep, QuestionDefinition> = {
   },
   4: {
     title: 'どの頃のヒゲダンに会いたい？',
-    description: '選んだ時期から探します。迷ったらおまかせで。',
+    description: '気になった時期があれば選んでみて。迷ったらおまかせで。',
     options: [
-      { id: 'any', label: 'どの時期の曲も聴きたい' },
-      { id: 'indies_escaparade', label: '初期〜エスカパレード' },
-      { id: 'traveler', label: 'Traveler期' },
-      { id: 'editorial', label: 'Editorial期' },
-      { id: 'rejoice', label: 'Rejoice期' },
-      { id: 'latest_2025_2026', label: '2024〜2026年の曲' },
+      { id: 'any', label: ERA_PREFERENCE_LABELS.any, sub: 'デビューから最新曲まで、幅広く出会う' },
+      { id: 'indies_escaparade', label: ERA_PREFERENCE_LABELS.indies_escaparade, sub: '原点のみずみずしさとグルーヴを' },
+      { id: 'traveler', label: ERA_PREFERENCE_LABELS.traveler, sub: '飛躍と輝きが詰まった代表作の時代' },
+      { id: 'editorial', label: ERA_PREFERENCE_LABELS.editorial, sub: '音の冒険と繊細な深みが広がる頃' },
+      { id: 'rejoice', label: ERA_PREFERENCE_LABELS.rejoice, sub: 'しなやかで力強い近年のバンドサウンド' },
+      { id: 'latest_2025_2026', label: ERA_PREFERENCE_LABELS.latest_2025_2026, sub: 'いちばん新しい音の旅路に触れる' },
     ],
   },
   5: {
     title: '今日は、どのくらい聴いていられそう？',
-    description: '今の時間に合う長さを選んでみて。',
+    description: '過ごす時間や余韻の長さを思い浮かべて。',
     options: [
-      { id: 'any', label: '長さはこだわらない' },
-      { id: 'under4', label: '４分未満' },
-      { id: 'fourToFive', label: '４分以上５分未満' },
-      { id: 'fivePlus', label: '５分以上' },
+      { id: 'any', label: LENGTH_PREFERENCE_LABELS.any, sub: '曲の長さはおまかせして、今の気分に合わせる' },
+      { id: 'under4', label: LENGTH_PREFERENCE_LABELS.under4, sub: '軽やかに心を弾ませ、すっきり聴き終えたいときに' },
+      { id: 'fourToFive', label: LENGTH_PREFERENCE_LABELS.fourToFive, sub: '一曲のドラマを心地よく味わえる、いつもの長さ' },
+      { id: 'fivePlus', label: LENGTH_PREFERENCE_LABELS.fivePlus, sub: '余韻までじっくり浸りたい時間のおともに' },
     ],
   },
 };

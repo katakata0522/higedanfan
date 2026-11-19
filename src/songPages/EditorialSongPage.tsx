@@ -1,5 +1,5 @@
 import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { ChevronRight, ExternalLink, Menu, Play } from 'lucide-react';
+import { ArrowLeft, Check, ChevronRight, ExternalLink, Menu, NotebookPen, Play, Plus } from 'lucide-react';
 import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { useFanRecords } from '../hooks/useFanRecords';
@@ -20,7 +20,12 @@ import {
 import { songAppleArtwork } from '../data/songAppleArtwork';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
 import { formatAlbumDisplayName } from '../utils/songCatalog';
+import { recordMyNoteSongRead } from '../utils/myNoteProfile';
 import type { EditorialSongPageData } from './EditorialSongPageData';
+
+const MyNoteModal = lazy(() =>
+  import('../components/MyNoteModal').then(module => ({ default: module.MyNoteModal }))
+);
 
 const KurunIntroOverlay = lazy(() =>
   import('../components/KurunIntroOverlay').then(module => ({ default: module.KurunIntroOverlay }))
@@ -50,6 +55,8 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const [isPlayerLoaded, setIsPlayerLoaded] = useState(false);
   const [isIntroOpen, setIsIntroOpen] = useState(false);
   const [introReplayToken, setIntroReplayToken] = useState(0);
+  const [hasLoadedMyNote, setHasLoadedMyNote] = useState(false);
+  const [isMyNoteOpen, setIsMyNoteOpen] = useState(false);
   const sourcesRef = useRef<HTMLDetailsElement>(null);
   const siteMenuRef = useRef<HTMLDetailsElement>(null);
   const toastTimer = useRef<number | null>(null);
@@ -65,6 +72,10 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
     setArtworkFailed(false);
     setIsPlayerLoaded(false);
   }, [page.id]);
+
+  useEffect(() => {
+    recordMyNoteSongRead(page.id, records.resetEpoch);
+  }, [page.id, records.resetEpoch]);
 
   useEffect(() => () => {
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
@@ -120,7 +131,23 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               <span className="sr-only"> トップへ</span>
             </span>
           </a>
-          <details className="song-site-menu" ref={siteMenuRef}
+          <div className="site-topbar-actions">
+            <button
+              type="button"
+              className="song-mynote-btn"
+              aria-haspopup="dialog"
+              aria-expanded={isMyNoteOpen}
+              onClick={() => {
+                siteMenuRef.current?.removeAttribute('open');
+                setHasLoadedMyNote(true);
+                setIsMyNoteOpen(true);
+              }}
+            >
+              <NotebookPen className="song-menu-trigger-icon song-mynote-icon" aria-hidden="true" />
+              <span>マイノート</span>
+            </button>
+
+            <details className="song-site-menu" ref={siteMenuRef}
             onKeyDown={event => {
               if (event.key === 'Escape') {
                 siteMenuRef.current?.removeAttribute('open');
@@ -180,13 +207,34 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               </div>
             </nav>
           </details>
+          </div>
         </div>
       </header>
 
       <main id="main" tabIndex={-1} className="page-main" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>
         <div className={`sheet-frame${readable ? ' sheet-frame--readable' : ''}`}>
+        <div className="sheet-top-bar">
+          <a className="sheet-top-back" href={tabPath(returnDest.hash, base)}>
+            <ArrowLeft size={14} strokeWidth={2.2} aria-hidden="true" />
+            <span>{returnDest.label}</span>
+          </a>
+          {inSetlist ? (
+            <a className="sheet-top-setlist sheet-top-setlist--saved" href={tabPath('setlist', base)}>
+              <Check size={14} strokeWidth={2.3} aria-hidden="true" />
+              <span>MYセトリで確認</span>
+            </a>
+          ) : (
+            <button
+              type="button"
+              className="sheet-top-setlist"
+              onClick={() => void records.addToSetlist(song.id)}
+            >
+              <Plus size={14} strokeWidth={2.3} aria-hidden="true" />
+              <span>MYセトリに追加</span>
+            </button>
+          )}
+        </div>
         <article className="song-sheet" aria-labelledby="song-title">
-          <a className="sheet-close" href={tabPath(returnDest.hash, base)} aria-label={returnDest.label}>×</a>
           <header className="song-hero">
             <figure className="cover">
               {appleArtwork && !artworkFailed ? (
@@ -231,7 +279,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <div className="fact-item"><dt>テンポ</dt><dd>{formatSongBpm(page.id, fact.tempo)}{!tempoUnderReview && <> <small>BPM</small></>}</dd></div>
                 <div className="fact-item"><dt>地声最低</dt><dd>{fact.low}</dd></div>
                 <div className="fact-item"><dt>地声最高</dt><dd>{fact.chest}</dd></div>
-                <div className={fact.falsetto ? 'fact-item' : 'fact-item fact-item--missing'}><dt>裏声最高</dt><dd>{fact.falsetto ?? '参考値なし'}</dd></div>
+                <div className={fact.falsetto ? 'fact-item' : 'fact-item fact-item--missing'}><dt>裏声最高</dt><dd>{fact.falsetto ?? '—'}</dd></div>
               </dl>
               {tempoUnderReview && <p className="tempo-explanation">テンポは資料によって値が異なるため、確認中です。</p>}
             </div>
@@ -302,7 +350,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 aria-label={`${song.title}をYouTubeで聴く${videoDescription ? `（${videoDescription}）` : ''}（新しいタブ）`}
                 className="listen-video-card"
               >
-                <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" />
+                <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" referrerPolicy="no-referrer" />
                 <span className="listen-video-play">
                   <Play size={16} aria-hidden="true" />
                   <span>YouTubeで聴く{videoDescription ? `（${videoDescription}）` : ''}</span>
@@ -328,7 +376,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   aria-label={`${song.title}の公式動画をこのページで再生`}
                   className="listen-video-card"
                 >
-                  <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" />
+                  <img src={`https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`} alt="" loading="lazy" referrerPolicy="no-referrer" />
                   <span className="listen-video-play">
                     <Play size={16} aria-hidden="true" />
                     <span>このページで動画を再生</span>
@@ -362,7 +410,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
                 <div><dt>収録作品</dt><dd>{formatAlbumDisplayName(fact.album)}{page.albumTrack ? `（${page.albumTrack}曲目）` : ''}</dd></div>
                 <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
-                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '参考値なし'}</dd></div>
+                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '—'}</dd></div>
               </dl>
               {page.vocalVariants?.map(variant => (
                 <p className="vocal-variant" key={variant.label}>
@@ -371,7 +419,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               ))}
               {fact.otherRange && !page.vocalVariants?.length && (
                 <p className="vocal-variant">
-                  <strong>別サイトの音域データ：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2] === '記載なし' ? '参考値なし' : fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noopener noreferrer">音域データ！＠ウィキ</a>の調査）
+                  <strong>別サイトの音域データ：</strong>地声最低 {fact.otherRange[0]} ／ 地声最高 {fact.otherRange[1]} ／ 裏声最高 {fact.otherRange[2] === '記載なし' ? '—' : fact.otherRange[2]}（<a href={fact.otherSource} target="_blank" rel="noopener noreferrer">音域データ！＠ウィキ</a>の調査）
                 </p>
               )}
               <ul className="source-list">
@@ -424,10 +472,38 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             ※当サイトはファンによる非公式ファンサイトであり、Official髭男dism公式および所属事務所・レコード会社とは一切関係ありません。
           </p>
           <p className="song-site-footer-storage">
-            ※MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href={`${base}#privacy`}>プライバシーポリシー</a>から行えます）。
+            ※MYセトリや参戦・訪問記録はお使いのブラウザ内に保存されます（書き出し・初期化は<a href={tabPath('privacy', base)}>プライバシーポリシー</a>から行えます）。
           </p>
         </div>
       </footer>
+
+      {hasLoadedMyNote && (
+        <Suspense fallback={null}>
+          <MyNoteModal
+            isOpen={isMyNoteOpen}
+            onClose={() => setIsMyNoteOpen(false)}
+            songs={records.songs}
+            setlist={records.setlist}
+            setlistTitle={records.setlistTitle}
+            resetEpoch={records.resetEpoch}
+            visitedSpotIds={records.visitedSpotIds}
+            attendedTourIds={records.attendedTourIds}
+            bestQuizScore={records.bestQuizScore}
+            votedKeys={records.votedKeys}
+            reviews={records.reviews}
+            onNavigateTab={tab => {
+              setIsMyNoteOpen(false);
+              window.location.assign(tabPath(tab, base));
+            }}
+            onNavigateSong={id => {
+              setIsMyNoteOpen(false);
+              window.location.assign(`${base}songs/${id}/`);
+            }}
+            onSwitchSavedSetlist={records.replaceSetlistSilently}
+            onExportRecords={records.downloadRecords}
+          />
+        </Suspense>
+      )}
     </div>
   );
 }

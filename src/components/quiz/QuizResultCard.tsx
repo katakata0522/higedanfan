@@ -8,10 +8,11 @@ interface Props {
   quizSummary: QuizResultSummary;
   onRestart: () => void;
   onChooseCourse: () => void;
+  onOpenArchive?: () => void;
 }
 
 export function QuizResultCard({
-  visible, activeCourseLabel, quizSummary, onRestart, onChooseCourse,
+  visible, activeCourseLabel, quizSummary, onRestart, onChooseCourse, onOpenArchive,
 }: Props) {
   const [isCertShareOpen, setIsCertShareOpen] = useState(false);
   const [copiedCert, setCopiedCert] = useState(false);
@@ -107,7 +108,7 @@ export function QuizResultCard({
 
         <button
           type="button"
-          onClick={() => (window.location.hash = 'quiz_archive')}
+          onClick={() => (onOpenArchive ? onOpenArchive() : (window.location.hash = 'quiz_archive'))}
           className="inline-flex items-center gap-2 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-5 py-2.5 text-xs font-bold text-[#1E3A5F] hover:border-[#1E3A5F] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
         >
           <Newspaper className="h-4 w-4" />

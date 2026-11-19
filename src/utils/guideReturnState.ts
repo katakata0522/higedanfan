@@ -44,6 +44,9 @@ export type TourReturnState = {
   query: string;
   sortOrder: 'newest' | 'oldest';
   category: TourCategoryFilter;
+  year?: string;
+  attendedOnly?: boolean;
+  setlistOnly?: boolean;
   openTourId?: string;
   openEventId?: string;
   resetEpoch?: string;
@@ -219,6 +222,9 @@ export function saveTourReturnState(
       query: state.query,
       sortOrder: state.sortOrder,
       category: state.category,
+      ...(state.year && state.year !== 'all' ? { year: state.year } : {}),
+      ...(state.attendedOnly ? { attendedOnly: true } : {}),
+      ...(state.setlistOnly ? { setlistOnly: true } : {}),
       ...(state.openTourId ? { openTourId: state.openTourId } : {}),
       ...(state.openEventId ? { openEventId: state.openEventId } : {}),
       resetEpoch: state.resetEpoch ?? '',
@@ -242,11 +248,17 @@ export function readTourReturnState(
     if (stateEpoch !== expectedEpoch) return null;
     const validOptionalId = (val: unknown) =>
       val === undefined || (typeof val === 'string' && val.length > 0 && val.length <= 80 && !/[\u0000-\u001F\u007F]/.test(val));
+    const validOptionalYear =
+      record.year === undefined || (typeof record.year === 'string' && (record.year === 'all' || /^\d{4}$/.test(record.year)));
+    const validOptionalBool = (val: unknown) => val === undefined || typeof val === 'boolean';
     if (
       typeof record.query !== 'string' ||
       record.query.length > 60 ||
       (record.sortOrder !== 'newest' && record.sortOrder !== 'oldest') ||
       !tourCategories.has(record.category as TourCategoryFilter) ||
+      !validOptionalYear ||
+      !validOptionalBool(record.attendedOnly) ||
+      !validOptionalBool(record.setlistOnly) ||
       !validOptionalId(record.openTourId) ||
       !validOptionalId(record.openEventId)
     ) {
@@ -256,6 +268,9 @@ export function readTourReturnState(
       query: record.query,
       sortOrder: record.sortOrder,
       category: record.category as TourCategoryFilter,
+      ...(typeof record.year === 'string' ? { year: record.year } : {}),
+      ...(typeof record.attendedOnly === 'boolean' ? { attendedOnly: record.attendedOnly } : {}),
+      ...(typeof record.setlistOnly === 'boolean' ? { setlistOnly: record.setlistOnly } : {}),
       ...(typeof record.openTourId === 'string' ? { openTourId: record.openTourId } : {}),
       ...(typeof record.openEventId === 'string' ? { openEventId: record.openEventId } : {}),
       resetEpoch: expectedEpoch,

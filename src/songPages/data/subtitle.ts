@@ -14,7 +14,7 @@ const page = {
     citeUrl: editorialArticles.subtitle.featureCiteUrl,
   },
   overview: editorialArticles.subtitle.paragraphs,
-  rangeNote: '※ 地声最低音mid1A#は瞬間的に現れる音で、調査元も判定がやや曖昧だと説明しています。裏声最高音は参照元に値がないため「参考値なし」と表示しています。',
+  rangeNote: '※ 地声最低音mid1A#は瞬間的に現れる音で、調査元も判定がやや曖昧だと説明しています。裏声最高音は参照元に値がないため「—」と表示しています。',
   albumTrack: 10,
   sources: [
     { label: 'フジテレビ『silent』公式サイト', purpose: '主題歌の制作背景とアーティストコメント', url: 'https://www.fujitv.co.jp/silent/news/news07.html' },

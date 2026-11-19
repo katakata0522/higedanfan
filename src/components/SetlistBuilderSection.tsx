@@ -1,7 +1,7 @@
 import { prepareSongSearch } from '../utils/songSearch';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SetlistImageModal } from './SetlistImageModal';
-import { SETLIST_TITLE_LIMIT } from '../utils/setlist';
+import { SETLIST_TITLE_LIMIT, reorderSetlistEntries } from '../utils/setlist';
 import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../utils/guideReturnState';
@@ -20,7 +20,9 @@ import {
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
+  ArrowUpToLine,
   ArrowDown,
+  GripVertical,
   Plus,
   Copy,
   Check,
@@ -28,6 +30,7 @@ import {
   Search,
   X,
   Pencil,
+  Eye,
   Image as ImageIcon,
 } from 'lucide-react';
 import { SongItem } from '../data/higedanData';
@@ -119,6 +122,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const [pendingDeleteSaved, setPendingDeleteSaved] = useState<{ id: string; title: string } | null>(null);
   const [isPresetConfirmOpen, setIsPresetConfirmOpen] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
   const setlistPaperRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
@@ -136,6 +141,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [savedSetlists, setSavedSetlists] = useState<SavedSetlistsState>(() =>
     loadSavedSetlists(validSongIds, setlistTitle, setlist, { expectedEpoch: resetEpoch }),
   );
+  const savedSetlistsRef = useRef(savedSetlists);
+  savedSetlistsRef.current = savedSetlists;
   const switchingTargetRef = useRef<{ title: string; sig: string } | null>(null);
 
   const selectableSongsByAlbum = useMemo(() => {
@@ -210,15 +217,16 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       }
       switchingTargetRef.current = null;
     }
-    setSavedSetlists((prev) => {
-      const next = syncActiveSavedSetlist(prev, safeDisplayTitle, setlist);
+    const current = savedSetlistsRef.current;
+    const next = syncActiveSavedSetlist(current, safeDisplayTitle, setlist);
+    if (next !== current) {
       persistSavedSetlists(next, {
         expectedEpoch: resetEpoch,
         validSongIds,
         deletedIds: deletedIdsRef.current,
       });
-      return next;
-    });
+      setSavedSetlists(next);
+    }
   }, [resetEpoch, safeDisplayTitle, setlist, validSongIds]);
 
   useEffect(() => {
@@ -625,31 +633,74 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     if (idx < 0) return null;
     const trackBadge = entry.isEncore ? `EN${sectionIdx + 1}` : `M${(sectionIdx + 1).toString().padStart(2, '0')}`;
     const isFirstMain = !isEncoreSection && sectionIdx === 0;
+    const isFirstInSection = sectionIdx === 0;
     const isLastEncore = isEncoreSection && sectionIdx === encoreEntries.length - 1;
 
     return (
       <li
         key={entry.songId}
         data-song-id={entry.songId}
-        className={`setlist-track grid min-w-0 items-center ${
+        draggable={!isCompleteView}
+        onDragStart={(e) => {
+          if (isCompleteView) return;
+          setDraggedIndex(idx);
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', entry.songId);
+        }}
+        onDragOver={(e) => {
+          if (isCompleteView || draggedIndex === null || draggedIndex === idx) return;
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          if (dragOverIndex !== idx) setDragOverIndex(idx);
+        }}
+        onDragLeave={() => {
+          if (dragOverIndex === idx) setDragOverIndex(null);
+        }}
+        onDrop={(e) => {
+          if (isCompleteView || draggedIndex === null) return;
+          e.preventDefault();
+          if (draggedIndex !== idx) {
+            onReplaceSetlistSilently(reorderSetlistEntries(setlist, draggedIndex, idx), setlistTitle);
+          }
+          setDraggedIndex(null);
+          setDragOverIndex(null);
+        }}
+        onDragEnd={() => {
+          setDraggedIndex(null);
+          setDragOverIndex(null);
+        }}
+        className={`setlist-track grid min-w-0 items-center transition-opacity ${
           isCompleteView ? 'grid-cols-[minmax(0,1fr)]' : 'grid-cols-[minmax(0,1fr)_24px] gap-1.5'
+        } ${draggedIndex === idx ? 'opacity-50' : ''} ${
+          dragOverIndex === idx && draggedIndex !== idx ? 'rounded-lg ring-2 ring-[#C83E2B]/45' : ''
         }`}
       >
         <div
           className={`setlist-track-card grid min-h-[52px] min-w-0 items-center gap-1.5 rounded-lg border border-[#E6E1D6] px-2 py-2 ${
-            isCompleteView ? 'grid-cols-[26px_minmax(0,1fr)]' : 'grid-cols-[26px_minmax(0,1fr)_28px]'
+            isCompleteView
+              ? 'grid-cols-[26px_minmax(0,1fr)]'
+              : 'grid-cols-[26px_minmax(0,1fr)_auto] sm:grid-cols-[16px_26px_minmax(0,1fr)_auto]'
           } ${entry.isEncore ? 'bg-[#FEF8EC]' : 'bg-white'}`}
         >
+          {!isCompleteView && (
+            <span
+              className="hidden sm:inline-flex items-center justify-center text-[#A8A29E] cursor-grab active:cursor-grabbing"
+              aria-hidden="true"
+              title="ドラッグして並び替え"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </span>
+          )}
           {!isCompleteView && onToggleEncore ? (
             <button
               type="button"
               onClick={() => onToggleEncore(idx)}
               aria-label={`${song.title}を${entry.isEncore ? '本編' : 'アンコール'}へ切り替え`}
               title={entry.isEncore ? '本編へ切り替え' : 'アンコールへ切り替え'}
-              className={`inline-flex h-7 w-[26px] items-center justify-center rounded font-mono-num text-[11px] font-bold underline decoration-dotted underline-offset-2 transition-colors cursor-pointer ${
+              className={`inline-flex h-7 w-[26px] items-center justify-center rounded border font-mono-num text-[11px] font-bold transition-colors cursor-pointer ${
                 entry.isEncore
-                  ? 'text-[#B45309] hover:bg-[#FDE68A]/40'
-                  : 'text-[#57534E] hover:bg-[#F2EFE9]'
+                  ? 'border-[#F3D19E] bg-[#FFFBEB] text-[#B45309] hover:border-[#D97706] hover:bg-[#FEF3C7]'
+                  : 'border-[#E6E1D6] bg-[#FBF9F5] text-[#57534E] hover:border-[#A8A29E] hover:bg-[#F2EFE9] hover:text-[#1C1917]'
               }`}
             >
               {trackBadge}
@@ -667,14 +718,27 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             {song.title}
           </a>
           {!isCompleteView && (
-            <button
-              type="button"
-              onClick={() => onRemoveSong(song.id)}
-              aria-label={`${song.title}をセットリストから外す`}
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
-            >
-              <X aria-hidden="true" className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-0.5 shrink-0">
+              {!isFirstInSection && (
+                <button
+                  type="button"
+                  onClick={() => onMoveSong(idx, 'top')}
+                  aria-label={`${song.title}を${entry.isEncore ? 'アンコール' : '本編'}の先頭へ移動`}
+                  title="先頭へ移動"
+                  className="hidden min-[400px]:inline-flex h-7 w-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] transition-colors cursor-pointer"
+                >
+                  <ArrowUpToLine aria-hidden="true" className="h-3.5 w-3.5" />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onRemoveSong(song.id)}
+                aria-label={`${song.title}をセットリストから外す`}
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+              >
+                <X aria-hidden="true" className="h-3.5 w-3.5" />
+              </button>
+            </div>
           )}
         </div>
         {!isCompleteView && (
@@ -707,28 +771,15 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     if (isCompleteView) return null;
     return (
       <li key={`add-${target}`} className="pt-0.5">
-        <div className="flex min-h-[36px] items-center justify-between gap-1 rounded-lg border border-dashed border-[#D5CEC2] bg-[#FBF9F5]/90 px-2 py-0.5">
-          <button
-            type="button"
-            onClick={() => openPickerFor(target)}
-            aria-expanded={pickerTarget === target}
-            className="inline-flex min-h-[30px] flex-1 items-center gap-1.5 rounded-md px-1.5 text-left text-xs font-semibold text-[#57534E] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
-          >
-            <Plus aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#C83E2B]" />
-            <span>{label}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setPickerTarget(null);
-              setIsCompleteView(true);
-            }}
-            aria-label="曲の追加・編集ツールを閉じる"
-            className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#E6E1D6] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 cursor-pointer"
-          >
-            <X aria-hidden="true" className="h-3.5 w-3.5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => openPickerFor(target)}
+          aria-expanded={pickerTarget === target}
+          className="inline-flex min-h-[36px] w-full items-center gap-1.5 rounded-lg border border-dashed border-[#D5CEC2] bg-[#FBF9F5]/90 px-3 py-1 text-left text-xs font-semibold text-[#57534E] hover:border-[#A8A29E] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
+        >
+          <Plus aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#C83E2B]" />
+          <span>{label}</span>
+        </button>
         {pickerTarget === target && renderInlinePickerPanel(target)}
       </li>
     );
@@ -822,16 +873,31 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   <p className="text-xs text-[#78716C]">
                     {stats.totalSongs}曲 · <span ref={durationLabelRef} className="rounded-sm">{stats.formattedDuration}</span>
                   </p>
-                  {isCompleteView && (
-                    <button
-                      type="button"
-                      onClick={() => setIsCompleteView(false)}
-                      aria-label="セットリストの追加・並び替えを開く"
-                      className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D5CEC2] bg-white px-2.5 py-0.5 text-xs font-medium text-[#57534E] hover:border-[#1C1917] hover:text-[#1C1917] cursor-pointer"
-                    >
-                      <Pencil aria-hidden="true" className="h-3 w-3" />
-                      <span>編集</span>
-                    </button>
+                  {setlist.length > 0 && (
+                    isCompleteView ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsCompleteView(false)}
+                        aria-label="セットリストの追加・並び替えを開く"
+                        className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D5CEC2] bg-white px-2.5 py-0.5 text-xs font-medium text-[#57534E] hover:border-[#1C1917] hover:text-[#1C1917] cursor-pointer"
+                      >
+                        <Pencil aria-hidden="true" className="h-3 w-3" />
+                        <span>編集</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPickerTarget(null);
+                          setIsCompleteView(true);
+                        }}
+                        aria-label="セットリストの完成プレビューを見る"
+                        className="inline-flex min-h-7 items-center gap-1 rounded-md border border-[#D5CEC2] bg-[#FAF6EB] px-2.5 py-0.5 text-xs font-medium text-[#253331] hover:border-[#253331] hover:bg-[#F2EFE9] cursor-pointer"
+                      >
+                        <Eye aria-hidden="true" className="h-3 w-3" />
+                        <span>プレビュー</span>
+                      </button>
+                    )
                   )}
                 </div>
               </div>
@@ -853,6 +919,17 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   mainEntries.map((entry, mIdx) => renderTrackRow(entry, mIdx, false))
                 )}
                 {renderInlineAddRow('main', 'ここに曲を追加')}
+                {(encoreEntries.length > 0 || !isCompleteView) && (
+                  <li
+                    key="encore-divider"
+                    aria-hidden="true"
+                    className="flex items-center gap-2 py-0.5 text-[10px] font-bold leading-none tracking-[0.18em] text-[#9A341F]"
+                  >
+                    <span className="h-px flex-1 border-t border-dashed border-[#E6C594]" />
+                    <span>ENCORE</span>
+                    <span className="h-px flex-1 border-t border-dashed border-[#E6C594]" />
+                  </li>
+                )}
                 {encoreEntries.map((entry, eIdx) => renderTrackRow(entry, eIdx, true))}
                 {renderInlineAddRow('encore', 'アンコールに曲を追加')}
               </ol>

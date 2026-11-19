@@ -13,7 +13,7 @@ function renderCatalog() {
     const duration = formatDuration(f.seconds);
     const title = '<strong>'+escape(f.recording)+'</strong>';
     const songLink = publishedSongPageIds.has(id) ? '<a href="/higedanfan/songs/'+encodeURIComponent(id)+'/">'+title+'</a>' : title;
-    return '<li>'+songLink+' ／ '+escape(f.style)+' ／ '+duration+' ／ '+formatSongBpm(id, f.tempo)+(isTempoUnderReview(id) ? '' : ' BPM')+' ／ 地声 '+escape(f.low)+'～'+escape(f.chest)+' ／ 裏声最高 '+escape(f.falsetto || '参考値なし')+
+    return '<li>'+songLink+' ／ '+escape(f.style)+' ／ '+duration+' ／ '+formatSongBpm(id, f.tempo)+(isTempoUnderReview(id) ? '' : ' BPM')+' ／ 地声 '+escape(f.low)+'～'+escape(f.chest)+' ／ 裏声最高 '+escape(f.falsetto || '—')+
       ' ／ 配信日 '+f.release+' <a href="'+escape(f.apple)+'">Apple Music</a> · <a href="'+escape(f.rangeSource)+'">音域の参照元</a> · <a href="'+escape(f.styleSource)+'">曲調</a> · <a href="'+escape(f.tempoSource)+'">テンポ</a></li>';
   }).join('\n');
 }

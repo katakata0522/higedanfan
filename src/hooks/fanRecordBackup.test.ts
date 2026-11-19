@@ -100,3 +100,58 @@ test('backup preserves multiple saved setlists and rejects tampered setlist entr
   tampered.savedSetlists.items[0].entries.push({ songId: 'not-a-real-song', isEncore: false });
   assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tampered)), /安全に読み込めません/);
 });
+
+test('backup preserves quiz volume scores and rejects tampered volume records', () => {
+  const records = {
+    ...initialRecords('epoch-1'),
+    bestQuizScore: 90,
+  };
+  const volumes = Object.assign(Object.create(null), {
+    'beginner:vol1': { score: 9, total: 10, percentage: 90 },
+    'all:vol6': { score: 10, total: 10, percentage: 100 },
+  });
+  const backup = createFanRecordBackup(records, null, volumes);
+  const restored = parseFanRecordBackupWithSetlists(backup);
+  assert.deepEqual({ ...(restored.quizVolumeScores ?? {}) }, { ...volumes });
+
+  const tamperedKey = JSON.parse(backup);
+  tamperedKey.quizVolumeScores['beginner:unknown'] = { score: 5, total: 10, percentage: 50 };
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tamperedKey)), /安全に読み込めません/);
+
+  const tamperedScore = JSON.parse(backup);
+  tamperedScore.quizVolumeScores['beginner:vol1'].score = 11;
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tamperedScore)), /安全に読み込めません/);
+});
+
+test('backup preserves myNoteProfile and rejects tampered profile payloads', () => {
+  const records = { ...initialRecords('epoch-mn') };
+  const profile = {
+    nickname: 'テスト太郎',
+    opened: true,
+    readSongIds: ['pretender', 'subtitle'],
+    completedMoods: ['push_back', 'deep_lyric'],
+    moodCompletedCount: 3,
+    visitedVocalRange: true,
+    visitedReferenceArchive: true,
+    exportedBackup: true,
+  };
+  const backup = createFanRecordBackup(records, null, null, profile);
+  const restored = parseFanRecordBackupWithSetlists(backup);
+  assert.deepEqual(restored.myNoteProfile, profile);
+
+  const tamperedName = JSON.parse(backup);
+  tamperedName.myNoteProfile.nickname = '<script>bad</script>';
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tamperedName)), /安全に読み込めません/);
+
+  const tamperedSong = JSON.parse(backup);
+  tamperedSong.myNoteProfile.readSongIds.push('not-a-catalog-song');
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(tamperedSong)), /安全に読み込めません/);
+
+  const extraKey = JSON.parse(backup);
+  extraKey.myNoteProfile.unexpectedFlag = true;
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(extraKey)), /安全に読み込めません/);
+
+  const badType = JSON.parse(backup);
+  badType.myNoteProfile.opened = 'yes';
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(badType)), /安全に読み込めません/);
+});

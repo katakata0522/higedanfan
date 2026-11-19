@@ -1,3 +1,6 @@
+import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
+import type { SiteTab } from '../SiteHeader';
+
 type SourceLink = readonly [label: string, url: string];
 
 interface SourceGroup {
@@ -138,7 +141,7 @@ function ReferenceList({ links }: { links: SourceLink[] }) {
   );
 }
 
-export function SourcesAndThanks() {
+export function SourcesAndThanks({ onSelectTab }: { onSelectTab?: (tab: SiteTab) => void }) {
   return (
     <article aria-labelledby="sources-title" className="my-4 text-[#1C1917]">
       <header className="mb-7 border-b border-[#D5CEC2] pb-6">
@@ -166,7 +169,16 @@ export function SourcesAndThanks() {
 
       <section className="mt-7 border-t border-[#D5CEC2] pt-5">
         <h2 className="text-lg font-bold sm:text-xl">
-          サイト制作・編集　<a href="#editor" className="text-[#1E3A5F] underline underline-offset-4">
+          サイト制作・編集　<a
+            href={tabPath('editor', import.meta.env.BASE_URL)}
+            onClick={(e) => {
+              if (isPlainLeftClick(e) && onSelectTab) {
+                e.preventDefault();
+                onSelectTab('editor');
+              }
+            }}
+            className="text-[#1E3A5F] underline underline-offset-4"
+          >
             かたかた<span className="sr-only">のプロフィール</span>
           </a>
         </h2>

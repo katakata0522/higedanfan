@@ -48,6 +48,29 @@ export function normalizeSetlistOrder(entries: SetlistEntry[]): SetlistEntry[] {
   return [...main, ...encore];
 }
 
+export function reorderSetlistEntries(
+  entries: readonly SetlistEntry[],
+  fromIndex: number,
+  toIndex: number,
+): SetlistEntry[] {
+  if (
+    !Number.isInteger(fromIndex) ||
+    !Number.isInteger(toIndex) ||
+    fromIndex < 0 ||
+    toIndex < 0 ||
+    fromIndex >= entries.length ||
+    toIndex >= entries.length ||
+    fromIndex === toIndex
+  ) {
+    return entries.map((item) => ({ ...item }));
+  }
+  const copy = entries.map((item) => ({ ...item }));
+  const targetIsEncore = copy[toIndex].isEncore;
+  const [moved] = copy.splice(fromIndex, 1);
+  copy.splice(toIndex, 0, { songId: moved.songId, isEncore: targetIsEncore });
+  return normalizeSetlistOrder(copy);
+}
+
 export function sanitizeSetlistEntries(
   rawEntries: unknown,
   validSongIds: Set<string>

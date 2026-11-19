@@ -32,6 +32,11 @@ import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
 import { clearArchiveReturnState, clearGuideListReturnState, clearGuideReturnState, clearSongReturnTab, clearTourReturnState, saveSongReturnTab } from './utils/guideReturnState';
+import { recordMyNoteFeatureVisited, recordMyNoteSongRead } from './utils/myNoteProfile';
+
+const MyNoteModal = React.lazy(() =>
+  import('./components/MyNoteModal').then(module => ({ default: module.MyNoteModal }))
+);
 
 const MoodFinderSection = React.lazy(() =>
   import('./components/MoodFinderSection').then(module => ({default: module.MoodFinderSection}))
@@ -198,6 +203,9 @@ export default function App() {
 
   const selectSong = (id: string | null) => {
     const editorialPath = id ? songPagePath(id) : null;
+    if (id) {
+      recordMyNoteSongRead(id, records.resetEpoch);
+    }
     if (editorialPath) {
       saveSongReturnTab(activeFeatureTab);
       window.location.assign(`${import.meta.env.BASE_URL}${editorialPath}`);
@@ -248,9 +256,12 @@ export default function App() {
 
   const records = useFanRecords(showToast);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [hasLoadedMyNote, setHasLoadedMyNote] = React.useState(false);
+  const [isMyNoteOpen, setIsMyNoteOpen] = React.useState(false);
+  const [setlistSyncVersion, setSetlistSyncVersion] = React.useState(0);
 
   useEffect(() => {
-    if (pendingFocusTabRef.current !== activeFeatureTab || isIntroOpen || isMenuOpen) return undefined;
+    if (pendingFocusTabRef.current !== activeFeatureTab || isIntroOpen || isMenuOpen || isMyNoteOpen) return undefined;
     let attempts = 0;
     let timerId: number | null = null;
     const focusHeadingOrMain = () => {
@@ -276,7 +287,7 @@ export default function App() {
       window.cancelAnimationFrame(rafId);
       if (timerId !== null) window.clearTimeout(timerId);
     };
-  }, [activeFeatureTab, isIntroOpen, isMenuOpen]);
+  }, [activeFeatureTab, isIntroOpen, isMenuOpen, isMyNoteOpen]);
   const quizSession = React.useMemo<{current: QuizSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist } = records;
@@ -287,7 +298,17 @@ export default function App() {
     clearStaleQuizSession(epoch);
     void import('./components/mood/moodSession').then(({ clearStaleMoodSession }) => clearStaleMoodSession(epoch));
     void import('./utils/savedSetlists').then(({ clearStaleSavedSetlists }) => clearStaleSavedSetlists(epoch));
+    void import('./components/quiz/quizVolumeRecords').then(({ clearStaleQuizVolumeScores }) => clearStaleQuizVolumeScores(epoch));
+    void import('./utils/myNoteProfile').then(({ clearStaleMyNoteProfile }) => clearStaleMyNoteProfile(epoch));
   }, [records.resetEpoch]);
+
+  useEffect(() => {
+    if (activeFeatureTab === 'vocal_range') {
+      recordMyNoteFeatureVisited('vocal_range', records.resetEpoch);
+    } else if (activeFeatureTab === 'quiz_archive') {
+      recordMyNoteFeatureVisited('quiz_archive', records.resetEpoch);
+    }
+  }, [activeFeatureTab, records.resetEpoch]);
 
   const setlistSongIds = setlist.map((s) => s.songId);
 
@@ -315,6 +336,12 @@ export default function App() {
         onSelectTab={handleSelectTab}
         onReplayIntro={handleReplayIntro}
         onMenuOpenChange={setIsMenuOpen}
+        onOpenMyNote={() => {
+          setHasLoadedMyNote(true);
+          setIsMyNoteOpen(true);
+        }}
+        isMyNoteOpen={isMyNoteOpen}
+        setlistCount={setlist.length}
       />
 
       {/* Main Content Area Protected by ErrorBoundary */}
@@ -385,7 +412,7 @@ export default function App() {
                 {(activeFeatureTab === 'setlist' ||
                   activeFeatureTab === 'tour_archive') && (
                   <SetlistBuilderSection
-                    key={`${activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'}:${records.resetEpoch}`}
+                    key={`${activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'}:${records.resetEpoch}:${setlistSyncVersion}`}
                     songs={songs}
                     setlist={setlist}
                     setlistTitle={records.setlistTitle}
@@ -397,9 +424,37 @@ export default function App() {
                     onToggleEncore={records.toggleEncore}
                     onLoadPresetSetlist={records.loadPresetSetlist}
                     onCreateSetlistFromTour={(entries, title) => {
-                      if (records.loadPresetSetlist(entries, title, { skipConfirm: true })) {
-                        handleSelectTab('setlist');
+                      if (setlist.length === 0) {
+                        if (records.loadPresetSetlist(entries, title, { skipConfirm: true })) {
+                          handleSelectTab('setlist');
+                        }
+                        return;
                       }
+                      void import('./utils/savedSetlists').then(({
+                        createNewSavedSetlist,
+                        loadSavedSetlists,
+                        persistSavedSetlists,
+                        syncActiveSavedSetlist,
+                      }) => {
+                        const validIds = new Set(songs.map(song => song.id));
+                        const cleanTitle = sanitizeUserText(title, 160) || 'MYセトリ';
+                        const loaded = loadSavedSetlists(validIds, records.setlistTitle, setlist, {
+                          expectedEpoch: records.resetEpoch,
+                        });
+                        const synced = syncActiveSavedSetlist(
+                          loaded,
+                          sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ',
+                          setlist,
+                        );
+                        const { state: nextSaved, created } = createNewSavedSetlist(synced, cleanTitle, entries);
+                        persistSavedSetlists(nextSaved, {
+                          expectedEpoch: records.resetEpoch,
+                          validSongIds: validIds,
+                        });
+                        records.replaceSetlistSilently(created.entries, created.title);
+                        showToast(`「${created.title}」を新しいMYセトリとして作成しました（元のセトリも保存済みです）`);
+                        handleSelectTab('setlist');
+                      });
                     }}
                     onReplaceSetlistSilently={records.replaceSetlistSilently}
                     attendedTourIds={records.attendedTourIds}
@@ -427,6 +482,7 @@ export default function App() {
                     }
                     bestQuizScore={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}
+                    onOpenArchive={() => handleSelectTab('quiz_archive')}
                   />
                 )}
               </React.Suspense>
@@ -465,6 +521,37 @@ export default function App() {
         </div>
       )}
       </div>
+
+      {hasLoadedMyNote && (
+        <React.Suspense fallback={null}>
+          <MyNoteModal
+            isOpen={isMyNoteOpen}
+            onClose={() => setIsMyNoteOpen(false)}
+            songs={songs}
+            setlist={setlist}
+            setlistTitle={records.setlistTitle}
+            resetEpoch={records.resetEpoch}
+            visitedSpotIds={records.visitedSpotIds}
+            attendedTourIds={records.attendedTourIds}
+            bestQuizScore={records.bestQuizScore}
+            votedKeys={records.votedKeys}
+            reviews={records.reviews}
+            onNavigateTab={(tab) => {
+              setIsMyNoteOpen(false);
+              handleSelectTab(tab);
+            }}
+            onNavigateSong={(id) => {
+              setIsMyNoteOpen(false);
+              selectSong(id);
+            }}
+            onSwitchSavedSetlist={(entries, title) => {
+              records.replaceSetlistSilently(entries, title);
+              setSetlistSyncVersion((v) => v + 1);
+            }}
+            onExportRecords={records.downloadRecords}
+          />
+        </React.Suspense>
+      )}
     </div>
   );
 }

@@ -391,14 +391,6 @@ body.kurun-intro-active {
 }
 
 /* ノート机ドット方眼＋付箋カード */
-.notebook-desk-panel {
-  background-color: #faf6eb;
-  background-image:
-    radial-gradient(rgba(160, 148, 128, .24) 1.1px, transparent 1.1px),
-    linear-gradient(90deg, rgba(160, 148, 128, .04) 1px, transparent 1px);
-  background-size: 24px 24px, 24px 100%;
-}
-
 .fusen-card {
   position: relative;
   display: flex;
@@ -465,6 +457,22 @@ body.kurun-intro-active {
   color: #57534E;
   line-height: 26px;
 }
+.fusen-motif {
+  position: absolute;
+  right: 16px;
+  bottom: 24px;
+  width: 46px;
+  height: 46px;
+  color: var(--accent, #253331);
+  opacity: 0.13;
+  pointer-events: none;
+  z-index: 1;
+  transition: opacity 220ms ease-out, transform 240ms ease-out;
+}
+.fusen-card:hover .fusen-motif,
+.fusen-card:focus-within .fusen-motif {
+  opacity: 0.28;
+}
 
 /* Gemini ノート世界観：共通紙面キャンバス＆メモカード */
 .notebook-canvas {
@@ -518,6 +526,7 @@ body.kurun-intro-active {
   .fusen-card,
   .fusen-card:hover,
   .fusen-card:active,
+  .fusen-motif,
   .fusen-memo-card,
   .fusen-memo-card:hover {
     transform: none !important;
