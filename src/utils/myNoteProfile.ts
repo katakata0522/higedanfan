@@ -7,8 +7,12 @@ import {
 import { sanitizeSafeId, sanitizeUserText } from './userInput';
 
 export const MY_NOTE_PROFILE_STORAGE_KEY = 'higedanfan:my-note-profile:v1';
+export const MY_NOTE_TITLE_MODE_STORAGE_KEY = 'higedanfan:my-note-title-mode:v1';
+export const MY_NOTE_SETLIST_IMAGE_STORAGE_KEY = 'higedanfan:my-note-setlist-image:v1';
 export const DEFAULT_MY_NOTE_NAME = 'ゲスト';
 export const MY_NOTE_NAME_MAX_LENGTH = 20;
+
+export type MyNoteTitleDisplayMode = 'rank' | 'playstyle';
 
 const MAX_READ_SONGS = 120;
 const ALLOWED_MOODS = new Set([
@@ -259,12 +263,117 @@ export function recordMyNoteFeatureVisited(
   return next;
 }
 
+export function loadMyNoteTitleMode(
+  expectedEpoch = '',
+  store: QuizSessionStore | null = browserQuizStore('localStorage'),
+): MyNoteTitleDisplayMode {
+  if (!store) return 'rank';
+  try {
+    const raw = store.getItem(MY_NOTE_TITLE_MODE_STORAGE_KEY);
+    if (!raw) return 'rank';
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      !isPlainObject(parsed) ||
+      (Object.getPrototypeOf(parsed) !== Object.prototype && Object.getPrototypeOf(parsed) !== null) ||
+      typeof parsed.resetEpoch !== 'string'
+    ) {
+      return 'rank';
+    }
+    const currentEpoch = readCurrentQuizRecordEpoch(store);
+    if (currentEpoch !== null && currentEpoch !== parsed.resetEpoch) return 'rank';
+    if (currentEpoch === null && expectedEpoch !== parsed.resetEpoch) return 'rank';
+    return parsed.mode === 'playstyle' ? 'playstyle' : 'rank';
+  } catch {
+    return 'rank';
+  }
+}
+
+export function persistMyNoteTitleMode(
+  mode: MyNoteTitleDisplayMode,
+  expectedEpoch = '',
+  store: QuizSessionStore | null = browserQuizStore('localStorage'),
+): boolean {
+  if (!store) return false;
+  try {
+    const safeMode: MyNoteTitleDisplayMode = mode === 'playstyle' ? 'playstyle' : 'rank';
+    store.setItem(
+      MY_NOTE_TITLE_MODE_STORAGE_KEY,
+      JSON.stringify({
+        resetEpoch: expectedEpoch,
+        mode: safeMode,
+      }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function loadSetlistShareImageGenerated(
+  expectedEpoch = '',
+  store: QuizSessionStore | null = browserQuizStore('localStorage'),
+): boolean {
+  if (!store) return false;
+  try {
+    const raw = store.getItem(MY_NOTE_SETLIST_IMAGE_STORAGE_KEY);
+    if (!raw) return false;
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      !isPlainObject(parsed) ||
+      (Object.getPrototypeOf(parsed) !== Object.prototype && Object.getPrototypeOf(parsed) !== null) ||
+      typeof parsed.resetEpoch !== 'string'
+    ) {
+      return false;
+    }
+    const currentEpoch = readCurrentQuizRecordEpoch(store);
+    if (currentEpoch !== null && currentEpoch !== parsed.resetEpoch) return false;
+    if (currentEpoch === null && expectedEpoch !== parsed.resetEpoch) return false;
+    return parsed.generated === true;
+  } catch {
+    return false;
+  }
+}
+
+export function recordSetlistShareImageGenerated(
+  expectedEpoch = '',
+  store: QuizSessionStore | null = browserQuizStore('localStorage'),
+): boolean {
+  if (!store) return false;
+  try {
+    const effectiveEpoch = expectedEpoch || readCurrentQuizRecordEpoch(store) || '';
+    store.setItem(
+      MY_NOTE_SETLIST_IMAGE_STORAGE_KEY,
+      JSON.stringify({
+        resetEpoch: effectiveEpoch,
+        generated: true,
+      }),
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export function clearSetlistShareImageGeneratedStorage(
+  store: QuizSessionStore | null = browserQuizStore('localStorage'),
+): boolean {
+  if (!store) return false;
+  try {
+    store.removeItem(MY_NOTE_SETLIST_IMAGE_STORAGE_KEY);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function clearMyNoteProfileStorage(
   store: QuizSessionStore | null = browserQuizStore('localStorage'),
 ): boolean {
   if (!store) return false;
   try {
     store.removeItem(MY_NOTE_PROFILE_STORAGE_KEY);
+    store.removeItem(MY_NOTE_TITLE_MODE_STORAGE_KEY);
+    store.removeItem(MY_NOTE_SETLIST_IMAGE_STORAGE_KEY);
     return true;
   } catch {
     return false;
@@ -277,14 +386,21 @@ export function clearStaleMyNoteProfile(
 ): boolean {
   if (!store || !expectedEpoch || readCurrentQuizRecordEpoch(store) !== expectedEpoch) return false;
   try {
-    const raw = store.getItem(MY_NOTE_PROFILE_STORAGE_KEY);
-    if (!raw) return false;
-    const parsed: unknown = JSON.parse(raw);
-    if (isPlainObject(parsed) && typeof parsed.resetEpoch === 'string' && parsed.resetEpoch !== expectedEpoch) {
-      store.removeItem(MY_NOTE_PROFILE_STORAGE_KEY);
-      return true;
+    let cleared = false;
+    for (const key of [
+      MY_NOTE_PROFILE_STORAGE_KEY,
+      MY_NOTE_TITLE_MODE_STORAGE_KEY,
+      MY_NOTE_SETLIST_IMAGE_STORAGE_KEY,
+    ]) {
+      const raw = store.getItem(key);
+      if (!raw) continue;
+      const parsed: unknown = JSON.parse(raw);
+      if (isPlainObject(parsed) && typeof parsed.resetEpoch === 'string' && parsed.resetEpoch !== expectedEpoch) {
+        store.removeItem(key);
+        cleared = true;
+      }
     }
-    return false;
+    return cleared;
   } catch {
     return false;
   }

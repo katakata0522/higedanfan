@@ -20,9 +20,12 @@ import {
 } from '../components/quiz/quizVolumeRecords';
 import {
   clearMyNoteProfileStorage,
+  clearSetlistShareImageGeneratedStorage,
   loadMyNoteProfile,
+  loadSetlistShareImageGenerated,
   persistMyNoteProfile,
   recordMyNoteFeatureVisited,
+  recordSetlistShareImageGenerated,
 } from '../utils/myNoteProfile';
 
 type ReviewFields = Omit<FanReview, 'id' | 'postedAt' | 'likes'>;
@@ -190,13 +193,14 @@ export function useFanRecords(showToast: (message: string) => void) {
   const downloadRecords = () => {
     recordMyNoteFeatureVisited('backup_export', records.resetEpoch);
     const myNoteProfile = loadMyNoteProfile(records.resetEpoch);
+    const setlistShareImageGenerated = loadSetlistShareImageGenerated(records.resetEpoch);
     const storedSetlists = readStoredSavedSetlists(songIds, { expectedEpoch: records.resetEpoch });
     const syncedSetlists = storedSetlists
       ? syncActiveSavedSetlist(storedSetlists, records.setlistTitle || DEFAULT_SETLIST_TITLE, records.setlist)
       : null;
     const quizVolumeScores = loadQuizVolumeScores(records.resetEpoch);
     const url = URL.createObjectURL(
-      new Blob([createFanRecordBackup(records, syncedSetlists, quizVolumeScores, myNoteProfile)], {type: 'application/json'}),
+      new Blob([createFanRecordBackup(records, syncedSetlists, quizVolumeScores, myNoteProfile, setlistShareImageGenerated)], {type: 'application/json'}),
     );
     const link = document.createElement('a');
     link.href = url;
@@ -207,7 +211,7 @@ export function useFanRecords(showToast: (message: string) => void) {
   const importRecords = async (file: File) => {
     try {
       if (file.size > 2_000_000) throw new Error('記録ファイルが大きすぎます。');
-      const { records: imported, savedSetlists, quizVolumeScores, myNoteProfile } = parseFanRecordBackupWithSetlists(await file.text());
+      const { records: imported, savedSetlists, quizVolumeScores, myNoteProfile, setlistShareImageGenerated } = parseFanRecordBackupWithSetlists(await file.text());
       if (!window.confirm('このブラウザのMYセトリ、参戦・訪問、クイズなどの記録を、ファイルの内容に置き換えます。\n\n今の記録も残したい場合は、先に「記録を書き出す」を押してください。読み込みますか？')) return;
       if (await store.importBackup(imported, records)) {
         const nextEpoch = store.snapshot().records.resetEpoch;
@@ -217,6 +221,8 @@ export function useFanRecords(showToast: (message: string) => void) {
         else clearQuizVolumeScoresStorage();
         if (myNoteProfile) persistMyNoteProfile(myNoteProfile, nextEpoch);
         else clearMyNoteProfileStorage();
+        if (setlistShareImageGenerated) recordSetlistShareImageGenerated(nextEpoch);
+        else clearSetlistShareImageGeneratedStorage();
         showToast('記録を読み込みました。');
       }
       else showToast('読み込めませんでした。別タブの変更や保存状態を確認してください。');

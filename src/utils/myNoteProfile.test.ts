@@ -3,15 +3,22 @@ import test from 'node:test';
 import { STORAGE_KEY } from '../hooks/fanRecordStorage';
 import {
   clearMyNoteProfileStorage,
+  clearSetlistShareImageGeneratedStorage,
   clearStaleMyNoteProfile,
   displayMyNoteNickname,
   hasCustomMyNoteNickname,
   loadMyNoteProfile,
+  loadMyNoteTitleMode,
+  loadSetlistShareImageGenerated,
   MY_NOTE_PROFILE_STORAGE_KEY,
+  MY_NOTE_SETLIST_IMAGE_STORAGE_KEY,
+  MY_NOTE_TITLE_MODE_STORAGE_KEY,
   persistMyNoteProfile,
+  persistMyNoteTitleMode,
   recordMyNoteFeatureVisited,
   recordMyNoteMoodCompleted,
   recordMyNoteSongRead,
+  recordSetlistShareImageGenerated,
   sanitizeMyNoteNickname,
 } from './myNoteProfile';
 
@@ -91,4 +98,55 @@ test('exploration tracking accumulates read songs, mood completions, and feature
   assert.equal(reloaded.exportedBackup, true);
   assert.equal(reloaded.nickname, 'ヒゲ巡礼者');
   assert.equal(reloaded.opened, true);
+});
+
+test('myNote title display mode persists per epoch and clears safely', () => {
+  const store = createMemoryStore({
+    [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-4', setlist: [] }),
+  });
+
+  assert.equal(loadMyNoteTitleMode('epoch-4', store), 'rank');
+  assert.equal(persistMyNoteTitleMode('playstyle', 'epoch-4', store), true);
+  assert.equal(loadMyNoteTitleMode('epoch-4', store), 'playstyle');
+
+  // Stale epoch is ignored and cleaned up cleanly
+  store.setItem(MY_NOTE_TITLE_MODE_STORAGE_KEY, JSON.stringify({ resetEpoch: 'epoch-old', mode: 'playstyle' }));
+  assert.equal(loadMyNoteTitleMode('epoch-4', store), 'rank');
+  assert.equal(clearStaleMyNoteProfile('epoch-4', store), true);
+  assert.equal(store.getItem(MY_NOTE_TITLE_MODE_STORAGE_KEY), null);
+
+  // Invalid mode falls back safely to 'rank'
+  store.setItem(MY_NOTE_TITLE_MODE_STORAGE_KEY, JSON.stringify({ resetEpoch: 'epoch-4', mode: 'unknown' }));
+  assert.equal(loadMyNoteTitleMode('epoch-4', store), 'rank');
+
+  persistMyNoteTitleMode('playstyle', 'epoch-4', store);
+  assert.equal(clearMyNoteProfileStorage(store), true);
+  assert.equal(loadMyNoteTitleMode('epoch-4', store), 'rank');
+});
+
+test('setlist share image generation flag persists per epoch and clears safely', () => {
+  const store = createMemoryStore({
+    [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-5', setlist: [] }),
+  });
+
+  assert.equal(loadSetlistShareImageGenerated('epoch-5', store), false);
+  assert.equal(recordSetlistShareImageGenerated('epoch-5', store), true);
+  assert.equal(loadSetlistShareImageGenerated('epoch-5', store), true);
+
+  // Stale epoch is ignored and cleaned up by clearStaleMyNoteProfile
+  store.setItem(
+    MY_NOTE_SETLIST_IMAGE_STORAGE_KEY,
+    JSON.stringify({ resetEpoch: 'epoch-old', generated: true }),
+  );
+  assert.equal(loadSetlistShareImageGenerated('epoch-5', store), false);
+  assert.equal(clearStaleMyNoteProfile('epoch-5', store), true);
+  assert.equal(store.getItem(MY_NOTE_SETLIST_IMAGE_STORAGE_KEY), null);
+
+  recordSetlistShareImageGenerated('epoch-5', store);
+  assert.equal(clearSetlistShareImageGeneratedStorage(store), true);
+  assert.equal(loadSetlistShareImageGenerated('epoch-5', store), false);
+
+  recordSetlistShareImageGenerated('epoch-5', store);
+  assert.equal(clearMyNoteProfileStorage(store), true);
+  assert.equal(loadSetlistShareImageGenerated('epoch-5', store), false);
 });

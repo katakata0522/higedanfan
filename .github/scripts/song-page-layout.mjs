@@ -820,9 +820,16 @@ async function verifyMyNoteModal(browser) {
   await dialog.waitFor({ state: 'visible' });
   assert.equal(new URL(page.url()).pathname, '/higedanfan/', 'マイノートはページ遷移せずモーダルで開く必要があります');
   await dialog.getByText('はじめの一歩').waitFor();
-  await dialog.getByText('ランク', { exact: true }).waitFor();
+  await dialog.getByText('総合ランク', { exact: true }).waitFor();
+  await dialog.getByText('ダイヤの原石', { exact: true }).waitFor();
   assert.equal(await dialog.getByText('ファンノート・ランク', { exact: true }).count(), 0, 'ランク表示名が旧表記のままです');
   assert.equal(await dialog.locator('.mn-gold-count').count(), 0, '右上の32分金バッジは削除されている必要があります');
+  await dialog.getByText('1 / 115').waitFor();
+  await dialog.getByRole('button', { name: /^1 \/ 115/ }).click();
+  await dialog.getByText('通常 1 / 85').waitFor();
+  await dialog.getByRole('button', { name: /^通常 1 \/ 85/ }).click();
+  await dialog.getByText('特別 0 / 30').waitFor();
+  await dialog.getByRole('button', { name: /^特別 0 \/ 30/ }).click();
   await dialog.getByText('1 / 115').waitFor();
   await dialog.getByText('1 / 6 ページ（全115個）').waitFor();
   assert.equal(await dialog.locator('.mn-stamp').count(), 20, '1ページあたり20個のスタンプ表示が必要です');
@@ -835,9 +842,9 @@ async function verifyMyNoteModal(browser) {
   await dialog.getByText('021', { exact: true }).waitFor();
 
   await dialog.getByRole('button', { name: '特別称号', exact: true }).click();
-  await dialog.getByText('1 / 2 ページ（全32個）').waitFor();
+  await dialog.getByText('1 / 2 ページ（全30個）').waitFor();
   await dialog.getByRole('button', { name: '次のスタンプページ', exact: true }).click();
-  await dialog.getByText('2 / 2 ページ（全32個）').waitFor();
+  await dialog.getByText('2 / 2 ページ（全30個）').waitFor();
   await dialog.getByRole('button', { name: /^No\.074 特別称号（未獲得）/ }).click();
   await dialog.locator('.mn-hint-serial').filter({ hasText: /^No\.074 \/ 115$/ }).waitFor();
   await dialog.locator('.mn-stamp-tier-pill', { hasText: '特別称号' }).waitFor();
@@ -845,7 +852,7 @@ async function verifyMyNoteModal(browser) {
   assert.equal(await dialog.locator('.mn-stamp-progress-pill').innerText(), '未達成');
   assert.equal(await dialog.locator('.mn-hint-desc').innerText(), '??????（MYセトリ作成）');
   const hintText = await dialog.locator('.mn-stamp-hint').innerText();
-  assert.ok(!hintText.includes('髭男と同じ感性') && !hintText.includes('完全一致'), '未獲得の特別称号に条件や名称が露出しています');
+  assert.ok(!hintText.includes('拍手喝采') && !hintText.includes('SNSシェア画像'), '未獲得の特別称号に条件や名称が露出しています');
 
   await dialog.getByRole('button', { name: 'すべて', exact: true }).click();
   await dialog.getByText('1 / 6 ページ（全115個）').waitFor();
@@ -854,8 +861,14 @@ async function verifyMyNoteModal(browser) {
   await dialog.getByLabel('お名前を入力', { exact: true }).fill('テスト太郎');
   await dialog.getByRole('button', { name: 'お名前を保存', exact: true }).click();
   await dialog.getByText('テスト太郎', { exact: true }).waitFor();
-  await dialog.getByText('音と言葉のルーキー').waitFor();
+  await dialog.getByText('ファンノートの新人').waitFor();
   await dialog.getByText('2 / 115').waitFor();
+
+  // タップで総合ランク ↔ 推し活タイプを切り替えて保存状態を確認
+  await dialog.getByRole('button', { name: /^ファンノートの新人/ }).click();
+  await dialog.getByText('推し活タイプ', { exact: true }).waitFor();
+  await dialog.locator('.mn-rank-badge--playstyle', { hasText: 'ダイヤの原石' }).waitFor();
+  await dialog.locator('.mn-secondary-value', { hasText: 'ファンノートの新人' }).waitFor();
 
   await Promise.all([
     page.waitForEvent('download'),
@@ -886,6 +899,7 @@ async function verifyMyNoteModal(browser) {
   await dialog.waitFor({ state: 'visible' });
   assert.equal(new URL(page.url()).pathname, '/higedanfan/songs/pretender/', '楽曲ページ上でもマイノートはURLを変えずモーダルで開く必要があります');
   await dialog.getByText('テスト太郎', { exact: true }).waitFor();
+  await dialog.locator('.mn-rank-badge--playstyle', { hasText: 'ライナーノーツの深掘り人' }).waitFor();
   await dialog.getByText('4 / 115').waitFor();
   const mobileCols = await dialog.locator('.mn-stamp-grid').evaluate(
     el => getComputedStyle(el).gridTemplateColumns.trim().split(/\s+/).length,

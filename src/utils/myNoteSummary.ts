@@ -25,7 +25,9 @@ import {
   getSacredSpotRegion,
   type SacredSpotRegion,
 } from './sacredSpotAreas';
-import type { SavedSetlistItem } from './savedSetlists';
+import { DEFAULT_SETLIST_TITLE } from '../hooks/fanRecordStore';
+import { DEFAULT_SAVED_SETLIST_TITLE, type SavedSetlistItem } from './savedSetlists';
+import { songwriterInfo } from './songCatalog';
 
 export interface AttendedTourYearGroup {
   year: string;
@@ -173,18 +175,23 @@ export function formatStampProgress(current: number, target: number, unit: strin
 }
 
 export interface MyNoteRankSummary {
+  tierNumber: number;
   title: string;
   subtitle: string;
   unlockedCount: number;
   totalStamps: number;
+  unlockedNormalCount: number;
+  totalNormalStamps: number;
   unlockedGoldCount: number;
   totalGoldStamps: number;
   progressPercent: number;
   nextMilestoneText: string;
 }
 
+export type MyNoteRadarAxisId = 'tour' | 'spot' | 'setlist' | 'quiz' | 'explore';
+
 export interface MyNoteRadarAxis {
-  id: string;
+  id: MyNoteRadarAxisId;
   label: string;
   value: number;
   rawLabel: string;
@@ -193,6 +200,22 @@ export interface MyNoteRadarAxis {
 export interface MyNoteRadarSummary {
   hasAnyActivity: boolean;
   axes: MyNoteRadarAxis[];
+}
+
+export type MyNotePlaystyleId =
+  | 'gem'
+  | 'balanced'
+  | 'tour'
+  | 'spot'
+  | 'setlist'
+  | 'quiz'
+  | 'explore';
+
+export interface MyNotePlaystyleSummary {
+  id: MyNotePlaystyleId;
+  title: string;
+  subtitle: string;
+  dominantAxisId: MyNoteRadarAxisId | null;
 }
 
 export interface MyNoteEngagementInput {
@@ -204,6 +227,7 @@ export interface MyNoteEngagementInput {
   setlists: readonly Pick<SavedSetlistItem, 'title' | 'entries'>[];
   savedSetlistCount: number;
   hasCustomSetlistTitle: boolean;
+  generatedSetlistShareImage?: boolean;
   quizVolumeScores: QuizVolumeRecordMap;
   bestQuizScore: number | null;
   votedSongCount: number;
@@ -228,8 +252,7 @@ for (const song of HIGEDAN_SONGS) {
   ALBUM_SONGS_MAP.set(song.album, list);
 }
 
-const { realConcertSignatures, realOpeningTrios } = (() => {
-  const full = new Set<string>();
+const { realOpeningTrios } = (() => {
   const openings = new Set<string>();
   const templates = (tourSetlistBundle as { templates: Record<string, TourSetlistTrack[]> }).templates;
   for (const tracks of Object.values(templates)) {
@@ -240,15 +263,22 @@ const { realConcertSignatures, realOpeningTrios } = (() => {
     }
     const normalized = normalizeSetlistOrder(entries);
     if (normalized.length >= 3) {
-      full.add(normalized.map((entry) => entry.songId).join(','));
       openings.add(normalized.slice(0, 3).map((entry) => entry.songId).join(','));
     }
   }
-  return { realConcertSignatures: full, realOpeningTrios: openings };
+  return { realOpeningTrios: openings };
 })();
 
-export const REAL_CONCERT_SETLIST_SIGNATURES = realConcertSignatures;
 export const REAL_CONCERT_OPENING_TRIOS = realOpeningTrios;
+
+export function isCustomSetlistTitle(title: string): boolean {
+  const clean = title.trim();
+  return (
+    clean.length > 0 &&
+    clean !== DEFAULT_SETLIST_TITLE &&
+    clean !== DEFAULT_SAVED_SETLIST_TITLE
+  );
+}
 
 const ANTHEM_FINALE_IDS = new Set(['shukumei', 'stand-by-you', 'last-song']);
 const FOUR_MEMBER_SONG_IDS = ['rowan-song', 'tabi-wa-michizure', 'filament-song'] as const;
@@ -369,7 +399,7 @@ interface ComputedMetrics {
   maxEncoreCount: number;
   savedSetlistCount: number;
   hasCustomSetlistTitle: boolean;
-  matchesRealConcertSetlist: boolean;
+  hasBestLiveSetlist: boolean;
   matchesRealOpeningTrio: boolean;
   hasAllFourMemberSongs: boolean;
   hasAllFiveErasSetlist: boolean;
@@ -396,7 +426,7 @@ interface ComputedMetrics {
 function analyzeSetlists(setlists: readonly Pick<SavedSetlistItem, 'title' | 'entries'>[]) {
   let maxSetlistSongs = 0;
   let maxEncoreCount = 0;
-  let matchesRealConcertSetlist = false;
+  let hasBestLiveSetlist = false;
   let matchesRealOpeningTrio = false;
   let hasAllFourMemberSongs = false;
   let hasAllFiveErasSetlist = false;
@@ -418,9 +448,11 @@ function analyzeSetlists(setlists: readonly Pick<SavedSetlistItem, 'title' | 'en
     const encoreCount = normalized.filter((entry) => entry.isEncore).length;
     if (encoreCount > maxEncoreCount) maxEncoreCount = encoreCount;
 
+    if (len >= 12 && encoreCount >= 2 && isCustomSetlistTitle(item.title)) {
+      hasBestLiveSetlist = true;
+    }
+
     if (len >= 3) {
-      const signature = normalized.map((entry) => entry.songId).join(',');
-      if (realConcertSignatures.has(signature)) matchesRealConcertSetlist = true;
       const openingKey = normalized.slice(0, 3).map((entry) => entry.songId).join(',');
       if (realOpeningTrios.has(openingKey)) matchesRealOpeningTrio = true;
     }
@@ -430,9 +462,19 @@ function analyzeSetlists(setlists: readonly Pick<SavedSetlistItem, 'title' | 'en
       const song = SONG_BY_ID.get(entry.songId);
       if (song) songsInList.push(song);
     }
-    const idSet = new Set(songsInList.map((song) => song.id));
 
-    if (len >= 4 && FOUR_MEMBER_SONG_IDS.every((id) => idSet.has(id))) {
+    let hasFujiwaraSolo = false;
+    let hasOzasa = false;
+    let hasNarazaki = false;
+    let hasMatsuura = false;
+    for (const song of songsInList) {
+      const creditName = songwriterInfo(song)?.name ?? '藤原聡';
+      if (creditName === '藤原聡') hasFujiwaraSolo = true;
+      if (creditName.includes('小笹大輔')) hasOzasa = true;
+      if (creditName.includes('楢﨑誠')) hasNarazaki = true;
+      if (creditName.includes('松浦匡希')) hasMatsuura = true;
+    }
+    if (len >= 4 && hasFujiwaraSolo && hasOzasa && hasNarazaki && hasMatsuura) {
       hasAllFourMemberSongs = true;
     }
 
@@ -468,7 +510,7 @@ function analyzeSetlists(setlists: readonly Pick<SavedSetlistItem, 'title' | 'en
   return {
     maxSetlistSongs,
     maxEncoreCount,
-    matchesRealConcertSetlist,
+    hasBestLiveSetlist,
     matchesRealOpeningTrio,
     hasAllFourMemberSongs,
     hasAllFiveErasSetlist,
@@ -612,33 +654,30 @@ function albumReadProgress(readSet: ReadonlySet<string>, albumName: string): str
 
 function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics): MyNoteStampItem[] {
   const hasAny = (ids: readonly string[]) => ids.some((id) => m.attendedSet.has(id));
-  const hasCategoryComplete = (cat: string) => {
-    const stat = m.spotCategoryStats[cat];
-    return Boolean(stat && stat.total > 0 && stat.visited >= stat.total);
-  };
 
   const first114: MyNoteStampDraft[] = [
-    // 1. welcome & profile (8 items here + complete-115 at the end = 9)
+    // A. welcome & profile (001-007 here + 115 at the end = 8 total: 6 normal, 2 gold)
     {
       id: 'welcome',
       label: 'ようこそ！',
-      hint: 'マイノートを開いた記念スタンプ',
+      hint: 'マイノートを初めて開く',
       unlocked: input.noteOpened,
       category: 'welcome',
       tier: 'normal',
     },
     {
       id: 'named-note',
-      label: '名入れ完了',
+      label: '刻まれた名前',
       hint: 'マイノートのお名前を設定する',
+      areaHint: 'マイノート',
       unlocked: input.hasCustomNickname,
       category: 'profile',
       tier: 'normal',
     },
     {
       id: 'backup-keeper',
-      label: '記録の守り手',
-      hint: '記録データをファイルに保存してバックアップ',
+      label: '記憶のタイムカプセル',
+      hint: '記録データをファイルに保存してバックアップする',
       areaHint: 'マイノート',
       unlocked: input.exportedBackup,
       category: 'profile',
@@ -646,8 +685,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'two-pillars',
-      label: '2つの扉をひらく',
-      hint: 'ライブ・聖地・MYセトリ・検定・楽曲探索の5分野のうち、2分野以上で記録を残す',
+      label: '2つめのワクワクへ',
+      hint: '5分野のうち2分野以上で記録を残す',
+      areaHint: 'サイト全体（5分野）',
       unlocked: m.activeRadarAxes >= 2,
       category: 'profile',
       tier: 'normal',
@@ -655,17 +695,19 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'balanced-three',
-      label: '3つの扉をひらく',
-      hint: 'ライブ・聖地・MYセトリ・検定・楽曲探索の5分野のうち、3分野以上で記録を残す',
+      label: '広がる推し活の景色',
+      hint: '5分野のうち3分野以上で記録を残す',
+      areaHint: 'サイト全体（5分野）',
       unlocked: m.activeRadarAxes >= 3,
       category: 'profile',
-      tier: 'gold',
+      tier: 'normal',
       progressText: formatStampProgress(m.activeRadarAxes, 3, '分野'),
     },
     {
       id: 'four-pillars',
-      label: '4つの扉をひらく',
-      hint: 'ライブ・聖地・MYセトリ・検定・楽曲探索の5分野のうち、4分野以上で記録を残す',
+      label: '4つの世界をまたぐ者',
+      hint: '5分野のうち4分野以上で記録を残す',
+      areaHint: 'サイト全体（5分野）',
       unlocked: m.activeRadarAxes >= 4,
       category: 'profile',
       tier: 'normal',
@@ -673,109 +715,109 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'all-five-pillars',
-      label: '5分野オールラウンダー',
-      hint: 'ライブ・聖地・MYセトリ・検定・楽曲探索の5分野すべてで記録を残す',
+      label: 'すべてを楽しむ全力髭団',
+      hint: '5分野すべてで記録を残す',
+      areaHint: 'サイト全体（5分野）',
       unlocked: m.activeRadarAxes >= 5,
       category: 'profile',
       tier: 'gold',
       progressText: formatStampProgress(m.activeRadarAxes, 5, '分野'),
     },
+    // B. tour archive (008-030 = 23 items: 17 normal, 6 gold)
     {
       id: 'tour-five-years',
-      label: '5年をまたぐライブ史',
-      hint: '異なる5年以上のライブ・ツアーを歴代ツアー記録でチェック',
+      label: 'これからも、ここからも',
+      hint: '異なる5年以上のライブ・ツアーを記録する',
       unlocked: m.attendedYears.size >= 5,
       category: 'tour',
       tier: 'gold',
       targetTab: 'tours',
       progressText: formatStampProgress(m.attendedYears.size, 5, '年'),
     },
-
-    // 2. tour archive (22 items: 16 normal, 6 gold)
     {
       id: 'tour-1',
-      label: '初ライブ記録',
-      hint: '歴代ツアー記録から参戦・視聴を1件チェック',
+      label: '最初の手拍子',
+      hint: '参戦・視聴を1シリーズ以上記録する',
       unlocked: m.attendedCount >= 1,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 1, '件'),
+      progressText: formatStampProgress(m.attendedCount, 1, 'シリーズ'),
     },
     {
       id: 'tour-3',
-      label: 'ライブ3公演の記憶',
-      hint: '歴代ツアー・公演を3シリーズ以上チェック',
+      label: 'アンコールの余韻',
+      hint: '3シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 3,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 3, '件'),
+      progressText: formatStampProgress(m.attendedCount, 3, 'シリーズ'),
     },
     {
       id: 'tour-5',
-      label: 'ツアー通',
-      hint: '5シリーズ以上のライブ・ツアーを記録',
+      label: 'ライブの常連さん',
+      hint: '5シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 5,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 5, '件'),
+      progressText: formatStampProgress(m.attendedCount, 5, 'シリーズ'),
     },
     {
       id: 'tour-10',
-      label: 'ライブ10シリーズ',
-      hint: '10シリーズ以上のライブ・ツアーを記録',
+      label: '歓声のなかで生きる',
+      hint: '10シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 10,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 10, '件'),
+      progressText: formatStampProgress(m.attendedCount, 10, 'シリーズ'),
     },
     {
       id: 'tour-15',
-      label: '音の履歴書',
-      hint: '15シリーズ以上のライブ・ツアーを記録',
+      label: 'もはやサポメン',
+      hint: '15シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 15,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 15, '件'),
+      progressText: formatStampProgress(m.attendedCount, 15, 'シリーズ'),
     },
     {
       id: 'tour-20',
-      label: 'ライブ20本突破',
-      hint: '20シリーズ以上のライブ・ツアーを記録',
+      label: 'ステージを追い続けて',
+      hint: '20シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 20,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 20, '件'),
+      progressText: formatStampProgress(m.attendedCount, 20, 'シリーズ'),
     },
     {
       id: 'tour-30',
-      label: 'ツアー記録マスター',
-      hint: '30シリーズ以上のライブ・ツアーを記録',
+      label: 'ライブハウスの生き字引',
+      hint: '25シリーズ以上のライブ・ツアーを記録する',
+      unlocked: m.attendedCount >= 25,
+      category: 'tour',
+      tier: 'gold',
+      targetTab: 'tours',
+      progressText: formatStampProgress(m.attendedCount, 25, 'シリーズ'),
+    },
+    {
+      id: 'tour-all-37',
+      label: '歴代ライブの生き証人',
+      hint: '30シリーズ以上のライブ・ツアーを記録する',
       unlocked: m.attendedCount >= 30,
       category: 'tour',
       tier: 'gold',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, 30, '件'),
-    },
-    {
-      id: 'tour-all-37',
-      label: '全37シリーズ完全網羅',
-      hint: '掲載中の全37公演シリーズをチェック',
-      unlocked: m.attendedCount >= TOUR_ARCHIVES.length,
-      category: 'tour',
-      tier: 'gold',
-      targetTab: 'tours',
-      progressText: formatStampProgress(m.attendedCount, TOUR_ARCHIVES.length, '件'),
+      progressText: formatStampProgress(m.attendedCount, 30, 'シリーズ'),
     },
     {
       id: 'tour-cat-tour-1',
-      label: '全国ツアーの旅へ',
-      hint: 'ツアーカテゴリから1シリーズ以上を記録',
+      label: 'ツアーバスを追いかけて',
+      hint: '全国ツアーカテゴリを1シリーズ以上記録する',
       unlocked: m.tourCatCount.tour >= 1,
       category: 'tour',
       tier: 'normal',
@@ -783,28 +825,28 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'tour-cat-tour-8',
-      label: 'ツアー常連組',
-      hint: '全国ツアーシリーズを8本以上記録',
-      unlocked: m.tourCatCount.tour >= 8,
+      label: '日本列島ライブ行脚',
+      hint: '全国ツアーカテゴリを5シリーズ以上記録する',
+      unlocked: m.tourCatCount.tour >= 5,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.tourCatCount.tour, 8, '本'),
+      progressText: formatStampProgress(m.tourCatCount.tour, 5, 'シリーズ'),
     },
     {
       id: 'tour-cat-tour-16',
-      label: '全国ツアー全制覇',
-      hint: '掲載中の全16本のツアーシリーズをすべてチェック',
-      unlocked: m.tourCatCount.tour >= 16,
+      label: '全国ツアーの覇者',
+      hint: '全国ツアーカテゴリを10シリーズ以上記録する',
+      unlocked: m.tourCatCount.tour >= 10,
       category: 'tour',
       tier: 'gold',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.tourCatCount.tour, 16, '本'),
+      progressText: formatStampProgress(m.tourCatCount.tour, 10, 'シリーズ'),
     },
     {
       id: 'tour-cat-oneman',
-      label: 'ワンマンライブの熱狂',
-      hint: 'ワンマン単独公演シリーズを1本以上記録',
+      label: 'ワンマンの熱気に飲まれて',
+      hint: 'ワンマン単独公演を1シリーズ以上記録する',
       unlocked: m.tourCatCount.one_man >= 1,
       category: 'tour',
       tier: 'normal',
@@ -812,38 +854,38 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'tour-cat-oneman-all',
-      label: '単独公演コンプリート',
-      hint: '掲載中のワンマン単独公演7シリーズをすべて記録',
-      unlocked: m.tourCatCount.one_man >= 7,
+      label: '特別な夜の目撃者',
+      hint: 'ワンマン単独公演を4シリーズ以上記録する',
+      unlocked: m.tourCatCount.one_man >= 4,
       category: 'tour',
       tier: 'gold',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.tourCatCount.one_man, 7, '本'),
+      progressText: formatStampProgress(m.tourCatCount.one_man, 4, 'シリーズ'),
     },
     {
       id: 'tour-cat-online-3',
       label: '画面越しの最前列',
-      hint: '配信・FC限定ライブを3シリーズ以上記録',
+      hint: '配信・FC限定ライブを3シリーズ以上記録する',
       unlocked: m.tourCatCount.online_fc >= 3,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.tourCatCount.online_fc, 3, '本'),
+      progressText: formatStampProgress(m.tourCatCount.online_fc, 3, 'シリーズ'),
     },
     {
       id: 'tour-cat-free-3',
-      label: 'フリーライブの熱気',
-      hint: 'フリーライブ・特別企画を3シリーズ以上記録',
-      unlocked: m.tourCatCount.free_special >= 3,
+      label: '街角に響いたフリーライブ',
+      hint: 'フリーライブ・特別企画を2シリーズ以上記録する',
+      unlocked: m.tourCatCount.free_special >= 2,
       category: 'tour',
       tier: 'normal',
       targetTab: 'tours',
-      progressText: formatStampProgress(m.tourCatCount.free_special, 3, '本'),
+      progressText: formatStampProgress(m.tourCatCount.free_special, 2, 'シリーズ'),
     },
     {
       id: 'tour-indies-era',
-      label: 'インディーズの鼓動',
-      hint: '2015〜2017年の初期ライブ・ツアーを1本以上記録',
+      label: 'インディーズの初期衝動',
+      hint: '2015〜2017年の初期ライブを1シリーズ以上記録する（映像視聴含む）',
       unlocked:
         m.attendedYears.has('2015') ||
         m.attendedYears.has('2016') ||
@@ -854,8 +896,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'tour-budokan-2019',
-      label: '武道館の景色',
-      hint: 'one-man tour 2019（日本武道館公演）を記録',
+      label: '夢の武道館の景色',
+      hint: 'one-man tour 2019（日本武道館公演）を記録する',
       unlocked: m.attendedSet.has('tour-oneman-2019'),
       category: 'tour',
       tier: 'normal',
@@ -863,8 +905,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'tour-travelers-1920',
-      label: 'Travelerの航海',
-      hint: 'Hall Travelers / ONLINE Arena Travelers を記録',
+      label: 'Travelerの航海日誌',
+      hint: 'Hall Travelers / ONLINE Arena Travelers を記録する',
       unlocked: hasAny(['tour-hall-travelers-2019', 'live-online-arena-travelers-2020']),
       category: 'tour',
       tier: 'normal',
@@ -873,7 +915,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'tour-editorial-2021',
       label: 'Editorialの夜明け',
-      hint: 'one-man tour 2021-2022 -Editorial- または発売記念ライブを記録',
+      hint: 'one-man tour 2021-2022 -Editorial- または発売記念ライブを記録する',
       unlocked: hasAny(['tour-editorial-2021', 'live-editorial-online-free-2021']),
       category: 'tour',
       tier: 'normal',
@@ -882,7 +924,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'tour-shocking-nuts-2022',
       label: 'SHOCKING NUTSの衝撃',
-      hint: 'SHOCKING NUTS TOUR を記録',
+      hint: 'SHOCKING NUTS TOUR を記録する',
       unlocked: m.attendedSet.has('tour-shocking-nuts-2022'),
       category: 'tour',
       tier: 'normal',
@@ -890,28 +932,28 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'tour-stadium-2025',
-      label: 'スタジアムの歓声',
-      hint: 'OFFICIAL HIGE DANDISM LIVE at STADIUM 2025 を記録',
+      label: 'スタジアムを揺らした歓声',
+      hint: 'OFFICIAL HIGE DANDISM LIVE at STADIUM 2025 を記録する',
       unlocked: m.attendedSet.has('tour-stadium-2025'),
       category: 'tour',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'tours',
     },
     {
       id: 'tour-asia-2026',
-      label: '海を越えるLIVE',
-      hint: 'アジア・海外公演（Rejoice ASIA / ASIA TOUR 2026 / 韓国公演）を記録',
+      label: '国境を越えたシンガロング',
+      hint: 'アジア・海外公演（Rejoice ASIA / ASIA TOUR 2026 / 韓国公演など）を記録する',
       unlocked: hasAny(['live-korea-understage-2016', 'tour-rejoice-asia-2024', 'tour-asia-2026']),
       category: 'tour',
       tier: 'gold',
       targetTab: 'tours',
     },
 
-    // 3. sacred map (22 items: 15 normal, 7 gold)
+    // C. sacred map (031-052 = 22 items: 14 normal, 8 gold)
     {
       id: 'spot-1',
-      label: '聖地はじめの一歩',
-      hint: '聖地巡礼マップで最初の1か所をチェック',
+      label: 'いざ聖地へ！',
+      hint: '聖地スポットを1か所以上訪問する',
       unlocked: m.visitedCount >= 1,
       category: 'spot',
       tier: 'normal',
@@ -920,8 +962,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'spot-5',
-      label: '聖地5か所',
-      hint: '聖地スポットを5か所以上チェック',
+      label: 'ゆかりの地コレクション',
+      hint: '聖地スポットを5か所以上訪問する',
       unlocked: m.visitedCount >= 5,
       category: 'spot',
       tier: 'normal',
@@ -930,8 +972,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'spot-10',
-      label: '聖地10か所',
-      hint: '聖地スポットを10か所以上チェック',
+      label: 'あの風景をこの目で',
+      hint: '聖地スポットを10か所以上訪問する',
       unlocked: m.visitedCount >= 10,
       category: 'spot',
       tier: 'normal',
@@ -940,28 +982,28 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'spot-20',
-      label: '聖地20か所',
-      hint: '聖地スポットを20か所以上チェック',
-      unlocked: m.visitedCount >= 20,
+      label: '音と景色をつなぐ足あと',
+      hint: '聖地スポットを15か所以上訪問する',
+      unlocked: m.visitedCount >= 15,
       category: 'spot',
       tier: 'normal',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.visitedCount, 20, 'か所'),
+      progressText: formatStampProgress(m.visitedCount, 15, 'か所'),
     },
     {
       id: 'spot-all-32',
-      label: '115万キロの聖地制覇',
-      hint: 'マップ掲載の全32か所の聖地スポットをすべて訪問',
-      unlocked: m.visitedCount >= CHECKABLE_SPOTS.length,
+      label: '記憶の地図を塗りつぶす旅人',
+      hint: '聖地スポットを25か所以上訪問する',
+      unlocked: m.visitedCount >= 25,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.visitedCount, CHECKABLE_SPOTS.length, 'か所'),
+      progressText: formatStampProgress(m.visitedCount, 25, 'か所'),
     },
     {
       id: 'sanin-roots',
-      label: '山陰の原点',
-      hint: '島根・鳥取の聖地を1か所以上訪問',
+      label: 'はじまりの街の風',
+      hint: '島根・鳥取エリアの聖地を1か所以上訪問する',
       unlocked: m.regionVisited.sanin >= 1,
       category: 'spot',
       tier: 'normal',
@@ -970,8 +1012,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'sanin-5',
-      label: '山陰の旅人',
-      hint: '島根・鳥取エリアの聖地を5か所以上訪問',
+      label: '原点の地をめぐる旅',
+      hint: '島根・鳥取エリアの聖地を5か所以上訪問する',
       unlocked: m.regionVisited.sanin >= 5,
       category: 'spot',
       tier: 'normal',
@@ -980,8 +1022,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'sanin-10',
-      label: '松江・米子の案内人',
-      hint: '島根・鳥取エリアの聖地を10か所以上訪問',
+      label: '山陰の路地まで知り尽くす',
+      hint: '島根・鳥取エリアの聖地を10か所以上訪問する',
       unlocked: m.regionVisited.sanin >= 10,
       category: 'spot',
       tier: 'normal',
@@ -990,18 +1032,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'sanin-all',
-      label: '山陰の頂点',
-      hint: '山陰（島根・鳥取）エリアの全17か所を完全制覇',
-      unlocked: m.regionTotal.sanin > 0 && m.regionVisited.sanin >= m.regionTotal.sanin,
+      label: 'ヒゲダンの生まれ育った地',
+      hint: '島根・鳥取エリアの聖地を15か所以上訪問する',
+      unlocked: m.regionVisited.sanin >= 15,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.regionVisited.sanin, m.regionTotal.sanin, 'か所'),
+      progressText: formatStampProgress(m.regionVisited.sanin, 15, 'か所'),
     },
     {
       id: 'kanto-memory',
-      label: '関東の記憶',
-      hint: '東京・関東エリアの聖地を1か所以上訪問',
+      label: '都会の片隅でみつけた聖地',
+      hint: '東京・関東エリアの聖地を1か所以上訪問する',
       unlocked: m.regionVisited.kanto >= 1,
       category: 'spot',
       tier: 'normal',
@@ -1010,8 +1052,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'kanto-3',
-      label: '首都圏ウォーカー',
-      hint: '関東エリアの聖地を3か所以上訪問',
+      label: 'ネオンとメロディの散歩道',
+      hint: '関東エリアの聖地を3か所以上訪問する',
       unlocked: m.regionVisited.kanto >= 3,
       category: 'spot',
       tier: 'normal',
@@ -1020,18 +1062,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'kanto-all',
-      label: '関東を制す者',
-      hint: '関東エリアの全5か所を完全制覇',
-      unlocked: m.regionTotal.kanto > 0 && m.regionVisited.kanto >= m.regionTotal.kanto,
+      label: '関東エリアのコンパス',
+      hint: '関東エリアの聖地を5か所以上訪問する',
+      unlocked: m.regionVisited.kanto >= 5,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.regionVisited.kanto, m.regionTotal.kanto, 'か所'),
+      progressText: formatStampProgress(m.regionVisited.kanto, 5, 'か所'),
     },
     {
       id: 'domestic-1',
-      label: '列島をめぐる旅',
-      hint: '北海道・中部・関西エリアの聖地を1か所以上訪問',
+      label: 'まだ見ぬ街へトランクひとつ',
+      hint: '北海道・中部・関西エリアの聖地を1か所以上訪問する',
       unlocked: m.regionVisited.domestic_other >= 1,
       category: 'spot',
       tier: 'normal',
@@ -1039,20 +1081,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'domestic-all',
-      label: '西東の巡礼マスター',
-      hint: '北海道・中部・関西エリアの全6か所を完全制覇',
-      unlocked:
-        m.regionTotal.domestic_other > 0 &&
-        m.regionVisited.domestic_other >= m.regionTotal.domestic_other,
+      label: 'TRAVEL FANTASISTA',
+      hint: '北海道・中部・関西エリアの聖地を4か所以上訪問する',
+      unlocked: m.regionVisited.domestic_other >= 4,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.regionVisited.domestic_other, m.regionTotal.domestic_other, 'か所'),
+      progressText: formatStampProgress(m.regionVisited.domestic_other, 4, 'か所'),
     },
     {
       id: 'overseas-1',
-      label: '海を越えた一歩',
-      hint: '海外エリア（台北・グアム・LA・NY）の聖地を1か所以上訪問',
+      label: 'ちょっと遠い国へ行って',
+      hint: '海外エリア（台北・グアム・LA・NYなど）の聖地を1か所以上訪問する',
       unlocked: m.regionVisited.overseas >= 1,
       category: 'spot',
       tier: 'normal',
@@ -1060,69 +1100,59 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'overseas-all',
-      label: 'ワールド・トラベラー',
-      hint: '海外エリアの全4か所を完全制覇',
-      unlocked: m.regionTotal.overseas > 0 && m.regionVisited.overseas >= m.regionTotal.overseas,
+      label: 'パスポートにヒゲダンの記憶',
+      hint: '海外エリアの聖地を2か所以上訪問する',
+      unlocked: m.regionVisited.overseas >= 2,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(m.regionVisited.overseas, m.regionTotal.overseas, 'か所'),
+      progressText: formatStampProgress(m.regionVisited.overseas, 2, 'か所'),
     },
     {
       id: 'spot-cat-mv-all',
       label: 'MVの風景を追いかけて',
-      hint: 'MVロケ地カテゴリの全9か所をすべて訪問',
-      unlocked: hasCategoryComplete('MVロケ地'),
+      hint: 'MVロケ地カテゴリの聖地を5か所以上訪問する',
+      unlocked: (m.spotCategoryStats['MVロケ地']?.visited ?? 0) >= 5,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(
-        m.spotCategoryStats['MVロケ地']?.visited ?? 0,
-        m.spotCategoryStats['MVロケ地']?.total ?? 0,
-        'か所',
-      ),
+      progressText: formatStampProgress(m.spotCategoryStats['MVロケ地']?.visited ?? 0, 5, 'か所'),
     },
     {
       id: 'spot-cat-venue-all',
-      label: '聖なるステージの記憶',
-      hint: 'ライブ会場カテゴリの全10か所をすべて訪問',
-      unlocked: hasCategoryComplete('ライブ会場'),
+      label: 'Clap Clap',
+      hint: 'ライブ会場カテゴリの聖地を6か所以上訪問する',
+      unlocked: (m.spotCategoryStats['ライブ会場']?.visited ?? 0) >= 6,
       category: 'spot',
       tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(
-        m.spotCategoryStats['ライブ会場']?.visited ?? 0,
-        m.spotCategoryStats['ライブ会場']?.total ?? 0,
-        'か所',
-      ),
+      progressText: formatStampProgress(m.spotCategoryStats['ライブ会場']?.visited ?? 0, 6, 'か所'),
     },
     {
       id: 'spot-cat-memory-all',
       label: '4人の青春の足あと',
-      hint: 'メンバーの思い出カテゴリ全7か所をすべて訪問',
-      unlocked: hasCategoryComplete('メンバーの思い出'),
+      hint: 'メンバーの思い出カテゴリの聖地を5か所以上訪問する',
+      unlocked: (m.spotCategoryStats['メンバーの思い出']?.visited ?? 0) >= 5,
       category: 'spot',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'spots',
-      progressText: formatStampProgress(
-        m.spotCategoryStats['メンバーの思い出']?.visited ?? 0,
-        m.spotCategoryStats['メンバーの思い出']?.total ?? 0,
-        'か所',
-      ),
+      progressText: formatStampProgress(m.spotCategoryStats['メンバーの思い出']?.visited ?? 0, 5, 'か所'),
     },
     {
       id: 'spot-cat-rec-all',
-      label: 'メンバーお墨付き',
-      hint: 'メンバーのおすすめスポット（岡本一銭屋・勝田神社）を訪問',
-      unlocked: hasCategoryComplete('メンバーのおすすめ'),
+      label: 'お墨付きの寄り道',
+      hint: 'メンバーのおすすめスポット（岡本一銭屋・勝田神社）を両方訪問する',
+      unlocked:
+        m.visitedSpotSet.has('spot-okamoto-issenya') &&
+        m.visitedSpotSet.has('spot-kanda-shrine-yonago'),
       category: 'spot',
       tier: 'normal',
       targetTab: 'spots',
     },
     {
       id: 'spot-town-4',
-      label: '街とヒゲダンの記憶',
-      hint: '街とヒゲダンカテゴリのスポットを4か所以上訪問',
+      label: '街角にひそむヒゲダンの気配',
+      hint: '「街とヒゲダン」カテゴリのスポットを4か所以上訪問する',
       unlocked: (m.spotCategoryStats['街とヒゲダン']?.visited ?? 0) >= 4,
       category: 'spot',
       tier: 'normal',
@@ -1131,8 +1161,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'spot-twin-stadium',
-      label: '二大スタジアムの記憶',
-      hint: '日産スタジアムとヤンマースタジアム長居の両方をチェック',
+      label: '二大スタジアムのアンセム',
+      hint: '日産スタジアムとヤンマースタジアム長居の両方を訪問する',
       unlocked:
         m.visitedSpotSet.has('spot-nissan-stadium') &&
         m.visitedSpotSet.has('spot-yanmar-stadium'),
@@ -1141,11 +1171,11 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
       targetTab: 'spots',
     },
 
-    // 4. setlist (22 items: 15 normal, 7 gold)
+    // D. setlist (053-074 = 22 items: 16 normal, 6 gold)
     {
       id: 'setlist-create-1',
-      label: '最初の1曲',
-      hint: 'MYセトリに最初の1曲を追加',
+      label: 'それじゃ夢の中へ',
+      hint: 'MYセトリに最初の1曲を追加する',
       unlocked: m.maxSetlistSongs >= 1,
       category: 'setlist',
       tier: 'normal',
@@ -1153,7 +1183,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'first-setlist',
-      label: 'MYセトリ作り',
+      label: 'ちいさなミニライブ開幕',
       hint: 'MYセトリに3曲以上並べる',
       unlocked: m.maxSetlistSongs >= 3,
       category: 'setlist',
@@ -1163,7 +1193,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'setlist-7',
-      label: 'ライブ気分（7曲）',
+      label: 'フェス枠のセットリスト',
       hint: '1つのMYセトリに7曲以上並べる',
       unlocked: m.maxSetlistSongs >= 7,
       category: 'setlist',
@@ -1173,7 +1203,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'setlist-12',
-      label: 'ワンマン編成（12曲）',
+      label: 'ホール公演の演出家',
       hint: '1つのMYセトリに12曲以上並べる',
       unlocked: m.maxSetlistSongs >= 12,
       category: 'setlist',
@@ -1183,7 +1213,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'setlist-18',
-      label: 'フルスケール公演',
+      label: '夢のフルスケール公演',
       hint: '18曲以上の本格ワンマンセットリストを組む',
       unlocked: m.maxSetlistSongs >= 18,
       category: 'setlist',
@@ -1193,8 +1223,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'encore-night',
-      label: 'アンコール構成',
-      hint: 'アンコール曲入りのMYセトリを作成',
+      label: '鳴りやまないアンコール',
+      hint: 'アンコール曲入りのMYセトリを作成する',
       unlocked: m.maxEncoreCount >= 1,
       category: 'setlist',
       tier: 'normal',
@@ -1202,16 +1232,16 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'setlist-opening-trio',
-      label: '開幕3曲シンクロ',
-      hint: 'MYセトリの最初の3曲の並びが実際のライブ公演の開幕3曲と一致',
+      label: '奇跡の開幕3曲シンクロ',
+      hint: 'MYセトリの最初の3曲の並びが実際のライブ公演の開幕3曲と一致する',
       unlocked: m.matchesRealOpeningTrio,
       category: 'setlist',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-custom-title',
-      label: 'ツアータイトル命名',
+      label: '自分だけのツアーに名を',
       hint: 'MYセトリにオリジナルの公演タイトルをつける',
       unlocked: m.hasCustomSetlistTitle,
       category: 'setlist',
@@ -1220,8 +1250,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'multi-setlist',
-      label: 'セトリ職人（2件）',
-      hint: '2つ以上のMYセトリを保存',
+      label: 'ふたつめの妄想ステージ',
+      hint: '2つ以上のMYセトリを保存する',
       unlocked: m.savedSetlistCount >= 2,
       category: 'setlist',
       tier: 'normal',
@@ -1230,8 +1260,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'saved-setlist-3',
-      label: '3つのセットリスト',
-      hint: '3つ以上のMYセトリを保存',
+      label: '気分で着替える3つの宴',
+      hint: '3つ以上のMYセトリを保存する',
       unlocked: m.savedSetlistCount >= 3,
       category: 'setlist',
       tier: 'normal',
@@ -1240,8 +1270,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'saved-setlist-5',
-      label: '理想郷の編集長（5件）',
-      hint: '5つ以上のMYセトリを保存',
+      label: 'セットリスト編集長',
+      hint: '5つ以上のMYセトリを保存する',
       unlocked: m.savedSetlistCount >= 5,
       category: 'setlist',
       tier: 'normal',
@@ -1250,8 +1280,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'saved-setlist-10',
-      label: '夢のアーカイブ（10件）',
-      hint: '10個以上のMYセトリを保存',
+      label: '夢の公演アーカイブ館長',
+      hint: '10個以上のMYセトリを保存する',
       unlocked: m.savedSetlistCount >= 10,
       category: 'setlist',
       tier: 'gold',
@@ -1261,24 +1291,24 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'setlist-115-opener',
       label: '115万キロから始まる夜',
-      hint: '5曲以上のMYセトリの1曲目に「115万キロのフィルム」を配置',
+      hint: '5曲以上のMYセトリの1曲目に「115万キロのフィルム」を配置する',
       unlocked: m.has115ManKiloOpening,
       category: 'setlist',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-anthem-finale',
-      label: '大団円のラスト曲',
-      hint: '5曲以上のMYセトリの本編・最後を「宿命 / Stand By You / ラストソング」で締める',
+      label: '涙と笑顔の大団円',
+      hint: '5曲以上のMYセトリの一番最後（アンコール含む最終曲）を「宿命 / Stand By You / ラストソング」のいずれかで締める',
       unlocked: m.hasAnthemFinale,
       category: 'setlist',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-upper-beat',
-      label: '灼熱のアッパー編成',
+      label: '灼熱のアッパー・フロア',
       hint: '6曲以上で平均BPM 130以上の勢いあるセトリを組む',
       unlocked: m.hasHighBpmSetlist,
       category: 'setlist',
@@ -1287,8 +1317,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'setlist-ballad-night',
-      label: '余韻のバラード夜会',
-      hint: 'しっとり聴かせるバラード系楽曲を4曲以上入れたセトリを組む',
+      label: '星降るバラード夜会',
+      hint: 'バラード系楽曲を4曲以上入れたセトリを組む',
       unlocked: m.hasBalladSetlist,
       category: 'setlist',
       tier: 'normal',
@@ -1306,54 +1336,54 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'setlist-high-tone',
       label: 'ハイトーンの極限へ',
-      hint: '地声最高音hiD以上の難曲を5曲以上組み込んだ挑戦セトリを作成',
+      hint: '地声最高音 hiD 以上の難曲を5曲以上組み込んだ挑戦セトリを作成する',
       unlocked: m.hasHighToneSetlist,
       category: 'setlist',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-album-tribute',
-      label: 'アルバム濃密特集',
-      hint: '同じ収録作品（アルバム）の曲を7曲以上入れたコンセプトセトリを作成',
+      label: 'My Favorite Album',
+      hint: '同じ収録作品（アルバム）の曲を7曲以上入れたコンセプトセトリを作成する',
       unlocked: m.hasAlbumConceptSetlist,
       category: 'setlist',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-five-eras',
-      label: '5つの時代を旅する夜',
-      hint: '10曲以上で初期〜最新2026までの全5時代の楽曲を1つのセトリに揃える',
+      label: '時代を駆け抜けるタイムマシン',
+      hint: '10曲以上で初期〜最新までの全5時代の楽曲を1つのセトリに揃える',
       unlocked: m.hasAllFiveErasSetlist,
       category: 'setlist',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'setlists',
     },
     {
       id: 'setlist-four-creators',
       label: '4人のペンが交差する夜',
-      hint: '「Rowan」「旅は道連れ」「フィラメント」などメンバー4人それぞれの制作曲を1つのセトリに揃える',
+      hint: '藤原曲に加え「Rowan」「旅は道連れ」「フィラメント」などメンバー4人全員の制作曲を1つのセトリに揃える',
       unlocked: m.hasAllFourMemberSongs,
       category: 'setlist',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'setlists',
     },
     {
       id: 'higedan-same-sensibility',
-      label: '髭男と同じ感性',
-      hint: '作成したMYセトリの曲順が実際のライブ・公演セットリストと完全一致する',
-      unlocked: m.matchesRealConcertSetlist,
+      label: '拍手喝采のマイ・ベスト公演',
+      hint: '12曲以上・アンコール2曲以上・オリジナルタイトル付きのMYセトリを作成し、SNSシェア画像を生成する',
+      unlocked: Boolean(input.generatedSetlistShareImage) && m.hasBestLiveSetlist,
       category: 'setlist',
       tier: 'gold',
       targetTab: 'setlists',
     },
 
-    // 5. quiz (20 items: 15 normal, 5 gold)
+    // E. quiz (075-094 = 20 items: 15 normal, 5 gold)
     {
       id: 'quiz-starter',
-      label: '検定チャレンジャー',
-      hint: 'Official髭男dism検定を1セット完了',
+      label: 'はじめてのクイズ挑戦状',
+      hint: '検定を1セット完了する',
       unlocked: m.completedSets >= 1,
       category: 'quiz',
       tier: 'normal',
@@ -1362,8 +1392,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-3',
-      label: '検定3セット挑戦',
-      hint: 'Official髭男dism検定を3セット完了',
+      label: '知識欲に火がついた',
+      hint: '検定を3セット完了する',
       unlocked: m.completedSets >= 3,
       category: 'quiz',
       tier: 'normal',
@@ -1372,8 +1402,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-6',
-      label: '検定折り返し（6セット）',
-      hint: 'Official髭男dism検定を6セット完了',
+      label: '検定ロードの折り返し',
+      hint: '検定を6セット完了する',
       unlocked: m.completedSets >= 6,
       category: 'quiz',
       tier: 'normal',
@@ -1382,8 +1412,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-9',
-      label: '検定9セット走破',
-      hint: 'Official髭男dism検定を9セット完了',
+      label: '難問の森を突き進む',
+      hint: '検定を9セット完了する',
       unlocked: m.completedSets >= 9,
       category: 'quiz',
       tier: 'normal',
@@ -1392,8 +1422,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-all-12',
-      label: '全12セット完全走破',
-      hint: '全コース計12セットの検定すべてを完了',
+      label: '12のステージを駆け抜けて',
+      hint: '全コース計12セットの検定すべてを完了する',
       unlocked: m.completedSets >= 12,
       category: 'quiz',
       tier: 'gold',
@@ -1402,8 +1432,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-beginner-done',
-      label: '初級コース修了',
-      hint: '初級コース（Vol.1 / Vol.2）を両方完了',
+      label: '髭団のたまご卒業',
+      hint: '初級コース（Vol.1 / Vol.2）を両方完了する',
       unlocked: m.courseDone.beginner >= 2,
       category: 'quiz',
       tier: 'normal',
@@ -1412,8 +1442,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-intermediate-done',
-      label: '中級コース修了',
-      hint: '中級コース（Vol.1 / Vol.2）を両方完了',
+      label: 'ディープな沼の案内役',
+      hint: '中級コース（Vol.1 / Vol.2）を両方完了する',
       unlocked: m.courseDone.intermediate >= 2,
       category: 'quiz',
       tier: 'normal',
@@ -1422,18 +1452,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-brothers-done',
-      label: 'Bros.級コース修了',
-      hint: '難問 Bros.級コース（Vol.1 / Vol.2）を両方完了',
+      label: '難問 BROTHERS級の生還者',
+      hint: '難問 BROTHERS級コース（Vol.1 / Vol.2）を両方完了する',
       unlocked: m.courseDone.brothers >= 2,
       category: 'quiz',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'quiz',
       progressText: formatStampProgress(m.courseDone.brothers, 2, 'セット'),
     },
     {
       id: 'quiz-allcourse-half',
-      label: '全曲総合3セット達成',
-      hint: '全曲総合コース（Vol.1〜6）のうち3セット以上を完了',
+      label: 'ディスコグラフィの探検家',
+      hint: '全曲総合コース（Vol.1〜6）のうち3セット以上を完了する',
       unlocked: m.courseDone.all >= 3,
       category: 'quiz',
       tier: 'normal',
@@ -1442,8 +1472,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-allcourse-done',
-      label: '全曲総合60問制覇',
-      hint: '全曲総合コース Vol.1〜Vol.6 をすべて完了',
+      label: '完全踏破',
+      hint: '全曲総合コース Vol.1〜Vol.6 をすべて完了する',
       unlocked: m.courseDone.all >= 6,
       category: 'quiz',
       tier: 'gold',
@@ -1452,17 +1482,17 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-score-70',
-      label: '正答率70%突破',
-      hint: '検定で正答率70%以上を記録',
-      unlocked: m.bestQuizScore !== null && m.bestQuizScore >= 70,
+      label: '50%',
+      hint: '検定で正答率50%以上を記録する',
+      unlocked: m.bestQuizScore !== null && m.bestQuizScore >= 50,
       category: 'quiz',
       tier: 'normal',
       targetTab: 'quiz',
     },
     {
       id: 'quiz-master',
-      label: '検定80%超',
-      hint: '検定で正答率80%以上を記録',
+      label: '溢れるヒゲダン愛',
+      hint: '検定で正答率80%以上を記録する',
       unlocked: m.bestQuizScore !== null && m.bestQuizScore >= 80,
       category: 'quiz',
       tier: 'normal',
@@ -1470,8 +1500,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-score-90',
-      label: '正答率90%超え',
-      hint: '検定で正答率90%以上を記録',
+      label: '完璧まであとひとかけ',
+      hint: '検定で正答率90%以上を記録する',
       unlocked: m.bestQuizScore !== null && m.bestQuizScore >= 90,
       category: 'quiz',
       tier: 'normal',
@@ -1479,18 +1509,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-perfect-1',
-      label: '初の全問正解（満点）',
-      hint: 'いずれかの検定セットで100%（全問正解）を達成',
+      label: '満点のファンファーレ',
+      hint: 'いずれかの検定セットで100%（全問正解）を達成する',
       unlocked: m.perfectSets >= 1,
       category: 'quiz',
-      tier: 'gold',
+      tier: 'normal',
       targetTab: 'quiz',
       progressText: formatStampProgress(m.perfectSets, 1, 'セット'),
     },
     {
       id: 'quiz-perfect-3',
-      label: '満点トリプル',
-      hint: '3セット以上で100%（全問正解）を達成',
+      label: '知識のハットトリック',
+      hint: '3セット以上で100%（全問正解）を達成する',
       unlocked: m.perfectSets >= 3,
       category: 'quiz',
       tier: 'normal',
@@ -1499,18 +1529,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-perfect-6',
-      label: '満点ハーフコンプリート',
-      hint: '6セット以上で100%（全問正解）を達成',
+      label: 'もはや関係者',
+      hint: '6セット以上で100%（全問正解）を達成する',
       unlocked: m.perfectSets >= 6,
       category: 'quiz',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'quiz',
       progressText: formatStampProgress(m.perfectSets, 6, 'セット'),
     },
     {
       id: 'quiz-beginner-perfect',
-      label: '初級オール満点',
-      hint: '初級コース Vol.1 / Vol.2 を両方100%でクリア',
+      label: 'ウォーミングアップ完了',
+      hint: '初級コース Vol.1 / Vol.2 を両方100%でクリアする',
       unlocked: m.coursePerfect.beginner >= 2,
       category: 'quiz',
       tier: 'normal',
@@ -1518,8 +1548,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-intermediate-perfect',
-      label: '中級オール満点',
-      hint: '中級コース Vol.1 / Vol.2 を両方100%でクリア',
+      label: '頼れる先輩髭団',
+      hint: '中級コース Vol.1 / Vol.2 を両方100%でクリアする',
       unlocked: m.coursePerfect.intermediate >= 2,
       category: 'quiz',
       tier: 'normal',
@@ -1527,17 +1557,17 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'quiz-brothers-perfect',
-      label: 'Bros.級オール満点',
-      hint: 'Bros.級コース Vol.1 / Vol.2 を両方100%でクリア',
+      label: '髭男知識のグランドマスター',
+      hint: 'BROTHERS級コース Vol.1 / Vol.2 を両方100%でクリアする',
       unlocked: m.coursePerfect.brothers >= 2,
       category: 'quiz',
-      tier: 'normal',
+      tier: 'gold',
       targetTab: 'quiz',
     },
     {
       id: 'quiz-grand-master',
-      label: '検定グランドマスター',
-      hint: '全12セットすべてで100%（全問正解）を達成',
+      label: 'ノーダウト',
+      hint: '全12セットすべてで100%（全問正解）を達成する',
       unlocked: m.perfectSets >= 12,
       category: 'quiz',
       tier: 'gold',
@@ -1545,11 +1575,12 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
       progressText: formatStampProgress(m.perfectSets, 12, 'セット'),
     },
 
-    // 6. explore (20 items: 17 normal, 3 gold)
+    // F. explore (095-114 = 20 items: 17 normal, 3 gold)
     {
       id: 'song-read-1',
-      label: '音と言葉の1曲目',
-      hint: '楽曲ガイドから個別の楽曲解説ページを1曲読む',
+      label: '1ページ目のライナーノーツ',
+      hint: '個別の楽曲解説ページを1曲読む',
+      areaHint: '楽曲ページ',
       unlocked: m.readSongCount >= 1,
       category: 'explore',
       tier: 'normal',
@@ -1557,8 +1588,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-5',
-      label: '楽曲ページ5曲読破',
+      label: '曲の秘密を知りし者',
       hint: '個別の楽曲解説ページを5曲読む',
+      areaHint: '楽曲ページ',
       unlocked: m.readSongCount >= 5,
       category: 'explore',
       tier: 'normal',
@@ -1566,8 +1598,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-15',
-      label: '15曲のライナーノーツ',
+      label: '音と言葉に酔いしれて',
       hint: '個別の楽曲解説ページを15曲読む',
+      areaHint: '楽曲ページ',
       unlocked: m.readSongCount >= 15,
       category: 'explore',
       tier: 'normal',
@@ -1575,8 +1608,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-30',
-      label: '30曲の歌詞世界',
+      label: '深まる楽曲のラビリンス',
       hint: '個別の楽曲解説ページを30曲読む',
+      areaHint: '楽曲ページ',
       unlocked: m.readSongCount >= 30,
       category: 'explore',
       tier: 'normal',
@@ -1584,17 +1618,19 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-50',
-      label: '50曲ノート読破',
-      hint: '個別の楽曲解説ページを50曲読む',
-      unlocked: m.readSongCount >= 50,
+      label: '55',
+      hint: '個別の楽曲解説ページを55曲読む',
+      areaHint: '楽曲ページ',
+      unlocked: m.readSongCount >= 55,
       category: 'explore',
       tier: 'normal',
-      progressText: formatStampProgress(m.readSongCount, 50, '曲'),
+      progressText: formatStampProgress(m.readSongCount, 55, '曲'),
     },
     {
       id: 'song-read-75',
-      label: '全曲完読への道（75曲）',
+      label: '全曲制覇のカウントダウン',
       hint: '個別の楽曲解説ページを75曲読む',
+      areaHint: '楽曲ページ',
       unlocked: m.readSongCount >= 75,
       category: 'explore',
       tier: 'normal',
@@ -1602,17 +1638,19 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-all-90',
-      label: '全90曲コンプリート読破',
-      hint: '掲載90曲すべての個別楽曲解説ページを読む',
-      unlocked: m.readSongCount >= HIGEDAN_SONGS.length,
+      label: 'すべての物語を抱きしめて',
+      hint: '個別の楽曲解説ページを90曲以上読む',
+      areaHint: '楽曲ページ',
+      unlocked: m.readSongCount >= 90,
       category: 'explore',
       tier: 'gold',
-      progressText: formatStampProgress(m.readSongCount, HIGEDAN_SONGS.length, '曲'),
+      progressText: formatStampProgress(m.readSongCount, 90, '曲'),
     },
     {
       id: 'album-read-lovepeace',
-      label: 'ラブとピースは君の中 完読',
+      label: 'ラブとピースは君の中',
       hint: '「ラブとピースは君の中」収録8曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'ラブとピースは君の中'),
       category: 'explore',
       tier: 'normal',
@@ -1620,8 +1658,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-manmirror',
-      label: 'MAN IN THE MIRROR 完読',
+      label: 'MAN IN THE MIRROR',
       hint: '「MAN IN THE MIRROR」収録6曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'MAN IN THE MIRROR'),
       category: 'explore',
       tier: 'normal',
@@ -1629,8 +1668,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-report',
-      label: 'レポート 完読',
+      label: 'レポート',
       hint: '「レポート」収録7曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'レポート'),
       category: 'explore',
       tier: 'normal',
@@ -1638,8 +1678,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-escaparade',
-      label: 'エスカパレード 完読',
+      label: 'エスカパレード',
       hint: '「エスカパレード」収録13曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'エスカパレード'),
       category: 'explore',
       tier: 'normal',
@@ -1647,8 +1688,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-traveler',
-      label: 'Traveler 完読',
+      label: 'Traveler',
       hint: '「Traveler」収録13曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'Traveler'),
       category: 'explore',
       tier: 'normal',
@@ -1656,8 +1698,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-editorial',
-      label: 'Editorial 完読',
+      label: 'Editorial',
       hint: '「Editorial」収録14曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'Editorial'),
       category: 'explore',
       tier: 'normal',
@@ -1665,8 +1708,9 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'album-read-rejoice',
-      label: 'Rejoice 完読',
+      label: 'Rejoice',
       hint: '「Rejoice」収録15曲の楽曲ページをすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: hasReadAllAlbumSongs(m.readSongSet, 'Rejoice'),
       category: 'explore',
       tier: 'normal',
@@ -1674,15 +1718,16 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'song-read-member-trio',
-      label: '3人の自作曲を巡る読書',
+      label: 'それぞれの音楽性',
       hint: '「Rowan」「旅は道連れ」「フィラメント」の3曲の解説をすべて読む',
+      areaHint: '楽曲ページ',
       unlocked: FOUR_MEMBER_SONG_IDS.every((id) => m.readSongSet.has(id)),
       category: 'explore',
       tier: 'gold',
     },
     {
       id: 'mood-first',
-      label: '今日の1曲との出会い',
+      label: '今日のわたしに届く1曲',
       hint: '「今日の1曲診断」に最後まで答えて1曲を受け取る',
       areaHint: '今日の1曲診断',
       unlocked: m.moodCompletedCount >= 1,
@@ -1691,7 +1736,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'mood-three',
-      label: '気分の処方箋（3回診断）',
+      label: '気分の処方箋コレクター',
       hint: '「今日の1曲診断」を3回以上完了する',
       areaHint: '今日の1曲診断',
       unlocked: m.moodCompletedCount >= 3,
@@ -1701,8 +1746,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'mood-all-four',
-      label: '4つの気分の旅人',
-      hint: '今日の1曲診断で最初の質問（4種類の気分すべて）を完走する',
+      label: '喜怒哀楽を愛す者',
+      hint: '「今日の1曲診断」で最初の質問（4種類の気分すべて）を完走する',
       areaHint: '今日の1曲診断',
       unlocked: m.completedMoodsCount >= 4,
       category: 'explore',
@@ -1711,17 +1756,17 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
     {
       id: 'vocal-range-visit',
-      label: '音域とキーの探求者',
+      label: 'カラオケの達人',
       hint: '「掲載90曲の音域・発売日一覧」ページを開く',
-      areaHint: '掲載90曲の音域・発売日一覧',
+      areaHint: '音域・発売日一覧',
       unlocked: input.visitedVocalRange,
       category: 'explore',
       tier: 'normal',
     },
     {
       id: 'archive-visit',
-      label: 'インタビュー資料室の読書家',
-      hint: '「参考記事・インタビュー」ページを開く',
+      label: 'インタビュー資料室の常連',
+      hint: '「参考記事・インタビュー一覧」ページを開く',
       areaHint: '参考記事・インタビュー',
       unlocked: input.visitedReferenceArchive,
       category: 'explore',
@@ -1729,17 +1774,18 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     },
   ];
 
-  const allOtherUnlocked = first114.every((stamp) => stamp.unlocked);
+  const first114UnlockedCount = first114.filter((stamp) => stamp.unlocked).length;
   const allStamps: MyNoteStampDraft[] = [
     ...first114,
     {
       id: 'complete-115',
-      label: '115万キロの記憶',
-      hint: 'ほかの全114個の訪問・記念スタンプをすべて集める',
-      unlocked: allOtherUnlocked,
+      label: '115万キロのフィルム',
+      hint: 'ほかのスタンプを92個以上集めて最高ランクに到達する',
+      areaHint: 'サイト全体',
+      unlocked: first114UnlockedCount >= 92,
       category: 'profile',
       tier: 'gold',
-      progressText: formatStampProgress(first114.filter((s) => s.unlocked).length, 114, '個'),
+      progressText: formatStampProgress(first114UnlockedCount, 92, '個'),
     },
   ];
 
@@ -1758,11 +1804,13 @@ export function buildMyNoteSnapshot(input: MyNoteEngagementInput): {
   stamps: MyNoteStampItem[];
   rank: MyNoteRankSummary;
   radar: MyNoteRadarSummary;
+  playstyle: MyNotePlaystyleSummary;
 } {
   const metrics = computeMetrics(input);
   const stamps = buildStampsFromMetrics(input, metrics);
   const rank = buildMyNoteRank(stamps);
-  return { stamps, rank, radar: metrics.radar };
+  const playstyle = buildMyNotePlaystyle(metrics.radar);
+  return { stamps, rank, radar: metrics.radar, playstyle };
 }
 
 interface RankTierSpec {
@@ -1772,47 +1820,134 @@ interface RankTierSpec {
 }
 
 const RANK_TIERS: readonly RankTierSpec[] = [
-  { min: 115, title: '115万キロのフィルム・マスター', subtitle: '全115スタンプ制覇！永遠のパートナー級の一冊です' },
-  { min: 108, title: '115万キロの案内人', subtitle: 'コンプリート目前！細部まで愛に満ちた一冊です' },
-  { min: 97, title: '115万キロの伴走者', subtitle: '数えきれない音楽と旅の軌跡が刻まれています' },
-  { min: 85, title: '髭団アーカイブの達人', subtitle: '曲もライブも歴史も深く味わう達人のノート' },
-  { min: 73, title: '音と言葉のマイスター', subtitle: '多角的な視点で作品を深く味わっています' },
-  { min: 61, title: 'ライブと聖地の案内人', subtitle: 'ステージの熱気とゆかりの地が美しく繋がっています' },
-  { min: 50, title: '髭男ノート研究員', subtitle: '半分に迫るほど豊かな発見が集まりました' },
-  { min: 40, title: '山陰と東京を結ぶ旅人', subtitle: '原点と現在をつなぐ足あとが広がっています' },
-  { min: 31, title: 'セトリと記憶の編集者', subtitle: '選曲のこだわりや実体験が生き生きと残っています' },
-  { min: 23, title: 'グッド・メロディ探検家', subtitle: '曲の背景やライブの余韻を楽しく巡っています' },
-  { min: 16, title: '旅するリスナー', subtitle: '音と言葉の記録が着実に増えています' },
-  { min: 10, title: '街角のリスナー', subtitle: 'お気に入りの曲や思い出が形になりはじめました' },
-  { min: 5, title: 'ファンノート・ビギナー', subtitle: '最初の旅のあしあとがついてきました！' },
-  { min: 2, title: '音と言葉のルーキー', subtitle: '少しずつ自分のページが埋まりはじめています' },
-  { min: 0, title: 'はじめの一歩', subtitle: '気になるコーナーで記録やチェックをつけてみよう' },
+  { min: 92, title: '115万キロのマイスター', subtitle: '永遠のパートナー級の愛と軌跡。最高の推し活に拍手を！' },
+  { min: 84, title: '永遠のBROTHERS', subtitle: '最高峰まであと少し。揺るぎない絆がここに' },
+  { min: 76, title: '殿堂入り髭団', subtitle: 'もはや髭団の歴史に名を刻む伝説級の存在です' },
+  { min: 68, title: '名誉髭団', subtitle: '深い愛情と歩みを称える栄誉の称号' },
+  { min: 60, title: 'ヒゲダン博士', subtitle: '曲の背景からトリビアまで、何でも語れる博士級！' },
+  { min: 52, title: '筋金入りの髭団', subtitle: '曲も歴史も遊び心も、ブレない愛で楽しみ尽くす領域' },
+  { min: 44, title: 'ヒゲダン愛の伝道師', subtitle: '溢れる熱意で周囲にグッドミュージックを広める存在' },
+  { min: 36, title: 'ヒゲダン史の目撃者', subtitle: 'バンドの歩みと音楽の大きなうねりを見渡しています' },
+  { min: 29, title: 'グッドミュージックの語り部', subtitle: '誰かに推し曲をおすすめしたくなる熱量です' },
+  { min: 22, title: '音と言葉の探究者', subtitle: '歌詞やアレンジの奥深さまで味わい尽くす段階へ' },
+  { min: 16, title: 'ヒゲダン沼の住人', subtitle: '気づけばもう引き返せないほど夢中です' },
+  { min: 10, title: '駆け出し髭団', subtitle: 'いよいよ「髭団」を名乗る新たな一歩へ' },
+  { min: 5, title: '街角のリスナー', subtitle: 'ふとした瞬間にメロディが浮かぶ日々のはじまり' },
+  { min: 2, title: 'ファンノートの新人', subtitle: '最初の付箋がぺたりと貼られました' },
+  { min: 0, title: 'はじめの一歩', subtitle: 'これから始まる、ヒゲダンと歩む物語の最初のページ' },
 ];
 
 export function buildMyNoteRank(stamps: readonly MyNoteStampItem[]): MyNoteRankSummary {
   const totalStamps = stamps.length;
   const unlockedCount = stamps.filter((stamp) => stamp.unlocked).length;
+  const totalNormalStamps = stamps.filter((stamp) => stamp.tier === 'normal').length;
+  const unlockedNormalCount = stamps.filter(
+    (stamp) => stamp.unlocked && stamp.tier === 'normal',
+  ).length;
   const totalGoldStamps = stamps.filter((stamp) => stamp.tier === 'gold').length;
-  const unlockedGoldCount = stamps.filter((stamp) => stamp.unlocked && stamp.tier === 'gold').length;
+  const unlockedGoldCount = stamps.filter(
+    (stamp) => stamp.unlocked && stamp.tier === 'gold',
+  ).length;
 
   const rawPercent = totalStamps > 0 ? Math.round((unlockedCount / totalStamps) * 100) : 0;
   const progressPercent = unlockedCount <= 1 ? Math.max(2, rawPercent) : rawPercent;
 
   const tierIdx = RANK_TIERS.findIndex((tier) => unlockedCount >= tier.min);
-  const currentTier = tierIdx >= 0 ? RANK_TIERS[tierIdx] : RANK_TIERS[RANK_TIERS.length - 1];
-  const nextTier = tierIdx > 0 ? RANK_TIERS[tierIdx - 1] : null;
+  const resolvedIdx = tierIdx >= 0 ? tierIdx : RANK_TIERS.length - 1;
+  const currentTier = RANK_TIERS[resolvedIdx];
+  const nextTier = resolvedIdx > 0 ? RANK_TIERS[resolvedIdx - 1] : null;
+  const remainingTotal = Math.max(0, totalStamps - unlockedCount);
 
   return {
+    tierNumber: RANK_TIERS.length - resolvedIdx,
     title: currentTier.title,
     subtitle: currentTier.subtitle,
     unlockedCount,
     totalStamps,
+    unlockedNormalCount,
+    totalNormalStamps,
     unlockedGoldCount,
     totalGoldStamps,
     progressPercent,
     nextMilestoneText: nextTier
       ? `次のランクまであと ${Math.max(1, nextTier.min - unlockedCount)} スタンプ`
-      : '最高ランク到達！全115スタンプコンプリート',
+      : remainingTotal > 0
+        ? `最高ランク達成！全${totalStamps}スタンプ制覇まであと ${remainingTotal} スタンプ`
+        : `最高ランク達成！全${totalStamps}スタンプ完全制覇`,
+  };
+}
+
+const PLAYSTYLE_SPECS: Record<MyNotePlaystyleId, { title: string; subtitle: string }> = {
+  gem: {
+    title: 'ダイヤの原石',
+    subtitle: 'これからどんな輝きにも磨かれていく可能性を秘めたスタート',
+  },
+  tour: {
+    title: '歓声のど真ん中を生きる人',
+    subtitle: '歴代ツアー記録を中心に思い出を刻んでいる人',
+  },
+  spot: {
+    title: '風景と音をめぐる旅人',
+    subtitle: '全国・世界のゆかりの地をカメラ片手に巡る人',
+  },
+  setlist: {
+    title: '夢の公演ディレクター',
+    subtitle: '理想のセットリストを何度も練り上げる演出家タイプ',
+  },
+  quiz: {
+    title: 'ヒゲダン愛のトリビア賢者',
+    subtitle: '検定や難問チャレンジで知識を極めるタイプ',
+  },
+  explore: {
+    title: 'ライナーノーツの深掘り人',
+    subtitle: '楽曲解説や音域チャート、サイトの隅々までじっくり読み込む人',
+  },
+  balanced: {
+    title: '全方位の髭団トラベラー',
+    subtitle: '偏りなくサイト全体を満遍なく楽しむオールラウンダー',
+  },
+};
+
+// Gently wait until any axis moves past simple setup actions before locking in a specialty.
+const PLAYSTYLE_GEM_THRESHOLD_MILLI = 160;
+const PLAYSTYLE_BALANCED_FLOOR_MILLI = 120;
+const PLAYSTYLE_BALANCED_MAX_SPREAD_MILLI = 220;
+
+export function buildMyNotePlaystyle(radar: MyNoteRadarSummary): MyNotePlaystyleSummary {
+  if (radar.axes.length === 0) {
+    return { id: 'gem', ...PLAYSTYLE_SPECS.gem, dominantAxisId: null };
+  }
+
+  let maxMilli = -1;
+  let minMilli = Number.POSITIVE_INFINITY;
+  let bestAxis: MyNoteRadarAxis = radar.axes[0];
+
+  for (const axis of radar.axes) {
+    const scoreMilli = Math.max(0, Math.round(axis.value * 1000));
+    if (scoreMilli > maxMilli) {
+      maxMilli = scoreMilli;
+      bestAxis = axis;
+    }
+    if (scoreMilli < minMilli) {
+      minMilli = scoreMilli;
+    }
+  }
+
+  if (maxMilli < PLAYSTYLE_GEM_THRESHOLD_MILLI) {
+    return { id: 'gem', ...PLAYSTYLE_SPECS.gem, dominantAxisId: null };
+  }
+
+  if (
+    minMilli >= PLAYSTYLE_BALANCED_FLOOR_MILLI &&
+    maxMilli - minMilli <= PLAYSTYLE_BALANCED_MAX_SPREAD_MILLI
+  ) {
+    return { id: 'balanced', ...PLAYSTYLE_SPECS.balanced, dominantAxisId: null };
+  }
+
+  return {
+    id: bestAxis.id,
+    ...PLAYSTYLE_SPECS[bestAxis.id],
+    dominantAxisId: bestAxis.id,
   };
 }
 
