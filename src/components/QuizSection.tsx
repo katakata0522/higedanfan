@@ -188,6 +188,8 @@ export function QuizSection({
             visible={viewTab === 'quiz'}
             activeCourseLabel={getCourseLabel(difficulty, scope)}
             quizSummary={calculateQuizResult(score, questions)}
+            questions={questions}
+            questionOutcomes={session.outcomes}
             onRestart={() => startCourse(difficulty, scope, questionSet)}
             onChooseCourse={chooseCourse}
             onOpenArchive={onOpenArchive}

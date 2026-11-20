@@ -104,7 +104,7 @@ export function QuizQuestionCard({
                 ? isCurrentQuestionCorrect
                   ? 'bg-[#2e6f40]'
                   : 'bg-[#C83E2B]'
-                : 'bg-[#C83E2B] ring-2 ring-[#C83E2B]/25';
+                : 'bg-[#253331] ring-2 ring-[#253331]/30';
             }
             return <span key={idx} className={`h-2 flex-1 rounded-full transition-colors ${dotClass}`} />;
           })}

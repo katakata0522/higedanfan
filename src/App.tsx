@@ -33,6 +33,15 @@ import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
 import { clearArchiveReturnState, clearGuideListReturnState, clearGuideReturnState, clearSongReturnTab, clearTourReturnState, saveSongReturnTab } from './utils/guideReturnState';
 import { recordMyNoteFeatureVisited, recordMyNoteSongRead } from './utils/myNoteProfile';
+import {
+  clearStaleSavedSetlists,
+  createNewSavedSetlist,
+  loadSavedSetlists,
+  persistSavedSetlists,
+  readQuickAddSetlistId,
+  syncActiveSavedSetlist,
+  writeQuickAddSetlistId,
+} from './utils/savedSetlists';
 
 const MyNoteModal = React.lazy(() =>
   import('./components/MyNoteModal').then(module => ({ default: module.MyNoteModal }))
@@ -240,7 +249,7 @@ export default function App() {
       window.history.pushState(entry, '', nextUrl);
     }
     if (revisitingActivity) setActivityVisit(visit => visit + 1);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   };
 
   useEffect(() => {
@@ -299,25 +308,77 @@ export default function App() {
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist } = records;
 
+  const [quickAddSetlistId, setQuickAddSetlistId] = useState<string | null>(() =>
+    readQuickAddSetlistId(records.resetEpoch),
+  );
+  const updateQuickAddTarget = React.useCallback((id: string | null) => {
+    setQuickAddSetlistId(id);
+    writeQuickAddSetlistId(id, records.resetEpoch);
+  }, [records.resetEpoch]);
+  const prevResetEpochRef = React.useRef(records.resetEpoch);
+
   useEffect(() => {
+    if (prevResetEpochRef.current !== records.resetEpoch) {
+      prevResetEpochRef.current = records.resetEpoch;
+      updateQuickAddTarget(null);
+    }
     if (!records.resetEpoch) return;
     const epoch = records.resetEpoch;
     clearStaleQuizSession(epoch);
+    clearStaleSavedSetlists(epoch);
     void import('./components/mood/moodSession').then(({ clearStaleMoodSession }) => clearStaleMoodSession(epoch));
-    void import('./utils/savedSetlists').then(({ clearStaleSavedSetlists }) => clearStaleSavedSetlists(epoch));
     void import('./components/quiz/quizVolumeRecords').then(({ clearStaleQuizVolumeScores }) => clearStaleQuizVolumeScores(epoch));
     void import('./utils/myNoteProfile').then(({ clearStaleMyNoteProfile }) => clearStaleMyNoteProfile(epoch));
-  }, [records.resetEpoch]);
+  }, [records.resetEpoch, updateQuickAddTarget]);
 
   useEffect(() => {
     if (activeFeatureTab === 'vocal_range') {
       recordMyNoteFeatureVisited('vocal_range', records.resetEpoch);
     } else if (activeFeatureTab === 'quiz_archive') {
       recordMyNoteFeatureVisited('quiz_archive', records.resetEpoch);
+    } else if (activeFeatureTab === 'setlist') {
+      updateQuickAddTarget(null);
     }
-  }, [activeFeatureTab, records.resetEpoch]);
+  }, [activeFeatureTab, records.resetEpoch, updateQuickAddTarget]);
 
   const setlistSongIds = setlist.map((s) => s.songId);
+  const quickAddVisibleSongIds = setlist.length === 0 || Boolean(quickAddSetlistId) ? setlistSongIds : [];
+
+  const handleQuickAddToSetlist = React.useCallback((songId: string) => {
+    const song = songs.find(s => s.id === songId);
+    if (!song) return;
+    const validIds = new Set(songs.map(s => s.id));
+    const currentTitle = sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ';
+    const loaded = loadSavedSetlists(validIds, currentTitle, setlist, {
+      expectedEpoch: records.resetEpoch,
+    });
+    const synced = syncActiveSavedSetlist(loaded, currentTitle, setlist);
+
+    if (setlist.length === 0) {
+      updateQuickAddTarget(synced.activeId);
+      void records.addToSetlist(songId);
+      return;
+    }
+
+    if (quickAddSetlistId && quickAddSetlistId === synced.activeId) {
+      void records.addToSetlist(songId);
+      return;
+    }
+
+    const nextNum = synced.items.length + 1;
+    const newTitle = `MYセトリ ${nextNum}`;
+    const { state: nextSaved, created } = createNewSavedSetlist(synced, newTitle, [
+      { songId, isEncore: false },
+    ]);
+    persistSavedSetlists(nextSaved, {
+      expectedEpoch: records.resetEpoch,
+      validSongIds: validIds,
+    });
+    records.replaceSetlistSilently(created.entries, created.title);
+    setSetlistSyncVersion(v => v + 1);
+    updateQuickAddTarget(created.id);
+    showToast(`「${currentTitle}」を保存したまま、「${created.title}」を作成して「${song.title}」を追加しました！`);
+  }, [songs, records, setlist, quickAddSetlistId, updateQuickAddTarget]);
 
   return (
     <div className="min-h-screen flex flex-col notebook-canvas text-[#253331]">
@@ -395,8 +456,9 @@ export default function App() {
                     sessionRef={moodSession}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
-                    onAddToSetlist={records.addToSetlist}
-                    setlistSongIds={setlistSongIds}
+                    onAddToSetlist={handleQuickAddToSetlist}
+                    onRemoveFromSetlist={records.removeFromSetlist}
+                    setlistSongIds={quickAddVisibleSongIds}
                   />
                 )}
 
@@ -408,8 +470,9 @@ export default function App() {
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
                     onSelectView={(view) => handleSelectTab(view)}
-                    onAddToSetlist={records.addToSetlist}
-                    setlistSongIds={setlistSongIds}
+                    onAddToSetlist={handleQuickAddToSetlist}
+                    onRemoveFromSetlist={records.removeFromSetlist}
+                    setlistSongIds={quickAddVisibleSongIds}
                     visitedSpotIds={records.visitedSpotIds}
                     onToggleVisitedSpot={records.toggleVisitedSpot}
                     initialSubView={
@@ -438,37 +501,31 @@ export default function App() {
                     onToggleEncore={records.toggleEncore}
                     onLoadPresetSetlist={records.loadPresetSetlist}
                     onCreateSetlistFromTour={(entries, title) => {
+                      updateQuickAddTarget(null);
                       if (setlist.length === 0) {
                         if (records.loadPresetSetlist(entries, title, { skipConfirm: true })) {
                           handleSelectTab('setlist');
                         }
                         return;
                       }
-                      void import('./utils/savedSetlists').then(({
-                        createNewSavedSetlist,
-                        loadSavedSetlists,
-                        persistSavedSetlists,
-                        syncActiveSavedSetlist,
-                      }) => {
-                        const validIds = new Set(songs.map(song => song.id));
-                        const cleanTitle = sanitizeUserText(title, 160) || 'MYセトリ';
-                        const loaded = loadSavedSetlists(validIds, records.setlistTitle, setlist, {
-                          expectedEpoch: records.resetEpoch,
-                        });
-                        const synced = syncActiveSavedSetlist(
-                          loaded,
-                          sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ',
-                          setlist,
-                        );
-                        const { state: nextSaved, created } = createNewSavedSetlist(synced, cleanTitle, entries);
-                        persistSavedSetlists(nextSaved, {
-                          expectedEpoch: records.resetEpoch,
-                          validSongIds: validIds,
-                        });
-                        records.replaceSetlistSilently(created.entries, created.title);
-                        showToast(`「${created.title}」を新しいMYセトリとして作成しました（元のセトリも保存済みです）`);
-                        handleSelectTab('setlist');
+                      const validIds = new Set(songs.map(song => song.id));
+                      const cleanTitle = sanitizeUserText(title, 160) || 'MYセトリ';
+                      const loaded = loadSavedSetlists(validIds, records.setlistTitle, setlist, {
+                        expectedEpoch: records.resetEpoch,
                       });
+                      const synced = syncActiveSavedSetlist(
+                        loaded,
+                        sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ',
+                        setlist,
+                      );
+                      const { state: nextSaved, created } = createNewSavedSetlist(synced, cleanTitle, entries);
+                      persistSavedSetlists(nextSaved, {
+                        expectedEpoch: records.resetEpoch,
+                        validSongIds: validIds,
+                      });
+                      records.replaceSetlistSilently(created.entries, created.title);
+                      showToast(`「${created.title}」を新しいMYセトリとして作成しました（元のセトリも保存済みです）`);
+                      handleSelectTab('setlist');
                     }}
                     onReplaceSetlistSilently={records.replaceSetlistSilently}
                     attendedTourIds={records.attendedTourIds}
@@ -559,6 +616,7 @@ export default function App() {
               selectSong(id);
             }}
             onSwitchSavedSetlist={(entries, title) => {
+              updateQuickAddTarget(null);
               records.replaceSetlistSilently(entries, title);
               setSetlistSyncVersion((v) => v + 1);
             }}

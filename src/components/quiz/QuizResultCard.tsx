@@ -1,18 +1,22 @@
-import { RotateCcw, Award, Newspaper } from 'lucide-react';
+import { RotateCcw, Award, Newspaper, ChevronDown } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
-import type { QuizResultSummary } from '../../utils/fanLogic';
+import type { QuizQuestion } from '../../data/higedanData';
+import { formatOrderingSequence, type QuizResultSummary } from '../../utils/fanLogic';
+import type { QuizQuestionOutcome } from './quizSession';
 
 interface Props {
   visible: boolean;
   activeCourseLabel: string;
   quizSummary: QuizResultSummary;
+  questions?: readonly QuizQuestion[];
+  questionOutcomes?: readonly QuizQuestionOutcome[];
   onRestart: () => void;
   onChooseCourse: () => void;
   onOpenArchive?: () => void;
 }
 
 export function QuizResultCard({
-  visible, activeCourseLabel, quizSummary, onRestart, onChooseCourse, onOpenArchive,
+  visible, activeCourseLabel, quizSummary, questions, questionOutcomes, onRestart, onChooseCourse, onOpenArchive,
 }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
@@ -74,6 +78,44 @@ export function QuizResultCard({
         </button>
       </div>
 
+      {questions && questions.length > 0 && (
+        <details className="group mt-4 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] text-left">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-xs sm:text-sm font-bold text-[#253331] [&::-webkit-details-marker]:hidden">
+            <span>今回の{questions.length}問を振り返る（正誤と答え）</span>
+            <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-[#57534E] transition-transform group-open:rotate-180" />
+          </summary>
+          <ol className="divide-y divide-[#E6E1D6] border-t border-[#E6E1D6] px-4 py-2 text-xs sm:text-sm">
+            {questions.map((q, idx) => {
+              const outcome = questionOutcomes?.[idx];
+              const answerText = q.questionType === 'ordering' && q.correctOrder
+                ? formatOrderingSequence(q.options, q.correctOrder)
+                : (q.options[q.correctIndex] ?? '');
+              return (
+                <li key={q.id} className="space-y-1 py-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono-num text-[11px] font-bold text-[#57534E]">
+                      問{idx + 1}
+                    </span>
+                    {outcome && (
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                          outcome === 'correct'
+                            ? 'bg-[#eef9f0] text-[#2e6f40]'
+                            : 'bg-[#fdf2f0] text-[#A93020]'
+                        }`}
+                      >
+                        {outcome === 'correct' ? '正解' : '不正解'}
+                      </span>
+                    )}
+                  </div>
+                  <p className="font-bold leading-relaxed text-[#1C1917]">{q.prompt}</p>
+                  <p className="text-xs leading-relaxed text-[#253331]">答え：{answerText}</p>
+                </li>
+              );
+            })}
+          </ol>
+        </details>
+      )}
     </div>
   );
 }

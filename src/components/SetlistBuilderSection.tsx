@@ -49,6 +49,8 @@ const TourArchiveSection = React.lazy(() =>
 
 type PickerTarget = 'main' | 'encore' | null;
 
+const SHOW_SETLIST_TEXT_COPY = false;
+
 const ROYAL_ROAD_PRESET: SetlistEntry[] = [
   { songId: 'same-blue', isEncore: false },
   { songId: 'mixed-nuts', isEncore: false },
@@ -859,14 +861,16 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     >
                       {safeDisplayTitle}
                     </h2>
-                    <button
-                      type="button"
-                      onClick={() => setIsEditingTitle(true)}
-                      aria-label="セットリスト名を編集"
-                      className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
-                    >
-                      <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
-                    </button>
+                    {!isCompleteView && (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingTitle(true)}
+                        aria-label="セットリスト名を編集"
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
+                      >
+                        <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -936,23 +940,25 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               </ol>
 
               <div className="mt-3 space-y-2">
-                <button
-                  type="button"
-                  onClick={handleCopySetlist}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#FBF9F5] px-4 py-2.5 text-xs font-bold text-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
-                >
-                  {copiedFlyer ? (
-                    <>
-                      <Check className="h-4 w-4 text-[#15803D]" />
-                      セットリストをコピーしました！
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="h-4 w-4" />
-                      セットリストをテキストでコピー
-                    </>
-                  )}
-                </button>
+                {SHOW_SETLIST_TEXT_COPY && (
+                  <button
+                    type="button"
+                    onClick={handleCopySetlist}
+                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#FBF9F5] px-4 py-2.5 text-xs font-bold text-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
+                  >
+                    {copiedFlyer ? (
+                      <>
+                        <Check className="h-4 w-4 text-[#15803D]" />
+                        セットリストをコピーしました！
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-4 w-4" />
+                        セットリストをテキストでコピー
+                      </>
+                    )}
+                  </button>
+                )}
                 <button
                   type="button"
                   disabled={setlist.length === 0}

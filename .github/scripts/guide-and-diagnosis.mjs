@@ -16,7 +16,7 @@ export async function verifyGuideAndDiagnosis(browser, root) {
         await values.last().waitFor();
         assert.deepEqual(await values.locator('dt').allTextContents(), ['地声最低', '地声最高', '裏声最高', 'テンポ']);
         assert.equal(await values.last().locator('dd').innerText(), bpm);
-        if (title === 'Subtitle') assert.equal(await values.nth(2).locator('dd').innerText(), '未掲載');
+        if (title === 'Subtitle') assert.equal(await values.nth(2).locator('dd').innerText(), '—');
         const cells = await values.evaluateAll(items => items.map(item => {
           const { x, y } = item.getBoundingClientRect();
           return { x, y };

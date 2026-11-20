@@ -132,8 +132,20 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
           <select id="album-filter-select" value={album} className={selectClass}
             onChange={e => {
               const nextAlbum = e.target.value;
-              onChange(nextAlbum === 'all' ? { ...values, album: nextAlbum } :
-                { ...values, album: nextAlbum, era: 'all', sortBy: 'album_track_order' });
+              onChange(
+                nextAlbum === 'all'
+                  ? {
+                      ...values,
+                      album: nextAlbum,
+                      sortBy: values.sortBy === 'album_track_order' ? 'guide_order' : values.sortBy,
+                    }
+                  : {
+                      ...values,
+                      album: nextAlbum,
+                      era: 'all',
+                      sortBy: values.sortBy === 'guide_order' ? 'album_track_order' : values.sortBy,
+                    },
+              );
             }}>
             {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
           </select>

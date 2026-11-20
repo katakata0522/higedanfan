@@ -377,7 +377,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   const colWidthsAfter = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
   assert.deepEqual(colWidthsAfter, colWidthsBefore, '並べ替えで比較表の列幅が変わっています');
   const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
-  assert.match(await subtitle.innerText(), /未掲載/, '裏声の掲載状況が表示されていません');
+  assert.match(await subtitle.innerText(), /—/, '調査元にあるはずのない裏声値を誤表示しています');
   assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域の参照元/ }).count(), 1);
   assert.match(await subtitle.innerText(), /J-POP 音域の沼 ↗/);
   assert.doesNotMatch(await table.innerText(), /(?:^|\s)採譜 ↗/);

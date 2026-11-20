@@ -9,10 +9,12 @@ import {
   createNewSavedSetlist,
   deleteSavedSetlist,
   persistSavedSetlists,
+  readQuickAddSetlistId,
   readStoredSavedSetlists,
   sanitizeSavedSetlistsState,
   switchSavedSetlist,
   syncActiveSavedSetlist,
+  writeQuickAddSetlistId,
   type SavedSetlistsStoreLike,
 } from './savedSetlists';
 
@@ -200,4 +202,16 @@ test('concurrent tab persist merges unknown setlists without resurrecting delete
   const afterDelete = readStoredSavedSetlists(VALID_IDS, { storage });
   assert.equal(afterDelete?.items.length, 1);
   assert.equal(afterDelete?.items[0].id, 'setlist-1');
+});
+
+test('quick-add session draft id round-trips, clears, and rejects mismatched resetEpoch', () => {
+  const storage = memoryStore();
+  assert.equal(readQuickAddSetlistId('epoch-1', storage), null);
+
+  writeQuickAddSetlistId('setlist-2', 'epoch-1', storage);
+  assert.equal(readQuickAddSetlistId('epoch-1', storage), 'setlist-2');
+  assert.equal(readQuickAddSetlistId('epoch-2', storage), null);
+
+  writeQuickAddSetlistId(null, 'epoch-1', storage);
+  assert.equal(readQuickAddSetlistId('epoch-1', storage), null);
 });

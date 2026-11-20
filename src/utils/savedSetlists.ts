@@ -8,6 +8,7 @@ import {
 import { sanitizeSafeId, sanitizeUserText } from './userInput';
 
 export const SAVED_SETLISTS_STORAGE_KEY = 'higedan_saved_setlists_v1';
+export const QUICK_ADD_SETLIST_SESSION_KEY = 'higedan_quick_add_setlist_v1';
 export const DEFAULT_SAVED_SETLIST_TITLE = 'マイ・ドリームライブ';
 export const MAX_SAVED_SETLISTS = 30;
 
@@ -386,4 +387,38 @@ export function deleteSavedSetlist(
       items: filtered,
     },
   };
+}
+
+export function readQuickAddSetlistId(
+  expectedEpoch = '',
+  storage: SavedSetlistsStoreLike | null = typeof window !== 'undefined' ? window.sessionStorage : null,
+): string | null {
+  if (!storage) return null;
+  try {
+    const raw = storage.getItem(QUICK_ADD_SETLIST_SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { id?: unknown; resetEpoch?: unknown };
+    if (typeof parsed?.id !== 'string' || !parsed.id) return null;
+    if ((parsed.resetEpoch ?? '') !== expectedEpoch) return null;
+    return parsed.id;
+  } catch {
+    return null;
+  }
+}
+
+export function writeQuickAddSetlistId(
+  id: string | null,
+  resetEpoch = '',
+  storage: SavedSetlistsStoreLike | null = typeof window !== 'undefined' ? window.sessionStorage : null,
+): void {
+  if (!storage) return;
+  try {
+    if (!id) {
+      storage.removeItem(QUICK_ADD_SETLIST_SESSION_KEY);
+      return;
+    }
+    storage.setItem(QUICK_ADD_SETLIST_SESSION_KEY, JSON.stringify({ id, resetEpoch }));
+  } catch {
+    // ignore storage errors
+  }
 }

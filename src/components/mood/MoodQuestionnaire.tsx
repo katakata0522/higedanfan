@@ -133,7 +133,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
             onClick={() => onChoose(option.id)}
             aria-pressed={option.id === selected}
             className={[
-              'mood-answer group flex items-center justify-between rounded-xl border p-4 sm:p-5 text-left hover:border-[#1C1917] hover:bg-white transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B]',
+              'mood-answer group flex items-center justify-between rounded-xl border p-4 sm:p-5 text-left [@media(hover:hover)]:hover:border-[#BFB6A6] [@media(hover:hover)]:hover:bg-white transition-all cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B]',
               option.id === selected ? 'border-[#C83E2B] bg-[#FFF6F3]' : 'border-[#E6E1D6] bg-[#FBF9F5]',
             ].join(' ')}
           >

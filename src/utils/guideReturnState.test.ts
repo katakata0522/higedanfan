@@ -37,6 +37,13 @@ test('楽曲ページから戻ると検索条件と表示件数を一度だけ�
   assert.deepEqual(takeGuideReturnState(90, store), state);
   assert.equal(takeGuideReturnState(90, store), null);
   assert.equal(guideReturnView(store), 'discography');
+
+  const withOrigin = { ...state, view: 'discography' as const, originSongId: 'pretender', showTieUps: true };
+  saveGuideReturnState(withOrigin, store);
+  assert.deepEqual(takeGuideReturnState(90, store), withOrigin);
+
+  store.setItem('higedanfan:guide-return:v1', JSON.stringify({ ...withOrigin, originSongId: '../evil' }));
+  assert.equal(takeGuideReturnState(90, store), null);
 });
 
 test('古い件数や不正な検索条件を復元しない', () => {

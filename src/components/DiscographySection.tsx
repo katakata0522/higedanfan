@@ -41,6 +41,7 @@ interface DiscographySectionProps {
   onSelectSong: (song: SongItem) => void;
   onSelectView?: (view: 'discography' | 'vocal_range') => void;
   onAddToSetlist: (songId: string) => void;
+  onRemoveFromSetlist?: (songId: string) => void;
   setlistSongIds: string[];
   visitedSpotIds: string[];
   onToggleVisitedSpot: (spotId: string) => void;
@@ -105,6 +106,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   onSelectSong,
   onSelectView,
   onAddToSetlist,
+  onRemoveFromSetlist,
   setlistSongIds,
   visitedSpotIds,
   onToggleVisitedSpot,
@@ -180,6 +182,16 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const skipInitialPaginationReset = useRef(Boolean(restored));
   const previousEraPreset = useRef(initialEraFilter);
   const resultsTopRef = useRef<HTMLDivElement>(null);
+  const originSongRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!restored?.originSongId) return;
+    const el = originSongRef.current;
+    if (el) {
+      el.focus({ preventScroll: true });
+      el.scrollIntoView({ block: 'center', behavior: 'instant' });
+    }
+  }, [restored]);
 
   useEffect(() => {
     if (previousEraPreset.current === initialEraFilter) return;
@@ -221,7 +233,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     [activeSubView, filteredSongs, cardRangeStart]
   );
 
-  const rememberGuide = () => {
+  const rememberGuide = (originSongId?: string) => {
     const restoredCount = activeSubView === 'vocal_range'
       ? Math.max(1, Math.min(songs.length, filteredSongs.length))
       : Math.min(Math.max(1, songs.length), Math.max(1, safeCardPage * CARDS_PER_PAGE));
@@ -230,6 +242,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       visibleCount: restoredCount,
       showTieUps,
       view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography',
+      ...(originSongId ? { originSongId } : {}),
     });
   };
 
@@ -419,7 +432,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             aria-label={`${song.title}：曲のページを見る`}
                             onClick={event => {
                               if (!isPlainLeftClick(event)) return;
-                              rememberGuide();
+                              rememberGuide(song.id);
                               if (!pagePath) {
                                 event.preventDefault();
                                 onSelectSong(song);
@@ -433,7 +446,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                                 <span className="min-w-0 wrap-anywhere">{albumBadgeText}</span>
                                 <span>配信日 {song.releaseDate}</span>
                               </div>
-                              <h2 className="mt-1 font-note-serif text-lg text-[#253331] wrap-anywhere group-hover:underline">
+                              <h2
+                                ref={song.id === restored?.originSongId ? (el) => { originSongRef.current = el; } : undefined}
+                                tabIndex={song.id === restored?.originSongId ? -1 : undefined}
+                                className="mt-1 scroll-mt-24 font-note-serif text-lg text-[#253331] wrap-anywhere group-hover:underline"
+                              >
                                 {song.title}<ChevronRight aria-hidden="true" className="ml-1 inline-block h-4 w-4 align-middle text-[#756c60]" />
                               </h2>
                             </div>
@@ -448,7 +465,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-[#ebe2d2] bg-[#faf6eb] px-3 py-2.5 text-sm tabular-nums">
                             <div><dt className="text-xs text-[#57534E]">地声最低</dt><dd>{song.vocalRange.lowestNote}</dd></div>
                             <div><dt className="text-xs text-[#57534E]">地声最高</dt><dd>{song.vocalRange.highestChestNote}</dd></div>
-                            <div><dt className="text-xs text-[#57534E]">裏声最高</dt><dd>{song.vocalRange.highestFalsettoNote === '—' ? '未掲載' : song.vocalRange.highestFalsettoNote}</dd></div>
+                            <div><dt className="text-xs text-[#57534E]">裏声最高</dt><dd className={song.vocalRange.highestFalsettoNote === '—' ? 'text-[#78716C]' : ''}>{song.vocalRange.highestFalsettoNote}</dd></div>
                             <div><dt className="text-xs text-[#57534E]">テンポ</dt><dd>{bpm}{bpm !== '調査中' && ' BPM'}</dd></div>
                           </dl>
                         </div>
@@ -456,12 +473,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         <div className="mt-3 flex justify-end border-t border-[#ece3d2] pt-3">
                           <button
                             type="button"
-                            aria-label={inSetlist ? `${song.title}はセトリに追加済み` : `${song.title}をセトリに追加`}
-                            onClick={() => onAddToSetlist(song.id)}
-                            disabled={inSetlist}
+                            aria-pressed={inSetlist}
+                            aria-label={inSetlist ? `${song.title}はセトリに追加済み（もう一度押すと外す）` : `${song.title}をセトリに追加`}
+                            title={inSetlist && onRemoveFromSetlist ? 'もう一度押すとセトリから外せます' : undefined}
+                            onClick={() => (inSetlist ? onRemoveFromSetlist?.(song.id) : onAddToSetlist(song.id))}
+                            disabled={inSetlist && !onRemoveFromSetlist}
                             className={`inline-flex items-center gap-1 rounded-full px-3 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
                               inSetlist
-                                ? 'border border-[#2e6f40]/40 bg-[#eef9f0] text-[#2e6f40]'
+                                ? `border border-[#2e6f40]/40 bg-[#eef9f0] text-[#2e6f40] ${onRemoveFromSetlist ? 'cursor-pointer hover:border-[#2e6f40] hover:bg-[#dff3e3]' : ''}`
                                 : 'border border-[#C83E2B]/45 bg-[#fdf4f2] text-[#A93020] hover:border-[#C83E2B] hover:bg-[#fae8e4] cursor-pointer'
                             }`}
                           >
@@ -554,8 +573,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
               <ul aria-label="楽曲別のタイアップ" className="notebook-paper divide-y divide-[#e5dccb] rounded-xl px-4 md:hidden">
                 {filteredSongs.map(song => (
                   <li key={song.id} className="py-3">
-                    <a href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? `#vocal_range/${song.id}`}`}
-                      onClick={rememberGuide} className="font-note-serif inline-block py-1 text-base underline underline-offset-2">{song.title}</a>
+                    <a
+                      ref={song.id === restored?.originSongId && showTieUps ? (el) => { originSongRef.current = el; } : undefined}
+                      href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? `#vocal_range/${song.id}`}`}
+                      onClick={() => rememberGuide(song.id)}
+                      className="font-note-serif inline-block scroll-mt-24 py-1 text-base underline underline-offset-2"
+                    >
+                      {song.title}
+                    </a>
                     <div className="mt-1 text-sm leading-relaxed"><SongTieUps song={song} /></div>
                   </li>
                 ))}
@@ -583,7 +608,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                       {(['title', 'low', 'chest', 'falsetto', 'album', 'duration', 'bpm', 'release'] as SongTableSortKey[]).map(key => {
                         const direction = filters.tableSort?.key === key ? filters.tableSort.direction : undefined;
                         const next = direction === 'ascending' ? 'descending' : 'ascending';
-                        return <th key={key} scope="col" aria-sort={direction} className={`whitespace-nowrap px-2 py-1 ${key === 'title' ? 'sticky left-0 z-20 w-[168px] sm:w-[200px] bg-[#f4efe4] border-r border-[#e5dccb] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)]' : ''}`}>
+                        return <th key={key} scope="col" aria-sort={direction} className={`whitespace-nowrap px-2 py-1 ${key === 'title' ? 'sticky left-0 z-20 w-[168px] sm:w-[200px] bg-[#f4efe4] border-r border-[#e5dccb] shadow-[3px_0_6px_-2px_rgba(37,51,49,0.14)]' : key === 'low' ? 'pl-3 pr-2' : ''}`}>
                           <button type="button" className="flex min-h-10 w-full items-center gap-1 text-left font-bold text-[#253331] hover:text-[#C83E2B] cursor-pointer"
                             aria-label={`${SONG_TABLE_SORT_LABELS[key]}を${next === 'ascending' ? '昇順' : '降順'}で並べ替え`}
                             onClick={() => setFilters(current => ({ ...current, tableSort: { key, direction: next } }))}>
@@ -599,16 +624,17 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     {displayedSongs.map(song => {
                       const f = songEvidence[song.id as keyof typeof songEvidence];
                       return <tr key={song.id} className="group align-top hover:bg-[#faf6eb]">
-                        <th scope="row" className="sticky left-0 z-10 w-[168px] sm:w-[200px] bg-[#fffdf8] group-hover:bg-[#faf6eb] border-r border-[#ece3d2] shadow-[2px_0_4px_-2px_rgba(37,51,49,0.08)] px-2 py-3 font-note-serif font-bold text-[#253331] whitespace-normal wrap-anywhere">
+                        <th scope="row" className="sticky left-0 z-10 w-[168px] sm:w-[200px] bg-[#fffdf8] group-hover:bg-[#faf6eb] border-r border-[#ece3d2] shadow-[3px_0_6px_-2px_rgba(37,51,49,0.14)] px-2 py-3 font-note-serif font-bold text-[#253331] whitespace-normal wrap-anywhere">
                           <a
+                            ref={song.id === restored?.originSongId && !showTieUps ? (el) => { originSongRef.current = el; } : undefined}
                             href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
-                            onClick={rememberGuide}
-                            className="inline-flex min-h-[28px] items-center py-0.5 text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
+                            onClick={() => rememberGuide(song.id)}
+                            className="inline-flex min-h-[28px] scroll-mt-24 items-center py-0.5 text-left underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
                           >
                             {song.title}
                           </a>
                         </th>
-                        <td className="whitespace-nowrap px-2 py-3 font-mono-num">{song.vocalRange.lowestNote}</td>
+                        <td className="whitespace-nowrap py-3 pl-3 pr-2 font-mono-num">{song.vocalRange.lowestNote}</td>
                         <td
                           className={`whitespace-nowrap px-2 py-3 font-mono-num ${
                             song.vocalRange.chestSemitoneScore >= 74
@@ -620,7 +646,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         >
                           {song.vocalRange.highestChestNote}
                         </td>
-                        <td className={`whitespace-nowrap px-2 py-3 ${song.vocalRange.highestFalsettoNote === '—' ? 'text-[#57534E]' : 'font-mono-num'}`}>{song.vocalRange.highestFalsettoNote === '—' ? '未掲載' : song.vocalRange.highestFalsettoNote}</td>
+                        <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '—' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
                         <td className="px-3 py-3 whitespace-normal wrap-anywhere">{formatAlbumDisplayName(f.album)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
@@ -635,7 +661,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             )}
             <details className={`notebook-paper rounded-xl p-3.5 text-xs text-[#57534E] ${showTieUps ? 'hidden md:block' : ''}`}>
               <summary className="cursor-pointer font-bold text-[#253331]">音域・日付の見方</summary>
-              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日です。裏声最高が「未掲載」の曲は、参照元に裏声の最高音の記載がありません。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中の値は並べ替えの方向にかかわらず末尾に表示します。</p>
+              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日です。裏声の「—」は音域データがない（地声中心など）ことを示します。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中の値は並べ替えの方向にかかわらず末尾に表示します。</p>
             </details>
           </div>
         )}
@@ -657,7 +683,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     <span className="ml-1.5 font-normal text-[#57534E]">
                       （{hasSpotFilter
                         ? `${spotFilterChoices.join(' ／ ')} · ${filteredSpots.length}か所`
-                        : `すべて ${filteredSpots.length}か所 ／ つながり・エリア・訪問済み`}）
+                        : `全${filteredSpots.length}件（訪問記録対象 ${totalCheckableSpotCount}スポット） ／ つながり・エリア・訪問済み`}）
                     </span>
                   </span>
                   <ChevronDown

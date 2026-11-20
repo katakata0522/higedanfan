@@ -282,6 +282,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   const titleId = useId();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const detailBoxRef = useRef<HTMLElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<MyNoteProfile>(() => loadMyNoteProfile(resetEpoch));
   const [titleMode, setTitleMode] = useState<MyNoteTitleDisplayMode>(() =>
@@ -464,6 +465,23 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
       const next: MyNoteTitleDisplayMode = prev === 'rank' ? 'playstyle' : 'rank';
       persistMyNoteTitleMode(next, resetEpoch);
       return next;
+    });
+  };
+
+  const handleSelectDetailTab = (nextTab: MyNoteDetailTab) => {
+    setActiveTab(nextTab);
+    window.requestAnimationFrame(() => {
+      const body = bodyRef.current;
+      const box = detailBoxRef.current;
+      if (!body || !box) return;
+      const bodyRect = body.getBoundingClientRect();
+      const boxRect = box.getBoundingClientRect();
+      if (boxRect.top > bodyRect.bottom - 120) {
+        body.scrollTo({
+          top: Math.max(0, body.scrollTop + (boxRect.top - bodyRect.top) - 16),
+          behavior: 'instant',
+        });
+      }
     });
   };
 
@@ -826,7 +844,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
         </div>
 
         {/* Detailed Records Tabs */}
-        <section className="mn-detail-box" aria-label="くわしい記録一覧">
+        <section ref={detailBoxRef} className="mn-detail-box" aria-label="くわしい記録一覧">
           <div className="mn-detail-tabs" role="tablist" aria-label="記録の切り替え">
             <button
               id={`${titleId}-tab-tours`}
@@ -835,7 +853,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               aria-selected={activeTab === 'tours'}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'tours' ? 'mn-tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('tours')}
+              onClick={() => handleSelectDetailTab('tours')}
             >
               <Ticket size={14} aria-hidden="true" />
               <span>参戦年表 ({timeline.totalAttended})</span>
@@ -847,7 +865,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               aria-selected={activeTab === 'spots'}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'spots' ? 'mn-tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('spots')}
+              onClick={() => handleSelectDetailTab('spots')}
             >
               <Compass size={14} aria-hidden="true" />
               <span>
@@ -861,7 +879,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               aria-selected={activeTab === 'setlists'}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'setlists' ? 'mn-tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('setlists')}
+              onClick={() => handleSelectDetailTab('setlists')}
             >
               <ListMusic size={14} aria-hidden="true" />
               <span>MYセトリ ({savedSetlists.items.length})</span>
@@ -873,7 +891,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               aria-selected={activeTab === 'quiz'}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'quiz' ? 'mn-tab-btn--active' : ''}`}
-              onClick={() => setActiveTab('quiz')}
+              onClick={() => handleSelectDetailTab('quiz')}
             >
               <Award size={14} aria-hidden="true" />
               <span>

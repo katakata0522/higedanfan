@@ -21,6 +21,7 @@ export interface MoodLibraryProps {
   songs: SongItem[];
   onSelectSong: (song: SongItem) => void;
   onAddToSetlist: (songId: string) => void;
+  onRemoveFromSetlist?: (songId: string) => void;
   setlistSongIds: string[];
 }
 
@@ -33,7 +34,7 @@ interface MoodResultsProps extends MoodLibraryProps {
 }
 
 export function MoodResults({
-  songs, onAddToSetlist, setlistSongIds,
+  songs, onAddToSetlist, onRemoveFromSetlist, setlistSongIds,
   criteria, onEditAnswer, onRestart, page = 0, onPageChange,
 }: MoodResultsProps) {
   const [localPage, setLocalPage] = useState(page);
@@ -130,28 +131,35 @@ export function MoodResults({
               <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
               詳しい解説を読む
             </a>
-            <button
-              type="button"
-              onClick={() => onAddToSetlist(bestMatch.song.id)}
-              disabled={setlistSongIds.includes(bestMatch.song.id)}
-              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
-                setlistSongIds.includes(bestMatch.song.id)
-                  ? 'bg-[#1C1917] text-white'
-                  : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
-              }`}
-            >
-              {setlistSongIds.includes(bestMatch.song.id) ? (
-                <>
-                  <Check className="h-3.5 w-3.5" />
-                  MYセトリ追加済み
-                </>
-              ) : (
-                <>
-                  <Plus className="h-3.5 w-3.5" />
-                  MYセトリに追加
-                </>
-              )}
-            </button>
+            {(() => {
+              const inBestSetlist = setlistSongIds.includes(bestMatch.song.id);
+              return (
+                <button
+                  type="button"
+                  aria-pressed={inBestSetlist}
+                  aria-label={inBestSetlist ? `${bestMatch.song.title}はMYセトリ追加済み（もう一度押すと外す）` : `${bestMatch.song.title}をMYセトリに追加`}
+                  onClick={() => (inBestSetlist ? onRemoveFromSetlist?.(bestMatch.song.id) : onAddToSetlist(bestMatch.song.id))}
+                  disabled={inBestSetlist && !onRemoveFromSetlist}
+                  className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                    inBestSetlist
+                      ? `bg-[#1C1917] text-white ${onRemoveFromSetlist ? 'cursor-pointer hover:bg-[#3A3531]' : ''}`
+                      : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
+                  }`}
+                >
+                  {inBestSetlist ? (
+                    <>
+                      <Check className="h-3.5 w-3.5" />
+                      MYセトリ追加済み
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="h-3.5 w-3.5" />
+                      MYセトリに追加
+                    </>
+                  )}
+                </button>
+              );
+            })()}
           </div>
         </article>
       )}
@@ -200,11 +208,13 @@ export function MoodResults({
                       </a>
                       <button
                         type="button"
-                        onClick={() => onAddToSetlist(song.id)}
-                        disabled={inSetlist}
+                        aria-pressed={inSetlist}
+                        aria-label={inSetlist ? `${song.title}は追加済み（もう一度押すと外す）` : `${song.title}をセトリへ追加`}
+                        onClick={() => (inSetlist ? onRemoveFromSetlist?.(song.id) : onAddToSetlist(song.id))}
+                        disabled={inSetlist && !onRemoveFromSetlist}
                         className={`inline-flex items-center gap-1 rounded-md px-2.5 py-1.5 text-[11px] font-bold whitespace-nowrap shrink-0 ${
                           inSetlist
-                            ? 'bg-[#1C1917] text-white'
+                            ? `bg-[#1C1917] text-white ${onRemoveFromSetlist ? 'cursor-pointer hover:bg-[#3A3531]' : ''}`
                             : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
                         }`}
                       >
