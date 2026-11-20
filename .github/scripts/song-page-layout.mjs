@@ -140,9 +140,10 @@ async function inspectAllPages(browser, scenario) {
             placeholders: document.querySelectorAll('.cover-placeholder').length,
             coverImages: document.querySelectorAll('.cover .cover-art').length,
             appleBadges: document.querySelectorAll('.cover .cover-apple-badge').length,
-            closeClickable: (() => {
+            backLink: (() => {
               const link = document.querySelector('.sheet-top-back'), r = link.getBoundingClientRect();
-              return link.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+              const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+              return { clickable: link.contains(hit), top: r.top, scroll: scrollY, hit: hit?.className?.toString() };
             })(),
             legacyBadges: [...document.querySelectorAll('a')].filter(link => /iTunes Store/i.test(`${link.textContent} ${link.querySelector('img')?.alt || ''}`)).length
               + document.querySelectorAll('iframe[src*="music.apple.com"]').length,
@@ -159,7 +160,7 @@ async function inspectAllPages(browser, scenario) {
         assert.ok(result.badgeLoaded, 'Apple Music公式バッジSVGが読み込めませんでした');
         assert.match(result.badgeHref, /^https:\/\/music\.apple\.com\//, 'Apple Music公式バッジのリンク先が不正です');
         assert.ok(result.badgeTop - result.coverBottom >= 4, 'ジャケットとApple Musicバッジの間隔が狭すぎます');
-        assert.ok(result.closeClickable, '一覧に戻るリンクがタイトルに覆われています');
+        assert.ok(result.backLink.clickable, `一覧に戻るリンクを押せません ${JSON.stringify(result.backLink)}`);
         assert.equal(result.legacyBadges, 0, '旧ストアバッジやプレーヤー埋め込みが残っています');
         assert.match(result.tempoText, isTempoUnderReview(id) ? /^調査中$/ : /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポの表示が調査状況と一致しません');
         assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, 'ジャケット画像枠が正方形ではありません');
