@@ -1,0 +1,20 @@
+@font-face {
+  font-family: "Fan Note Kiwi";
+  src: url("/higedanfan/fonts/kiwi-maru-medium-c8f08bbe.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fan Note Sans";
+  src: url("/higedanfan/fonts/noto-sans-jp-b515a988.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+:root {
+  --fan-note-font: "Fan Note Kiwi", "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  --fan-ui-font: "Fan Note Sans", "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+}

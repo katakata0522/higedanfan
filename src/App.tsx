@@ -112,6 +112,7 @@ function readLocation(): { tab: SiteTab; songId: string | null } {
 export default function App() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [activeFeatureTab, setActiveFeatureTab] = useState<SiteTab>(() => readLocation().tab);
+  const [activityVisit, setActivityVisit] = useState(0);
   const prevTabRef = React.useRef<SiteTab>(activeFeatureTab);
   const pendingFocusTabRef = React.useRef<SiteTab | null>(null);
   const mainRef = React.useRef<HTMLElement>(null);
@@ -156,7 +157,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    const restore = () => {
+    const restore = (event?: Event) => {
       if (isUnpublishedHash(window.location.hash.slice(1).split('/')[0])) {
         window.history.replaceState(null, '', `${import.meta.env.BASE_URL}#home`);
       }
@@ -183,6 +184,9 @@ export default function App() {
         }
       }
       const tabChanged = prevTabRef.current !== tab;
+      if (!tabChanged && event?.type === 'popstate' && (tab === 'mood' || tab === 'quiz')) {
+        setActivityVisit(visit => visit + 1);
+      }
       prevTabRef.current = tab;
       if (tabChanged && !songId) {
         pendingFocusTabRef.current = tab;
@@ -230,9 +234,12 @@ export default function App() {
     setActiveFeatureTab(tab);
     const nextUrl = tabPath(tab, import.meta.env.BASE_URL);
     const currentUrl = `${window.location.pathname}${window.location.hash}`;
-    if (currentUrl !== nextUrl) {
-      window.history.pushState(null, '', nextUrl);
+    const revisitingActivity = tab === activeFeatureTab && (tab === 'mood' || tab === 'quiz');
+    if (currentUrl !== nextUrl || revisitingActivity) {
+      const entry = tab === 'mood' ? { newMoodVisit: true } : tab === 'quiz' ? { chooseNextQuiz: true } : null;
+      window.history.pushState(entry, '', nextUrl);
     }
+    if (revisitingActivity) setActivityVisit(visit => visit + 1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -383,7 +390,7 @@ export default function App() {
               <React.Suspense fallback={<div role="status" aria-label="読み込み中" className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8 min-h-[50vh]"><span className="text-sm text-[#57534E]">読み込み中…</span></div>}>
                 {activeFeatureTab === 'mood' && (
                   <MoodFinderSection
-                    key={records.resetEpoch}
+                    key={`${records.resetEpoch}:${activityVisit}`}
                     resetEpoch={records.resetEpoch}
                     sessionRef={moodSession}
                     songs={songs}
@@ -479,7 +486,7 @@ export default function App() {
                 {(activeFeatureTab === 'quiz' ||
                   activeFeatureTab === 'quiz_archive') && (
                   <QuizSection
-                    key={records.resetEpoch}
+                    key={`${records.resetEpoch}:${activityVisit}`}
                     resetEpoch={records.resetEpoch}
                     sessionRef={quizSession}
                     songs={songs}

@@ -108,23 +108,27 @@ test('corrupt or inaccessible browser storage never crashes or restores invalid 
   assert.doesNotThrow(() => clearMoodSession(denied));
 });
 
-test('page and theme survive restoration and invalid values are rejected', () => {
+test('result pages survive restoration and legacy card preferences are ignored', () => {
   const sessions = memoryStore();
   const records = memoryStore();
-  const paged: MoodSession = { ...completedSession(), page: 2, theme: 'editorial' };
+  const paged: MoodSession = { ...completedSession(), page: 2 };
   assert.equal(saveMoodSession(paged, '', sessions, records), true);
   assert.deepEqual(restoreMoodSession(sessions, records), paged);
 
-  // Finishing an edited answer resets result page while preserving chosen card theme.
+  // Finishing an edited answer resets result page.
   const editing = editMoodAnswer(paged, 3);
   const reAnswered = selectMoodAnswer(editing, 'gentle');
   assert.equal(reAnswered.page, undefined);
-  assert.equal(reAnswered.theme, 'editorial');
 
   for (const badPage of [-1, 1.5, 100, '2']) {
     sessions.setItem(MOOD_SESSION_KEY, JSON.stringify({ ...completedSession(), page: badPage, resetEpoch: '' }));
     assert.deepEqual(restoreMoodSession(sessions, records), newMoodSession());
   }
-  sessions.setItem(MOOD_SESSION_KEY, JSON.stringify({ ...completedSession(), theme: 'neon', resetEpoch: '' }));
-  assert.deepEqual(restoreMoodSession(sessions, records), newMoodSession());
+  const oldResult = JSON.stringify({ ...paged, theme: 'editorial', resetEpoch: '' });
+  sessions.setItem(MOOD_SESSION_KEY, oldResult);
+  assert.deepEqual(restoreMoodSession(sessions, records), paged);
+  saveMoodSession(newMoodSession(), '', sessions, records);
+  assert.deepEqual(restoreMoodSession(sessions, records, oldResult), paged);
+  records.setItem(STORAGE_KEY, JSON.stringify({ resetEpoch: 'new' }));
+  assert.deepEqual(restoreMoodSession(sessions, records, oldResult), newMoodSession());
 });

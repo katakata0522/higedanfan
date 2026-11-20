@@ -19,20 +19,20 @@ export const DEFAULT_GUIDE_FILTERS: SongGuideFilterValues = {
 };
 
 const ALBUM_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'すべての収録アルバム・EP（掲載90曲）' },
-  { id: 'ラブとピースは君の中', label: '1st Mini『ラブとピースは君の中』(2015・全8曲)' },
-  { id: 'MAN IN THE MIRROR', label: '2nd Mini『MAN IN THE MIRROR』(2016・全6曲)' },
-  { id: "What's Going On? EP", label: "1st EP『What's Going On?』(2016・全4曲)" },
-  { id: 'レポート', label: '3rd Mini『レポート』(2017・全7曲)' },
-  { id: 'エスカパレード', label: '1st Full『エスカパレード』(2018・全13曲)' },
-  { id: 'Stand By You EP', label: '2nd EP『Stand By You EP』(2018・掲載3曲／全4曲)' },
-  { id: 'Traveler', label: 'Major 1st『Traveler』(2019・歌あり13曲／全14曲)' },
-  { id: 'HELLO EP', label: '3rd EP『HELLO EP』(2020・全4曲)' },
-  { id: 'Editorial', label: 'Major 2nd『Editorial』(2021・全14曲)' },
-  { id: 'ミックスナッツ EP', label: '4th EP『ミックスナッツ EP』(2022・掲載3曲／全4曲)' },
-  { id: 'Rejoice', label: 'Major 3rd『Rejoice』(2024・歌あり15曲／全16曲)' },
-  { id: 'Single / 2024-2026 Collection', label: '2024–2026 配信シングル（Same Blue〜Make Me Wonder・掲載5曲）' },
-  { id: 'スターダスト/エルダーフラワー', label: '2026 両A面シングル『スターダスト/エルダーフラワー』（掲載2曲）' },
+  { id: 'all', label: 'すべて' },
+  { id: 'ラブとピースは君の中', label: 'ラブとピースは君の中' },
+  { id: 'MAN IN THE MIRROR', label: 'MAN IN THE MIRROR' },
+  { id: "What's Going On? EP", label: "What's Going On?" },
+  { id: 'レポート', label: 'レポート' },
+  { id: 'エスカパレード', label: 'エスカパレード' },
+  { id: 'Stand By You EP', label: 'Stand By You EP' },
+  { id: 'Traveler', label: 'Traveler' },
+  { id: 'HELLO EP', label: 'HELLO EP' },
+  { id: 'Editorial', label: 'Editorial' },
+  { id: 'ミックスナッツ EP', label: 'ミックスナッツ EP' },
+  { id: 'Rejoice', label: 'Rejoice' },
+  { id: 'Single / 2024-2026 Collection', label: '配信シングル（2024–2026）' },
+  { id: 'スターダスト/エルダーフラワー', label: 'スターダスト/エルダーフラワー' },
 ];
 
 const SOUND_FILTERS: { id: SoundTag | 'all'; label: string }[] = [

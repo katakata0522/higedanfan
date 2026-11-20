@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS } from '../data/higedanData';
-import { formatDiagnosisShareText, isSoundMatch, matchesEra, matchesLength, recommendSongsByMood, scoreSongsByMood, type MoodCriteria } from './moodMatching';
+import { isSoundMatch, matchesEra, matchesLength, recommendSongsByMood, scoreSongsByMood, type MoodCriteria } from './moodMatching';
 
 const originalCriteria: MoodCriteria = {
   mood: 'push_back', situation: 'morning_commute', sound: 'piano_pop',
@@ -52,7 +52,7 @@ test('the added preferences produce different recommendations in the real catalo
   assert.ok(long.song.durationSec >= 300);
 });
 
-test('a nonmatching condition is never presented as a match and legacy sharing stays supported', () => {
+test('a nonmatching condition is never presented as a match', () => {
   const song = {
     ...HIGEDAN_SONGS[0], moods: [] as typeof HIGEDAN_SONGS[number]['moods'],
     situations: [] as typeof HIGEDAN_SONGS[number]['situations'],
@@ -63,10 +63,6 @@ test('a nonmatching condition is never presented as a match and legacy sharing s
   assert.deepEqual(match.matchReasons, []);
   assert.ok(match.moodMatchExplanation.includes('今の気分に近い候補を選びました'));
   assert.ok(!match.moodMatchExplanation.includes('時期「'));
-  const text = formatDiagnosisShareText(match, criteria);
-  assert.ok(text.includes('Rejoice期'));
-  assert.ok(text.includes('長めにゆったり思いを馳せて'));
-  assert.ok(formatDiagnosisShareText(match, originalCriteria).includes('今日の1曲診断'));
 });
 
 test('requested release years and duration are honoured, including Rejoice songs from 2024', () => {

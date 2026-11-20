@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { BookOpen, Check, ChevronDown, Disc, Pencil, Plus, RotateCcw, Share2 } from 'lucide-react';
+import { BookOpen, Check, ChevronDown, Disc, Pencil, Plus, RotateCcw } from 'lucide-react';
 import type { SongItem } from '../../data/higedanData';
 import {
   ERA_PREFERENCE_LABELS,
@@ -12,7 +12,6 @@ import {
   SOUND_PREFERENCE_LABELS,
 } from '../../utils/fanLogic';
 import { MoodListen, officialVideoId } from './MoodListen';
-import { MoodShareCard, type ShareTheme } from './MoodShareCard';
 import { moodResultCopy } from './moodResultCopy';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../../utils/guideReturnState';
@@ -31,15 +30,12 @@ interface MoodResultsProps extends MoodLibraryProps {
   onRestart: () => void;
   page?: number;
   onPageChange?: (page: number) => void;
-  theme: ShareTheme;
-  onSelectTheme: (theme: ShareTheme) => void;
 }
 
 export function MoodResults({
   songs, onAddToSetlist, setlistSongIds,
-  criteria, onEditAnswer, onRestart, page = 0, onPageChange, theme, onSelectTheme,
+  criteria, onEditAnswer, onRestart, page = 0, onPageChange,
 }: MoodResultsProps) {
-  const [shareRank, setShareRank] = useState<number | null>(null);
   const [localPage, setLocalPage] = useState(page);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
 
@@ -67,7 +63,6 @@ export function MoodResults({
 
   const changePage = (next: number) => {
     const clamped = Math.min(Math.max(0, next), maxPage);
-    setShareRank(null);
     setLocalPage(clamped);
     onPageChange?.(clamped);
   };
@@ -126,67 +121,38 @@ export function MoodResults({
             </p>
           )}
 
-          {/* Action Bar including Share Card Generator Button */}
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-[#E6E1D6] pt-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setShareRank(rank => rank === null ? 0 : null)}
-                aria-expanded={shareRank !== null}
-                aria-controls="diagnosis-share-card-panel"
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 border cursor-pointer ${
-                  shareRank !== null
-                    ? 'border-[#1C1917] bg-[#1C1917] text-[#FBF9F5]'
-                    : 'border-[#D5CEC2] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
-                }`}
-              >
-                <Share2 className="h-3.5 w-3.5 text-[#C83E2B]" />
-                <span>シェアカードを見る</span>
-              </button>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <a
-                href={`${import.meta.env.BASE_URL}${songPagePath(bestMatch.song.id) ?? ''}`}
-                onClick={() => saveSongReturnTab('mood')}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
-              >
-                <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
-                詳しい解説を読む
-              </a>
-              <button
-                type="button"
-                onClick={() => onAddToSetlist(bestMatch.song.id)}
-                disabled={setlistSongIds.includes(bestMatch.song.id)}
-                className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
-                  setlistSongIds.includes(bestMatch.song.id)
-                    ? 'bg-[#1C1917] text-white'
-                    : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
-                }`}
-              >
-                {setlistSongIds.includes(bestMatch.song.id) ? (
-                  <>
-                    <Check className="h-3.5 w-3.5" />
-                    MYセトリ追加済み
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-3.5 w-3.5" />
-                    MYセトリに追加
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-[#E6E1D6] pt-4">
+            <a
+              href={`${import.meta.env.BASE_URL}${songPagePath(bestMatch.song.id) ?? ''}`}
+              onClick={() => saveSongReturnTab('mood')}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
+            >
+              <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+              詳しい解説を読む
+            </a>
+            <button
+              type="button"
+              onClick={() => onAddToSetlist(bestMatch.song.id)}
+              disabled={setlistSongIds.includes(bestMatch.song.id)}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
+                setlistSongIds.includes(bestMatch.song.id)
+                  ? 'bg-[#1C1917] text-white'
+                  : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
+              }`}
+            >
+              {setlistSongIds.includes(bestMatch.song.id) ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  MYセトリ追加済み
+                </>
+              ) : (
+                <>
+                  <Plus className="h-3.5 w-3.5" />
+                  MYセトリに追加
+                </>
+              )}
+            </button>
           </div>
-
-          <MoodShareCard
-            matches={matches}
-            criteria={criteria}
-            rankIndex={shareRank}
-            onSelectRank={setShareRank}
-            theme={theme}
-            onSelectTheme={onSelectTheme}
-          />
         </article>
       )}
 

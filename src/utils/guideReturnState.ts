@@ -32,6 +32,7 @@ export type GuideReturnState = {
   filters: SongGuideFilterValues;
   visibleCount: number;
   view: GuideReturnView;
+  showTieUps?: boolean;
   voice?: { low: string; high: string; keyShift: number };
 };
 export type MapReturnState = {
@@ -152,7 +153,7 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     if (!raw) return null;
     const value: unknown = JSON.parse(raw);
     if (!value || typeof value !== 'object') return null;
-    const { filters, visibleCount, view, voice } = value as Partial<GuideReturnState>;
+    const { filters, visibleCount, view, voice, showTieUps } = value as Partial<GuideReturnState>;
     if (!filters || typeof filters !== 'object' ||
         (view !== 'discography' && view !== 'vocal_range') ||
         !eras.has(filters.era) || !sounds.has(filters.sound) || !sorts.has(filters.sortBy) ||
@@ -162,12 +163,13 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     if (filters.tableSort !== undefined && (!filters.tableSort ||
         !SONG_TABLE_SORT_KEYS.includes(filters.tableSort.key) ||
         !['ascending', 'descending'].includes(filters.tableSort.direction))) return null;
+    const comparison = showTieUps === true ? { showTieUps: true } : {};
     if (voice !== undefined) {
       const pitchValid = (pitch: unknown) => typeof pitch === 'string' && (pitch === '' || (/^\d+$/.test(pitch) && Number(pitch) >= 36 && Number(pitch) <= 84));
       if (!voice || !pitchValid(voice.low) || !pitchValid(voice.high) || !Number.isInteger(voice.keyShift) || voice.keyShift < -12 || voice.keyShift > 12) return null;
-      return { filters, visibleCount: visibleCount!, view, voice };
+      return { filters, visibleCount: visibleCount!, view, voice, ...comparison };
     }
-    return { filters, visibleCount: visibleCount!, view };
+    return { filters, visibleCount: visibleCount!, view, ...comparison };
   } catch { return null; }
 }
 

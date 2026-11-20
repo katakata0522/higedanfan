@@ -1,6 +1,5 @@
 import type { MoodCriteria } from '../../utils/fanLogic';
 import { STORAGE_KEY, restoreFanRecords } from '../../hooks/fanRecordStorage';
-import type { ShareTheme } from './MoodShareCard';
 
 export const MOOD_SESSION_KEY = 'higedanfan:mood-session:v1';
 export type MoodStep = 1 | 2 | 3 | 4 | 5;
@@ -14,7 +13,6 @@ export interface MoodSession {
   completed: boolean;
   editing: boolean;
   page?: number;
-  theme?: ShareTheme;
 }
 
 export interface MoodStorage {
@@ -68,11 +66,12 @@ function recordEpoch(storage: MoodStorage | null): string | null {
 export function restoreMoodSession(
   storage: MoodStorage | null = browserStorage('sessionStorage'),
   records: MoodStorage | null = browserStorage('localStorage'),
+  historySnapshot?: string,
 ): MoodSession {
   try {
     const epoch = recordEpoch(records);
     if (epoch === null) return newMoodSession();
-    const saved = storage?.getItem(MOOD_SESSION_KEY);
+    const saved = historySnapshot ?? storage?.getItem(MOOD_SESSION_KEY);
     if (!saved || saved.length > 10_000) return newMoodSession();
     const value: unknown = JSON.parse(saved);
     if (!value || typeof value !== 'object') return newMoodSession();
@@ -98,14 +97,8 @@ export function restoreMoodSession(
       if (!Number.isInteger(data.page) || Number(data.page) < 0 || Number(data.page) >= 100) return newMoodSession();
       page = Number(data.page);
     }
-    let theme: ShareTheme | undefined;
-    if (data.theme !== undefined) {
-      if (data.theme !== 'dark' && data.theme !== 'editorial') return newMoodSession();
-      theme = data.theme;
-    }
     const restored: MoodSession = { version: 1, step, answers, completed: data.completed, editing: data.editing };
     if (page !== undefined) restored.page = page;
-    if (theme !== undefined) restored.theme = theme;
     return restored;
   } catch {
     return newMoodSession();

@@ -6,8 +6,8 @@
 | --- | --- |
 | 画面の切り替え、曲への直リンク | `src/App.tsx` |
 | トップの案内、メンバー・機能カードの表示 | `src/components/home/` |
-| 診断の質問・選曲結果・シェアカード | `src/components/mood/` |
-| 検定のコース・問題表示・認定証 | `src/components/quiz/`（問題そのものは `src/data/quizData.ts`） |
+| 診断の質問・選曲結果 | `src/components/mood/` |
+| 検定のコース・問題表示・認定結果 | `src/components/quiz/`（問題そのものは `src/data/quizData.ts`） |
 | 参考記事・インタビューの書誌情報と検索 | `src/data/referenceArticles.ts`、`src/components/quiz/QuizSourceArchive.tsx` |
 | セトリ・投票などの個人記録と旧データの復元 | `src/hooks/useFanRecords.ts`、`src/hooks/fanRecordStorage.ts` |
 | 曲順やタグなどの編集情報／録音の曲長・音域・出典 | `src/data/catalogEntries.ts` ／ `src/data/songEvidence.json` |

@@ -60,7 +60,9 @@ export function QuizSection({
       cancelled = true;
     };
   }, [sessionRef, resetEpoch]);
-  const { stage: quizStage, difficulty, scope, questionSet, currentIndex, correctBefore, answer } = session;
+  const { difficulty, scope, questionSet, currentIndex, correctBefore, answer } = session;
+  const choosingNextCourse = session.stage === 'finished' && window.history.state?.chooseNextQuiz === true;
+  const quizStage = choosingNextCourse ? 'select' : session.stage;
   const questions = useMemo(() => getCourseQuestions(difficulty, scope, questionSet), [difficulty, scope, questionSet]);
   const question = questions[currentIndex];
   const score = correctBefore + Number(quizStage === 'playing' && isAnswerCorrect(question, answer));
@@ -96,6 +98,9 @@ export function QuizSection({
   }
 
   function startCourse(course: CourseDifficulty, nextScope: QuestionScopeFilter, set: QuestionSet = 'current') {
+    if (window.history.state?.chooseNextQuiz) {
+      window.history.replaceState({ ...window.history.state, chooseNextQuiz: false }, '');
+    }
     updateSession({ ...INITIAL_SESSION, stage: 'playing', difficulty: course, scope: nextScope, questionSet: set, outcomes: [] });
     if (tabFromPathname(window.location.pathname, import.meta.env.BASE_URL) !== 'quiz') {
       window.location.hash = 'quiz';
@@ -152,7 +157,8 @@ export function QuizSection({
         )}
 
         {viewTab === 'quiz' && quizStage === 'select' && (
-          <QuizCoursePicker onStart={startCourse} bestQuizScore={bestQuizScore} volumeScores={volumeScores} />
+          <QuizCoursePicker key={choosingNextCourse ? difficulty : 'new'} initialDifficulty={choosingNextCourse ? difficulty : 'beginner'}
+            onStart={startCourse} bestQuizScore={bestQuizScore} volumeScores={volumeScores} />
         )}
         {/* Switching tabs keeps the current answer, certificate and archive filters. */}
         {quizStage === 'playing' && question && (

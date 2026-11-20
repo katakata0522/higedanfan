@@ -255,20 +255,3 @@ export function recommendSongsByMood(songs: SongItem[], criteria: MoodCriteria):
     && (!criteria.length || criteria.length === 'any' || matchesLength(song.durationSec, criteria.length))
   ), criteria);
 }
-
-export function formatDiagnosisShareText(
-  match: ScoredSongMatch,
-  criteria: MoodCriteria
-): string {
-  return [
-    `【今日の1曲診断結果：『${match.song.title}』】`,
-    `診断条件：${[
-      MOOD_CHOICE_LABELS[criteria.mood], SITUATION_CHOICE_LABELS[criteria.situation], SOUND_PREFERENCE_LABELS[criteria.sound],
-      criteria.era && ERA_PREFERENCE_LABELS[criteria.era],
-      criteria.length && LENGTH_PREFERENCE_LABELS[criteria.length],
-    ].filter(Boolean).join(' ／ ')}`,
-    `理由：${match.moodMatchExplanation}`,
-    `曲調：${match.song.musicalHighlight}`,
-    '#115万キロのファンノート #Official髭男dism #今日の1曲診断',
-  ].join('\n');
-}

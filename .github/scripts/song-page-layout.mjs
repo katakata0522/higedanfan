@@ -11,6 +11,7 @@ import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
 import { getCourseQuestions } from '../../src/components/quiz/quizCourses.ts';
+import { verifyGuideAndDiagnosis } from './guide-and-diagnosis.mjs';
 import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor, verifyPwaReadinessAndInstall } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
@@ -375,7 +376,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   const colWidthsAfter = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
   assert.deepEqual(colWidthsAfter, colWidthsBefore, '並べ替えで比較表の列幅が変わっています');
   const subtitle = table.locator('tr').filter({ hasText: 'Subtitle' });
-  assert.match(await subtitle.innerText(), /—/, '調査元にあるはずのない裏声値を誤表示しています');
+  assert.match(await subtitle.innerText(), /未掲載/, '裏声の掲載状況が表示されていません');
   assert.equal(await subtitle.getByRole('link', { name: /Subtitleの音域の参照元/ }).count(), 1);
   assert.match(await subtitle.innerText(), /J-POP 音域の沼 ↗/);
   assert.doesNotMatch(await table.innerText(), /(?:^|\s)採譜 ↗/);
@@ -397,7 +398,8 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.getByLabel('曲名・読み・タイアップで検索').fill('Pretender');
   const pretender = page.locator('article').filter({ has: page.getByRole('heading', { name: 'Pretender', exact: true }) });
   assert.match(await pretender.innerText(), /配信日\s*2019\.04\.17/);
-  assert.doesNotMatch(await pretender.innerText(), /収録音源|掲載音源|配信掲載|BPM|リズムの刻みが印象に残るバラード/);
+  assert.doesNotMatch(await pretender.innerText(), /収録音源|掲載音源|配信掲載|王道ピアノポップ|コンフィデンスマンJP|リズムの刻みが印象に残るバラード/);
+  assert.match(await pretender.innerText(), /約92\s+BPM/);
   assert.equal(await pretender.getByRole('button', { name: 'Pretenderをセトリに追加' }).isDisabled(), false);
 
   await page.goto(`${root}discography/`, { waitUntil: 'load' });
@@ -984,6 +986,7 @@ try {
   await verifyRecordFileImport(browser, root);
   await verifyKurunIntroAndStickyNotes(browser);
   await verifyGuideAndSetlistUsability(browser);
+  await verifyGuideAndDiagnosis(browser, root);
   await verifyVisitorJourneys(browser);
   await verifySetlistHierarchy(browser);
   await verifyReferenceLibrary(browser);

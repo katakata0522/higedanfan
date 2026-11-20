@@ -5,12 +5,13 @@ import { quizVolumeKey, type QuizVolumeRecordMap } from './quizVolumeRecords';
 
 interface Props {
   onStart: (difficulty: CourseDifficulty, scope: QuestionScopeFilter) => void;
+  initialDifficulty?: CourseDifficulty;
   bestQuizScore?: number | null;
   volumeScores?: QuizVolumeRecordMap;
 }
 
-export function QuizCoursePicker({ onStart, bestQuizScore = null, volumeScores }: Props) {
-  const [difficulty, setDifficulty] = useState<CourseDifficulty>('beginner');
+export function QuizCoursePicker({ onStart, initialDifficulty = 'beginner', bestQuizScore = null, volumeScores }: Props) {
+  const [difficulty, setDifficulty] = useState<CourseDifficulty>(initialDifficulty);
   const selectedCourse = QUIZ_COURSES.find(course => course.id === difficulty) ?? QUIZ_COURSES[1];
   const volumes = difficulty === 'all' ? 6 : 2;
 

@@ -1,7 +1,6 @@
 import { useLayoutEffect, useState, type RefObject } from 'react';
 import { MoodQuestionnaire } from './mood/MoodQuestionnaire';
 import { MoodResults, type MoodLibraryProps } from './mood/MoodResults';
-import type { ShareTheme } from './mood/MoodShareCard';
 import {
   cancelMoodEdit, editMoodAnswer, isCompleteMoodCriteria, newMoodSession,
   previousMoodStep, restoreMoodSession, saveMoodSession, selectMoodAnswer,
@@ -15,20 +14,38 @@ interface MoodFinderSectionProps extends MoodLibraryProps {
 }
 
 export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFinderSectionProps) {
-  const [session, setSession] = useState<MoodSession>(() => sessionRef.current ?? restoreMoodSession());
+  const [visit] = useState(() => {
+    const entry = window.history.state;
+    const saved = typeof entry?.moodSnapshot === 'string'
+      ? restoreMoodSession(undefined, undefined, entry.moodSnapshot)
+      : sessionRef.current ?? restoreMoodSession();
+    if (entry?.newMoodVisit && (saved.completed || saved.editing)) {
+      return { initial: newMoodSession(), previous: saved.editing ? cancelMoodEdit(saved) : saved };
+    }
+    const previous = typeof entry?.previousMoodSnapshot === 'string'
+      ? restoreMoodSession(undefined, undefined, entry.previousMoodSnapshot) : null;
+    return { initial: saved, previous: previous?.completed ? previous : null };
+  });
+  const [session, setSession] = useState<MoodSession>(visit.initial);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
-  useLayoutEffect(() => { sessionRef.current = session; }, [sessionRef, session]);
-  // Keep the chosen card theme when the listener starts another diagnosis.
-  const theme: ShareTheme = session.theme ?? 'dark';
+  useLayoutEffect(() => {
+    sessionRef.current = session;
+    const entry = window.history.state;
+    // 履歴から開いた結果も、楽曲ページの「診断に戻る」で復元できるようにする。
+    if (session === visit.initial) saveMoodSession(session, resetEpoch);
+    try {
+      window.history.replaceState({
+        ...entry, newMoodVisit: false, moodSnapshot: JSON.stringify({ ...session, resetEpoch }),
+        previousMoodSnapshot: visit.previous && JSON.stringify({ ...visit.previous, resetEpoch }),
+      }, '');
+    } catch {
+      // 履歴を書けない環境でも、タブ内の保存から復帰できる。
+    }
+  }, [resetEpoch, sessionRef, session, visit]);
   const updateSession = (next: MoodSession) => {
     sessionRef.current = next;
     setSessionSaveUnavailable(!saveMoodSession(next, resetEpoch));
     setSession(next);
-  };
-  const restart = () => {
-    const base = newMoodSession();
-    const next: MoodSession = session.theme ? { ...base, theme: session.theme } : base;
-    updateSession(next);
   };
   const criteria = session.completed && isCompleteMoodCriteria(session.answers) ? session.answers : null;
 
@@ -62,16 +79,14 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
             page={session.page ?? 0}
             onPageChange={page => updateSession({ ...session, page })}
             onEditAnswer={step => updateSession(editMoodAnswer(session, step))}
-            onRestart={restart}
-            theme={theme}
-            onSelectTheme={nextTheme => updateSession({ ...session, theme: nextTheme })}
+            onRestart={() => updateSession(newMoodSession())}
           />
         ) : (
           <MoodQuestionnaire
             session={session}
             onChoose={answer => {
               const next = selectMoodAnswer(session, answer);
-              if (!session.completed && next.completed && isCompleteMoodCriteria(next.answers)) {
+              if (!session.editing && !session.completed && next.completed && isCompleteMoodCriteria(next.answers)) {
                 recordMyNoteMoodCompleted(next.answers.mood, resetEpoch);
               }
               updateSession(next);
@@ -79,6 +94,12 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
             onBack={() => updateSession(previousMoodStep(session))}
             onCancelEdit={() => updateSession(cancelMoodEdit(session))}
           />
+        )}
+        {!session.completed && !session.editing && session.step === 1 && visit.previous && (
+          <button type="button" onClick={() => updateSession(visit.previous!)}
+            className="mt-2 min-h-11 px-1 text-sm text-[#57534E] underline underline-offset-4 hover:text-[#253331]">
+            前回の1曲を見る
+          </button>
         )}
       </div>
     </section>
