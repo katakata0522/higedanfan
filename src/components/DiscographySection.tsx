@@ -6,9 +6,9 @@ import { songEvidence } from '../data/fullCatalogSongs';
 import { songAppleArtwork } from '../data/songAppleArtwork';
 import { sortSongTable, SONG_TABLE_SORT_LABELS, type SongTableSortKey } from '../utils/songTableSort';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { saveGuideReturnState, saveSongReturnTab, takeGuideReturnState } from '../utils/guideReturnState';
+import { saveGuideReturnState, saveMapReturnState, takeGuideReturnState, takeMapReturnState } from '../utils/guideReturnState';
 import { SOUND_LABELS } from '../utils/songLabels';
-import { getSacredSpotRegion, SACRED_SPOT_REGIONS, type SacredSpotRegion } from '../utils/sacredSpotAreas';
+import { getSacredSpotRegion, SACRED_SPOT_REGIONS, SPOT_CATEGORIES, type SacredSpotRegion } from '../utils/sacredSpotAreas';
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
   BookOpen,
@@ -53,9 +53,7 @@ interface DiscographySectionProps {
 const SPOT_TAPE_COLORS = ['#f3d2a8', '#f5c6be', '#bce3f8', '#c0e6c7', '#dfcaf6', '#f6e39c'] as const;
 
 const CARDS_PER_PAGE = 24;
-const SPOT_CATEGORIES: (SacredSpotCategory | 'all')[] = [
-  'all', 'MVロケ地', 'メンバーの思い出', 'メンバーのおすすめ', 'ライブ会場', '街とヒゲダン',
-];
+const spotIds = SACRED_SPOTS.map(spot => spot.id);
 
 function SongArtworkThumb({ src }: { src?: string }) {
   const [failed, setFailed] = useState(false);
@@ -109,7 +107,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     return map;
   }, [songs]);
 
-  const renderSpotRelatedSongs = (raw: string) => {
+  const renderSpotRelatedSongs = (raw: string, originSpotId: string) => {
     const parts = raw.split(' / ');
     return parts.map((part, idx) => {
       const matched = titleToSong.get(part) ?? titleToSong.get(part.replace(/…/g, '・・・'));
@@ -120,7 +118,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           {path ? (
             <a
               href={`${import.meta.env.BASE_URL}${path}`}
-              onClick={() => saveSongReturnTab('sacred_map')}
+              onClick={() => saveMapReturnState({
+                originSpotId, category: selectedSpotCategory, region: selectedSpotRegion,
+                visitedOnly: visitedSpotsOnly, filtersOpen: isSpotFilterOpen, mapSpotId, pinnedSpotId,
+              })}
               className="font-medium text-[#253331] underline decoration-[#c6bba8] underline-offset-2 hover:text-[#C83E2B]"
             >
               {part}
@@ -144,11 +145,21 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       : { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter }
   );
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery } = filters;
-  const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>('all');
-  const [selectedSpotRegion, setSelectedSpotRegion] = useState<SacredSpotRegion>('all');
-  const [visitedSpotsOnly, setVisitedSpotsOnly] = useState(false);
-  const [isSpotFilterOpen, setIsSpotFilterOpen] = useState(false);
-  const [pinnedSpotId, setPinnedSpotId] = useState<string | null>(null);
+  const [mapReturn] = useState(() => initialSubView === 'sacred_map' ? takeMapReturnState(spotIds) : null);
+  const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>(mapReturn?.category ?? 'all');
+  const [selectedSpotRegion, setSelectedSpotRegion] = useState<SacredSpotRegion>(mapReturn?.region ?? 'all');
+  const [visitedSpotsOnly, setVisitedSpotsOnly] = useState(mapReturn?.visitedOnly ?? false);
+  const [isSpotFilterOpen, setIsSpotFilterOpen] = useState(mapReturn?.filtersOpen ?? false);
+  const [pinnedSpotId, setPinnedSpotId] = useState<string | null>(mapReturn?.pinnedSpotId ?? null);
+  const [mapSpotId, setMapSpotId] = useState(mapReturn?.mapSpotId ?? '');
+  const originSpotHeading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => {
+    const heading = originSpotHeading.current;
+    if (heading) {
+      heading.focus({ preventScroll: true });
+      heading.scrollIntoView({ block: 'start', behavior: 'instant' });
+    }
+  }, [mapReturn]);
   const [cardPage, setCardPage] = useState<number>(() =>
     restored ? Math.max(1, Math.ceil(restored.visibleCount / CARDS_PER_PAGE)) : 1
   );
@@ -211,7 +222,10 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     const bounded = Math.max(1, Math.min(totalPages, nextPage));
     setCardPage(bounded);
     const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    resultsTopRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    window.requestAnimationFrame(() => {
+      resultsTopRef.current?.focus({ preventScroll: true });
+      resultsTopRef.current?.scrollIntoView({ behavior: reduced ? 'instant' : 'smooth', block: 'start' });
+    });
   };
 
   const filteredSpots = useMemo(
@@ -236,7 +250,6 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     [selectedSpotCategory, selectedSpotRegion, visitedSpotsOnly]
   );
 
-  const [mapSpotId, setMapSpotId] = useState('');
   const orderedSpots = useMemo(() => {
     if (!pinnedSpotId) return filteredSpots;
     const pinned = filteredSpots.find((s) => s.id === pinnedSpotId);
@@ -248,16 +261,18 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const mapQuery = mapSpot ? encodeURIComponent(mapSpot.name + ' ' + mapSpot.addressHint) : '';
   const visitedSpotCount = SACRED_SPOTS.filter((s) => s.mapScope !== 'none' && visitedSpotIds.includes(s.id)).length;
   const totalCheckableSpotCount = SACRED_SPOTS.filter((s) => s.mapScope !== 'none').length;
+  const hasNoVisits = visitedSpotsOnly && visitedSpotCount === 0;
+  const hasVisitsOutsideFilter = visitedSpotsOnly && visitedSpotCount > 0 && filteredSpots.length === 0;
   const spotFilterChoices = [
     selectedSpotCategory !== 'all' && selectedSpotCategory,
     selectedSpotRegion !== 'all' && SACRED_SPOT_REGIONS.find((r) => r.id === selectedSpotRegion)?.label,
     visitedSpotsOnly && '訪問済みのみ',
   ].filter(Boolean);
   const hasSpotFilter = spotFilterChoices.length > 0;
-  const resetSpotFilters = () => {
+  const resetSpotFilters = (onlyVisited = false) => {
     setSelectedSpotCategory('all');
     setSelectedSpotRegion('all');
-    setVisitedSpotsOnly(false);
+    setVisitedSpotsOnly(onlyVisited);
     setPinnedSpotId(null);
   };
   const emptyResults = (
@@ -363,7 +378,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
 
         {/* Sub-View 1: Song Guide Cards */}
         {activeSubView === 'discography' && (
-          <div ref={resultsTopRef} className="scroll-mt-20">
+          <div ref={resultsTopRef} tabIndex={-1} role="region" aria-label={`楽曲ガイドの検索結果（${safeCardPage} / ${totalPages} ページ）`} className="scroll-mt-20">
             {filteredSongs.length === 0 ? emptyResults : (
               <>
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-[repeat(2,minmax(0,1fr))] lg:grid-cols-[repeat(3,minmax(0,1fr))] gap-4">
@@ -652,7 +667,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                 {hasSpotFilter && (
                   <button
                     type="button"
-                    onClick={resetSpotFilters}
+                    onClick={() => resetSpotFilters()}
                     className="min-h-[40px] shrink-0 rounded-lg border border-[#dfd7c7] bg-white px-3 py-1.5 text-xs font-bold text-[#C83E2B] hover:border-[#C83E2B] cursor-pointer"
                   >
                     リセット
@@ -772,19 +787,19 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             {filteredSpots.length === 0 && filteredHistoricalSpots.length === 0 ? (
               <div className="notebook-paper rounded-xl p-6 text-center">
                 <p className="font-note-serif text-sm font-bold text-[#253331]">
-                  {visitedSpotsOnly ? 'まだ訪問済みの場所がありません。' : '条件に一致する場所が見つかりませんでした。'}
+                  {hasNoVisits ? 'まだ訪問済みの場所がありません。' : '条件に一致する場所が見つかりませんでした。'}
                 </p>
                 <p className="mt-1.5 text-xs text-[#57534E]">
-                  {visitedSpotsOnly
+                  {hasNoVisits
                     ? '気になったスポットカードの「行った！を記録」を押すと、ここにまとめて見返せます。'
-                    : 'つながりやエリアの条件を変えてお試しください。'}
+                    : hasVisitsOutsideFilter ? `ほかの条件を外すと、訪問済みの${visitedSpotCount}か所を見返せます。` : 'つながりやエリアの条件を変えてお試しください。'}
                 </p>
                 <button
                   type="button"
-                  onClick={resetSpotFilters}
+                  onClick={() => resetSpotFilters(hasVisitsOutsideFilter)}
                   className="mt-4 inline-flex min-h-[38px] items-center justify-center rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-4 py-1.5 text-xs font-bold text-[#253331] hover:border-[#253331] hover:bg-[#f4efe4] cursor-pointer"
                 >
-                  条件をリセット
+                  {hasVisitsOutsideFilter ? '訪問済みの場所をすべて見る' : '条件をリセット'}
                 </button>
               </div>
             ) : (
@@ -803,7 +818,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     >
                       <div>
                         <div className="flex items-start justify-between gap-2">
-                          <h2 className="font-note-serif text-base font-bold text-[#253331]">
+                          <h2 ref={spot.id === mapReturn?.originSpotId ? originSpotHeading : undefined}
+                            tabIndex={-1} className="scroll-mt-20 font-note-serif text-base font-bold text-[#253331]">
                             {spot.name}
                           </h2>
                           <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
@@ -829,7 +845,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                             <strong className="text-[#253331]">
                               {spot.relatedSongLabel ?? (spot.categories.includes('ライブ会場') ? '会場ゆかりの曲' : 'あわせて聴きたい曲')}：
                             </strong>
-                            {renderSpotRelatedSongs(spot.relatedSong)}
+                            {renderSpotRelatedSongs(spot.relatedSong, spot.id)}
                           </p>
                         )}
                         <div className="mt-3 rounded-md border border-[#ebe2d2] bg-[#faf6eb] px-3 py-2.5 text-xs text-[#57534E] leading-relaxed">

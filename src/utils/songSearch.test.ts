@@ -75,6 +75,21 @@ test('album filters remain active even if the same title matches elsewhere', () 
   assert.equal(search('Pretender', { album: 'Traveler' })[0]?.title, 'Pretender');
 });
 
+test('作品名の読みや略称から、対応する曲と実際のタイアップを探せる', () => {
+  for (const term of ['スパイファミリー', 'すぱい ふぁみりー', 'ｽﾊﾟｲﾌｧﾐﾘｰ']) {
+    assert.deepEqual(search(term).map(song => song.title).sort(), ['SOULSOUP', 'ミックスナッツ'].sort());
+  }
+  assert.deepEqual(search('スパイファミリー 劇場版').map(song => song.title), ['SOULSOUP']);
+  assert.deepEqual(search('東リベ').map(song => song.title).sort(), ['Cry Baby', 'ホワイトノイズ'].sort());
+  const [song] = search('サイレント 主題歌');
+  assert.equal(song.title, 'Subtitle');
+  const [context] = matchedSongContexts('さいれんと', song);
+  assert.equal(context.text, song.tieUps[0].text);
+  assert.equal(context.source, song.tieUps[0].source);
+  const [film] = search('スーモ');
+  assert.deepEqual(matchedSongContexts('スーモ', film).map(match => match.text), ['SUUMO テレビCMソング']);
+});
+
 test('tie-up hints reflect the keywords that matched the actual work', () => {
   const song = HIGEDAN_SONGS.find(s => s.id === 'mixed-nuts')!;
   assert.ok(matchedSongContexts('spy family', song).some(item => item.label === 'タイアップ'));

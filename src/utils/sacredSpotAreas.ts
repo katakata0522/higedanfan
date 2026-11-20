@@ -1,3 +1,9 @@
+import type { SacredSpotCategory } from '../data/higedanData';
+
+export const SPOT_CATEGORIES: readonly (SacredSpotCategory | 'all')[] = [
+  'all', 'MVロケ地', 'メンバーの思い出', 'メンバーのおすすめ', 'ライブ会場', '街とヒゲダン',
+];
+
 export type SacredSpotRegion = 'all' | 'sanin' | 'kanto' | 'domestic_other' | 'overseas';
 
 export const SACRED_SPOT_REGIONS: readonly { id: SacredSpotRegion; label: string }[] = [
