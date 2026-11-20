@@ -324,7 +324,12 @@ export default function App() {
         aria-hidden={isIntroOpen || undefined}
         inert={isIntroOpen || undefined}
       >
-      <a href="#top" className="skip-link">本文へ移動</a>
+      <a href="#top" className="skip-link" onClick={event => {
+        if (!isPlainLeftClick(event) || !mainRef.current) return;
+        event.preventDefault();
+        mainRef.current.focus({ preventScroll: true });
+        mainRef.current.scrollIntoView({ block: 'start', behavior: 'instant' });
+      }}>本文へ移動</a>
       {records.storageNotice && (
         <p role="alert" className="bg-amber-100 p-3 text-sm">
           {records.storageNotice}{' '}
@@ -353,7 +358,7 @@ export default function App() {
           tabIndex={-1}
           aria-hidden={isMenuOpen || undefined}
           inert={isIntroOpen || isMenuOpen || undefined}
-          className="flex-1 outline-none"
+          className="flex-1 scroll-mt-16 outline-none"
         >
           {activeFeatureTab === 'home' ? (
             <HomePage
@@ -392,6 +397,7 @@ export default function App() {
                   activeFeatureTab === 'vocal_range' ||
                   activeFeatureTab === 'sacred_map') && (
                   <DiscographySection
+                    key={activeFeatureTab === 'sacred_map' ? 'map' : 'songs'}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
                     onSelectView={(view) => handleSelectTab(view)}

@@ -31,7 +31,7 @@ export interface SongItem {
   situations: SituationTag[];
   sound: SoundTag;
   tieUp: string;
-  tieUps: { text: string; source: string }[];
+  tieUps: { text: string; source: string; searchAliases?: string[] }[];
   releaseNote?: string;
   iconicLyricQuote: string;
   musicalHighlight: string;

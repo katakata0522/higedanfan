@@ -10,6 +10,7 @@ import { songLatinReadings, songTitleAliases } from '../../src/data/songLatinRea
 import { catalogEntries } from '../../src/data/catalogEntries.ts';
 import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.ts';
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
+import { getCourseQuestions } from '../../src/components/quiz/quizCourses.ts';
 import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor, verifyPwaReadinessAndInstall } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
@@ -384,6 +385,9 @@ async function verifyGuideAndSetlistUsability(browser) {
   await page.getByRole('navigation', { name: '楽曲ガイドのページ切り替え' }).getByRole('button', { name: '2ページ目を表示' }).click();
   await page.getByText(/全 90 曲中 25〜48 曲目/).waitFor();
   const firstSongLink = page.locator('#section-discography article a[aria-label$="：曲のページを見る"]').first();
+  await page.waitForFunction(() => document.activeElement?.getAttribute('role') === 'region');
+  await page.keyboard.press('Tab');
+  assert.ok(await firstSongLink.evaluate(link => link === document.activeElement), '次のページの先頭曲にTabで進めません');
   const secondPageTitle = (await firstSongLink.getAttribute('aria-label')).replace(/：曲のページを見る$/, '');
   await firstSongLink.click();
   await page.getByRole('heading', { name: secondPageTitle, exact: true }).waitFor();
@@ -614,6 +618,62 @@ async function verifyTourArchiveSetlists(browser) {
 
   await context.close();
   console.log('320/390px・PCで歴代ツアー記録の内蔵セトリ展開・曲名検索・参戦絞込・MYセトリ化・静的URL・楽曲解説との往復を確認');
+}
+
+async function verifyVisitorJourneys(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+  const page = await context.newPage();
+  await page.goto(`${root}discography/`);
+  await page.getByLabel('曲名・読み・タイアップで検索').fill('スパイファミリー');
+  assert.deepEqual((await page.locator('main article h2').allTextContents()).sort(), ['SOULSOUP', 'ミックスナッツ'].sort());
+
+  await page.goto(`${root}sacred-map/`);
+  const filters = page.getByRole('button', { name: /絞り込み条件/ });
+  await filters.click();
+  const visited = page.getByRole('button', { name: /^訪問済みのみ/ });
+  await visited.click();
+  await page.getByText('まだ訪問済みの場所がありません。').waitFor();
+  await visited.click();
+  const overseas = page.getByRole('button', { name: '海外', exact: true });
+  await overseas.click();
+  const place = page.getByRole('article').filter({ has: page.getByRole('heading', { name: '台北', exact: true }) });
+  await place.getByRole('button', { name: '台北の訪問を記録' }).click();
+  await place.getByRole('button', { name: '台北のエリアを地図で見る' }).click();
+  await place.getByRole('link', { name: 'Pretender', exact: true }).click();
+  await page.getByRole('link', { name: '聖地巡礼マップに戻る', exact: true }).first().click();
+  assert.equal(await overseas.getAttribute('aria-pressed'), 'true');
+  await place.getByText('地図に表示中', { exact: true }).waitFor();
+  await page.waitForFunction(() => document.activeElement?.textContent === '台北');
+  await visited.click();
+  await page.getByRole('button', { name: '関東', exact: true }).click();
+  await page.getByRole('button', { name: '訪問済みの場所をすべて見る' }).click();
+  assert.equal(await visited.getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('main article').count(), 1);
+  await place.waitFor();
+
+  await page.getByRole('link', { name: 'プライバシーポリシー', exact: true }).click();
+  await page.getByRole('heading', { name: 'プライバシーポリシー', exact: true }).waitFor();
+  await page.getByRole('link', { name: '本文へ移動' }).press('Enter');
+  assert.equal(new URL(page.url()).hash, '#privacy');
+  assert.ok(await page.getByRole('main').evaluate(main => main === document.activeElement));
+
+  await page.goto(`${root}quiz/`);
+  await page.getByRole('button').filter({ has: page.getByText('初級', { exact: true }) }).click();
+  await page.getByRole('button', { name: /Vol\.1 .*挑戦する/ }).click();
+  const questions = getCourseQuestions('beginner', 'vol1', 'current');
+  for (const [index, question] of questions.slice(0, 2).entries()) {
+    const chosen = index === 0 ? (question.correctIndex + 1) % question.options.length : question.correctIndex;
+    await page.getByRole('button', { name: `${chosen + 1}. ${question.options[chosen]}`, exact: true }).press('Enter');
+    const feedback = page.getByRole('heading', { level: 3 }).filter({ hasText: question.options[question.correctIndex] });
+    await feedback.waitFor();
+    assert.ok(await feedback.evaluate(heading => heading === document.activeElement));
+    assert.match(await feedback.innerText(), index === 0 ? /おしい/ : /正解/);
+    const box = await feedback.boundingBox();
+    assert.ok(box.y >= 60 && box.y + box.height <= 844, '検定結果が見える位置にありません');
+    await page.getByRole('button', { name: '次の問題へ進む' }).click();
+  }
+  await context.close();
+  console.log('作品名の読み検索、地図への復帰と訪問記録、本文移動、検定の正誤表示を確認');
 }
 
 async function verifyReferenceLibrary(browser) {
@@ -910,6 +970,7 @@ try {
   await verifyRecordFileImport(browser, root);
   await verifyKurunIntroAndStickyNotes(browser);
   await verifyGuideAndSetlistUsability(browser);
+  await verifyVisitorJourneys(browser);
   await verifySetlistHierarchy(browser);
   await verifyReferenceLibrary(browser);
   await verifyTourArchiveSetlists(browser);

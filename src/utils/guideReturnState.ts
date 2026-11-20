@@ -1,4 +1,6 @@
 import type { SongGuideFilterValues } from '../components/SongGuideFilters';
+import type { SacredSpotCategory } from '../data/higedanData';
+import { SACRED_SPOT_REGIONS, SPOT_CATEGORIES, type SacredSpotRegion } from './sacredSpotAreas';
 import { ALBUM_CHRONOLOGY_RANK } from './songCatalog';
 import { SONG_TABLE_SORT_KEYS } from './songTableSort';
 
@@ -31,6 +33,15 @@ export type GuideReturnState = {
   visibleCount: number;
   view: GuideReturnView;
   voice?: { low: string; high: string; keyShift: number };
+};
+export type MapReturnState = {
+  region: SacredSpotRegion;
+  category: SacredSpotCategory | 'all';
+  visitedOnly: boolean;
+  filtersOpen: boolean;
+  mapSpotId: string;
+  pinnedSpotId: string | null;
+  originSpotId: string;
 };
 export type ArchiveReturnState = {
   publisher: string;
@@ -91,6 +102,28 @@ export function saveGuideReturnState(state: GuideReturnState, store: Store | nul
     store?.setItem(key, JSON.stringify(state));
     store?.setItem(originTabKey, state.view);
   } catch { /* 保存できない環境では通常の一覧へ戻す。 */ }
+}
+
+export function saveMapReturnState(state: MapReturnState, store: Store | null = browserStore()): void {
+  try {
+    store?.setItem(key, JSON.stringify({ ...state, view: 'sacred_map' }));
+    saveSongReturnTab('sacred_map', store);
+  } catch { /* 保存できない環境では通常の地図へ戻す。 */ }
+}
+
+export function takeMapReturnState(spotIds: readonly string[], store: Store | null = browserStore()): MapReturnState | null {
+  try {
+    const raw = store?.getItem(key);
+    store?.removeItem(key);
+    if (!raw || raw.length > 2000) return null;
+    const state = JSON.parse(raw) as (MapReturnState & { view: string }) | null;
+    if (state?.view !== 'sacred_map' ||
+        !SACRED_SPOT_REGIONS.some(region => region.id === state.region) || !SPOT_CATEGORIES.includes(state.category) ||
+        typeof state.visitedOnly !== 'boolean' || typeof state.filtersOpen !== 'boolean' ||
+        !spotIds.includes(state.originSpotId) || (state.mapSpotId !== '' && !spotIds.includes(state.mapSpotId)) ||
+        (state.pinnedSpotId !== null && !spotIds.includes(state.pinnedSpotId))) return null;
+    return state;
+  } catch { return null; }
 }
 
 export function guideReturnView(store: Store | null = browserStore()): GuideReturnView {

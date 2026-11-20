@@ -31,13 +31,19 @@ export function albumForSearch(query: string): string | undefined {
   return albumSearchKeys.get(searchKey(query.trim()));
 }
 
-function contextFields(song: SongItem): { label: string; text: string; source?: string }[] {
+type SongContext = { label: string; text: string; source?: string; searchAliases?: string[] };
+
+function contextKeys(field: SongContext): string[] {
+  return [field.label + field.text, ...(field.searchAliases ?? [])].map(searchKey);
+}
+
+function contextFields(song: SongItem): SongContext[] {
   const credit = songwriterInfo(song);
   return [
     ...songAlbums(song).map(({ album, trackNumber }) => ({
       label: '収録作品', text: trackNumber ? `${album} (M${trackNumber})` : album,
     })),
-    ...song.tieUps.map(({ text, source }) => ({ label: 'タイアップ', text, source })),
+    ...song.tieUps.map(tieUp => ({ label: 'タイアップ', ...tieUp })),
     ...(credit ? [{ label: '作詞・作曲', text: credit.name, source: credit.source }] : []),
     ...(song.releaseNote ? [{ label: '収録メモ', text: song.releaseNote }] : []),
   ];
@@ -57,9 +63,7 @@ export function prepareSongSearch(query: string) {
     if (titles.some(title => title.startsWith(phrase))) return 1;
     if (words.every(word => titles.some(title => title.includes(word)))) return 2;
 
-    const fields = [
-      ...contextFields(song).map(item => item.label + item.text), song.musicalHighlight, song.linerNotes,
-    ].map(searchKey);
+    const fields = [...contextFields(song).flatMap(contextKeys), searchKey(song.musicalHighlight), searchKey(song.linerNotes)];
     const searchable = titles.concat(fields);
     return words.every(word => searchable.some(field => field.includes(word))) ? 3 : undefined;
   };
@@ -70,6 +74,6 @@ export function matchedSongContexts(query: string, song: SongItem) {
   const titles = titleKeys(song);
   if (!words.length || titles.includes(words.join(''))) return [];
   return contextFields(song).filter(field =>
-    words.some(word => searchKey(field.label + field.text).includes(word) && !titles.some(title => title.includes(word)))
+    words.some(word => contextKeys(field).some(key => key.includes(word)) && !titles.some(title => title.includes(word)))
   );
 }

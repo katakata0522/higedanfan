@@ -28,7 +28,7 @@ export function QuizQuestionCard({
   const { selectedOption, selectedOrder, isOrderingSubmitted } = answer;
   const [showHint, setShowHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
-  const orderingResult = useRef<HTMLDivElement>(null);
+  const resultHeading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
     if (visible && heading.current) {
       heading.current.focus({ preventScroll: true });
@@ -39,10 +39,11 @@ export function QuizQuestionCard({
   const isQuestionAnswered = isOrderingQuestion ? isOrderingSubmitted : selectedOption !== null;
   const isCurrentQuestionCorrect = isAnswerCorrect(question, answer);
   useLayoutEffect(() => {
-    if (visible && isOrderingQuestion && isOrderingSubmitted && orderingResult.current) {
-      orderingResult.current.focus({ preventScroll: true });
+    if (visible && isQuestionAnswered && resultHeading.current) {
+      resultHeading.current.focus({ preventScroll: true });
+      resultHeading.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
-  }, [visible, isOrderingQuestion, isOrderingSubmitted]);
+  }, [visible, isQuestionAnswered]);
 
   const handleAnswerSingleChoice = (optionIdx: number) => {
     if (selectedOption !== null) return;
@@ -245,13 +246,14 @@ export function QuizQuestionCard({
 
       {/* Explanation, Sources & Next Button */}
       {isQuestionAnswered && (
-        <div ref={isOrderingQuestion ? orderingResult : undefined} tabIndex={isOrderingQuestion ? -1 : undefined} className="mt-5 scroll-mt-20 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-4">
+        <div className="mt-5 scroll-mt-20 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-4">
           <div>
-            <div className="text-xs sm:text-sm font-bold text-[#1C1917]">
-              {isCurrentQuestionCorrect
-                ? '正解！'
-                : 'おしい！正解はこちら'}
-            </div>
+            <h3 ref={resultHeading} tabIndex={-1} className="scroll-mt-20 scroll-mb-6 text-sm font-bold text-[#1C1917]">
+              {isCurrentQuestionCorrect ? '正解！' : isOrderingQuestion ? 'おしい！正解はこちら' : 'おしい！'}
+              {!isOrderingQuestion && <span className="block mt-1">{isCurrentQuestionCorrect
+                ? question.options[question.correctIndex]
+                : `正解は「${question.options[question.correctIndex]}」です。`}</span>}
+            </h3>
 
             {isOrderingQuestion && question.correctOrder && (
               <div className="mt-2 rounded-lg border border-[#E6E1D6] bg-white p-3 text-xs space-y-1">
