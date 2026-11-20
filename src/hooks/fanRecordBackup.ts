@@ -31,6 +31,7 @@ export function createFanRecordBackup(
   savedSetlists?: SavedSetlistsState | null,
   quizVolumeScores?: QuizVolumeRecordMap | null,
   myNoteProfile?: MyNoteProfile | null,
+  setlistShareImageGenerated?: boolean,
 ): string {
   const payload: {
     format: string;
@@ -39,6 +40,7 @@ export function createFanRecordBackup(
     savedSetlists?: SavedSetlistsState;
     quizVolumeScores?: QuizVolumeRecordMap;
     myNoteProfile?: MyNoteProfile;
+    setlistShareImageGenerated?: boolean;
   } = {
     format: BACKUP_FORMAT,
     version: 1,
@@ -54,6 +56,9 @@ export function createFanRecordBackup(
   const cleanMyNote = myNoteProfile ? sanitizeMyNoteProfilePayload(myNoteProfile, validSongIds) : null;
   if (cleanMyNote && !isDefaultMyNoteProfile(cleanMyNote)) {
     payload.myNoteProfile = cleanMyNote;
+  }
+  if (setlistShareImageGenerated === true) {
+    payload.setlistShareImageGenerated = true;
   }
   return JSON.stringify(payload, null, 2);
 }
@@ -151,6 +156,7 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
   savedSetlists?: SavedSetlistsState;
   quizVolumeScores?: QuizVolumeRecordMap;
   myNoteProfile?: MyNoteProfile;
+  setlistShareImageGenerated?: boolean;
 } {
   if (raw.length > MAX_BACKUP_BYTES) throw new TypeError('記録ファイルが大きすぎます。');
   const value: unknown = JSON.parse(raw);
@@ -183,6 +189,13 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
     'format' in outer && outer.myNoteProfile !== undefined
       ? validateMyNoteProfileBackup(outer.myNoteProfile)
       : undefined;
+  let setlistShareImageGenerated: boolean | undefined;
+  if ('format' in outer && outer.setlistShareImageGenerated !== undefined) {
+    if (typeof outer.setlistShareImageGenerated !== 'boolean') {
+      throw new TypeError('MYセトリ画像生成の記録を安全に読み込めませんでした。');
+    }
+    setlistShareImageGenerated = outer.setlistShareImageGenerated;
+  }
   return {
     records: {
       setlist: restored.setlist, setlistTitle: restored.setlistTitle,
@@ -193,6 +206,7 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
     savedSetlists,
     quizVolumeScores,
     myNoteProfile,
+    setlistShareImageGenerated,
   };
 }
 

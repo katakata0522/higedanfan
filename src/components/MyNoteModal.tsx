@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
+  ArrowLeftRight,
   ArrowRight,
   Award,
   BookOpen,
@@ -23,10 +24,14 @@ import {
   displayMyNoteNickname,
   hasCustomMyNoteNickname,
   loadMyNoteProfile,
+  loadMyNoteTitleMode,
+  loadSetlistShareImageGenerated,
   MY_NOTE_NAME_MAX_LENGTH,
   persistMyNoteProfile,
+  persistMyNoteTitleMode,
   sanitizeMyNoteNickname,
   type MyNoteProfile,
+  type MyNoteTitleDisplayMode,
 } from '../utils/myNoteProfile';
 import {
   buildAttendedTimeline,
@@ -34,13 +39,13 @@ import {
   buildQuizRecordSummary,
   buildSacredProgressByRegion,
   getStampDisplayDetails,
+  isCustomSetlistTitle,
   type MyNoteDetailTab,
   type MyNoteEngagementInput,
   type MyNoteRadarAxis,
   type MyNoteStampItem,
 } from '../utils/myNoteSummary';
 import {
-  DEFAULT_SAVED_SETLIST_TITLE,
   loadSavedSetlists,
   persistSavedSetlists,
   switchSavedSetlist,
@@ -72,6 +77,12 @@ interface MyNoteModalProps {
 const formatDisplayDate = (date: string) => date.replaceAll('-', '.');
 
 const STAMPS_PER_PAGE = 20;
+
+// Rank subtitles and playstyle descriptions remain curated in myNoteSummary.ts
+// so they can be surfaced cleanly once copy review is complete.
+const SHOW_TITLE_SUBTITLES = false;
+
+type StampCountMode = 'all' | 'normal' | 'gold';
 
 type StampCategoryFilter =
   | 'all'
@@ -273,6 +284,13 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   const bodyRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState<MyNoteProfile>(() => loadMyNoteProfile(resetEpoch));
+  const [titleMode, setTitleMode] = useState<MyNoteTitleDisplayMode>(() =>
+    loadMyNoteTitleMode(resetEpoch),
+  );
+  const [hasSetlistShareImage, setHasSetlistShareImage] = useState<boolean>(() =>
+    loadSetlistShareImageGenerated(resetEpoch),
+  );
+  const [stampCountMode, setStampCountMode] = useState<StampCountMode>('all');
   const [isEditingName, setIsEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
   const [activeTab, setActiveTab] = useState<MyNoteDetailTab>('tours');
@@ -283,6 +301,8 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
 
   useEffect(() => {
     setProfile(loadMyNoteProfile(resetEpoch));
+    setTitleMode(loadMyNoteTitleMode(resetEpoch));
+    setHasSetlistShareImage(loadSetlistShareImageGenerated(resetEpoch));
   }, [resetEpoch]);
 
   useEffect(() => {
@@ -295,6 +315,9 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
         persistMyNoteProfile(openedProfile, resetEpoch);
       }
       setProfile(openedProfile);
+      setTitleMode(loadMyNoteTitleMode(resetEpoch));
+      setHasSetlistShareImage(loadSetlistShareImageGenerated(resetEpoch));
+      setStampCountMode('all');
       setIsEditingName(false);
       setSwitchNotice(null);
       setSelectedStampId(null);
@@ -395,12 +418,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
         ? { title: liveActiveTitle, entries: setlist }
         : { title: item.title, entries: item.entries },
     );
-    const hasCustomTitle = allSetlists.some(
-      (item) =>
-        item.title.length > 0 &&
-        item.title !== DEFAULT_SETLIST_TITLE &&
-        item.title !== DEFAULT_SAVED_SETLIST_TITLE,
-    );
+    const hasCustomTitle = allSetlists.some((item) => isCustomSetlistTitle(item.title));
     return {
       noteOpened: profile.opened || isOpen,
       hasCustomNickname: hasCustomMyNoteNickname(profile),
@@ -410,6 +428,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
       setlists: allSetlists,
       savedSetlistCount: savedSetlists.items.length,
       hasCustomSetlistTitle: hasCustomTitle,
+      generatedSetlistShareImage: hasSetlistShareImage,
       quizVolumeScores,
       bestQuizScore: quizSummary.bestQuizScore,
       votedSongCount,
@@ -428,16 +447,49 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
     savedSetlists,
     setlistTitle,
     setlist,
+    hasSetlistShareImage,
     quizVolumeScores,
     quizSummary.bestQuizScore,
     votedSongCount,
     reviews.length,
   ]);
 
-  const { stamps, rank, radar } = useMemo(
+  const { stamps, rank, radar, playstyle } = useMemo(
     () => buildMyNoteSnapshot(engagementInput),
     [engagementInput],
   );
+
+  const handleToggleTitleMode = () => {
+    setTitleMode((prev) => {
+      const next: MyNoteTitleDisplayMode = prev === 'rank' ? 'playstyle' : 'rank';
+      persistMyNoteTitleMode(next, resetEpoch);
+      return next;
+    });
+  };
+
+  const handleCycleStampCountMode = () => {
+    setStampCountMode((prev) =>
+      prev === 'all' ? 'normal' : prev === 'normal' ? 'gold' : 'all',
+    );
+  };
+
+  const isPlaystyleMain = titleMode === 'playstyle';
+  const mainTitle = isPlaystyleMain ? playstyle.title : rank.title;
+  const mainSubtitle = isPlaystyleMain ? playstyle.subtitle : rank.subtitle;
+  const secondaryLabel = isPlaystyleMain ? '総合ランク' : '推し活タイプ';
+  const secondaryTitle = isPlaystyleMain ? rank.title : playstyle.title;
+  const stampCountVisibleText =
+    stampCountMode === 'all'
+      ? `${rank.unlockedCount} / ${rank.totalStamps}`
+      : stampCountMode === 'normal'
+        ? `通常 ${rank.unlockedNormalCount} / ${rank.totalNormalStamps}`
+        : `特別 ${rank.unlockedGoldCount} / ${rank.totalGoldStamps}`;
+  const stampCountAriaLabel =
+    stampCountMode === 'all'
+      ? `${stampCountVisibleText}（タップで通常・特別の内訳に切り替え）`
+      : stampCountMode === 'normal'
+        ? `${stampCountVisibleText}（タップで特別称号の内訳に切り替え）`
+        : `${stampCountVisibleText}（タップで全体表示に戻す）`;
 
   const filteredStamps = useMemo(
     () =>
@@ -536,9 +588,17 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
           <section className="mn-card mn-card--soft" aria-label="訪問・記念スタンプ">
             <div className="mn-card-header">
               <h3 className="mn-card-label">訪問・記念スタンプ</h3>
-              <span className="mn-card-count">
-                {rank.unlockedCount} / {rank.totalStamps}
-              </span>
+              <button
+                type="button"
+                onClick={handleCycleStampCountMode}
+                className={`mn-card-count mn-count-cycle-btn ${
+                  stampCountMode === 'gold' ? 'mn-count-cycle-btn--gold' : ''
+                }`}
+                aria-label={stampCountAriaLabel}
+              >
+                {stampCountMode === 'gold' && <SpecialSealIcon />}
+                <span>{stampCountVisibleText}</span>
+              </button>
             </div>
 
             <div className="mn-filter-row" role="group" aria-label="スタンプの種類で絞り込み">
@@ -652,12 +712,42 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
             </div>
           </section>
 
-          {/* Right column: Rank + Identity & 5-axis Balance Graph */}
+          {/* Right column: Rank + Playstyle & 5-axis Balance Graph */}
           <div className="mn-right-stack">
-            <section className="mn-card mn-card--profile" aria-label="ランク">
-              <p className="mn-card-label">ランク</p>
+            <section className="mn-card mn-card--profile" aria-label="総合ランクと推し活タイプ">
+              <div className="mn-card-header mn-profile-card-header">
+                <h3 className="mn-card-label">
+                  {isPlaystyleMain ? '推し活タイプ' : '総合ランク'}
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleToggleTitleMode}
+                  className="mn-mode-switch-btn"
+                  aria-label={
+                    isPlaystyleMain
+                      ? '総合ランクへ切り替え'
+                      : '推し活タイプへ切り替え'
+                  }
+                >
+                  <ArrowLeftRight size={11} aria-hidden="true" />
+                  <span>{isPlaystyleMain ? '総合ランクへ' : '推し活タイプへ'}</span>
+                </button>
+              </div>
               <div className="mn-rank-identity">
-                <span className="mn-rank-badge">{rank.title}</span>
+                <button
+                  type="button"
+                  onClick={handleToggleTitleMode}
+                  className={`mn-rank-badge mn-rank-badge--btn ${
+                    isPlaystyleMain ? 'mn-rank-badge--playstyle' : ''
+                  }`}
+                  aria-label={
+                    isPlaystyleMain
+                      ? `${playstyle.title}（タップで総合ランクへ切り替え）`
+                      : `${rank.title}（タップで推し活タイプへ切り替え）`
+                  }
+                >
+                  {mainTitle}
+                </button>
                 {isEditingName ? (
                   <form onSubmit={handleSaveNickname} className="mn-name-form">
                     <input
@@ -703,7 +793,13 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
                   </div>
                 )}
               </div>
-              <p className="mn-rank-sub">{rank.subtitle}</p>
+              {SHOW_TITLE_SUBTITLES && mainSubtitle && (
+                <p className="mn-rank-sub">{mainSubtitle}</p>
+              )}
+              <p className="mn-secondary-identity">
+                <span className="mn-secondary-label">{secondaryLabel}</span>
+                <span className="mn-secondary-value">{secondaryTitle}</span>
+              </p>
               <div
                 className="mn-progress-track"
                 role="progressbar"

@@ -2,6 +2,7 @@ import { prepareSongSearch } from '../utils/songSearch';
 import { ConfirmDialog } from './ConfirmDialog';
 import { SetlistImageModal } from './SetlistImageModal';
 import { SETLIST_TITLE_LIMIT, reorderSetlistEntries } from '../utils/setlist';
+import { recordSetlistShareImageGenerated } from '../utils/myNoteProfile';
 import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveSongReturnTab } from '../utils/guideReturnState';
@@ -955,7 +956,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 <button
                   type="button"
                   disabled={setlist.length === 0}
-                  onClick={() => setIsImageModalOpen(true)}
+                  onClick={() => {
+                    recordSetlistShareImageGenerated(resetEpoch);
+                    setIsImageModalOpen(true);
+                  }}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-center text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
                 >
                   <ImageIcon aria-hidden="true" className="h-4 w-4 text-[#C83E2B]" />

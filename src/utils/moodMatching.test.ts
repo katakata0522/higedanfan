@@ -100,7 +100,7 @@ test('all answer combinations keep results distinct and give every song a chance
   const moods = ['push_back', 'heartbreak_night', 'euphoric_drive', 'deep_lyric'] as const;
   const situations = ['morning_commute', 'late_night_alone', 'live_warmup', 'weekend_walk'] as const;
   const sounds = ['rhythm', 'gentle', 'melody', 'powerful'] as const;
-  const eras = ['any', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026'] as const;
+  const eras = ['any', 'early', 'middle', 'late', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026'] as const;
   const lengths = ['any', 'under4', 'fourToFive', 'fivePlus'] as const;
   const seen = new Set<string>();
   for (const mood of moods) for (const situation of situations) for (const sound of sounds)
@@ -114,4 +114,13 @@ test('all answer combinations keep results distinct and give every song a chance
     }
   assert.equal(seen.size, HIGEDAN_SONGS.length);
   assert.deepEqual(recommendSongsByMood(HIGEDAN_SONGS, originalCriteria), recommendSongsByMood(HIGEDAN_SONGS, originalCriteria));
+
+  // Verify broad era buckets cover all 90 songs distinctly
+  const earlySongs = HIGEDAN_SONGS.filter(song => matchesEra(song, 'early'));
+  const middleSongs = HIGEDAN_SONGS.filter(song => matchesEra(song, 'middle'));
+  const lateSongs = HIGEDAN_SONGS.filter(song => matchesEra(song, 'late'));
+  assert.equal(earlySongs.length + middleSongs.length + lateSongs.length, HIGEDAN_SONGS.length);
+  assert.ok(earlySongs.some(song => song.id === '115man-kilo'));
+  assert.ok(middleSongs.some(song => song.id === 'pretender') && middleSongs.some(song => song.id === 'cry-baby'));
+  assert.ok(lateSongs.some(song => song.id === 'subtitle') && lateSongs.some(song => song.id === 'stardust'));
 });

@@ -154,4 +154,14 @@ test('backup preserves myNoteProfile and rejects tampered profile payloads', () 
   const badType = JSON.parse(backup);
   badType.myNoteProfile.opened = 'yes';
   assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(badType)), /安全に読み込めません/);
+
+  // Optional setlistShareImageGenerated flag round-trips and rejects invalid types without breaking legacy backups
+  assert.equal(restored.setlistShareImageGenerated, undefined);
+  const backupWithImage = createFanRecordBackup(records, null, null, profile, true);
+  const restoredWithImage = parseFanRecordBackupWithSetlists(backupWithImage);
+  assert.equal(restoredWithImage.setlistShareImageGenerated, true);
+
+  const badImageFlag = JSON.parse(backupWithImage);
+  badImageFlag.setlistShareImageGenerated = 'yes';
+  assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(badImageFlag)), /安全に読み込めません/);
 });

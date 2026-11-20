@@ -69,15 +69,11 @@ a { color: inherit; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   max-width: 1152px;
   height: 64px;
   margin: 0 auto;
   padding: 0 10px;
-}
-
-@media (min-width: 380px) {
-  .site-topbar-inner { gap: 10px; padding: 0 12px; }
 }
 
 @media (min-width: 640px) {
@@ -104,16 +100,12 @@ a { color: inherit; }
   overflow: visible;
 }
 
-@media (min-width: 380px) {
-  .site-brand-logo { width: 32px; height: 22px; }
-}
-
 .site-brand-text { min-width: 0; }
 
 .site-brand-title {
   display: block;
   font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   font-synthesis-weight: none;
   line-height: 1.25;
@@ -121,7 +113,7 @@ a { color: inherit; }
 }
 
 @media (min-width: 380px) {
-  .site-brand-title { font-size: 12.5px; }
+  .site-brand-title { font-size: 13px; }
 }
 
 .site-brand-title span {
@@ -190,14 +182,15 @@ a { color: inherit; }
   justify-content: center;
   gap: 4px;
   min-height: 36px;
-  padding: 6px 9px;
+  padding: 6px 8px;
   border: 1px solid #dfd7c7;
   border-radius: 9999px;
   background: #fffcf5;
   color: #253331;
   list-style: none;
   cursor: pointer;
-  font-size: 11px;
+  font-family: inherit;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   transition: background-color .15s ease, border-color .15s ease, color .15s ease;
@@ -207,7 +200,7 @@ a { color: inherit; }
   .song-mynote-btn,
   .song-site-menu > summary {
     min-height: 38px;
-    padding: 7px 11px;
+    padding: 7px 10px;
     font-size: 12px;
   }
 }

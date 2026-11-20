@@ -27,7 +27,7 @@ const allowedAnswers = {
   mood: ['push_back', 'heartbreak_night', 'euphoric_drive', 'deep_lyric'],
   situation: ['morning_commute', 'late_night_alone', 'live_warmup', 'weekend_walk'],
   sound: ['piano_pop', 'brass_funk', 'emotional_ballad', 'stadium_rock', 'rhythm', 'gentle', 'melody', 'powerful'],
-  era: ['any', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026'],
+  era: ['any', 'early', 'middle', 'late', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026'],
   length: ['any', 'under4', 'fourToFive', 'fivePlus'],
 } as const;
 

@@ -1,7 +1,8 @@
 import type { EraTag, MoodTag, SituationTag, SongItem, SoundTag } from '../data/higedanData';
 import { ERA_SHORT_LABELS, SOUND_LABELS } from './songLabels';
 
-export type EraPreference = EraTag | 'any';
+export type BroadEraPreference = 'early' | 'middle' | 'late';
+export type EraPreference = EraTag | BroadEraPreference | 'any';
 export type LengthPreference = 'any' | 'under4' | 'fourToFive' | 'fivePlus';
 // 以前の回答も復元できるよう、従来の曲調IDは残す。
 export type MoodSoundPreference = SoundTag | 'rhythm' | 'gentle' | 'melody' | 'powerful';
@@ -28,6 +29,9 @@ export const SOUND_PREFERENCE_LABELS: Record<MoodSoundPreference, string> = {
 
 export const ERA_PREFERENCE_LABELS: Record<EraPreference, string> = {
   any: 'どの時期の曲も聴きたい',
+  early: '初期（2015〜2018年頃）',
+  middle: '中期（2018〜2021年頃）',
+  late: '後期（2022年〜現在）',
   ...ERA_SHORT_LABELS,
   latest_2025_2026: '2024〜2026年の曲',
 };
@@ -58,6 +62,9 @@ export function matchesLength(durationSec: number, preference: LengthPreference)
 
 export function matchesEra(song: SongItem, preference: EraPreference): boolean {
   if (preference === 'any') return true;
+  if (preference === 'early') return song.era === 'indies_escaparade';
+  if (preference === 'middle') return song.era === 'traveler' || song.era === 'editorial';
+  if (preference === 'late') return song.era === 'rejoice' || song.era === 'latest_2025_2026';
   if (preference === 'latest_2025_2026') return /^202[456][.\-/]/.test(song.releaseDate);
   return song.era === preference;
 }

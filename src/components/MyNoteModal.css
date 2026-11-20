@@ -161,6 +161,41 @@ dialog.my-note-dialog::backdrop {
   color: #78716C;
 }
 
+.mn-count-cycle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  border: 1px solid #dfd7c7;
+  background: #ffffff;
+  color: #57534E;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mn-count-cycle-btn:hover {
+  border-color: #253331;
+  color: #253331;
+}
+
+.mn-count-cycle-btn:focus-visible {
+  outline: 2px solid #253331;
+  outline-offset: 2px;
+}
+
+.mn-count-cycle-btn--gold {
+  border-color: #d6bf89;
+  background: #faf5e7;
+  color: #7d5b16;
+}
+
+.mn-count-cycle-btn--gold:hover {
+  border-color: #7a5812;
+  color: #7a5812;
+}
+
 .mn-right-stack {
   display: flex;
   flex-direction: column;
@@ -506,12 +541,44 @@ dialog.my-note-dialog::backdrop {
 }
 
 /* Rank + Identity & Radar */
+.mn-profile-card-header {
+  margin-bottom: 6px;
+}
+
+.mn-mode-switch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 9px;
+  border-radius: 9999px;
+  border: 1px solid #dfd7c7;
+  background: rgba(255, 255, 255, 0.85);
+  color: #57534E;
+  font-size: 10.5px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.mn-mode-switch-btn:hover {
+  border-color: #253331;
+  background: #ffffff;
+  color: #253331;
+}
+
+.mn-mode-switch-btn:focus-visible {
+  outline: 2px solid #253331;
+  outline-offset: 2px;
+}
+
 .mn-rank-identity {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px 10px;
-  margin-top: 6px;
+  margin-top: 2px;
 }
 
 .mn-rank-badge {
@@ -520,6 +587,65 @@ dialog.my-note-dialog::backdrop {
   font-weight: 700;
   color: #C83E2B;
   line-height: 1.3;
+}
+
+.mn-rank-badge--btn {
+  background: transparent;
+  border: none;
+  padding: 2px 0;
+  min-height: 26px;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(200, 62, 43, 0.35);
+  text-underline-offset: 4px;
+  transition: opacity 0.15s ease, color 0.15s ease;
+}
+
+.mn-rank-badge--btn:hover {
+  opacity: 0.82;
+}
+
+.mn-rank-badge--btn:focus-visible {
+  outline: 2px solid #253331;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.mn-rank-badge--playstyle {
+  color: #1F4E46;
+  text-decoration-color: rgba(31, 78, 70, 0.35);
+}
+
+.mn-secondary-identity {
+  margin: 6px 0 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 7px;
+  font-size: 11.5px;
+  line-height: 1.45;
+}
+
+.mn-secondary-label {
+  font-weight: 700;
+  color: #78716C;
+}
+
+.mn-secondary-value {
+  font-weight: 700;
+  color: #253331;
+  overflow-wrap: anywhere;
+}
+
+@media (pointer: coarse) {
+  .mn-count-cycle-btn,
+  .mn-mode-switch-btn {
+    min-height: 28px;
+  }
+
+  .mn-rank-badge--btn {
+    min-height: 30px;
+  }
 }
 
 .mn-profile-name-row {

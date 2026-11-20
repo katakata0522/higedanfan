@@ -257,7 +257,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             </g>
           </svg>
           <span className="min-w-0">
-            <span className="block font-note-serif text-[11px] min-[380px]:text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
+            <span className="block font-note-serif text-xs min-[380px]:text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
               <span className="whitespace-nowrap">115万キロの</span><wbr /><span className="whitespace-nowrap">ファンノート</span>
             </span>
             {' '}
@@ -285,7 +285,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
               }}
               aria-haspopup="dialog"
               aria-expanded={isMyNoteOpen}
-              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffcf5] hover:border-[#253331] hover:bg-[#f2ece0] text-[#253331] px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] min-[380px]:text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer"
+              className="inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffcf5] hover:border-[#253331] hover:bg-[#f2ece0] text-[#253331] px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer"
             >
               <NotebookPen className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-[#C83E2B] shrink-0" aria-hidden="true" />
               <span>マイノート</span>
@@ -299,7 +299,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             aria-expanded={isMenuOpen}
             aria-controls="global-nav-drawer"
             aria-label={isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
-            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-[11px] min-[380px]:text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
               isMenuOpen
                 ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
                 : 'border-[#dfd7c7] bg-[#fffcf5] text-[#253331] hover:border-[#253331] hover:bg-[#f2ece0]'
