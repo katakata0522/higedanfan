@@ -233,6 +233,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   onClick={() => {
                     setReadable(value => !value);
                     siteMenuRef.current?.removeAttribute('open');
+                    siteMenuRef.current?.querySelector('summary')?.focus({ preventScroll: true });
                   }}
                 >
                   {readable ? '標準の文字に戻す' : '大きな文字で読む'}

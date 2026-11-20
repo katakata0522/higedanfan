@@ -17,6 +17,7 @@
    - **重要**: 旧HTMLタブを開いたままの利用者が遅延読み込みできるよう、`higedanfan/assets/` の既存ハッシュ付きアセットファイルは上書き以外削除せず維持します。
    - **重要**: `robots.txt` と `sitemap.xml` は `katakatalab-web` のルート側で一括管理しているため、`higedanfan/` サブディレクトリには置かないでください。
    - `brand/` に新しい画像やバッジ SVG を追加した場合は、Public の `.gitignore` と `qa/published-dependencies.json`（SHA-256 / サイズ / CI用ダミー指定）へ登録します。
+   - `brand/fonts/` の WOFF2 は、[Google Fonts の原本](https://github.com/google/fonts/tree/cc5661d43cd4f9aad5567033a8e15ca28dc35c86/ofl)から作成した Kiwi Maru Medium と Noto Sans JP のサブセットです。更新時は同梱の OFL と一緒に Private の原本・`privateOverlay` に先行登録し、Public の依存台帳には同じファイルの SHA-256 とサイズを登録します。
 2. `docs/higedanfan-release.md` のソースコミットSHA・変更概要を更新し、`boundary`・`education-no-tracking`・`root quality`・SEO検査を通過させて `main` へマージします。
 
 ## 3. 本番デプロイ（`katakata0522/KatakataLab`）

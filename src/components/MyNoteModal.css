@@ -9,7 +9,7 @@ dialog.my-note-dialog {
   background: #fffdf8;
   color: #253331;
   box-shadow: 0 24px 64px rgba(31, 41, 39, 0.28), 0 4px 16px rgba(31, 41, 39, 0.12);
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
   overflow: hidden;
 }
 
@@ -44,7 +44,7 @@ dialog.my-note-dialog::backdrop {
 
 .mn-head-title {
   margin: 0;
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--fan-note-font);
   font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -582,7 +582,7 @@ dialog.my-note-dialog::backdrop {
 }
 
 .mn-rank-badge {
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--fan-note-font);
   font-size: 15px;
   font-weight: 700;
   color: #C83E2B;
@@ -655,7 +655,7 @@ dialog.my-note-dialog::backdrop {
 }
 
 .mn-profile-name {
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--fan-note-font);
   font-size: 18px;
   font-weight: 700;
   color: #253331;

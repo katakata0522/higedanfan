@@ -1,5 +1,7 @@
+@import "../typography.css";
+
 :root {
-  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif CJK JP", serif;
+  font-family: "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
   color: #1c1917;
   background: #faf6eb;
   font-synthesis: none;
@@ -40,7 +42,7 @@ a { color: inherit; }
   border: 1px solid #253331;
   background: #fffdf8;
   color: #253331;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
   font-size: 0.75rem;
   font-weight: 700;
   text-decoration: none;
@@ -61,7 +63,7 @@ a { color: inherit; }
   border-bottom: 1px solid #e7dfd0;
   background: rgba(249, 245, 235, .95);
   backdrop-filter: blur(12px);
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
 }
 
 .site-topbar-inner {
@@ -104,7 +106,7 @@ a { color: inherit; }
 
 .site-brand-title {
   display: block;
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  font-family: var(--fan-note-font);
   font-size: 12px;
   font-weight: 500;
   font-synthesis-weight: none;
@@ -251,7 +253,7 @@ a { color: inherit; }
   border-bottom: 1px solid #e5dccb;
 }
 .song-menu-heading {
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--fan-note-font);
   font-size: 12px;
   font-weight: 500;
   font-synthesis-weight: none;
@@ -407,7 +409,7 @@ a { color: inherit; }
   min-height: 36px;
   padding: 5px 13px;
   border-radius: 9999px;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
@@ -519,7 +521,7 @@ a { color: inherit; }
   position: relative;
   margin: 0;
   padding: 0;
-  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+  font-family: var(--fan-ui-font);
   font-size: 62px;
   font-weight: 900;
   letter-spacing: -.045em;
@@ -643,7 +645,7 @@ a { color: inherit; }
 
 .overview-copy p { margin: 16px 0 0; font-size: 18px; font-weight: 500; letter-spacing: .015em; line-height: 1.85; }
 
-.overview-copy .range-note { margin-top: 12px; color: #57534e; font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif; font-size: 13px; line-height: 1.45; }
+.overview-copy .range-note { margin-top: 12px; color: #57534e; font-family: var(--fan-ui-font); font-size: 13px; line-height: 1.45; }
 
 .sources { margin-top: 15px; border-top: 1px solid #bfb8ae; border-bottom: 1px solid #bfb8ae; }
 
@@ -664,7 +666,7 @@ a { color: inherit; }
 
 .sources summary strong::after { content: ""; width: 19px; height: 3px; transform: rotate(-45deg); background: #d32924; }
 
-.sources summary span { color: #0757ad; font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif; font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
+.sources summary span { color: #0757ad; font-family: var(--fan-ui-font); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
 
 .sources[open] summary { border-bottom: 1px solid #d8d0c6; }
 .sources summary span[aria-hidden="true"] { display: inline-block; transition: transform .15s ease; }
@@ -757,7 +759,7 @@ a { color: inherit; }
   justify-content: center;
   gap: 10px;
   border-radius: 9999px;
-  font-family: "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  font-family: var(--fan-ui-font);
   font-size: 16px;
   font-weight: 800;
   text-decoration: none;
@@ -848,7 +850,7 @@ a { color: inherit; }
   border-top: 1px solid #e2d8c5;
   background: rgba(244, 239, 228, .9);
   padding: 28px 0;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
 }
 .song-site-footer-inner {
   max-width: 1152px;
@@ -866,7 +868,7 @@ a { color: inherit; }
 }
 .song-site-footer-brand {
   margin: 0;
-  font-family: "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-family: var(--fan-note-font);
   font-size: 14px;
   font-weight: 500;
   font-synthesis-weight: none;
@@ -1010,7 +1012,7 @@ body.kurun-intro-active { overflow: hidden; }
   min-height: 40px;
   padding: 8px 18px;
   border-radius: 9999px;
-  font-family: system-ui, "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+  font-family: var(--fan-ui-font);
   font-size: 0.8125rem;
   font-weight: 700;
   text-decoration: none;

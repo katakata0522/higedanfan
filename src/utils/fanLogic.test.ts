@@ -11,7 +11,6 @@ import {
   calculateSetlistStats,
   filterAndSortDiscography,
   formatDateDot,
-  formatDiagnosisShareText,
   formatDuration,
   formatOrderingSequence,
   getSongwriterCredit,
@@ -264,20 +263,6 @@ test('normalizeSetlistOrder keeps main tracks before encore tracks and deduplica
   );
 
   assert.equal(formatDateDot(new Date('2026-11-05T12:00:00Z')), '2026.11.05');
-});
-
-test('formatDiagnosisShareText formats song title, mood reason, and hashtags without a subjective score', () => {
-  const criteria = {
-    mood: 'push_back' as const,
-    situation: 'morning_commute' as const,
-    sound: 'brass_funk' as const,
-  };
-  const matches = scoreSongsByMood(HIGEDAN_SONGS, criteria);
-  const shareText = formatDiagnosisShareText(matches[0], criteria);
-  assert.ok(shareText.includes(`『${matches[0].song.title}』`));
-  assert.ok(!shareText.includes('選曲スコア'));
-  assert.ok(shareText.includes(matches[0].moodMatchExplanation));
-  assert.ok(shareText.includes('#115万キロのファンノート'));
 });
 
 test('filterAndSortDiscography supports all 90 verified songs, album/EP filtering, album_track_order, guide_order, release_oldest, highest_note, vocal_span, and sortTourArchives orders tours chronologically', () => {

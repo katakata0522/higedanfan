@@ -159,9 +159,10 @@ export function generateFeaturePages(rootDir: string): string[] {
     <link rel="apple-touch-icon" href="/higedanfan/hige-touch-180.png?v=cd4d0ca" sizes="180x180" />
     <link rel="manifest" href="/higedanfan/manifest.webmanifest" />
     <meta name="theme-color" content="#faf6eb" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/higedanfan/fonts/kiwi-maru-medium-c8f08bbe.woff2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Shippori+Mincho:wght@500;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho:wght@500;600&display=swap" />
     <title>${escapeHtml(corner.title)}</title>
     <meta name="description" content="${escapeHtml(corner.description)}" />
     <meta property="og:site_name" content="${escapeHtml(SITE_BRAND_NAME)}" />

@@ -7,7 +7,6 @@ import { songAppleArtwork } from '../data/songAppleArtwork';
 import { sortSongTable, SONG_TABLE_SORT_LABELS, type SongTableSortKey } from '../utils/songTableSort';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import { saveGuideReturnState, saveMapReturnState, takeGuideReturnState, takeMapReturnState } from '../utils/guideReturnState';
-import { SOUND_LABELS } from '../utils/songLabels';
 import { getSacredSpotRegion, SACRED_SPOT_REGIONS, SPOT_CATEGORIES, type SacredSpotRegion } from '../utils/sacredSpotAreas';
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import {
@@ -33,7 +32,6 @@ import {
   filterAndSortDiscography,
   formatSongBpm,
   formatDuration,
-  getSongwriterCredit,
 } from '../utils/fanLogic';
 
 export type DiscographySubView = 'discography' | 'vocal_range' | 'sacred_map';
@@ -86,6 +84,22 @@ function SongArtworkThumb({ src }: { src?: string }) {
   );
 }
 
+function SongTieUps({ song }: { song: SongItem }) {
+  if (!song.tieUps.length) return <span className="text-[#57534E]">掲載情報なし</span>;
+  return (
+    <ul className="space-y-2">
+      {song.tieUps.map(item => (
+        <li key={item.text} className="whitespace-normal wrap-anywhere">
+          {item.text}{' '}
+          <a href={item.source} target="_blank" rel="noopener noreferrer"
+            aria-label={`${song.title}「${item.text}」の出典`}
+            className="inline-flex items-center py-1 text-[#1d5a7a] underline underline-offset-2">出典 ↗</a>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export const DiscographySection: React.FC<DiscographySectionProps> = ({
   songs,
   onSelectSong,
@@ -135,11 +149,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   };
   const [returnState] = useState(() => (initialSubView === 'sacred_map' ? null : takeGuideReturnState(songs.length)));
   const restored = initialEraFilter === 'all' ? returnState : null;
+  const [showTieUps, setShowTieUps] = useState(restored?.showTieUps === true);
   const [filters, setFilters] = useState(() =>
     restored?.filters
       ? {
           ...restored.filters,
-          era: initialEraFilter !== 'all' ? initialEraFilter : ('all' as const),
           tableSort: restored.filters.tableSort?.key === 'cd' ? undefined : restored.filters.tableSort,
         }
       : { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter }
@@ -214,6 +228,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     saveGuideReturnState({
       filters,
       visibleCount: restoredCount,
+      showTieUps,
       view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography',
     });
   };
@@ -387,6 +402,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     const pagePath = songPagePath(song.id);
                     const fact = songEvidence[song.id as keyof typeof songEvidence];
                     const artwork = songAppleArtwork[song.id];
+                    const bpm = formatSongBpm(song.id, song.bpm);
                     const displayFactAlbum = formatAlbumDisplayName(fact.album);
                     const albumBadgeText = resultAlbum && EP_TRACK_ORDER_MAP[resultAlbum]?.[song.id]
                       ? `${resultAlbum} (M${EP_TRACK_ORDER_MAP[resultAlbum][song.id]})`
@@ -398,32 +414,30 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         className="min-w-0 flex flex-col justify-between notebook-paper rounded-xl p-4 sm:p-5 transition-all hover:-translate-y-0.5 hover:border-[#253331]/40"
                       >
                         <div>
-                          <div className="flex items-start gap-3">
-                            {artwork && <SongArtworkThumb src={artwork.artworkUrl} />}
+                          <a
+                            href={pagePath ? `${import.meta.env.BASE_URL}${pagePath}` : `${import.meta.env.BASE_URL}#discography/${song.id}`}
+                            aria-label={`${song.title}：曲のページを見る`}
+                            onClick={event => {
+                              if (!isPlainLeftClick(event)) return;
+                              rememberGuide();
+                              if (!pagePath) {
+                                event.preventDefault();
+                                onSelectSong(song);
+                              }
+                            }}
+                            className="group flex min-h-[52px] items-start gap-3 rounded-lg text-inherit no-underline"
+                          >
+                            <SongArtworkThumb src={artwork?.artworkUrl} />
                             <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-2 text-[11px] text-[#78716C] font-mono-num">
-                                <span className="min-w-0 wrap-anywhere whitespace-normal">{albumBadgeText}</span>
-                                <span className="shrink-0">配信日 {song.releaseDate}</span>
+                              <div className="flex flex-wrap items-center justify-between gap-x-2 text-xs text-[#57534E]">
+                                <span className="min-w-0 wrap-anywhere">{albumBadgeText}</span>
+                                <span>配信日 {song.releaseDate}</span>
                               </div>
-                              <h2 className="mt-0.5 font-note-serif text-base sm:text-lg font-bold text-[#253331] min-w-0 wrap-anywhere whitespace-normal">
-                                {song.title}
+                              <h2 className="mt-1 font-note-serif text-lg text-[#253331] wrap-anywhere group-hover:underline">
+                                {song.title}<ChevronRight aria-hidden="true" className="ml-1 inline-block h-4 w-4 align-middle text-[#756c60]" />
                               </h2>
-                              <p className="mt-0.5 text-xs text-[#57534E] min-w-0 wrap-anywhere whitespace-normal">
-                                {getSongwriterCredit(song)}
-                                {!albumBadgeText.startsWith(displayFactAlbum) ? ` · 収録作：${displayFactAlbum}` : ''}
-                              </p>
-                              <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                                <span className="inline-flex items-center rounded border border-[#e5dccb] bg-[#f4efe4] px-1.5 py-0.5 font-medium text-[#253331]">
-                                  {SOUND_LABELS[song.sound]}
-                                </span>
-                                {song.tieUp && (
-                                  <span className="min-w-0 flex-1 truncate text-[#1d5a7a]" title={song.tieUp}>
-                                    {song.tieUp}
-                                  </span>
-                                )}
-                              </div>
                             </div>
-                          </div>
+                          </a>
 
                           {searchQuery.trim() && matchedSongContexts(searchQuery, song)
                             .filter(item => item.label !== '収録作品' || item.text !== albumBadgeText)
@@ -431,49 +445,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               {item.label}：{item.text}{item.source && <> <a className="underline" href={item.source} target="_blank" rel="noopener noreferrer">{item.label}の出典 ↗</a></>}
                             </p>)}
 
-                          {/* Vocal Range & High-Note Section Mini Box */}
-                          <div className="mt-3 rounded-lg bg-[#faf6eb] border border-[#ebe2d2] px-3 py-2 text-[11px]">
-                            <div className="flex flex-wrap items-center justify-between gap-1 font-mono-num">
-                              <span className="text-[#57534E]">
-                                最低 <strong className="text-[#1d5a7a]">{song.vocalRange.lowestNote}</strong>
-                              </span>
-                              <span className="text-[#57534E]">
-                                地声最高 <strong className="text-[#C83E2B]">{song.vocalRange.highestChestNote}</strong>
-                              </span>
-                              <span className="text-[#57534E]">
-                                裏声{' '}
-                                {song.vocalRange.highestFalsettoNote === '—' ? (
-                                  <span className="font-normal text-[#78716C]">—</span>
-                                ) : (
-                                  <strong className="text-[#9e6022]">{song.vocalRange.highestFalsettoNote}</strong>
-                                )}
-                              </span>
-                            </div>
-                          </div>
+                          <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-[#ebe2d2] bg-[#faf6eb] px-3 py-2.5 text-sm tabular-nums">
+                            <div><dt className="text-xs text-[#57534E]">地声最低</dt><dd>{song.vocalRange.lowestNote}</dd></div>
+                            <div><dt className="text-xs text-[#57534E]">地声最高</dt><dd>{song.vocalRange.highestChestNote}</dd></div>
+                            <div><dt className="text-xs text-[#57534E]">裏声最高</dt><dd>{song.vocalRange.highestFalsettoNote === '—' ? '未掲載' : song.vocalRange.highestFalsettoNote}</dd></div>
+                            <div><dt className="text-xs text-[#57534E]">テンポ</dt><dd>{bpm}{bpm !== '調査中' && ' BPM'}</dd></div>
+                          </dl>
                         </div>
 
-                        <div className="mt-3.5 flex items-center justify-between gap-2 pt-3 border-t border-[#ece3d2]">
-                          {pagePath ? (
-                            <a
-                              href={`${import.meta.env.BASE_URL}${pagePath}`}
-                              aria-label={`${song.title}：曲のページを見る`}
-                              onClick={rememberGuide}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#253331] bg-[#253331] px-3.5 py-2 text-xs font-bold text-[#faf6eb] hover:bg-[#1a2524] transition-colors whitespace-nowrap shrink-0"
-                            >
-                              <BookOpen className="h-3.5 w-3.5 text-[#f3d2a8]" aria-hidden="true" />
-                              曲のページを見る
-                            </a>
-                          ) : (
-                            <button
-                              type="button"
-                              aria-label={`${song.title}：曲のページを見る`}
-                              onClick={() => onSelectSong(song)}
-                              className="inline-flex items-center gap-1.5 rounded-full border border-[#253331] bg-[#253331] px-3.5 py-2 text-xs font-bold text-[#faf6eb] hover:bg-[#1a2524] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-                            >
-                              <BookOpen className="h-3.5 w-3.5 text-[#f3d2a8]" aria-hidden="true" />
-                              曲のページを見る
-                            </button>
-                          )}
+                        <div className="mt-3 flex justify-end border-t border-[#ece3d2] pt-3">
                           <button
                             type="button"
                             aria-label={inSetlist ? `${song.title}はセトリに追加済み` : `${song.title}をセトリに追加`}
@@ -563,10 +543,28 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
         {/* 画面幅によらず、曲名と音域を同じ表で比較する（並び替えても列幅が動かないよう固定）。 */}
         {activeSubView === 'vocal_range' && (
           <div className="mt-3 space-y-3 min-w-0">
-            <p id="song-table-help" className="text-xs leading-5 text-[#57534E]">↔ 表は横にスクロールできます。見出しを押すと昇順・降順で並べ替えられます。</p>
+            <div role="group" aria-label="比較する情報" className="inline-flex flex-wrap gap-1 rounded-full border border-[#dfd7c7] bg-[#fffdf8] p-1 md:hidden">
+              {(['音域・テンポ', 'タイアップ'] as const).map((label, index) => {
+                const selected = showTieUps === (index === 1);
+                return <button key={label} type="button" aria-pressed={selected} onClick={() => setShowTieUps(index === 1)}
+                  className={`min-h-11 rounded-full px-4 text-sm font-bold ${selected ? 'bg-[#253331] text-[#faf6eb]' : 'text-[#57534E]'}`}>{label}</button>;
+              })}
+            </div>
+            {showTieUps && filteredSongs.length > 0 && (
+              <ul aria-label="楽曲別のタイアップ" className="notebook-paper divide-y divide-[#e5dccb] rounded-xl px-4 md:hidden">
+                {filteredSongs.map(song => (
+                  <li key={song.id} className="py-3">
+                    <a href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? `#vocal_range/${song.id}`}`}
+                      onClick={rememberGuide} className="font-note-serif inline-block py-1 text-base underline underline-offset-2">{song.title}</a>
+                    <div className="mt-1 text-sm leading-relaxed"><SongTieUps song={song} /></div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p id="song-table-help" className={`text-xs leading-5 text-[#57534E] ${showTieUps ? 'hidden md:block' : ''}`}>↔ 表は横にスクロールできます。見出しを押すと昇順・降順で並べ替えられます。</p>
             {filteredSongs.length === 0 ? emptyResults : (
-              <div className="max-w-full overflow-x-auto notebook-paper rounded-xl" role="region" aria-label="音域・発売日比較表" aria-describedby="song-table-help" tabIndex={0}>
-                <table className="w-[1124px] sm:w-[1156px] table-fixed border-collapse text-left text-xs leading-5 sm:text-[13px]">
+              <div className={`max-w-full overflow-x-auto notebook-paper rounded-xl ${showTieUps ? 'hidden md:block' : ''}`} role="region" aria-label="音域・発売日比較表" aria-describedby="song-table-help" tabIndex={0}>
+                <table className="w-[1124px] sm:w-[1156px] md:w-[1444px] table-fixed border-collapse text-left text-xs leading-5 sm:text-[13px]">
                   <caption className="sr-only">音域・発売日比較表。見出しで並べ替え、日付と音域の出典は各行から開けます。</caption>
                   <colgroup>
                     <col className="w-[168px] sm:w-[200px]" />
@@ -578,6 +576,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                     <col className="w-[88px]" />
                     <col className="w-[106px]" />
                     <col className="w-[158px]" />
+                    <col className="hidden w-[288px] md:table-column" />
                   </colgroup>
                   <thead className="bg-[#f4efe4] text-xs text-[#57534E]">
                     <tr>
@@ -593,6 +592,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         </th>;
                       })}
                       <th scope="col" className="whitespace-nowrap px-3 py-3 text-[#253331]">音域の参照元</th>
+                      <th scope="col" className="hidden px-3 py-3 text-[#253331] md:table-cell">タイアップ</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#ece3d2]">
@@ -620,21 +620,22 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                         >
                           {song.vocalRange.highestChestNote}
                         </td>
-                        <td className={`whitespace-nowrap px-2 py-3 font-mono-num ${song.vocalRange.highestFalsettoNote === '—' ? 'text-[#78716C]' : ''}`}>{song.vocalRange.highestFalsettoNote}</td>
+                        <td className={`whitespace-nowrap px-2 py-3 ${song.vocalRange.highestFalsettoNote === '—' ? 'text-[#57534E]' : 'font-mono-num'}`}>{song.vocalRange.highestFalsettoNote === '—' ? '未掲載' : song.vocalRange.highestFalsettoNote}</td>
                         <td className="px-3 py-3 whitespace-normal wrap-anywhere">{formatAlbumDisplayName(f.album)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatDuration(song.durationSec)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num">{formatSongBpm(song.id, song.bpm)}</td>
                         <td className="whitespace-nowrap px-2 py-3 font-mono-num"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" target="_blank" rel="noopener noreferrer" href={f.apple} aria-label={`${song.title}の配信日 ${f.release}（Apple Musicを新しいタブで開く）`}>{f.release}</a></td>
                         <td className="whitespace-nowrap px-3 py-3"><a className="inline-flex min-h-[28px] items-center py-0.5 underline underline-offset-2 hover:text-[#C83E2B]" href={f.rangeSource} target="_blank" rel="noopener noreferrer" aria-label={`${song.title}の音域の参照元：${f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel}`}>{f.rangeLabel === '音域調査 Wiki' ? '音域データ！＠ウィキ' : f.rangeLabel} ↗</a></td>
+                        <td className="hidden px-3 py-3 md:table-cell"><SongTieUps song={song} /></td>
                       </tr>;
                     })}
                   </tbody>
                 </table>
               </div>
             )}
-            <details className="notebook-paper rounded-xl p-3.5 text-xs text-[#57534E]">
+            <details className={`notebook-paper rounded-xl p-3.5 text-xs text-[#57534E] ${showTieUps ? 'hidden md:block' : ''}`}>
               <summary className="cursor-pointer font-bold text-[#253331]">音域・日付の見方</summary>
-              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日です。裏声の「—」は音域データがない（地声中心など）ことを示します。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中の値は並べ替えの方向にかかわらず末尾に表示します。</p>
+              <p className="mt-2 leading-relaxed">地声・裏声は曲別の調査サイトに基づく目安です。「配信日」はApple Music上の配信日です。裏声最高が「未掲載」の曲は、参照元に裏声の最高音の記載がありません。BPMは小数を四捨五入した目安です。各曲名から別の調査データとの違いも確認できます。調査中の値は並べ替えの方向にかかわらず末尾に表示します。</p>
             </details>
           </div>
         )}

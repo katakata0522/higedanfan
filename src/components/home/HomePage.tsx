@@ -228,7 +228,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
 
         <h2
           id="members-heading"
-          className="font-note-serif text-lg sm:text-xl font-bold tracking-[.04em] text-[#253331]"
+          className="font-note-serif text-xl font-bold tracking-[.04em] text-[#253331]"
         >
           Official髭男dism メンバー紹介
         </h2>

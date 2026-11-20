@@ -1,4 +1,5 @@
 @import "tailwindcss" source(none);
+@import "./typography.css";
 @source "./";
 @source "../index.html";
 
@@ -23,10 +24,10 @@
     --accent-brass: #B45309;
     --accent-forest: #15803D;
 
-    --font-display: system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    --font-display: var(--fan-ui-font);
     --font-serif: 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-    --font-note-serif: 'Kiwi Maru', 'Shippori Mincho', 'Hiragino Mincho ProN', 'Yu Mincho', serif;
-    --font-sans: system-ui, 'Hiragino Kaku Gothic ProN', 'Yu Gothic', sans-serif;
+    --font-note-serif: var(--fan-note-font);
+    --font-sans: var(--fan-ui-font);
     --font-mono: ui-monospace, 'SFMono-Regular', Consolas, monospace;
   }
 
