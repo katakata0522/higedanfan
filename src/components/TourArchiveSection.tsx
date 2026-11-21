@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown, ChevronUp, ListMusic, RotateCcw, Search, Ticket, X } from 'lucide-react';
 import { TOUR_ARCHIVES } from '../data/tourArchivesData';
 import type { TourArchive, TourEventRecord, TourSetlistTrack } from '../data/higedanTypes';
@@ -12,6 +12,7 @@ import {
   readTourReturnState,
   saveTourReturnState,
   type TourCategoryFilter,
+  type TourSetlistTab,
 } from '../utils/guideReturnState';
 import { createTourArchiveSearch } from '../utils/tourArchiveSearch';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -71,6 +72,111 @@ const YEAR_OPTIONS: { year: string; count: number }[] = (() => {
     }));
 })();
 
+interface DualSetlistPanelsProps {
+  eventId: string;
+  activeTab: TourSetlistTab;
+  onSelectTab: (tab: TourSetlistTab) => void;
+  higedanContent: ReactNode;
+  fullContent: ReactNode;
+}
+
+/** Accessible 2-tab switcher between Higedan's setlist and the full co-headliner setlist. */
+function DualSetlistPanels({
+  eventId,
+  activeTab,
+  onSelectTab,
+  higedanContent,
+  fullContent,
+}: DualSetlistPanelsProps) {
+  const higedanPanelRef = useRef<HTMLDivElement>(null);
+  const fullPanelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    higedanPanelRef.current?.addEventListener('beforematch', () => onSelectTab('higedan'), {
+      signal: controller.signal,
+    });
+    fullPanelRef.current?.addEventListener('beforematch', () => onSelectTab('full'), {
+      signal: controller.signal,
+    });
+    return () => controller.abort();
+  }, [onSelectTab]);
+
+  const handleTabKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    let nextTab: TourSetlistTab | null = null;
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      nextTab = activeTab === 'higedan' ? 'full' : 'higedan';
+    } else if (e.key === 'Home') {
+      nextTab = 'higedan';
+    } else if (e.key === 'End') {
+      nextTab = 'full';
+    }
+    if (!nextTab) return;
+    e.preventDefault();
+    onSelectTab(nextTab);
+    document
+      .getElementById(`setlist-tab-${nextTab}-${eventId}`)
+      ?.focus({ preventScroll: true });
+  };
+
+  const tabClassName =
+    "relative shrink-0 whitespace-nowrap pb-2 pt-1.5 px-1 text-xs font-bold cursor-pointer transition-colors text-[#57534E] hover:text-[#253331] aria-[selected=true]:text-[#253331] aria-[selected=true]:after:content-[''] aria-[selected=true]:after:absolute aria-[selected=true]:after:inset-x-0 aria-[selected=true]:after:bottom-0 aria-[selected=true]:after:border-b-[3px] aria-[selected=true]:after:border-[#C83E2B]";
+
+  return (
+    <>
+      <div
+        role="tablist"
+        aria-label="セットリスト表示切替"
+        onKeyDown={handleTabKeyDown}
+        className="mt-2.5 flex flex-nowrap items-center gap-4 overflow-x-auto border-b border-[#e5dccb]"
+      >
+        <button
+          type="button"
+          role="tab"
+          id={`setlist-tab-higedan-${eventId}`}
+          aria-selected={activeTab === 'higedan'}
+          tabIndex={activeTab === 'higedan' ? 0 : -1}
+          onClick={() => onSelectTab('higedan')}
+          className={tabClassName}
+        >
+          Official髭男dism
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id={`setlist-tab-full-${eventId}`}
+          aria-selected={activeTab === 'full'}
+          tabIndex={activeTab === 'full' ? 0 : -1}
+          onClick={() => onSelectTab('full')}
+          className={tabClassName}
+        >
+          対バン完全版
+        </button>
+      </div>
+      <div
+        ref={higedanPanelRef}
+        role="tabpanel"
+        aria-labelledby={`setlist-tab-higedan-${eventId}`}
+        {...(activeTab !== 'higedan'
+          ? { hidden: 'until-found' as unknown as boolean }
+          : {})}
+      >
+        <div>{higedanContent}</div>
+      </div>
+      <div
+        ref={fullPanelRef}
+        role="tabpanel"
+        aria-labelledby={`setlist-tab-full-${eventId}`}
+        {...(activeTab !== 'full'
+          ? { hidden: 'until-found' as unknown as boolean }
+          : {})}
+      >
+        <div className="pt-3">{fullContent}</div>
+      </div>
+    </>
+  );
+}
+
 export function TourArchiveSection({
   attendedTourIds,
   onToggleAttendedTour,
@@ -114,6 +220,11 @@ export function TourArchiveSection({
   const [closedDuringSearchIds, setClosedDuringSearchIds] = useState<ReadonlySet<string>>(() => new Set());
   const [expandedEventIds, setExpandedEventIds] = useState<ReadonlySet<string>>(() =>
     initialReturn?.openEventId ? new Set([initialReturn.openEventId]) : new Set(),
+  );
+  const [setlistTabByEventId, setSetlistTabByEventId] = useState<ReadonlyMap<string, TourSetlistTab>>(() =>
+    initialReturn?.openEventId && initialReturn?.openSetlistTab === 'full'
+      ? new Map([[initialReturn.openEventId, 'full']])
+      : new Map(),
   );
   const [pendingTourSetlist, setPendingTourSetlist] = useState<{
     entries: SetlistEntry[];
@@ -182,6 +293,7 @@ export function TourArchiveSection({
   };
 
   const rememberAndOpenSong = (tourId: string, eventId: string) => {
+    const activeTab = setlistTabByEventId.get(eventId) ?? 'higedan';
     saveTourReturnState({
       query,
       sortOrder,
@@ -191,7 +303,18 @@ export function TourArchiveSection({
       setlistOnly,
       openTourId: tourId,
       openEventId: eventId,
+      openSetlistTab: activeTab,
       resetEpoch,
+    });
+  };
+
+  const setEventSetlistTab = (eventId: string, tab: TourSetlistTab) => {
+    setSetlistTabByEventId(prev => {
+      if ((prev.get(eventId) ?? 'higedan') === tab) return prev;
+      const next = new Map(prev);
+      if (tab === 'higedan') next.delete(eventId);
+      else next.set(eventId, tab);
+      return next;
     });
   };
 
@@ -200,6 +323,7 @@ export function TourArchiveSection({
     prefix: string,
     tourId: string,
     eventId: string,
+    keyScope: string,
     keyIndex: number,
     isMatchedTrack = false,
   ) => {
@@ -210,7 +334,7 @@ export function TourArchiveSection({
 
     return (
       <li
-        key={`${eventId}-${prefix}-${keyIndex}`}
+        key={`${keyScope}-${prefix}-${keyIndex}`}
         className={`flex items-baseline gap-2.5 text-sm leading-snug ${
           isMatchedTrack ? 'rounded-md bg-[#FFF3D6] px-2 py-1 -mx-2' : ''
         }`}
@@ -240,6 +364,56 @@ export function TourArchiveSection({
     );
   };
 
+  const renderTrackCollection = (
+    tracks: readonly TourSetlistTrack[],
+    keyScope: string,
+    tourId: string,
+    eventId: string,
+    matchedTitleSet?: ReadonlySet<string>,
+  ) => {
+    const main = tracks.filter(t => !t.isEncore);
+    const encore = tracks.filter(t => t.isEncore);
+
+    return (
+      <>
+        <ol className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+          {main.map((track, idx) =>
+            renderTrackRow(
+              track,
+              String(idx + 1).padStart(2, '0'),
+              tourId,
+              eventId,
+              keyScope,
+              idx,
+              matchedTitleSet ? matchedTitleSet.has(track.title) : false,
+            ),
+          )}
+        </ol>
+
+        {encore.length > 0 && (
+          <div className="mt-3.5 pt-3 border-t border-dashed border-[#d8ccb8]">
+            <p className="text-[11px] font-bold tracking-[.08em] text-[#C83E2B] mb-2">
+              ENCORE
+            </p>
+            <ol className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
+              {encore.map((track, idx) =>
+                renderTrackRow(
+                  track,
+                  `EN${idx + 1}`,
+                  tourId,
+                  eventId,
+                  keyScope,
+                  idx,
+                  matchedTitleSet ? matchedTitleSet.has(track.title) : false,
+                ),
+              )}
+            </ol>
+          </div>
+        )}
+      </>
+    );
+  };
+
   const renderSetlistDrawer = (
     tour: TourArchive,
     event: TourEventRecord,
@@ -251,6 +425,36 @@ export function TourArchiveSection({
     const mainTracks = data.tracks.filter(t => !t.isEncore);
     const encoreTracks = data.tracks.filter(t => t.isEncore);
     const matchedTitleSet = new Set(matchedSongs);
+    const coArtistSets = data.coArtistSets ?? [];
+    const hasCoArtistSets = coArtistSets.length > 0;
+    const activeTab: TourSetlistTab = hasCoArtistSets
+      ? (setlistTabByEventId.get(event.id) ?? 'higedan')
+      : 'higedan';
+
+    const orderedActs = hasCoArtistSets
+      ? [
+          {
+            id: 'higedan',
+            artist: 'Official髭男dism',
+            orderLabel: data.higedanOrderLabel,
+            tracks: data.tracks,
+            isHigedan: true,
+          },
+          ...coArtistSets.map((co, idx) => ({
+            id: `partner-${idx}`,
+            artist: co.artist,
+            orderLabel: co.orderLabel,
+            tracks: co.tracks,
+            note: co.note,
+            isHigedan: false,
+          })),
+        ].sort((a, b) => {
+          const rank = (label?: string) => (label === '先攻' ? 0 : label === '後攻' ? 2 : 1);
+          return rank(a.orderLabel) - rank(b.orderLabel);
+        })
+      : [];
+    const totalFullTracks = orderedActs.reduce((sum, act) => sum + act.tracks.length, 0);
+
     const catalogLoad = onCreateSetlistFromTour
       ? extractCatalogSetlistEntries(event.id, validSongIds)
       : null;
@@ -272,6 +476,46 @@ export function TourArchiveSection({
       onCreateSetlistFromTour(catalogLoad.entries, tourSetlistTitle);
     };
 
+    const higedanBody = renderTrackCollection(
+      data.tracks,
+      `${event.id}-single`,
+      tour.id,
+      event.id,
+      matchedTitleSet,
+    );
+
+    const fullBody = hasCoArtistSets
+      ? orderedActs.map((act, actIdx) => (
+          <section
+            key={act.id}
+            aria-label={`${act.artist}のセットリスト`}
+            className={actIdx > 0 ? 'mt-4 pt-3.5 border-t border-[#e5dccb]' : ''}
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <h3 className="text-xs font-bold text-[#253331]">
+                {act.orderLabel ? `${act.orderLabel}：` : ''}
+                {act.artist}
+              </h3>
+              <span className="font-mono-num text-[11px] font-medium text-[#57534E]">
+                {act.tracks.length}曲
+              </span>
+            </div>
+            {renderTrackCollection(
+              act.tracks,
+              `${event.id}-full-${act.id}`,
+              tour.id,
+              event.id,
+              act.isHigedan ? matchedTitleSet : undefined,
+            )}
+            {'note' in act && act.note && (
+              <p className="mt-2 text-[11px] leading-relaxed text-[#57534E]">
+                ※ {act.note}
+              </p>
+            )}
+          </section>
+        ))
+      : null;
+
     return (
       <div
         id={`setlist-panel-${event.id}`}
@@ -287,10 +531,13 @@ export function TourArchiveSection({
             </p>
             <p className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[11px] text-[#57534E]">
               <span>
-                全{data.tracks.length}曲
-                {encoreTracks.length > 0
-                  ? `（本編${mainTracks.length}曲 / アンコール${encoreTracks.length}曲）`
-                  : `（本編${mainTracks.length}曲）`}
+                {activeTab === 'full' && hasCoArtistSets
+                  ? `計${totalFullTracks}曲（${orderedActs.map(act => `${act.artist} ${act.tracks.length}曲`).join(' ＋ ')}）`
+                  : `全${data.tracks.length}曲${
+                      encoreTracks.length > 0
+                        ? `（本編${mainTracks.length}曲 / アンコール${encoreTracks.length}曲）`
+                        : `（本編${mainTracks.length}曲）`
+                    }`}
               </span>
               <span className="whitespace-nowrap text-[#68625C]">曲名から楽曲解説へ</span>
             </p>
@@ -310,45 +557,26 @@ export function TourArchiveSection({
           </button>
         </div>
 
-        <ol className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-          {mainTracks.map((track, idx) =>
-            renderTrackRow(
-              track,
-              String(idx + 1).padStart(2, '0'),
-              tour.id,
-              event.id,
-              idx,
-              matchedTitleSet.has(track.title),
-            ),
-          )}
-        </ol>
-
-        {encoreTracks.length > 0 && (
-          <div className="mt-3.5 pt-3 border-t border-dashed border-[#d8ccb8]">
-            <p className="text-[11px] font-bold tracking-[.08em] text-[#C83E2B] mb-2">
-              ENCORE
-            </p>
-            <ol className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
-              {encoreTracks.map((track, idx) =>
-                renderTrackRow(
-                  track,
-                  `EN${idx + 1}`,
-                  tour.id,
-                  event.id,
-                  idx,
-                  matchedTitleSet.has(track.title),
-                ),
-              )}
-            </ol>
-          </div>
+        {hasCoArtistSets ? (
+          <DualSetlistPanels
+            eventId={event.id}
+            activeTab={activeTab}
+            onSelectTab={tab => setEventSetlistTab(event.id, tab)}
+            higedanContent={higedanBody}
+            fullContent={fullBody}
+          />
+        ) : (
+          higedanBody
         )}
 
         {onCreateSetlistFromTour && catalogLoad && catalogLoad.entries.length > 0 && (
           <div className="mt-3.5 flex flex-wrap items-center justify-between gap-2 pt-2.5 border-t border-[#ece4d6]">
             <p className="text-[11px] text-[#57534E]">
-              {catalogLoad.skippedCount > 0
-                ? `楽曲ガイドにある ${catalogLoad.entries.length}曲を読み込みます（SE・カバー等 ${catalogLoad.skippedCount}曲は除きます）`
-                : `この公演の ${catalogLoad.entries.length}曲をMYセトリに読み込めます`}
+              {activeTab === 'full' && hasCoArtistSets
+                ? `Official髭男dismの公演曲から ${catalogLoad.entries.length}曲をMYセトリに読み込めます（対バン相手・カバー曲等は除きます）`
+                : catalogLoad.skippedCount > 0
+                  ? `楽曲ガイドにある ${catalogLoad.entries.length}曲を読み込みます（SE・カバー等 ${catalogLoad.skippedCount}曲は除きます）`
+                  : `この公演の ${catalogLoad.entries.length}曲をMYセトリに読み込めます`}
             </p>
             <button
               type="button"

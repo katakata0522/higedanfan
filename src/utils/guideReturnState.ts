@@ -58,6 +58,7 @@ export type ArchiveReturnState = {
   resetEpoch?: string;
 };
 export type TourCategoryFilter = 'all' | 'tour' | 'one_man' | 'online_fc' | 'free_special' | 'two_man';
+export type TourSetlistTab = 'higedan' | 'full';
 export type TourReturnState = {
   query: string;
   sortOrder: 'newest' | 'oldest';
@@ -67,6 +68,7 @@ export type TourReturnState = {
   setlistOnly?: boolean;
   openTourId?: string;
   openEventId?: string;
+  openSetlistTab?: TourSetlistTab;
   resetEpoch?: string;
 };
 
@@ -319,6 +321,7 @@ export function saveTourReturnState(
       ...(state.setlistOnly ? { setlistOnly: true } : {}),
       ...(state.openTourId ? { openTourId: state.openTourId } : {}),
       ...(state.openEventId ? { openEventId: state.openEventId } : {}),
+      ...(state.openSetlistTab === 'full' ? { openSetlistTab: 'full' } : {}),
       resetEpoch: state.resetEpoch ?? '',
     }));
     store?.setItem(originTabKey, 'tour_archive');
@@ -342,6 +345,7 @@ export function readTourReturnState(
     const validOptionalYear =
       record.year === undefined || (typeof record.year === 'string' && (record.year === 'all' || /^\d{4}$/.test(record.year)));
     const validOptionalBool = (val: unknown) => val === undefined || typeof val === 'boolean';
+    const validOptionalTab = record.openSetlistTab === undefined || record.openSetlistTab === 'higedan' || record.openSetlistTab === 'full';
     if (
       typeof record.query !== 'string' ||
       record.query.length > 60 ||
@@ -352,7 +356,8 @@ export function readTourReturnState(
       !validOptionalBool(record.attendedOnly) ||
       !validOptionalBool(record.setlistOnly) ||
       !validOptionalId(record.openTourId) ||
-      !validOptionalId(record.openEventId)
+      !validOptionalId(record.openEventId) ||
+      !validOptionalTab
     ) {
       return null;
     }
@@ -365,6 +370,7 @@ export function readTourReturnState(
       ...(typeof record.setlistOnly === 'boolean' ? { setlistOnly: record.setlistOnly } : {}),
       ...(typeof record.openTourId === 'string' ? { openTourId: record.openTourId } : {}),
       ...(typeof record.openEventId === 'string' ? { openEventId: record.openEventId } : {}),
+      ...(record.openSetlistTab === 'higedan' || record.openSetlistTab === 'full' ? { openSetlistTab: record.openSetlistTab } : {}),
       resetEpoch: expectedEpoch,
     };
   } catch {
