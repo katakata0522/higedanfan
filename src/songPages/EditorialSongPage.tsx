@@ -18,6 +18,7 @@ import {
   youtubeExternalOnlySongs,
 } from './songConnections';
 import { songAppleArtwork } from '../data/songAppleArtwork';
+import { songStreamingLinks } from '../data/songStreamingLinks';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
 import { formatAlbumDisplayName } from '../utils/songCatalog';
 import { recordMyNoteSongRead } from '../utils/myNoteProfile';
@@ -409,12 +410,30 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               )
             ) : null}
             <div className="listen-links">
-              <a href={fact.apple} target="_blank" rel="noopener noreferrer">Apple Musicで聴く <span aria-hidden="true">↗</span></a>
-              {video && (!videoId || !isExternalOnlyVideo) && (
-                <a href={video} target="_blank" rel="noopener noreferrer">
-                  YouTubeで開く{videoDescription && `（${videoDescription}）`} <span aria-hidden="true">↗</span>
-                </a>
-              )}
+              <a
+                href={fact.apple}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Apple Musicで「${fact.recording}」を聴く（新しいタブで開く）`}
+              >
+                Apple Music
+              </a>
+              <a
+                href={songStreamingLinks[page.id].spotifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Spotifyで「${fact.recording}」を聴く（新しいタブで開く）`}
+              >
+                Spotify
+              </a>
+              <a
+                href={songStreamingLinks[page.id].amazonUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Amazon Musicで「${fact.recording}」を聴く（新しいタブで開く）`}
+              >
+                Amazon Music
+              </a>
             </div>
             <p className="listen-note">※ ジャケット画像および配信情報は Apple Music の公開情報から参照しています。</p>
           </section>

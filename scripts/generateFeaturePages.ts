@@ -51,7 +51,8 @@ function buildCornerBody(
     const items = TOUR_ARCHIVES
       .map((tour) => {
         const period = tour.startDate === tour.endDate ? tour.startDate : `${tour.startDate}〜${tour.endDate}`;
-        return `<li><strong>${escapeHtml(tour.tourTitle)}</strong>（${escapeHtml(period)}・全${tour.events.length}公演）</li>`;
+        const co = tour.coArtists?.length ? `・共演：${tour.coArtists.join('・')}` : '';
+        return `<li><strong>${escapeHtml(tour.tourTitle)}</strong>（${escapeHtml(period)}・全${tour.events.length}公演${escapeHtml(co)}）</li>`;
       })
       .join('\n');
     detailHtml = `<section aria-label="ツアー記録一覧"><p>${TOUR_ARCHIVES.length}シリーズ・全${totalEvents}公演のスケジュールと確認済みセットリストを収録しています。</p><ul>\n${items}\n</ul></section>`;

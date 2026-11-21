@@ -457,8 +457,8 @@ test('all 90 setlist entries and encore assignments survive validation', () => {
 });
 
 test('tour archive contains dated public concert records and valid in-site event metadata', () => {
-  assert.equal(TOUR_ARCHIVES.length, 37);
-  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 251);
+  assert.equal(TOUR_ARCHIVES.length, 44);
+  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 260);
   for (const tour of TOUR_ARCHIVES) {
     assert.ok(tour.events.length > 0, tour.tourTitle);
     assert.equal(tour.startDate, tour.events[0].date);

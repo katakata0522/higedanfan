@@ -14,9 +14,20 @@ test('tour search accepts the displayed date and common date formats', () => {
 test('tour search preserves title, venue, empty and no-match searches', () => {
   const search = createTourArchiveSearch(TOUR_ARCHIVES);
   assert.equal(search('  shocking nuts  ')[0]?.events.length, 21);
-  assert.equal(search('武道館').flatMap(result => result.events).length, 6);
+  assert.equal(search('武道館').flatMap(result => result.events).length, 7);
   assert.equal(search('').length, TOUR_ARCHIVES.length);
   assert.deepEqual(search('該当しない会場名'), []);
+});
+
+test('tour search finds two-man concerts by co-starring artist name', () => {
+  const search = createTourArchiveSearch(TOUR_ARCHIVES);
+  const sumikaMatches = search('sumika');
+  assert.deepEqual(
+    sumikaMatches.map(r => r.tour.id).sort(),
+    ['live-music-freaks-2020', 'live-sumika-tooy-2022'],
+  );
+  const uverMatches = search('UVERworld');
+  assert.equal(uverMatches[0]?.tour.id, 'live-uverworld-vs-2024');
 });
 
 test('tour search finds concerts by performed song title and kana reading', () => {

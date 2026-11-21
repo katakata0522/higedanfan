@@ -99,7 +99,7 @@ export interface TourEventRecord {
   trackCount: number;
 }
 
-export type TourArchiveCategory = 'tour' | 'one_man' | 'online_fc' | 'free_special';
+export type TourArchiveCategory = 'tour' | 'one_man' | 'online_fc' | 'free_special' | 'two_man';
 
 export interface TourArchive {
   id: string;
@@ -107,6 +107,7 @@ export interface TourArchive {
   endDate: string;
   tourTitle: string;
   category?: TourArchiveCategory;
+  coArtists?: string[];
   officialSourceUrl?: string;
   events: TourEventRecord[];
 }

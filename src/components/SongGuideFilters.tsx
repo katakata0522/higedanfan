@@ -61,32 +61,73 @@ interface Props {
   onReset?: () => void;
 }
 
-const selectClass = 'w-full min-w-0 rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-2 text-base sm:text-xs font-medium text-[#253331] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#253331]';
+const chipBaseClass = 'inline-flex min-h-[34px] items-center rounded-full px-3 py-1.5 text-xs font-bold transition-colors cursor-pointer';
+const chipActiveClass = `${chipBaseClass} bg-[#253331] text-[#faf6eb]`;
+const chipIdleClass = `${chipBaseClass} border border-[#dfd7c7] bg-[#fffdf8] text-[#45413C] hover:border-[#253331] hover:text-[#253331]`;
 
 export function SongGuideFilters({ values, onChange, resultCount, shownCount, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultStatus = useRef<HTMLSpanElement>(null);
   const { era, album, sound, sortBy, searchQuery } = values;
+  const albumLabel = album !== 'all' ? (ALBUM_FILTERS.find(option => option.id === album)?.label ?? album) : null;
+  const soundLabel = sound !== 'all' ? (SOUND_FILTERS.find(option => option.id === sound)?.label ?? null) : null;
+  const sortLabel = values.tableSort
+    ? `${SONG_TABLE_SORT_LABELS[values.tableSort.key]}・${values.tableSort.direction === 'ascending' ? '昇順' : '降順'}`
+    : (sortBy !== 'guide_order'
+      ? (SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', '') ?? null)
+      : null);
   const secondaryChoices = [
     era !== 'all' && ERA_SHORT_LABELS[era],
-    album !== 'all' && album,
-    sound !== 'all' && SOUND_FILTERS.find(option => option.id === sound)?.label,
-    values.tableSort ? `${SONG_TABLE_SORT_LABELS[values.tableSort.key]}・${values.tableSort.direction === 'ascending' ? '昇順' : '降順'}` : sortBy !== 'guide_order' && SORT_OPTIONS.find(option => option.id === sortBy)?.label.replace('並び順：', ''),
+    albumLabel,
+    soundLabel,
+    sortLabel,
   ].filter(Boolean);
   const hasActiveFilter = album !== 'all' || era !== 'all' || sound !== 'all' || Boolean(searchQuery.trim()) || secondaryChoices.length > 0;
-  const sortSelect = (
-    <select id="discography-sort-select" className={selectClass} value={values.tableSort ? 'table' : sortBy}
-      onChange={e => onChange({ ...values, sortBy: e.target.value as DiscographySortOption, tableSort: undefined })}>
-      {values.tableSort && <option value="table" disabled>表の見出しで指定：{SONG_TABLE_SORT_LABELS[values.tableSort.key]}（{values.tableSort.direction === 'ascending' ? '昇順' : '降順'}）</option>}
-      {SORT_OPTIONS.map(option => <option key={option.id} value={option.id}>
-        {option.id === 'guide_order' && searchQuery.trim() ? '並び順：曲名・読みの一致を優先' : option.label}
-      </option>)}
-    </select>
-  );
+
+  const selectAlbum = (targetId: string) => {
+    const nextAlbum = targetId !== 'all' && album === targetId ? 'all' : targetId;
+    onChange(
+      nextAlbum === 'all'
+        ? {
+            ...values,
+            album: 'all',
+            sortBy: values.sortBy === 'album_track_order' ? 'guide_order' : values.sortBy,
+          }
+        : {
+            ...values,
+            album: nextAlbum,
+            era: 'all',
+            sortBy: values.sortBy === 'guide_order' ? 'album_track_order' : values.sortBy,
+          },
+    );
+  };
+
+  const activeChips: { key: string; label: string; clear: () => void }[] = [
+    ...(albumLabel ? [{
+      key: 'album',
+      label: albumLabel,
+      clear: () => selectAlbum('all'),
+    }] : []),
+    ...(era !== 'all' ? [{
+      key: 'era',
+      label: ERA_SHORT_LABELS[era],
+      clear: () => onChange({ ...values, era: 'all' }),
+    }] : []),
+    ...(soundLabel ? [{
+      key: 'sound',
+      label: soundLabel,
+      clear: () => onChange({ ...values, sound: 'all' }),
+    }] : []),
+    ...(sortLabel ? [{
+      key: 'sort',
+      label: sortLabel,
+      clear: () => onChange({ ...values, sortBy: 'guide_order', tableSort: undefined }),
+    }] : []),
+  ];
 
   return (
-    <div className="mt-5 space-y-2.5 notebook-paper rounded-xl p-3.5 sm:p-4">
+    <search aria-label="楽曲の検索と絞り込み" className="mt-5 block space-y-2.5 notebook-paper rounded-xl p-3.5 sm:p-4">
       <div>
         <div>
           <label htmlFor="discography-search" className="mb-1 block text-xs font-bold text-[#57534E]">曲名・読み・タイアップで検索</label>
@@ -126,48 +167,94 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
         </span>
         <ChevronDown aria-hidden="true" className={`h-4 w-4 shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`} />
       </button>
-      <div id="song-guide-secondary" className={`${expanded ? 'grid' : 'hidden'} gap-2.5 sm:grid-cols-2 pt-1`}>
-        <div className="sm:col-span-2">
-          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="album-filter-select">収録アルバム・EPで絞り込み</label>
-          <select id="album-filter-select" value={album} className={selectClass}
-            onChange={e => {
-              const nextAlbum = e.target.value;
-              onChange(
-                nextAlbum === 'all'
-                  ? {
-                      ...values,
-                      album: nextAlbum,
-                      sortBy: values.sortBy === 'album_track_order' ? 'guide_order' : values.sortBy,
-                    }
-                  : {
-                      ...values,
-                      album: nextAlbum,
-                      era: 'all',
-                      sortBy: values.sortBy === 'guide_order' ? 'album_track_order' : values.sortBy,
-                    },
+      <div id="song-guide-secondary" className={`${expanded ? 'space-y-3' : 'hidden'} pt-1`}>
+        <fieldset id="album-filter-group">
+          <legend className="mb-1.5 text-xs font-bold text-[#57534E]">収録アルバム・EPで絞り込み</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {ALBUM_FILTERS.map(option => {
+              const active = album === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => selectAlbum(option.id)}
+                  className={active ? chipActiveClass : chipIdleClass}
+                >
+                  {option.label}
+                </button>
               );
-            }}>
-            {ALBUM_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="sound-filter-select">曲調・サウンド</label>
-          <select id="sound-filter-select" className={selectClass} value={sound}
-            onChange={e => onChange({ ...values, sound: e.target.value as SongGuideFilterValues['sound'] })}>
-            {SOUND_FILTERS.map(option => <option key={option.id} value={option.id}>{option.label}</option>)}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-bold text-[#57534E]" htmlFor="discography-sort-select">並び替え</label>
-          {sortSelect}
-        </div>
-        {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E] sm:col-span-2">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset id="sound-filter-group">
+          <legend className="mb-1.5 text-xs font-bold text-[#57534E]">曲調・サウンド</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {SOUND_FILTERS.map(option => {
+              const active = sound === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onChange({
+                    ...values,
+                    sound: option.id !== 'all' && active ? 'all' : option.id,
+                  })}
+                  className={active ? chipActiveClass : chipIdleClass}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        <fieldset id="discography-sort-group">
+          <legend className="mb-1.5 text-xs font-bold text-[#57534E]">並び替え</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {SORT_OPTIONS.map(option => {
+              const active = !values.tableSort && sortBy === option.id;
+              const shortLabel = option.id === 'guide_order' && searchQuery.trim()
+                ? '曲名・読みの一致を優先'
+                : option.label.replace(/^並び順：/, '');
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => onChange({ ...values, sortBy: option.id, tableSort: undefined })}
+                  className={active ? chipActiveClass : chipIdleClass}
+                >
+                  {shortLabel}
+                </button>
+              );
+            })}
+          </div>
+        </fieldset>
+
+        {sortBy === 'bpm' && <p className="text-xs leading-relaxed text-[#57534E]">BPMは目安です。拍の数え方によって数値が倍・半分になることがあります。調査中の曲は最後に表示します。</p>}
       </div>
       <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[#ece3d2] pt-2 text-xs">
-        <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
-          className="scroll-mt-20 font-bold text-[#253331]">
-          該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
+            className="scroll-mt-20 font-bold text-[#253331]">
+            該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
+          </span>
+          {activeChips.map(chip => (
+            <button
+              key={chip.key}
+              type="button"
+              onClick={chip.clear}
+              aria-label={`${chip.label}の条件を解除`}
+              className="inline-flex min-h-[28px] items-center gap-1 rounded-full border border-[#C83E2B]/35 bg-[#fdf4f2] px-2.5 py-0.5 text-[11px] font-bold text-[#9B3021] hover:border-[#C83E2B] hover:bg-[#fae8e4] cursor-pointer transition-colors"
+            >
+              <span>{chip.label}</span>
+              <X aria-hidden="true" className="h-3 w-3 shrink-0" />
+            </button>
+          ))}
+        </div>
         {hasActiveFilter ? (
           <button type="button" onClick={() => onReset ? onReset() : onChange(DEFAULT_GUIDE_FILTERS)}
             className="inline-flex min-h-[32px] items-center gap-1 font-bold text-[#A3291C] hover:underline cursor-pointer">
@@ -177,6 +264,6 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
           <span className="text-[11px] text-[#68625C]">並び順：代表曲 → アルバム順</span>
         )}
       </div>
-    </div>
+    </search>
   );
 }

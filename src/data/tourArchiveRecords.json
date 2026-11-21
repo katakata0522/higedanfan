@@ -162,6 +162,25 @@
     ]
   },
   {
+    "id": "live-akahige-2017",
+    "startDate": "2017-05-05",
+    "endDate": "2017-05-05",
+    "tourTitle": "ヒゲダン×赤い公園 ツーマンライブ「赤ひげ危機一髪！」",
+    "category": "two_man",
+    "coArtists": [
+      "赤い公園"
+    ],
+    "events": [
+      {
+        "id": "live-2017-akahige-osaka",
+        "date": "2017-05-05",
+        "venue": "梅田CLUB QUATTRO",
+        "hasSetlist": false,
+        "trackCount": 0
+      }
+    ]
+  },
+  {
     "id": "tour-oneman-2017",
     "startDate": "2017-06-09",
     "endDate": "2017-07-14",
@@ -267,6 +286,32 @@
         "venue": "マイナビBLITZ赤坂",
         "hasSetlist": true,
         "trackCount": 18
+      }
+    ]
+  },
+  {
+    "id": "tour-a-flood-of-circus-2018",
+    "startDate": "2018-01-19",
+    "endDate": "2018-01-20",
+    "tourTitle": "a flood of circle「A FLOOD OF CIRCUS 大巡業 2018」（対バン出演）",
+    "category": "two_man",
+    "coArtists": [
+      "a flood of circle"
+    ],
+    "events": [
+      {
+        "id": "live-2018-afoc-kanazawa",
+        "date": "2018-01-19",
+        "venue": "金沢vanvan V4",
+        "hasSetlist": false,
+        "trackCount": 0
+      },
+      {
+        "id": "live-2018-afoc-niigata",
+        "date": "2018-01-20",
+        "venue": "新潟CLUB RIVERST",
+        "hasSetlist": false,
+        "trackCount": 0
       }
     ]
   },
@@ -422,6 +467,25 @@
         "venue": "中野サンプラザホール",
         "hasSetlist": true,
         "trackCount": 20
+      }
+    ]
+  },
+  {
+    "id": "live-spark-vol4-2018",
+    "startDate": "2018-09-19",
+    "endDate": "2018-09-19",
+    "tourTitle": "J-WAVE SPARK LIVE Vol.4",
+    "category": "two_man",
+    "coArtists": [
+      "ポルカドットスティングレイ"
+    ],
+    "events": [
+      {
+        "id": "live-2018-spark-vol4-roppongi",
+        "date": "2018-09-19",
+        "venue": "EX THEATER ROPPONGI",
+        "hasSetlist": true,
+        "trackCount": 9
       }
     ]
   },
@@ -660,6 +724,35 @@
         "id": "live-2018-fc-tour-vol1-nagoya",
         "date": "2018-12-25",
         "venue": "伏見JAMMIN’",
+        "hasSetlist": false,
+        "trackCount": 0
+      }
+    ]
+  },
+  {
+    "id": "tour-two-man-2019",
+    "startDate": "2019-03-02",
+    "endDate": "2019-03-17",
+    "tourTitle": "Official髭男dism two-man live 2019",
+    "category": "two_man",
+    "coArtists": [
+      "THE BAWDIES",
+      "フレデリック"
+    ],
+    "events": [
+      {
+        "id": "live-2019-two-man-tokyo",
+        "date": "2019-03-02",
+        "venue": "新木場STUDIO COAST",
+        "label": "共演：THE BAWDIES",
+        "hasSetlist": false,
+        "trackCount": 0
+      },
+      {
+        "id": "live-2019-two-man-osaka",
+        "date": "2019-03-17",
+        "venue": "なんばHatch",
+        "label": "共演：フレデリック",
         "hasSetlist": false,
         "trackCount": 0
       }
@@ -972,6 +1065,25 @@
         "venue": "米子市公会堂",
         "hasSetlist": true,
         "trackCount": 22
+      }
+    ]
+  },
+  {
+    "id": "live-music-freaks-2020",
+    "startDate": "2020-02-19",
+    "endDate": "2020-02-19",
+    "tourTitle": "FM802 MUSIC FREAKS LIVE",
+    "category": "two_man",
+    "coArtists": [
+      "sumika"
+    ],
+    "events": [
+      {
+        "id": "live-2020-music-freaks-osaka",
+        "date": "2020-02-19",
+        "venue": "Zepp Osaka Bayside",
+        "hasSetlist": true,
+        "trackCount": 9
       }
     ]
   },
@@ -1402,6 +1514,25 @@
     ]
   },
   {
+    "id": "live-sumika-tooy-2022",
+    "startDate": "2022-09-12",
+    "endDate": "2022-09-12",
+    "tourTitle": "sumika presents「TOOY」#1",
+    "category": "two_man",
+    "coArtists": [
+      "sumika"
+    ],
+    "events": [
+      {
+        "id": "live-2022-sumika-tooy-toyosu",
+        "date": "2022-09-12",
+        "venue": "チームスマイル・豊洲PIT",
+        "hasSetlist": true,
+        "trackCount": 11
+      }
+    ]
+  },
+  {
     "id": "tour-shocking-nuts-2022",
     "startDate": "2022-09-28",
     "endDate": "2023-02-16",
@@ -1698,6 +1829,25 @@
         "venue": "Taipei Arena",
         "hasSetlist": true,
         "trackCount": 18
+      }
+    ]
+  },
+  {
+    "id": "live-uverworld-vs-2024",
+    "startDate": "2024-12-26",
+    "endDate": "2024-12-26",
+    "tourTitle": "UVERworld VS シリーズ “UVERworld vs Official髭男dism”",
+    "category": "two_man",
+    "coArtists": [
+      "UVERworld"
+    ],
+    "events": [
+      {
+        "id": "live-2024-uverworld-vs-budokan",
+        "date": "2024-12-26",
+        "venue": "日本武道館",
+        "hasSetlist": true,
+        "trackCount": 10
       }
     ]
   },

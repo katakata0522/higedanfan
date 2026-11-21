@@ -32,6 +32,7 @@ const CATEGORY_OPTIONS: { id: TourCategoryFilter; label: string }[] = [
   { id: 'one_man', label: '単独・スペシャル' },
   { id: 'online_fc', label: 'FC・配信ライブ' },
   { id: 'free_special', label: 'フリー・特別公演' },
+  { id: 'two_man', label: '対バン・ツーマン' },
 ];
 
 const concertCount = TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0);
@@ -103,6 +104,7 @@ export function TourArchiveSection({
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>(() => initialReturn?.sortOrder ?? 'newest');
   const [categoryFilter, setCategoryFilter] = useState<TourCategoryFilter>(() => initialReturn?.category ?? 'all');
   const [yearFilter, setYearFilter] = useState<string>(() => initialReturn?.year ?? 'all');
+  const [yearPickerOpen, setYearPickerOpen] = useState(false);
   const [attendedOnly, setAttendedOnly] = useState(() => initialReturn?.attendedOnly ?? false);
   const [setlistOnly, setSetlistOnly] = useState(() => initialReturn?.setlistOnly ?? false);
   const [query, setQuery] = useState(() => initialReturn?.query ?? '');
@@ -468,84 +470,141 @@ export function TourArchiveSection({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-[#ece4d6]">
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="公演の種類や条件で絞り込み">
-            {CATEGORY_OPTIONS.map(option => {
-              const active = categoryFilter === option.id;
-              return (
-                <button
-                  key={option.id}
-                  type="button"
-                  aria-pressed={active}
-                  onClick={() => setCategoryFilter(option.id)}
-                  className={`min-h-8 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
-                    active
-                      ? 'bg-[#253331] text-[#faf6eb]'
-                      : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#253331] hover:text-[#253331]'
-                  }`}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-            <button
-              type="button"
-              aria-pressed={setlistOnly}
-              onClick={() => setSetlistOnly(prev => !prev)}
-              className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
-                setlistOnly
-                  ? 'bg-[#C83E2B] text-white'
-                  : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#C83E2B] hover:text-[#C83E2B]'
-              }`}
-            >
-              <ListMusic className="h-3 w-3 shrink-0" aria-hidden="true" />
-              <span>セトリありのみ</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={attendedOnly}
-              onClick={() => setAttendedOnly(prev => !prev)}
-              className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
-                attendedOnly
-                  ? 'bg-[#15803D] text-white'
-                  : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#15803D] hover:text-[#15803D]'
-              }`}
-            >
-              <Ticket className="h-3 w-3 shrink-0" aria-hidden="true" />
-              <span>参戦・視聴済みのみ（{attendedTourIds.length}）</span>
-            </button>
-          </div>
+        <div className="space-y-2 pt-2 border-t border-[#ece4d6]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="公演の種類や条件で絞り込み">
+              {CATEGORY_OPTIONS.map(option => {
+                const active = categoryFilter === option.id;
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setCategoryFilter(option.id !== 'all' && active ? 'all' : option.id)}
+                    className={`min-h-8 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                      active
+                        ? 'bg-[#253331] text-[#faf6eb]'
+                        : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#253331] hover:text-[#253331]'
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                aria-pressed={setlistOnly}
+                onClick={() => setSetlistOnly(prev => !prev)}
+                className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  setlistOnly
+                    ? 'bg-[#C83E2B] text-white'
+                    : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#C83E2B] hover:text-[#C83E2B]'
+                }`}
+              >
+                <ListMusic className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span>セトリありのみ</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={attendedOnly}
+                onClick={() => setAttendedOnly(prev => !prev)}
+                className={`inline-flex min-h-8 items-center gap-1 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  attendedOnly
+                    ? 'bg-[#15803D] text-white'
+                    : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#15803D] hover:text-[#15803D]'
+                }`}
+              >
+                <Ticket className="h-3 w-3 shrink-0" aria-hidden="true" />
+                <span>参戦・視聴済みのみ（{attendedTourIds.length}）</span>
+              </button>
+            </div>
 
-          <div className="flex items-center gap-2 shrink-0 ml-auto">
-            <label htmlFor="tour-year-filter" className="text-xs font-bold text-[#57534E] whitespace-nowrap">
-              開催年
-            </label>
-            <select
+            <button
               id="tour-year-filter"
-              value={yearFilter}
-              onChange={event => setYearFilter(event.target.value)}
-              className={`min-h-8 rounded-full border px-3 py-1 text-xs font-bold font-mono-num transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#253331] ${
+              type="button"
+              aria-expanded={yearPickerOpen}
+              aria-controls="tour-year-panel"
+              onClick={() => setYearPickerOpen(prev => !prev)}
+              className={`inline-flex min-h-8 items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold font-mono-num shrink-0 transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] ${
                 yearFilter !== 'all'
                   ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
                   : 'border-[#dfd7c7] bg-[#faf6eb] text-[#253331] hover:border-[#253331]'
               }`}
             >
-              <option value="all">すべての年</option>
-              {YEAR_OPTIONS.map(({ year, count }) => (
-                <option key={year} value={year}>
+              <span>開催年：{yearFilter === 'all' ? 'すべて' : `${yearFilter}年`}</span>
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${yearPickerOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div
+            id="tour-year-panel"
+            role="group"
+            aria-label="開催年で絞り込み"
+            className={`${yearPickerOpen ? 'flex' : 'hidden'} flex-wrap gap-1.5 pt-2 border-t border-[#ece4d6]`}
+          >
+            <button
+              type="button"
+              aria-pressed={yearFilter === 'all'}
+              onClick={() => setYearFilter('all')}
+              className={`min-h-8 rounded-full px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                yearFilter === 'all'
+                  ? 'bg-[#253331] text-[#faf6eb]'
+                  : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#253331] hover:text-[#253331]'
+              }`}
+            >
+              すべての年
+            </button>
+            {YEAR_OPTIONS.map(({ year, count }) => {
+              const active = yearFilter === year;
+              return (
+                <button
+                  key={year}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setYearFilter(active ? 'all' : year)}
+                  className={`min-h-8 rounded-full px-3 py-1 text-xs font-bold font-mono-num transition-colors cursor-pointer ${
+                    active
+                      ? 'bg-[#253331] text-[#faf6eb]'
+                      : 'border border-[#dfd7c7] bg-white text-[#57534E] hover:border-[#253331] hover:text-[#253331]'
+                  }`}
+                >
                   {year}年（{count}）
-                </option>
-              ))}
-            </select>
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
-          <p className="text-xs font-mono-num text-[#57534E]" role="status">
-            {!hasActiveFilter
-              ? `全${TOUR_ARCHIVES.length}シリーズ・${concertCount}公演（セトリ${setlistEventCount}公演）`
-              : `${matchingTours.length}シリーズ・${matchingTours.reduce((sum, item) => sum + item.events.length, 0)}公演を表示`}
-          </p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <p className="text-xs font-mono-num text-[#57534E]" role="status">
+              {!hasActiveFilter
+                ? `全${TOUR_ARCHIVES.length}シリーズ・${concertCount}公演（セトリ${setlistEventCount}公演）`
+                : `${matchingTours.length}シリーズ・${matchingTours.reduce((sum, item) => sum + item.events.length, 0)}公演を表示`}
+            </p>
+            {categoryFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setCategoryFilter('all')}
+                aria-label={`${CATEGORY_OPTIONS.find(option => option.id === categoryFilter)?.label ?? categoryFilter}の絞り込みを解除`}
+                className="inline-flex min-h-7 items-center gap-1 rounded-full border border-[#C83E2B]/35 bg-[#fdf4f2] px-2.5 py-0.5 text-[11px] font-bold text-[#9B3021] hover:border-[#C83E2B] hover:bg-[#fae8e4] cursor-pointer transition-colors"
+              >
+                <span>{CATEGORY_OPTIONS.find(option => option.id === categoryFilter)?.label}</span>
+                <X className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+            )}
+            {yearFilter !== 'all' && (
+              <button
+                type="button"
+                onClick={() => setYearFilter('all')}
+                aria-label={`${yearFilter}年の絞り込みを解除`}
+                className="inline-flex min-h-7 items-center gap-1 rounded-full border border-[#C83E2B]/35 bg-[#fdf4f2] px-2.5 py-0.5 text-[11px] font-bold font-mono-num text-[#9B3021] hover:border-[#C83E2B] hover:bg-[#fae8e4] cursor-pointer transition-colors"
+              >
+                <span>{yearFilter}年</span>
+                <X className="h-3 w-3 shrink-0" aria-hidden="true" />
+              </button>
+            )}
+          </div>
           {hasActiveFilter && (
             <button
               type="button"
@@ -625,6 +684,11 @@ export function TourArchiveSection({
                   <h2 className="mt-1 font-note-serif text-base font-bold text-[#253331] sm:text-lg">
                     {tour.tourTitle}
                   </h2>
+                  {tour.coArtists && tour.coArtists.length > 0 && (
+                    <p className="mt-1 text-xs font-medium text-[#57534E]">
+                      共演：{tour.coArtists.join(' ／ ')}
+                    </p>
+                  )}
                   {tour.officialSourceUrl && (
                     <div className="mt-1 flex flex-wrap gap-x-4 text-xs text-[#1E3A5F]">
                       <a
