@@ -113,18 +113,32 @@ export async function verifyInputAndScriptBoundaries(browser, root) {
         window.__inlineExecuted = 0;
         window.__attributeExecuted = 0;
         const violations = [];
-        const listener = event => violations.push(event.effectiveDirective);
-        document.addEventListener('securitypolicyviolation', listener);
+        let onViolation;
         const script = document.createElement('script');
         script.textContent = 'window.__inlineExecuted = 1';
         const image = document.createElement('img');
         image.setAttribute('onerror', 'window.__attributeExecuted = 1');
         image.src = '/__csp_regression_probe_missing__.png';
-        document.body.append(script, image);
         // CSP違反イベントと画像のエラーイベントの配送を待つ。
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => {
+          let settled = false;
+          const timer = setTimeout(() => {
+            settled = true;
+            resolve();
+          }, 2000);
+          onViolation = event => {
+            violations.push(event.effectiveDirective);
+            if (!settled && violations.includes('script-src-elem') && violations.includes('script-src-attr')) {
+              settled = true;
+              clearTimeout(timer);
+              resolve();
+            }
+          };
+          document.addEventListener('securitypolicyviolation', onViolation);
+          document.body.append(script, image);
+        });
         script.remove(); image.remove();
-        document.removeEventListener('securitypolicyviolation', listener);
+        document.removeEventListener('securitypolicyviolation', onViolation);
         return { inline: window.__inlineExecuted, attribute: window.__attributeExecuted, violations };
       });
       assert.equal(blocked.inline, 0, `${suffix}: 直接書かれたスクリプトが実行されました`);

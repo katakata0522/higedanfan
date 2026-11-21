@@ -1024,7 +1024,7 @@ try {
     () => verifyTourArchiveSetlists(browser),
     () => verifyMyNoteModal(browser),
     () => verifyPwaReadinessAndInstall(browser, root),
-  ], 4);
+  ], 3);
   if (!process.argv.includes('--ux-only')) {
     await runPool([
       () => verifyImmediateReload(browser),
