@@ -8,7 +8,7 @@ const BASE_SHELL_ASSETS = [
   '/higedanfan/',
   '/higedanfan/manifest.webmanifest',
   '/higedanfan/fonts/kiwi-maru-medium-c8f08bbe.woff2',
-  '/higedanfan/fonts/noto-sans-jp-b515a988.woff2',
+  '/higedanfan/fonts/noto-sans-jp-52eb61f0.woff2',
   '/higedanfan/hige-mark.svg?v=34b8cc7',
   '/higedanfan/hige-icon-192.png',
   '/higedanfan/hige-icon-512.png',

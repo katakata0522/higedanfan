@@ -223,9 +223,10 @@ a { color: inherit; }
   z-index: 40;
   right: 0;
   top: 64px;
-  width: min(400px, 100vw);
+  width: min(400px, 100%);
   max-height: calc(100vh - 64px);
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 14px;
   border-bottom: 1px solid #dfd7c7;
   background: #faf6eb;
@@ -339,7 +340,7 @@ a { color: inherit; }
 @media (min-width: 640px) {
   .song-menu-panel {
     right: 24px;
-    width: min(424px, 100vw);
+    width: min(424px, calc(100% - 48px));
     padding: 10px;
     border: 1px solid #dfd7c7;
     border-radius: 0 0 16px 16px;
@@ -517,6 +518,7 @@ a { color: inherit; }
   letter-spacing: -.045em;
   line-height: 1.16;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .recording { margin: 6px 0 12px 0; font-size: 18px; letter-spacing: .04em; }
@@ -637,7 +639,7 @@ a { color: inherit; }
 
 .overview-copy .range-note { margin-top: 12px; color: #57534e; font-family: var(--fan-ui-font); font-size: 13px; line-height: 1.45; }
 
-.sources { margin-top: 15px; border-top: 1px solid #bfb8ae; border-bottom: 1px solid #bfb8ae; }
+.sources { margin-top: 15px; scroll-margin-top: 76px; border-top: 1px solid #bfb8ae; border-bottom: 1px solid #bfb8ae; }
 
 .sources summary {
   display: flex;
@@ -656,10 +658,10 @@ a { color: inherit; }
 
 .sources summary strong::after { content: ""; width: 19px; height: 3px; transform: rotate(-45deg); background: #d32924; }
 
-.sources summary span { color: #0757ad; font-family: var(--fan-ui-font); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
+.sources summary > span { color: #0757ad; font-family: var(--fan-ui-font); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 5px; }
 
 .sources[open] summary { border-bottom: 1px solid #d8d0c6; }
-.sources summary span[aria-hidden="true"] { display: inline-block; transition: transform .15s ease; }
+.sources summary span[aria-hidden="true"] { display: inline-block; text-decoration: none; transition: transform .15s ease; }
 .sources[open] summary span[aria-hidden="true"] { transform: rotate(180deg); }
 
 .sources-body { padding: 18px 14px 22px; font-size: 14px; line-height: 1.7; }
@@ -684,6 +686,7 @@ a { color: inherit; }
 .tempo-explanation { margin: 7px 0 0; color: #57534e; font-size: 12px; line-height: 1.5; }
 .overview-sources { margin: 18px 5px 0; color: #57534e; font-size: 12px; line-height: 1.8; }
 .overview-sources a { color: #0757ad; text-underline-offset: 3px; }
+.overview-sources a[href="#song-sources"] { display: inline-block; white-space: nowrap; }
 .listen-section, .related-section { margin-top: 28px; padding: 20px; border: 1px solid #dfd7c7; border-radius: 12px; background: #fffdf8; }
 .listen-section h2, .related-section h2 { margin: 0; color: #253331; font-size: 19px; }
 .listen-section p { margin: 6px 0 0; color: #57534e; font-size: 13px; line-height: 1.65; }
@@ -772,6 +775,17 @@ a { color: inherit; }
 
 .toast { margin: 15px 0 0; color: #205539; font-size: 13px; text-align: center; }
 
+.sheet-frame--readable .feature-credit { font-size: 14px; }
+.sheet-frame--readable .overview-copy .range-note,
+.sheet-frame--readable .listen-section p { font-size: 15px; }
+.sheet-frame--readable .overview-sources,
+.sheet-frame--readable .source-facts dt,
+.sheet-frame--readable .source-caveat,
+.sheet-frame--readable .tempo-explanation,
+.sheet-frame--readable .listen-note,
+.sheet-frame--readable .related-section li p { font-size: 14px; }
+.sheet-frame--readable .sources-body { font-size: 16px; }
+
 @media (min-width: 761px), (min-width: 521px) and (hover: hover) and (pointer: fine) {
   .reading-toggle { display: inline-flex; align-items: center; }
   .song-sheet { min-height: 0; padding: 30px 32px; }
@@ -800,13 +814,13 @@ a { color: inherit; }
   .song-hero { grid-template-columns: minmax(0, 1fr); gap: 18px; }
   .cover { width: min(58vw, 225px); justify-self: center; }
   .cover .cover-art, .cover .cover-placeholder { width: 100%; height: auto; }
-  .hero-content h1 { padding-right: 0; font-size: clamp(31px, 8vw, 45px); }
+  .hero-content h1 { padding-right: 0; font-size: clamp(25px, 7.8vw, 45px); }
   .recording { margin: 8px 0; font-size: 15px; }
   .recording span { font-size: 17px; }
   .song-facts { margin-top: 8px; }
   .fact-item { min-height: 56px; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; }
   .fact-item dt { font-size: 12px; }
-  .fact-item dd { font-size: 20px; }
+  .fact-item dd { font-size: clamp(16.5px, 5vw, 20px); }
   .fact-item dd small { font-size: 12px; }
   .feature-line { min-height: 94px; margin-top: 16px; padding: 12px 8px; }
   .feature-phrase { gap: 0; font-size: clamp(23px, 6vw, 31px); }
@@ -820,11 +834,12 @@ a { color: inherit; }
   .overview-copy { padding: 0 5px; }
   .overview-copy p { font-size: 16px; }
   .sheet-frame--readable .overview-copy p { font-size: 19px; line-height: 1.9; }
-  .sheet-frame--readable .feature-phrase { font-size: clamp(24px, 6.2vw, 32px); }
+  .sheet-frame--readable .feature-credit { font-size: 12px; }
   .overview-copy .range-note { font-size: 12px; }
+  .sheet-frame--readable .overview-copy .range-note { font-size: 14px; }
   .sources summary { min-height: 60px; }
   .sources summary strong { font-size: 18px; }
-  .sources summary span { font-size: 12px; text-align: right; }
+  .sources summary > span { font-size: 12px; text-align: right; }
   .song-actions { gap: 12px; }
   .add-button, .back-button { width: 100%; min-width: 0; }
 }
