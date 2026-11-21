@@ -53,17 +53,25 @@ async function routeWithCache(route) {
   const url = route.request().url();
   let cached = appleCdnCache.get(url);
   if (!cached) {
-    const pending = route.fetch({ timeout: 20000 }).then(async res => ({
-      status: res.status(),
-      contentType: res.headers()['content-type'] || 'image/jpeg',
-      body: await res.body(),
-    }));
+    const pending = route.fetch({ timeout: 20000 }).then(async res => {
+      const resHeaders = res.headers();
+      const headers = {};
+      if (resHeaders['access-control-allow-origin']) {
+        headers['access-control-allow-origin'] = resHeaders['access-control-allow-origin'];
+      }
+      return {
+        status: res.status(),
+        contentType: resHeaders['content-type'] || 'application/octet-stream',
+        headers,
+        body: await res.body(),
+      };
+    });
     appleCdnCache.set(url, pending);
     cached = pending;
   }
   try {
     const entry = await cached;
-    await route.fulfill({ status: entry.status, contentType: entry.contentType, body: entry.body });
+    await route.fulfill({ status: entry.status, contentType: entry.contentType, headers: entry.headers, body: entry.body });
   } catch {
     appleCdnCache.delete(url);
     await route.abort();
@@ -74,6 +82,8 @@ async function inspectAllPages(browser, scenario) {
   const context = await browser.newContext(scenario.context);
   await context.route('https://*.mzstatic.com/**', routeWithCache);
   await context.route('https://i.ytimg.com/**', routeWithCache);
+  await context.route('https://fonts.googleapis.com/**', routeWithCache);
+  await context.route('https://fonts.gstatic.com/**', routeWithCache);
   const failures = [];
   let next = 0;
 
@@ -184,7 +194,7 @@ async function inspectAllPages(browser, scenario) {
     await page.close();
   }
 
-  await Promise.all(Array.from({ length: 4 }, worker));
+  await Promise.all(Array.from({ length: 6 }, worker));
   await context.close();
   assert.deepEqual(failures, [], `${scenario.name}で表示不良: ${failures.join('; ')}`);
   console.log(`${scenario.name}: ${ids.length}曲を確認`);
@@ -393,6 +403,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   const secondPageTitle = (await firstSongLink.getAttribute('aria-label')).replace(/：曲のページを見る$/, '');
   await firstSongLink.click();
   await page.getByRole('heading', { name: secondPageTitle, exact: true }).waitFor();
+  await page.locator('.song-mynote-btn').waitFor();
   await page.getByRole('link', { name: '楽曲ガイドに戻る', exact: true }).first().click();
   await page.getByText(/全 90 曲中 25〜48 曲目/).waitFor();
 
@@ -985,31 +996,46 @@ function resolveChromiumExecutable() {
   return candidates.find(candidate => candidate && existsSync(candidate));
 }
 
+async function runPool(tasks, concurrency) {
+  let cursor = 0;
+  async function runWorker() {
+    while (cursor < tasks.length) {
+      const task = tasks[cursor++];
+      await task();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, runWorker));
+}
+
 let browser;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, executablePath: resolveChromiumExecutable() });
-  await verifyStaticSeo(browser, root, ids);
-  await verifyInputAndScriptBoundaries(browser, root);
-  await verifyRecordFileImport(browser, root);
-  await verifyKurunIntroAndStickyNotes(browser);
-  await verifyGuideAndSetlistUsability(browser);
-  await verifyGuideAndDiagnosis(browser, root);
-  await verifyVisitorJourneys(browser);
-  await verifySetlistHierarchy(browser);
-  await verifyReferenceLibrary(browser);
-  await verifyTourArchiveSetlists(browser);
-  await verifyMyNoteModal(browser);
-  await verifyPwaReadinessAndInstall(browser, root);
+  await runPool([
+    () => verifyStaticSeo(browser, root, ids),
+    () => verifyInputAndScriptBoundaries(browser, root),
+    () => verifyRecordFileImport(browser, root),
+    () => verifyKurunIntroAndStickyNotes(browser),
+    () => verifyGuideAndSetlistUsability(browser),
+    () => verifyGuideAndDiagnosis(browser, root),
+    () => verifyVisitorJourneys(browser),
+    () => verifySetlistHierarchy(browser),
+    () => verifyReferenceLibrary(browser),
+    () => verifyTourArchiveSetlists(browser),
+    () => verifyMyNoteModal(browser),
+    () => verifyPwaReadinessAndInstall(browser, root),
+  ], 3);
   if (!process.argv.includes('--ux-only')) {
-    await verifyImmediateReload(browser);
-    await verifyStorageFailures(browser);
+    await runPool([
+      () => verifyImmediateReload(browser),
+      () => verifyStorageFailures(browser),
+      () => verifyInteractions(browser),
+    ], 3);
     await inspectAllPages(browser, { name: 'PC 1280×720', context: { viewport: { width: 1280, height: 720 } } });
     await inspectAllPages(browser, { name: 'PC 615×604', context: { viewport: { width: 615, height: 604 }, deviceScaleFactor: 1.5 } });
     await inspectAllPages(browser, { name: 'スマホ 320px', mobile: true, context: { viewport: { width: 320, height: 844 }, isMobile: true, hasTouch: true } });
     await inspectAllPages(browser, { name: 'スマホ 390px', mobile: true, context: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } });
     await inspectAllPages(browser, { name: 'PC 大きな文字 521px', readable: true, context: { viewport: { width: 521, height: 844 } } });
-    await verifyInteractions(browser);
   }
 } finally {
   await browser?.close();
