@@ -3,7 +3,12 @@ import { ChevronDown, MapPin } from 'lucide-react';
 import { HISTORICAL_SACRED_SPOTS, SACRED_SPOTS } from '../data/sacredSpotsData';
 import type { SacredSpotCategory, SongItem } from '../data/higedanTypes';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { saveMapReturnState, takeMapReturnState } from '../utils/guideReturnState';
+import {
+  clearGuideListReturnState,
+  clearSongReturnTab,
+  readMapReturnState,
+  saveMapReturnState,
+} from '../utils/guideReturnState';
 import {
   getSacredSpotRegion,
   SACRED_SPOT_REGIONS,
@@ -34,7 +39,8 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
     return map;
   }, [songs]);
 
-  const [mapReturn] = useState(() => takeMapReturnState(spotIds));
+  const [mapReturn] = useState(() => readMapReturnState(spotIds));
+  const consumedReturnRef = useRef(false);
   const [selectedSpotCategory, setSelectedSpotCategory] = useState<SacredSpotCategory | 'all'>(
     mapReturn?.category ?? 'all',
   );
@@ -46,6 +52,13 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
   const [pinnedSpotId, setPinnedSpotId] = useState<string | null>(mapReturn?.pinnedSpotId ?? null);
   const [mapSpotId, setMapSpotId] = useState(mapReturn?.mapSpotId ?? '');
   const originSpotHeading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (consumedReturnRef.current) return;
+    consumedReturnRef.current = true;
+    clearGuideListReturnState();
+    clearSongReturnTab();
+  }, []);
 
   useEffect(() => {
     const heading = originSpotHeading.current;

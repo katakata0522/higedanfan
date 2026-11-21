@@ -9,7 +9,12 @@ import { songAppleArtwork } from '../data/songAppleArtwork';
 import { sortSongTable } from '../utils/songTableSort';
 import { VocalRangeTable } from './discography/VocalRangeTable';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { saveGuideReturnState, takeGuideReturnState } from '../utils/guideReturnState';
+import {
+  clearGuideListReturnState,
+  clearSongReturnTab,
+  readGuideReturnState,
+  saveGuideReturnState,
+} from '../utils/guideReturnState';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   BookOpen,
@@ -79,7 +84,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   initialEraFilter = 'all',
 }) => {
   const activeSubView = initialSubView;
-  const [returnState] = useState(() => takeGuideReturnState(songs.length));
+  const [returnState] = useState(() => readGuideReturnState(songs.length));
+  const consumedReturnRef = useRef(false);
   const restored = initialEraFilter === 'all' ? returnState : null;
   const [showTieUps, setShowTieUps] = useState(restored?.showTieUps === true);
   const [filters, setFilters] = useState(() =>
@@ -98,6 +104,13 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const previousEraPreset = useRef(initialEraFilter);
   const resultsTopRef = useRef<HTMLDivElement>(null);
   const originSongRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (consumedReturnRef.current) return;
+    consumedReturnRef.current = true;
+    clearGuideListReturnState();
+    clearSongReturnTab();
+  }, []);
 
   useEffect(() => {
     if (!restored?.originSongId) return;

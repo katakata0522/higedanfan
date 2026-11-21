@@ -2,16 +2,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { DEFAULT_GUIDE_FILTERS } from '../components/SongGuideFilters';
 import {
+  clearGuideListReturnState,
   clearGuideReturnState,
   clearSongReturnTab,
   guideReturnView,
+  readGuideReturnState,
+  readMapReturnState,
   saveArchiveReturnState,
   saveGuideReturnState,
+  saveMapReturnState,
   saveSongReturnTab,
   saveTourReturnState,
   songReturnDestination,
   takeArchiveReturnState,
   takeGuideReturnState,
+  takeMapReturnState,
   takeTourReturnState,
 } from './guideReturnState';
 
@@ -174,4 +179,37 @@ test('歴代ツアー記録の状態は楽曲ページからの戻り時に1度�
 
   store.setItem('higedanfan:tour-return:v1', JSON.stringify({ ...extended, year: '2025;alert(1)' }));
   assert.equal(takeTourReturnState('epoch-1', store), null);
+});
+
+test('readGuideReturnStateとreadMapReturnStateは繰り返し読んでも状態を消さず、後続のクリアで削除される', () => {
+  const store = memoryStore();
+  const guideState = {
+    filters: { ...DEFAULT_GUIDE_FILTERS, sortBy: 'highest_note' as const },
+    visibleCount: 48,
+    view: 'discography' as const,
+    originSongId: 'stardust',
+  };
+  saveGuideReturnState(guideState, store);
+  assert.deepEqual(readGuideReturnState(90, store), guideState);
+  assert.deepEqual(readGuideReturnState(90, store), guideState);
+  assert.deepEqual(songReturnDestination(store), { hash: 'discography', label: '楽曲ガイドに戻る' });
+
+  clearGuideListReturnState(store);
+  clearSongReturnTab(store);
+  assert.equal(readGuideReturnState(90, store), null);
+
+  const mapState = {
+    region: 'kanto' as const,
+    category: 'all' as const,
+    visitedOnly: false,
+    filtersOpen: false,
+    mapSpotId: 'spot-1',
+    pinnedSpotId: 'spot-1',
+    originSpotId: 'spot-1',
+  };
+  saveMapReturnState(mapState, store);
+  assert.deepEqual(readMapReturnState(['spot-1'], store), mapState);
+  assert.deepEqual(readMapReturnState(['spot-1'], store), mapState);
+  assert.deepEqual(takeMapReturnState(['spot-1'], store), mapState);
+  assert.equal(readMapReturnState(['spot-1'], store), null);
 });

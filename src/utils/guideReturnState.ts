@@ -109,10 +109,10 @@ export function saveMapReturnState(state: MapReturnState, store: Store | null = 
   } catch { /* 保存できない環境では通常の地図へ戻す。 */ }
 }
 
-export function takeMapReturnState(spotIds: readonly string[], store: Store | null = browserStore()): MapReturnState | null {
+export function readMapReturnState(spotIds: readonly string[], store: Store | null = browserStore()): MapReturnState | null {
+  if (!store) return null;
   try {
-    const raw = store?.getItem(key);
-    store?.removeItem(key);
+    const raw = store.getItem(key);
     const parsed = safeJsonParseBounded(raw, 2000);
     if (!isPlainObject(parsed) || hasBlockedKey(parsed, 4)) return null;
     if (
@@ -141,12 +141,19 @@ export function takeMapReturnState(spotIds: readonly string[], store: Store | nu
   } catch { return null; }
 }
 
-export function takeGuideReturnState(songCount: number, store: Store | null = browserStore()): GuideReturnState | null {
+export function takeMapReturnState(spotIds: readonly string[], store: Store | null = browserStore()): MapReturnState | null {
+  if (!store) return null;
+  const restored = readMapReturnState(spotIds, store);
+  try {
+    store.removeItem(key);
+  } catch { /* ignore */ }
+  return restored;
+}
+
+export function readGuideReturnState(songCount: number, store: Store | null = browserStore()): GuideReturnState | null {
   if (!store) return null;
   try {
     const raw = store.getItem(key);
-    store.removeItem(key);
-    store.removeItem(originTabKey);
     const value = safeJsonParseBounded(raw, MAX_RETURN_STATE_BYTES);
     if (!isPlainObject(value) || hasBlockedKey(value, 5)) return null;
     const { filters: rawFilters, visibleCount, view, originSongId, voice: rawVoice, showTieUps } = value;
@@ -211,6 +218,16 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     }
     return { filters, visibleCount: Number(visibleCount), view, ...comparison, ...origin };
   } catch { return null; }
+}
+
+export function takeGuideReturnState(songCount: number, store: Store | null = browserStore()): GuideReturnState | null {
+  if (!store) return null;
+  const restored = readGuideReturnState(songCount, store);
+  try {
+    store.removeItem(key);
+    store.removeItem(originTabKey);
+  } catch { /* ignore */ }
+  return restored;
 }
 
 export function saveArchiveReturnState(
