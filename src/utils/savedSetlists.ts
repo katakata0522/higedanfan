@@ -1,4 +1,15 @@
-import { restoreFanRecords, STORAGE_KEY } from '../hooks/fanRecordStorage';
+import { readStoredResetEpoch } from '../hooks/fanRecordStorage';
+import {
+  getBrowserLocalStorage,
+  hasBlockedKey,
+  safeJsonParseBounded,
+  type BrowserStorageLike,
+} from './browserStorage';
+import {
+  QUICK_ADD_SETLIST_SESSION_KEY,
+  readQuickAddSetlistId,
+  writeQuickAddSetlistId,
+} from './quickAddSession';
 import {
   SETLIST_TITLE_LIMIT,
   SetlistEntry,
@@ -7,20 +18,19 @@ import {
 } from './setlist';
 import { sanitizeSafeId, sanitizeUserText } from './userInput';
 
+export { QUICK_ADD_SETLIST_SESSION_KEY, readQuickAddSetlistId, writeQuickAddSetlistId };
+
 export const SAVED_SETLISTS_STORAGE_KEY = 'higedan_saved_setlists_v1';
-export const QUICK_ADD_SETLIST_SESSION_KEY = 'higedan_quick_add_setlist_v1';
 export const DEFAULT_SAVED_SETLIST_TITLE = 'マイ・ドリームライブ';
 export const MAX_SAVED_SETLISTS = 30;
+const MAX_SAVED_SETLISTS_BYTES = 200_000;
+const ISO_TIMESTAMP_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/;
 
-export interface SavedSetlistsStoreLike {
-  getItem(key: string): string | null;
-  setItem(key: string, value: string): void;
-  removeItem(key: string): void;
-}
+export type SavedSetlistsStoreLike = BrowserStorageLike;
 
 export interface SavedSetlistsAccessOptions {
   expectedEpoch?: string;
-  validSongIds?: Set<string>;
+  validSongIds?: ReadonlySet<string>;
   deletedIds?: ReadonlySet<string>;
   replace?: boolean;
   storage?: SavedSetlistsStoreLike | null;
@@ -42,22 +52,11 @@ export interface SavedSetlistsState {
 const BLOCKED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
 function getStorage(): SavedSetlistsStoreLike | null {
-  try {
-    if (typeof window === 'undefined' || !window.localStorage) return null;
-    return window.localStorage;
-  } catch {
-    return null;
-  }
+  return getBrowserLocalStorage();
 }
 
 function readCurrentResetEpoch(recordStorage: SavedSetlistsStoreLike | null): string {
-  if (!recordStorage) return '';
-  try {
-    const raw = recordStorage.getItem(STORAGE_KEY);
-    return raw === null ? '' : restoreFanRecords(raw).resetEpoch;
-  } catch {
-    return '';
-  }
+  return readStoredResetEpoch(recordStorage) ?? '';
 }
 
 function isMatchingEpochPayload(raw: unknown, currentEpoch: string): boolean {
@@ -82,7 +81,7 @@ function formatEntriesSignature(title: string, entries: readonly SetlistEntry[])
 
 export function sanitizeSavedSetlistsState(
   raw: unknown,
-  validSongIds: Set<string>,
+  validSongIds: ReadonlySet<string>,
 ): SavedSetlistsState | null {
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
   const record = raw as Record<string, unknown>;
@@ -101,7 +100,11 @@ export function sanitizeSavedSetlistsState(
 
     const title = normalizeTitle(item.title);
     const cleanedEntries = sanitizeSetlistEntries(item.entries, validSongIds) ?? [];
-    const updatedAt = sanitizeUserText(item.updatedAt, 40) || new Date().toISOString();
+    const rawUpdatedAt = typeof item.updatedAt === 'string' ? item.updatedAt.trim() : '';
+    const updatedAt =
+      ISO_TIMESTAMP_RE.test(rawUpdatedAt) && !Number.isNaN(Date.parse(rawUpdatedAt))
+        ? rawUpdatedAt
+        : new Date().toISOString();
 
     items.push(
       createCleanRecord({
@@ -126,7 +129,7 @@ export function sanitizeSavedSetlistsState(
 export function createInitialSavedSetlistsState(
   activeTitle: string,
   activeEntries: readonly SetlistEntry[],
-  validSongIds?: Set<string>,
+  validSongIds?: ReadonlySet<string>,
   now = new Date().toISOString(),
 ): SavedSetlistsState {
   const cleanTitle = normalizeTitle(activeTitle);
@@ -148,7 +151,7 @@ export function createInitialSavedSetlistsState(
 }
 
 export function readStoredSavedSetlists(
-  validSongIds: Set<string>,
+  validSongIds: ReadonlySet<string>,
   options: SavedSetlistsAccessOptions = {},
 ): SavedSetlistsState | null {
   const storage = options.storage === undefined ? getStorage() : options.storage;
@@ -160,8 +163,8 @@ export function readStoredSavedSetlists(
   }
   try {
     const raw = storage.getItem(SAVED_SETLISTS_STORAGE_KEY);
-    if (!raw) return null;
-    const parsed: unknown = JSON.parse(raw);
+    const parsed = safeJsonParseBounded(raw, MAX_SAVED_SETLISTS_BYTES);
+    if (!parsed || hasBlockedKey(parsed, 8)) return null;
     if (!isMatchingEpochPayload(parsed, currentEpoch)) return null;
     return sanitizeSavedSetlistsState(parsed, validSongIds);
   } catch {
@@ -170,7 +173,7 @@ export function readStoredSavedSetlists(
 }
 
 export function loadSavedSetlists(
-  validSongIds: Set<string>,
+  validSongIds: ReadonlySet<string>,
   fallbackTitle: string,
   fallbackEntries: readonly SetlistEntry[],
   options: SavedSetlistsAccessOptions = {},
@@ -268,8 +271,8 @@ export function clearStaleSavedSetlists(
   try {
     const raw = storage.getItem(SAVED_SETLISTS_STORAGE_KEY);
     if (!raw) return false;
-    const parsed: unknown = JSON.parse(raw);
-    if (!isMatchingEpochPayload(parsed, expectedEpoch)) {
+    const parsed = safeJsonParseBounded(raw, MAX_SAVED_SETLISTS_BYTES);
+    if (!parsed || hasBlockedKey(parsed, 8) || !isMatchingEpochPayload(parsed, expectedEpoch)) {
       storage.removeItem(SAVED_SETLISTS_STORAGE_KEY);
       return true;
     }
@@ -389,36 +392,49 @@ export function deleteSavedSetlist(
   };
 }
 
-export function readQuickAddSetlistId(
-  expectedEpoch = '',
-  storage: SavedSetlistsStoreLike | null = typeof window !== 'undefined' ? window.sessionStorage : null,
-): string | null {
-  if (!storage) return null;
-  try {
-    const raw = storage.getItem(QUICK_ADD_SETLIST_SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { id?: unknown; resetEpoch?: unknown };
-    if (typeof parsed?.id !== 'string' || !parsed.id) return null;
-    if ((parsed.resetEpoch ?? '') !== expectedEpoch) return null;
-    return parsed.id;
-  } catch {
-    return null;
-  }
+export interface AppendOrCreateSavedSetlistOptions {
+  validSongIds: ReadonlySet<string>;
+  currentTitle: string;
+  currentEntries: readonly SetlistEntry[];
+  nextTitle?: string;
+  nextEntries: readonly SetlistEntry[];
+  expectedEpoch?: string;
+  storage?: SavedSetlistsStoreLike | null;
+  recordStorage?: SavedSetlistsStoreLike | null;
+  now?: string;
 }
 
-export function writeQuickAddSetlistId(
-  id: string | null,
-  resetEpoch = '',
-  storage: SavedSetlistsStoreLike | null = typeof window !== 'undefined' ? window.sessionStorage : null,
-): void {
-  if (!storage) return;
-  try {
-    if (!id) {
-      storage.removeItem(QUICK_ADD_SETLIST_SESSION_KEY);
-      return;
-    }
-    storage.setItem(QUICK_ADD_SETLIST_SESSION_KEY, JSON.stringify({ id, resetEpoch }));
-  } catch {
-    // ignore storage errors
-  }
+/**
+ * Syncs the current active setlist, appends a newly created saved setlist,
+ * and persists the updated state to browser storage.
+ */
+export function appendOrCreateSavedSetlist({
+  validSongIds,
+  currentTitle,
+  currentEntries,
+  nextTitle,
+  nextEntries,
+  expectedEpoch,
+  storage,
+  recordStorage,
+  now,
+}: AppendOrCreateSavedSetlistOptions): { state: SavedSetlistsState; created: SavedSetlistItem } {
+  const safeCurrentTitle = sanitizeUserText(currentTitle, SETLIST_TITLE_LIMIT) || DEFAULT_SAVED_SETLIST_TITLE;
+  const loaded = loadSavedSetlists(validSongIds, safeCurrentTitle, currentEntries, {
+    expectedEpoch,
+    storage,
+    recordStorage,
+  });
+  const synced = syncActiveSavedSetlist(loaded, safeCurrentTitle, currentEntries, now);
+  const resolvedTitle = nextTitle
+    ? (sanitizeUserText(nextTitle, SETLIST_TITLE_LIMIT) || 'MYセトリ')
+    : `MYセトリ ${synced.items.length + 1}`;
+  const { state, created } = createNewSavedSetlist(synced, resolvedTitle, nextEntries, now);
+  persistSavedSetlists(state, {
+    expectedEpoch,
+    validSongIds,
+    storage,
+    recordStorage,
+  });
+  return { state, created };
 }

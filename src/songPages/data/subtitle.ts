@@ -1,5 +1,5 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
-import { editorialArticles } from '../editorialArticles';
+import { editorialShard1 } from '../editorial/shard1';
 
 const page = {
   id: 'subtitle',
@@ -8,12 +8,12 @@ const page = {
     alt: '冬の窓辺、ランプ、ピアノ、白い紙を描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: editorialArticles.subtitle.feature,
-    credit: editorialArticles.subtitle.featureCredit ?? '— 楽曲ガイドより',
-    kind: editorialArticles.subtitle.featureKind,
-    citeUrl: editorialArticles.subtitle.featureCiteUrl,
+    text: editorialShard1.subtitle.feature,
+    credit: editorialShard1.subtitle.featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialShard1.subtitle.featureKind,
+    citeUrl: editorialShard1.subtitle.featureCiteUrl,
   },
-  overview: editorialArticles.subtitle.paragraphs,
+  overview: editorialShard1.subtitle.paragraphs,
   rangeNote: '※ 地声最低音mid1A#は瞬間的に現れる音で、調査元も判定がやや曖昧だと説明しています。裏声最高音は参照元に値がないため「—」と表示しています。',
   albumTrack: 10,
   sources: [

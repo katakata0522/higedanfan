@@ -19,7 +19,7 @@ export const songTieUps: Partial<Record<keyof typeof recordings, SongItem['tieUp
     { text: "TVアニメ『東京リベンジャーズ』オープニング主題歌", source: "https://tokyo-revengers-anime.com/news/archives/103", searchAliases: ['東リベ', 'とうきょうリベンジャーズ'] },
   ],
   '115man-kilo': [
-    { text: "映画『思い、思われ、ふり、ふられ』主題歌", source: "https://higedan.com/news/list/3/6/?page=18#:~:text=115万キロのフィルム" },
+    { text: "映画『思い、思われ、ふり、ふられ』主題歌", source: "https://natalie.mu/music/news/383576" },
     { text: "ローム「electric landscape」篇 CMソング", source: "https://www.rohm.co.jp/news-detail?defaultGroupId=false&news-title=2019-12-25_news_tv-cm" },
     { text: "SUUMO テレビCMソング", source: "https://higedan.com/news/detail/101724", searchAliases: ['スーモ'] },
   ],

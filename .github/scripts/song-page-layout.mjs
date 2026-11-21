@@ -822,6 +822,9 @@ async function verifyMyNoteModal(browser) {
   const dialog = page.locator('dialog.my-note-dialog');
   await dialog.waitFor({ state: 'visible' });
   assert.equal(new URL(page.url()).pathname, '/higedanfan/', 'マイノートはページ遷移せずモーダルで開く必要があります');
+  assert.equal(await dialog.locator('.mn-close-btn').count(), 0, 'フッター右下の「とじる」ボタンは削除されている必要があります');
+  const closeXBox = await dialog.getByRole('button', { name: 'マイノートを閉じる', exact: true }).boundingBox();
+  assert.ok(closeXBox && closeXBox.width >= 44 && closeXBox.height >= 44, '右上の閉じるボタンは44px以上のタップ領域が必要です');
   await dialog.getByText('はじめの一歩').waitFor();
   await dialog.getByText('総合ランク', { exact: true }).waitFor();
   await dialog.getByText('ダイヤの原石', { exact: true }).waitFor();
@@ -889,15 +892,19 @@ async function verifyMyNoteModal(browser) {
   await dialog.getByRole('heading', { name: /保存済みMYセトリ/ }).waitFor();
   await dialog.getByRole('tab', { name: /検定記録/ }).click();
   await dialog.getByRole('heading', { name: 'Official髭男dism検定の記録', exact: true }).waitFor();
-  await dialog.getByRole('button', { name: 'とじる', exact: true }).click();
+  await dialog.getByRole('button', { name: 'マイノートを閉じる', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
 
   await page.setViewportSize({ width: 320, height: 844 });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxでトップヘッダー（マイノート＋メニュー）が横にはみ出しています');
+  assert.ok(await myNoteBtn.locator('svg').isVisible(), '320pxでマイノートアイコンが非表示になっています');
+  assert.ok(await menuBtn.locator('svg').isVisible(), '320pxでメニューアイコンが非表示になっています');
 
   await page.goto(`${root}songs/pretender/`, { waitUntil: 'load' });
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxで楽曲ページヘッダー（マイノート＋メニュー）が横にはみ出しています');
   const songMyNoteBtn = page.getByRole('button', { name: 'マイノート', exact: true });
+  assert.ok(await songMyNoteBtn.locator('svg').isVisible(), '320pxの楽曲ページでマイノートアイコンが非表示になっています');
+  assert.ok(await page.locator('.song-site-menu > summary svg').isVisible(), '320pxの楽曲ページでメニューアイコンが非表示になっています');
   await songMyNoteBtn.click();
   await dialog.waitFor({ state: 'visible' });
   assert.equal(new URL(page.url()).pathname, '/higedanfan/songs/pretender/', '楽曲ページ上でもマイノートはURLを変えずモーダルで開く必要があります');
@@ -935,7 +942,7 @@ async function verifyMyNoteModal(browser) {
   await dialog.getByRole('tab', { name: /MYセトリ/ }).click();
   await dialog.getByRole('button', { name: 'このセトリに切替', exact: true }).click();
   await dialog.getByText(/切り替えました/).waitFor();
-  await dialog.getByRole('button', { name: 'とじる', exact: true }).click();
+  await dialog.getByRole('button', { name: 'マイノートを閉じる', exact: true }).click();
   await dialog.waitFor({ state: 'hidden' });
 
   await page.getByRole('link', { name: 'Pretender', exact: true }).waitFor();

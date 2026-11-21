@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen, Check, ChevronDown, Disc, Pencil, Plus, RotateCcw } from 'lucide-react';
-import type { SongItem } from '../../data/higedanData';
+import type { SongItem } from '../../data/higedanTypes';
 import {
   ERA_PREFERENCE_LABELS,
   isSoundMatch,
@@ -8,13 +8,13 @@ import {
   MOOD_CHOICE_LABELS,
   recommendSongsByMood,
   SITUATION_CHOICE_LABELS,
-  SOUND_LABELS,
   SOUND_PREFERENCE_LABELS,
-} from '../../utils/fanLogic';
+} from '../../utils/moodMatching';
+import { SOUND_LABELS } from '../../utils/songLabels';
 import { MoodListen, officialVideoId } from './MoodListen';
 import { moodResultCopy } from './moodResultCopy';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
-import { saveSongReturnTab } from '../../utils/guideReturnState';
+import { saveSongReturnTab } from '../../utils/songReturnTab';
 import type { CompleteMoodCriteria, MoodStep } from './moodSession';
 
 export interface MoodLibraryProps {
@@ -31,14 +31,19 @@ interface MoodResultsProps extends MoodLibraryProps {
   onRestart: () => void;
   page?: number;
   onPageChange?: (page: number) => void;
+  focusOnMount?: boolean;
+  onMountFocused?: () => void;
 }
 
 export function MoodResults({
   songs, onAddToSetlist, onRemoveFromSetlist, setlistSongIds,
   criteria, onEditAnswer, onRestart, page = 0, onPageChange,
+  focusOnMount = false, onMountFocused,
 }: MoodResultsProps) {
   const [localPage, setLocalPage] = useState(page);
   const resultHeadingRef = useRef<HTMLHeadingElement>(null);
+  const prevRecommendedIdRef = useRef<string | undefined>(undefined);
+  const hasMountedRef = useRef(false);
 
   const recommendations = useMemo(() => recommendSongsByMood(songs, criteria), [songs, criteria]);
   const maxPage = Math.max(0, Math.ceil(recommendations.length / 3) - 1);
@@ -48,10 +53,18 @@ export function MoodResults({
   const bestCopy = bestMatch ? moodResultCopy(bestMatch.song) : null;
   const recommendedSongId = bestMatch?.song.id;
   useEffect(() => {
-    const heading = resultHeadingRef.current;
-    heading?.focus({ preventScroll: true });
+    const isInitialMount = !hasMountedRef.current;
+    hasMountedRef.current = true;
+    const prevId = prevRecommendedIdRef.current;
+    prevRecommendedIdRef.current = recommendedSongId;
+    if (isInitialMount && !focusOnMount) return;
+    if (!isInitialMount && prevId === recommendedSongId) return;
+    resultHeadingRef.current?.focus({ preventScroll: true });
     window.scrollTo({ top: 0, behavior: 'instant' });
-  }, [recommendedSongId]);
+    if (isInitialMount) {
+      onMountFocused?.();
+    }
+  }, [recommendedSongId, focusOnMount, onMountFocused]);
   const showNearMatchNotice = Boolean(bestMatch
     && (!bestMatch.song.moods.includes(criteria.mood) || !isSoundMatch(bestMatch.song, criteria.sound)));
   const answers: { step: MoodStep; name: string; value: string }[] = [
@@ -93,7 +106,7 @@ export function MoodResults({
             {!officialVideoId(bestMatch.song.id) && (
               <div className="rounded-xl border border-[#E6E1D6] bg-[#FFFDF8] p-4 shadow-xs">
                 <div className="inline-flex items-center gap-1.5 rounded-md bg-[#F2EFE9] px-2.5 py-1 text-[11px] font-bold text-[#253331]">
-                  <Disc className="h-3.5 w-3.5 shrink-0 text-[#A93020]" />
+                  <Disc aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#A93020]" />
                   <span>{bestMatch.song.album}</span>
                 </div>
                 <div className="mt-2.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
@@ -128,7 +141,7 @@ export function MoodResults({
               onClick={() => saveSongReturnTab('mood')}
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors whitespace-nowrap shrink-0"
             >
-              <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+              <BookOpen aria-hidden="true" className="h-3.5 w-3.5 text-[#1E3A5F]" />
               詳しい解説を読む
             </a>
             {(() => {
@@ -148,12 +161,12 @@ export function MoodResults({
                 >
                   {inBestSetlist ? (
                     <>
-                      <Check className="h-3.5 w-3.5" />
+                      <Check aria-hidden="true" className="h-3.5 w-3.5" />
                       MYセトリ追加済み
                     </>
                   ) : (
                     <>
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus aria-hidden="true" className="h-3.5 w-3.5" />
                       MYセトリに追加
                     </>
                   )}
@@ -167,7 +180,7 @@ export function MoodResults({
       {/* 2nd & 3rd Candidate Songs */}
       {subMatches.length > 0 && (
         <div>
-          <h2 className="text-xs font-bold tracking-wide text-[#78716C] mb-3">
+          <h2 className="text-xs font-bold tracking-wide text-[#68625C] mb-3">
             こんな曲もおすすめ
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -265,7 +278,7 @@ export function MoodResults({
                 aria-label={answer.name + '「' + answer.value + '」を変更'}
                 className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-2.5 py-1.5 text-left font-medium text-[#1C1917] hover:border-[#C83E2B] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
               >
-                <span className="text-[#78716C]">{answer.name}</span> {answer.value}
+                <span className="text-[#68625C]">{answer.name}</span> {answer.value}
                 <Pencil aria-hidden="true" className="h-3 w-3 shrink-0" />
               </button>
             ))}

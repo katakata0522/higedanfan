@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 export interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -214,6 +214,41 @@ export function pwaInstallOutcomeMessage(outcome: PwaInstallOutcome): string | n
     default:
       return null;
   }
+}
+
+export interface UsePwaInstallActionOptions {
+  onFeedback?: (message: string) => void;
+  onAccepted?: () => void;
+  fallbackFocusElementId?: string;
+}
+
+export function usePwaInstallAction({
+  onFeedback,
+  onAccepted,
+  fallbackFocusElementId = 'kurun-replay-btn',
+}: UsePwaInstallActionOptions = {}) {
+  const pwaInstall = usePwaInstall();
+
+  const triggerInstall = useCallback(async () => {
+    if (pwaInstall.isInstalling) return;
+    const outcome = await pwaInstall.install();
+    const message = pwaInstallOutcomeMessage(outcome);
+    if (message) onFeedback?.(message);
+    if (outcome === 'accepted') {
+      onAccepted?.();
+    } else if (outcome !== 'unavailable') {
+      window.requestAnimationFrame(() => {
+        if (!document.getElementById('pwa-install-btn') && document.activeElement === document.body) {
+          document.getElementById(fallbackFocusElementId)?.focus();
+        }
+      });
+    }
+  }, [fallbackFocusElementId, onAccepted, onFeedback, pwaInstall]);
+
+  return {
+    ...pwaInstall,
+    triggerInstall,
+  };
 }
 
 export function usePwaInstall(): PwaInstallSnapshot & { install: () => Promise<PwaInstallOutcome> } {

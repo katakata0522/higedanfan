@@ -29,12 +29,17 @@ function sortValue(song: SongItem, key: SongTableSortKey): string | number | nul
 export function sortSongTable(songs: SongItem[], sort: SongTableSort | null): SongItem[] {
   if (!sort) return songs;
   const direction = sort.direction === 'ascending' ? 1 : -1;
-  return [...songs].sort((a, b) => {
-    const left = sortValue(a, sort.key), right = sortValue(b, sort.key);
-    // 未掲載・調査中の値は、どちらの方向でも末尾に置く。
-    if (left === null || right === null) return Number(left === null) - Number(right === null) || a.guideOrder - b.guideOrder;
-    const compared = typeof left === 'number' && typeof right === 'number'
-      ? left - right : String(left).localeCompare(String(right), 'ja', { numeric: true });
-    return compared * direction || a.guideOrder - b.guideOrder;
-  });
+  return songs
+    .map((song) => ({ song, value: sortValue(song, sort.key) }))
+    .sort((a, b) => {
+      // 未掲載・調査中の値は、どちらの方向でも末尾に置く。
+      if (a.value === null || b.value === null) {
+        return Number(a.value === null) - Number(b.value === null) || a.song.guideOrder - b.song.guideOrder;
+      }
+      const compared = typeof a.value === 'number' && typeof b.value === 'number'
+        ? a.value - b.value
+        : String(a.value).localeCompare(String(b.value), 'ja', { numeric: true });
+      return compared * direction || a.song.guideOrder - b.song.guideOrder;
+    })
+    .map((entry) => entry.song);
 }

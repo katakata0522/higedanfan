@@ -1,5 +1,5 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
-import { editorialArticles } from '../editorialArticles';
+import { editorialShard1 } from '../editorial/shard1';
 
 const page = {
   id: 'mixed-nuts',
@@ -8,12 +8,12 @@ const page = {
     alt: 'ピアノ、トランペット、赤いランプを描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: editorialArticles['mixed-nuts'].feature,
-    credit: editorialArticles['mixed-nuts'].featureCredit ?? '— 楽曲ガイドより',
-    kind: editorialArticles['mixed-nuts'].featureKind,
-    citeUrl: editorialArticles['mixed-nuts'].featureCiteUrl,
+    text: editorialShard1['mixed-nuts'].feature,
+    credit: editorialShard1['mixed-nuts'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialShard1['mixed-nuts'].featureKind,
+    citeUrl: editorialShard1['mixed-nuts'].featureCiteUrl,
   },
-  overview: editorialArticles['mixed-nuts'].paragraphs,
+  overview: editorialShard1['mixed-nuts'].paragraphs,
   rangeNote: '※ 上記の裏声最高音はラストのフェイクを含む調査値です。フェイクを除いた歌メロの音域は「データと出典」に分けて記載しています。',
   vocalVariants: [
     { label: 'フェイクを除いた歌メロ', value: '裏声最高 hiC#', sourceLabel: '音域データ！＠ウィキ', sourceUrl: 'https://w.atwiki.jp/saikouon_dokoda/pages/1008.html#:~:text=%E3%83%9F%E3%83%83%E3%82%AF%E3%82%B9%E3%83%8A%E3%83%83%E3%83%84' },

@@ -132,7 +132,7 @@ function ReferenceList({ links }: { links: SourceLink[] }) {
     <ul className="list-disc space-y-1 pl-5 text-sm leading-6 marker:text-[#827466]">
       {links.map(([label, url]) => (
         <li key={url}>
-          <a href={url} className="wrap-anywhere text-[#1E3A5F] underline decoration-[#ACA49A] underline-offset-4 hover:decoration-current focus-visible:outline-2 focus-visible:outline-offset-4">
+          <a href={url} rel="noopener noreferrer" className="wrap-anywhere text-[#1E3A5F] underline decoration-[#ACA49A] underline-offset-4 hover:decoration-current focus-visible:outline-2 focus-visible:outline-offset-4">
             {label}
           </a>
         </li>

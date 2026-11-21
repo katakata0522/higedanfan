@@ -7,6 +7,13 @@ export function formatDateDot(date: Date = new Date()): string {
   return `${y}.${m}.${d}`;
 }
 
+/**
+ * Formats an ISO date string (`YYYY-MM-DD`) with dot separators (`YYYY.MM.DD`).
+ */
+export function formatIsoDateDot(isoDate: string): string {
+  return isoDate.replaceAll('-', '.');
+}
+
 export function formatDuration(seconds: number): string {
   const safeSec = Math.max(0, Math.floor(Number(seconds) || 0));
   const mins = Math.floor(safeSec / 60);

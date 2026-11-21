@@ -36,7 +36,7 @@ dialog.my-note-dialog::backdrop {
   align-items: center;
   text-align: center;
   gap: 4px;
-  padding: 18px 46px 14px;
+  padding: 16px 60px 14px;
   border-bottom: 1px solid #ece3d2;
   background: linear-gradient(180deg, #fcf8ef 0%, #fffdf8 100%);
   flex: none;
@@ -46,7 +46,8 @@ dialog.my-note-dialog::backdrop {
   margin: 0;
   font-family: var(--fan-note-font);
   font-size: 1.2rem;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   letter-spacing: 0.04em;
   color: #253331;
   line-height: 1.3;
@@ -61,25 +62,31 @@ dialog.my-note-dialog::backdrop {
 
 .mn-close-x {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 9999px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: #57534E;
+  border: 1px solid #dfd7c7;
+  background: #fffdf8;
+  color: #253331;
+  box-shadow: 0 1px 2px rgba(37, 51, 49, 0.06);
   cursor: pointer;
   transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
 .mn-close-x:hover {
   background: #f2ece0;
-  border-color: #dfd7c7;
+  border-color: #253331;
   color: #253331;
+}
+
+.mn-close-x:focus-visible {
+  outline: 2px solid #253331;
+  outline-offset: 2px;
 }
 
 .mn-body {
@@ -158,7 +165,7 @@ dialog.my-note-dialog::backdrop {
   font-variant-numeric: tabular-nums;
   font-size: 11px;
   font-weight: 700;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-count-cycle-btn {
@@ -311,30 +318,30 @@ dialog.my-note-dialog::backdrop {
   font-size: 8.5px;
   font-weight: 700;
   line-height: 1;
-  color: #9b9282;
+  color: #68625C;
 }
 
 .mn-stamp--locked {
   border: 1.5px dashed #dcd2be;
   background: #f1ece2;
-  color: #a8a093;
+  color: #68625C;
 }
 
 .mn-stamp--locked:hover {
   border-color: #bfb39c;
-  color: #78716C;
+  color: #44403C;
 }
 
 .mn-stamp--gold.mn-stamp--locked {
   border-color: #cbb582;
   background: #f5efe1;
   box-shadow: inset 0 0 0 2px #faf6eb;
-  color: #8f7a4d;
+  color: #6D5B34;
 }
 
 .mn-stamp--gold.mn-stamp--locked .mn-stamp-serial,
 .mn-stamp--gold.mn-stamp--locked .mn-stamp-seal {
-  color: #a58f5e;
+  color: #6D5B34;
 }
 
 .mn-stamp--unlocked {
@@ -461,7 +468,7 @@ dialog.my-note-dialog::backdrop {
   margin: 20px 0;
   text-align: center;
   font-size: 11.5px;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-check-icon {
@@ -513,7 +520,7 @@ dialog.my-note-dialog::backdrop {
   font-variant-numeric: tabular-nums;
   font-size: 10px;
   font-weight: 700;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-stamp-tier-pill {
@@ -584,8 +591,9 @@ dialog.my-note-dialog::backdrop {
 .mn-rank-badge {
   font-family: var(--fan-note-font);
   font-size: 15px;
-  font-weight: 700;
-  color: #C83E2B;
+  font-weight: 500;
+  font-synthesis-weight: none;
+  color: #B83726;
   line-height: 1.3;
 }
 
@@ -628,7 +636,7 @@ dialog.my-note-dialog::backdrop {
 
 .mn-secondary-label {
   font-weight: 700;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-secondary-value {
@@ -657,7 +665,8 @@ dialog.my-note-dialog::backdrop {
 .mn-profile-name {
   font-family: var(--fan-note-font);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
+  font-synthesis-weight: none;
   color: #253331;
   line-height: 1.3;
   overflow-wrap: anywhere;
@@ -699,7 +708,13 @@ dialog.my-note-dialog::backdrop {
   border: 1px solid #cfc4ae;
   background: #ffffff;
   color: #253331;
-  font-size: 13px;
+  font-size: 16px;
+}
+
+@media (min-width: 640px) {
+  .mn-name-input {
+    font-size: 13px;
+  }
 }
 
 .mn-rank-sub {
@@ -730,7 +745,7 @@ dialog.my-note-dialog::backdrop {
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  color: #78716C;
+  color: #68625C;
 }
 
 /* Radar */
@@ -912,7 +927,7 @@ dialog.my-note-dialog::backdrop {
 .mn-tour-meta {
   margin: 2px 0 0;
   font-size: 11px;
-  color: #78716C;
+  color: #68625C;
 }
 
 /* Sacred areas */
@@ -1122,7 +1137,7 @@ dialog.my-note-dialog::backdrop {
   align-items: center;
   justify-content: space-between;
   font-size: 11.5px;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-quiz-vol--done {
@@ -1138,22 +1153,15 @@ dialog.my-note-dialog::backdrop {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px 10px;
   padding: 12px 18px 14px;
   border-top: 1px solid #ece3d2;
   background: #faf6ec;
 }
 
-.mn-footer-left {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
 .mn-footer-note {
   font-size: 11px;
-  color: #78716C;
+  color: #68625C;
 }
 
 .mn-export-btn {
@@ -1174,23 +1182,4 @@ dialog.my-note-dialog::backdrop {
 .mn-export-btn:hover {
   border-color: #253331;
   background: #f2ece0;
-}
-
-.mn-close-btn {
-  margin-left: auto;
-  min-height: 40px;
-  padding: 8px 24px;
-  border-radius: 9999px;
-  border: 1px solid #253331;
-  background: #253331;
-  color: #faf6eb;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
-}
-
-.mn-close-btn:hover {
-  background: #1a2422;
-  border-color: #1a2422;
 }

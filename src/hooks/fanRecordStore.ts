@@ -1,5 +1,6 @@
-import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import { VERIFIED_SONG_BY_ID, verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import type { FanReview } from '../data/higedanData';
+import { safeRandomUuid } from '../utils/browserStorage';
 import { normalizeSetlistOrder, type SetlistEntry } from '../utils/setlist';
 import { restoreFanRecords, STORAGE_KEY, type PersistedState } from './fanRecordStorage';
 import { readPendingSetlistAdds, writePendingSetlistAdd, type JournalStorage, type PendingSetlistAdd } from './setlistAddJournal';
@@ -11,7 +12,7 @@ const CONFLICT = '別のタブで記録が変わりました。最新の内容�
 const JOURNAL_ERROR = '曲の追加を一時保存できませんでした。端末の保存設定を確認して、もう一度お試しください。';
 const JOURNAL_READ_ERROR = '保存待ちの曲の情報を一部読めませんでした。元の記録は消去しません。';
 const JOURNAL_CANCEL_ERROR = '曲の削除を一時保存に反映できませんでした。画面を閉じる前に記録を書き出してください。';
-const songIds = new Set(HIGEDAN_SONGS.map(song => song.id));
+const songIds = new Set(VERIFIED_SONG_BY_ID.keys());
 
 export interface FanRecords {
   setlist: SetlistEntry[];
@@ -258,7 +259,7 @@ export class FanRecordStore {
         let epoch = expectedEpoch;
         try { epoch = decode(incoming).resetEpoch; } catch { /* explicit recovery */ }
         if (epoch !== expectedEpoch) { this.refresh(); return false; }
-        const fresh = initialRecords(crypto.randomUUID());
+        const fresh = initialRecords(safeRandomUuid());
         // Commit defaults and their reset generation together. A failed write leaves the
         // previous record intact, and stale drafts cannot cross a successful reset.
         const raw = encode(fresh);
@@ -285,7 +286,7 @@ export class FanRecordStore {
           return false;
         }
         // A new generation prevents stale tabs and journals from reviving old records.
-        const next = { ...imported, resetEpoch: crypto.randomUUID(), setlistMembershipVersions: {} };
+        const next = { ...imported, resetEpoch: safeRandomUuid(), setlistMembershipVersions: {} };
         const raw = encode(next);
         this.storage().setItem(STORAGE_KEY, raw);
         this.raw = raw;
@@ -312,12 +313,23 @@ export function createFanRecordStore() {
 let guardDatabase: Promise<IDBDatabase> | undefined;
 function withRecordLock<T>(work: () => T): Promise<T> {
   if (navigator.locks) return navigator.locks.request(STORAGE_KEY, work);
+  if (typeof indexedDB === 'undefined') return Promise.resolve().then(work);
   if (!guardDatabase) {
     guardDatabase = new Promise<IDBDatabase>((resolve, reject) => {
       const open = indexedDB.open('higedan-fan-record-lock', 1);
       open.onupgradeneeded = () => open.result.createObjectStore('guard');
       open.onerror = () => reject(open.error);
-      open.onsuccess = () => resolve(open.result);
+      open.onsuccess = () => {
+        const db = open.result;
+        db.onversionchange = () => {
+          db.close();
+          guardDatabase = undefined;
+        };
+        db.onclose = () => {
+          guardDatabase = undefined;
+        };
+        resolve(db);
+      };
     }).catch(error => { guardDatabase = undefined; throw error; });
   }
   return guardDatabase.then(database => new Promise<T>((resolve, reject) => {

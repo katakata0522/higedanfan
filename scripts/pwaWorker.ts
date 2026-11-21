@@ -90,8 +90,17 @@ function cacheKeyFor(request) {
 
 function offlineFallbackResponse() {
   return new Response(
-    '<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>オフライン｜115万キロのファンノート</title><body style="margin:0;padding:24px;font-family:sans-serif;background:#faf6eb;color:#253331;"><main style="max-width:480px;margin:40px auto;background:#fffdf8;border:1px solid #dfd7c7;border-radius:16px;padding:24px;"><h1 style="font-size:20px;margin:0 0 12px;">通信に接続できません</h1><p style="font-size:14px;line-height:1.7;margin:0 0 16px;">電波のよい場所で再読み込みすると、最新のページを開けます。</p><button type="button" onclick="location.reload()" style="padding:10px 18px;border-radius:10px;border:none;background:#253331;color:#faf6eb;font-size:14px;cursor:pointer;">再読み込み</button></main></body></html>',
-    { status: 503, headers: { 'Content-Type': 'text/html; charset=utf-8' } },
+    '<!doctype html><html lang="ja"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>オフライン｜115万キロのファンノート</title><body style="margin:0;padding:24px;font-family:sans-serif;background:#faf6eb;color:#253331;"><main style="max-width:480px;margin:40px auto;background:#fffdf8;border:1px solid #dfd7c7;border-radius:16px;padding:24px;"><h1 style="font-size:20px;margin:0 0 12px;">通信に接続できません</h1><p style="font-size:14px;line-height:1.7;margin:0 0 16px;">電波のよい場所で再読み込みすると、最新のページを開けます。</p><a href="" style="display:inline-block;text-decoration:none;padding:10px 18px;border-radius:10px;border:none;background:#253331;color:#faf6eb;font-size:14px;cursor:pointer;">再読み込み</a></main></body></html>',
+    {
+      status: 503,
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'",
+        'Referrer-Policy': 'no-referrer',
+        'X-Content-Type-Options': 'nosniff',
+      },
+    },
   );
 }
 
@@ -105,8 +114,20 @@ async function fetchBounded(request) {
   }
 }
 
-async function storeSafely(cache, key, response) {
-  if (!cache || !response || !response.ok || response.type !== 'basic') return;
+function expectedContentTypeMatches(urlPathname, isNavigation, response) {
+  const ct = (response.headers.get('Content-Type') || '').toLowerCase();
+  if (!ct) return true;
+  if (isNavigation) return ct.includes('text/html');
+  if (urlPathname.endsWith('.js')) return ct.includes('javascript');
+  if (urlPathname.endsWith('.css')) return ct.includes('text/css');
+  return true;
+}
+
+async function storeSafely(cache, key, response, urlPathname, isNavigation) {
+  if (!cache || !response || response.status !== 200 || response.type !== 'basic' || response.redirected) return;
+  const cacheControl = response.headers.get('Cache-Control') || '';
+  if (/no-store/i.test(cacheControl)) return;
+  if (!expectedContentTypeMatches(urlPathname, isNavigation, response)) return;
   try {
     await cache.put(key, response.clone());
     const keys = await cache.keys();
@@ -165,11 +186,15 @@ self.addEventListener('fetch', event => {
         const cached = await cache.match(key).catch(() => undefined);
         if (cached) return cached;
       }
-      const response = await fetch(request);
-      if (cache) {
-        event.waitUntil(storeSafely(cache, key, response));
+      try {
+        const response = await fetchBounded(request);
+        if (cache) {
+          event.waitUntil(storeSafely(cache, key, response, url.pathname, false));
+        }
+        return response;
+      } catch {
+        return Response.error();
       }
-      return response;
     })());
     return;
   }
@@ -182,14 +207,14 @@ self.addEventListener('fetch', event => {
         throw new Error('Server error during navigation');
       }
       if (cache) {
-        event.waitUntil(storeSafely(cache, key, response));
+        event.waitUntil(storeSafely(cache, key, response, url.pathname, isNavigation));
       }
       return response;
     } catch {
       if (cache) {
         const cached = await cache.match(key).catch(() => undefined);
         if (cached) return cached;
-        if (isNavigation) {
+        if (isNavigation && !url.pathname.startsWith('/higedanfan/songs/')) {
           const homeCached = await cache.match(canonicalUrl('/higedanfan/').href).catch(() => undefined);
           if (homeCached) return homeCached;
         }

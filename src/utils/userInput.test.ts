@@ -72,3 +72,23 @@ test('large malformed fields finish without blocking, across backup formats and 
     assert.equal(results[0].title, 'My セトリ ');
   } finally { clearTimeout(timer); await worker.terminate(); }
 });
+
+test('sanitizeUserText removes BiDi override characters, C1 control bytes, and nested dangerous schemes or handlers', () => {
+  // Bidirectional isolates/overrides and Arabic letter mark
+  const bidiInput = 'Safe\u061C\u200E\u200F\u202A\u202B\u202C\u202D\u202E\u2066\u2067\u2068\u2069Text';
+  assert.equal(sanitizeUserText(bidiInput), 'SafeText');
+
+  // C1 control characters (\u0080 - \u009F)
+  const c1Input = 'Line\u0080\u0085\u009B\u009FEnd';
+  assert.equal(sanitizeUserText(c1Input), 'LineEnd');
+
+  // Multi-pass obfuscated/stacked URI scheme and inline DOM handler stripping
+  assert.equal(sanitizeUserText('ja<!--split-->vascript:alert(1)'), 'alert(1)');
+  assert.equal(sanitizeUserText('da\u200Eta:text/html,ok'), 'text/html,ok');
+  assert.equal(sanitizeUserText('vb\u0080script:msg'), 'msg');
+  assert.equal(sanitizeUserText('fi<img src=x>le:///etc/passwd'), '///etc/passwd');
+  assert.equal(sanitizeUserText('bl<b>ob:https://example.com'), 'https://example.com');
+  assert.equal(sanitizeUserText('javascript:data:vbscript:alert(1)'), 'alert(1)');
+  assert.equal(sanitizeUserText('label on<!--c-->click=alert(1)'), 'label alert(1)');
+  assert.equal(sanitizeUserText('label onclick=onpointerenter=foo'), 'label foo');
+});

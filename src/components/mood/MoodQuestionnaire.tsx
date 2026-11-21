@@ -88,9 +88,17 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
   const question = QUESTIONS[step];
   const selected = answers[ANSWER_FIELDS[step - 1]];
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const prevStepRef = useRef<MoodStep | null>(null);
 
   useEffect(() => {
-    headingRef.current?.focus();
+    if (prevStepRef.current === null) {
+      prevStepRef.current = step;
+      return;
+    }
+    if (prevStepRef.current !== step) {
+      prevStepRef.current = step;
+      headingRef.current?.focus({ preventScroll: true });
+    }
   }, [step]);
 
   return (
@@ -144,7 +152,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
                 {option.id === selected && <div className="mt-1 text-xs font-bold text-[#A93020]">選択中</div>}
               </div>
             </div>
-            <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C] group-hover:translate-x-0.5 group-hover:text-[#1C1917] transition-transform" />
+            <ChevronRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#68625C] group-hover:translate-x-0.5 group-hover:text-[#1C1917] transition-transform" />
           </button>
         ))}
       </div>

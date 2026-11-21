@@ -1,7 +1,7 @@
 import { RotateCcw, Award, Newspaper, ChevronDown } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
-import type { QuizQuestion } from '../../data/higedanData';
-import { formatOrderingSequence, type QuizResultSummary } from '../../utils/fanLogic';
+import type { QuizQuestion } from '../../data/higedanTypes';
+import { formatOrderingSequence, type QuizResultSummary } from '../../utils/quizScoring';
 import type { QuizQuestionOutcome } from './quizSession';
 
 interface Props {
@@ -30,10 +30,10 @@ export function QuizResultCard({
   return (
     <div className="mt-6 rounded-2xl border border-[#D5CEC2] bg-white p-6 sm:p-8 text-center space-y-5 shadow-xs">
       <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[#FEF8EC] text-[#B45309]">
-        <Award className="h-7 w-7" />
+        <Award aria-hidden="true" className="h-7 w-7" />
       </div>
 
-      <div className="text-xs font-bold text-[#78716C]">
+      <div className="text-xs font-bold text-[#68625C]">
         Official髭男dism検定 認定結果（{activeCourseLabel}）
       </div>
 

@@ -12,7 +12,7 @@ import { SACRED_SPOTS, TOUR_ARCHIVES } from '../src/data/higedanData';
 import { isTempoUnderReview } from '../src/data/tempoReviewStatus';
 import { formatDuration, formatSongBpm } from '../src/utils/format';
 import { formatAlbumDisplayName } from '../src/utils/songCatalog';
-import { CSP_MARKER, escapeHtml, INITIAL_PAINT_STYLE } from './siteHtml';
+import { CSP_MARKER, escapeHtml, INITIAL_PAINT_STYLE, serializeJsonLd } from './siteHtml';
 
 interface SongFactRow {
   recording: string;
@@ -24,10 +24,6 @@ interface SongFactRow {
   tempo: number;
   album: string;
   style: string;
-}
-
-function serializeJsonLd(value: unknown): string {
-  return JSON.stringify(value).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 }
 
 function buildCornerBody(
@@ -162,7 +158,8 @@ export function generateFeaturePages(rootDir: string): string[] {
     <link rel="preload" as="font" type="font/woff2" crossorigin href="/higedanfan/fonts/kiwi-maru-medium-c8f08bbe.woff2" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@400;500&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho:wght@500;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@500&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho:wght@500;600&display=swap" media="print" data-async-font />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kiwi+Maru:wght@500&family=Noto+Sans+JP:wght@100..900&family=Shippori+Mincho:wght@500;600&display=swap" /></noscript>
     <title>${escapeHtml(corner.title)}</title>
     <meta name="description" content="${escapeHtml(corner.description)}" />
     <meta property="og:site_name" content="${escapeHtml(SITE_BRAND_NAME)}" />

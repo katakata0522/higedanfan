@@ -95,22 +95,57 @@ function soundPreferencePoints(song: SongItem, preference: MoodSoundPreference):
   }
 }
 
+const META_SOUND_PREFERENCES: ReadonlySet<MoodSoundPreference> = new Set([
+  'rhythm',
+  'gentle',
+  'melody',
+  'powerful',
+]);
+
+function isSoundMatchFromPoints(
+  song: SongItem,
+  preference: MoodSoundPreference,
+  points: number,
+): boolean {
+  return META_SOUND_PREFERENCES.has(preference)
+    ? points >= 21
+    : song.sound === preference;
+}
+
 export function isSoundMatch(song: SongItem, preference: MoodSoundPreference): boolean {
-  return ['rhythm', 'gentle', 'melody', 'powerful'].includes(preference)
+  return META_SOUND_PREFERENCES.has(preference)
     ? soundPreferencePoints(song, preference) >= 21
     : song.sound === preference;
 }
 
-function matchedCriteria(song: SongItem, criteria: MoodCriteria): string[] {
-  return [
-    song.moods.includes(criteria.mood) ? `気分「${MOOD_CHOICE_LABELS[criteria.mood]}」` : null,
-    song.situations.includes(criteria.situation) ? `場面「${SITUATION_CHOICE_LABELS[criteria.situation]}」` : null,
-    isSoundMatch(song, criteria.sound) ? `曲調「${SOUND_PREFERENCE_LABELS[criteria.sound]}」` : null,
-    criteria.era && criteria.era !== 'any' && matchesEra(song, criteria.era)
-      ? `時期「${ERA_PREFERENCE_LABELS[criteria.era]}」` : null,
-    criteria.length && criteria.length !== 'any' && matchesLength(song.durationSec, criteria.length)
-      ? `長さ「${LENGTH_PREFERENCE_LABELS[criteria.length]}」` : null,
-  ].filter((item): item is string => Boolean(item));
+function collectCriteriaEvaluation(song: SongItem, criteria: MoodCriteria) {
+  const moodMatched = song.moods.includes(criteria.mood);
+  const situationMatched = song.situations.includes(criteria.situation);
+  const soundPoints = soundPreferencePoints(song, criteria.sound);
+  const soundMatched = isSoundMatchFromPoints(song, criteria.sound, soundPoints);
+  const eraMatched = Boolean(
+    criteria.era && criteria.era !== 'any' && matchesEra(song, criteria.era),
+  );
+  const lengthMatched = Boolean(
+    criteria.length && criteria.length !== 'any' && matchesLength(song.durationSec, criteria.length),
+  );
+
+  const reasons: string[] = [];
+  if (moodMatched) reasons.push(`気分「${MOOD_CHOICE_LABELS[criteria.mood]}」`);
+  if (situationMatched) reasons.push(`場面「${SITUATION_CHOICE_LABELS[criteria.situation]}」`);
+  if (soundMatched) reasons.push(`曲調「${SOUND_PREFERENCE_LABELS[criteria.sound]}」`);
+  if (eraMatched && criteria.era) reasons.push(`時期「${ERA_PREFERENCE_LABELS[criteria.era]}」`);
+  if (lengthMatched && criteria.length) reasons.push(`長さ「${LENGTH_PREFERENCE_LABELS[criteria.length]}」`);
+
+  return {
+    moodMatched,
+    situationMatched,
+    soundPoints,
+    soundMatched,
+    eraMatched,
+    lengthMatched,
+    reasons,
+  };
 }
 
 export interface MatchBreakdown {
@@ -133,12 +168,7 @@ export interface ScoredSongMatch {
 
 const GENRE_STYLE_LABELS = /^(アップテンポ|ミドルテンポ|ミディアムロック|バラード|スローな曲|R&B|ファンク|ロック|ポップス)$/;
 
-/** Explain the actual matching criteria without claiming that a song will cause a feeling. */
-export function buildMoodMatchExplanation(
-  song: SongItem,
-  criteria: MoodCriteria
-): string {
-  const matched = matchedCriteria(song, criteria);
+function formatMoodMatchExplanation(song: SongItem, matched: readonly string[]): string {
   const reason = matched.length
     ? `${matched.join('・')}にぴったり重なる一曲です。`
     : '選んだ時期や長さの中で、今の気分に近い候補を選びました。';
@@ -148,24 +178,35 @@ export function buildMoodMatchExplanation(
   return `${reason}${styleNote}`;
 }
 
-export function buildMatchBreakdown(
+/** Explain the actual matching criteria without claiming that a song will cause a feeling. */
+export function buildMoodMatchExplanation(
   song: SongItem,
   criteria: MoodCriteria
+): string {
+  return formatMoodMatchExplanation(song, collectCriteriaEvaluation(song, criteria).reasons);
+}
+
+function buildMatchBreakdownFromFlags(
+  song: SongItem,
+  criteria: MoodCriteria,
+  moodMatched: boolean,
+  situationMatched: boolean,
+  soundMatched: boolean,
 ): MatchBreakdown {
-  const moodSyncPercent = song.moods.includes(criteria.mood)
+  const moodSyncPercent = moodMatched
     ? song.moods[0] === criteria.mood
       ? 98
       : 92
     : 74;
 
-  const sceneFitPercent = song.situations.includes(criteria.situation)
+  const sceneFitPercent = situationMatched
     ? song.situations[0] === criteria.situation
       ? 97
       : 91
     : 75;
 
   const soundMatchPercent =
-    isSoundMatch(song, criteria.sound)
+    soundMatched
       ? 99
       : (song.sound === 'piano_pop' && criteria.sound === 'emotional_ballad') ||
         (song.sound === 'brass_funk' && criteria.sound === 'stadium_rock')
@@ -190,39 +231,49 @@ export function buildMatchBreakdown(
   };
 }
 
+export function buildMatchBreakdown(
+  song: SongItem,
+  criteria: MoodCriteria
+): MatchBreakdown {
+  return buildMatchBreakdownFromFlags(
+    song,
+    criteria,
+    song.moods.includes(criteria.mood),
+    song.situations.includes(criteria.situation),
+    isSoundMatch(song, criteria.sound),
+  );
+}
+
 export function scoreSongsByMood(
   songs: SongItem[],
   criteria: MoodCriteria
 ): ScoredSongMatch[] {
   const scored = songs.map((song) => {
-    let rawPoints = 60;
-    const reasons = matchedCriteria(song, criteria);
-
-    if (song.moods.includes(criteria.mood)) {
-      rawPoints += 18;
-    }
-    if (song.situations.includes(criteria.situation)) {
-      rawPoints += 11;
-    }
-    rawPoints += soundPreferencePoints(song, criteria.sound);
-
-    if (criteria.era && criteria.era !== 'any' && matchesEra(song, criteria.era)) rawPoints += 8;
-    if (criteria.length && criteria.length !== 'any' && matchesLength(song.durationSec, criteria.length)) rawPoints += 6;
-
-    const matchScore = Math.min(99, rawPoints);
-    const moodMatchExplanation = buildMoodMatchExplanation(song, criteria);
-    const matchBreakdown = buildMatchBreakdown(song, criteria);
-    const soundAnalysisReason = `曲調の特徴：${song.musicalHighlight}`;
+    const evalResult = collectCriteriaEvaluation(song, criteria);
+    const rawPoints =
+      60 +
+      (evalResult.moodMatched ? 18 : 0) +
+      (evalResult.situationMatched ? 11 : 0) +
+      evalResult.soundPoints +
+      (evalResult.eraMatched ? 8 : 0) +
+      (evalResult.lengthMatched ? 6 : 0);
 
     return {
       song,
-      matchScore,
-      matchReasons: reasons,
-      moodMatchExplanation,
-      soundAnalysisReason,
-      matchBreakdown,
+      matchScore: Math.min(99, rawPoints),
+      matchReasons: evalResult.reasons,
+      moodMatchExplanation: formatMoodMatchExplanation(song, evalResult.reasons),
+      soundAnalysisReason: `曲調の特徴：${song.musicalHighlight}`,
+      matchBreakdown: buildMatchBreakdownFromFlags(
+        song,
+        criteria,
+        evalResult.moodMatched,
+        evalResult.situationMatched,
+        evalResult.soundMatched,
+      ),
       rawPoints,
-      coreMatches: Number(song.moods.includes(criteria.mood)) + Number(isSoundMatch(song, criteria.sound)),
+      coreMatches: Number(evalResult.moodMatched) + Number(evalResult.soundMatched),
+      tie: tieOrder(song.id, criteria),
     };
   });
 
@@ -231,9 +282,8 @@ export function scoreSongsByMood(
     if (b.rawPoints !== a.rawPoints) {
       return b.rawPoints - a.rawPoints;
     }
-    return tieOrder(a.song.id, criteria) - tieOrder(b.song.id, criteria)
-      || a.song.id.localeCompare(b.song.id, 'en');
-  }).map(({rawPoints: _rawPoints, coreMatches: _coreMatches, ...match}) => match);
+    return a.tie - b.tie || a.song.id.localeCompare(b.song.id, 'en');
+  }).map(({ rawPoints: _rawPoints, coreMatches: _coreMatches, tie: _tie, ...match }) => match);
 }
 
 // 同点では回答に応じて順番を変え、同じ回答を開き直したときは安定させる。

@@ -165,3 +165,85 @@ test('backup preserves myNoteProfile and rejects tampered profile payloads', () 
   badImageFlag.setlistShareImageGenerated = 'yes';
   assert.throws(() => parseFanRecordBackupWithSetlists(JSON.stringify(badImageFlag)), /安全に読み込めません/);
 });
+
+test('backup parser rejects deep nesting, unexpected keys, invalid updatedAt, and excessive ID counts', () => {
+  const baseRecords = {
+    setlist: [],
+    setlistTitle: 'セトリ',
+    visitedSpotIds: [],
+    attendedTourIds: [],
+    votedKeys: [],
+    reviews: [],
+    likedReviewIds: [],
+    bestQuizScore: null,
+  };
+  const baseEnvelope = () => ({
+    format: 'higedan-fan-notebook',
+    version: 1,
+    records: { ...baseRecords, hasQuizAttempt: false },
+  });
+
+  // 1. Deep nesting exceeding MAX_COMPARE_DEPTH (12)
+  let nested: Record<string, unknown> = { leaf: 'x' };
+  for (let i = 0; i < 15; i += 1) nested = { nested };
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({ ...baseEnvelope(), savedSetlists: nested })),
+    /形式を確認|安全に読み込めません|正しくありません|読み取れませんでした/,
+  );
+
+  // 2. Unexpected keys in outer envelope, records, savedSetlists, and savedSetlist item
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({ ...baseEnvelope(), surprise: true })),
+    /対応していません/,
+  );
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({
+      ...baseEnvelope(),
+      records: { ...baseRecords, hasQuizAttempt: false, sneaky: 1 },
+    })),
+    /読み取れませんでした/,
+  );
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({
+      ...baseEnvelope(),
+      savedSetlists: {
+        activeId: 'setlist-1',
+        items: [{ id: 'setlist-1', title: 'S1', entries: [], updatedAt: '2026-11-18T00:00:00.000Z' }],
+        extra: 1,
+      },
+    })),
+    /形式が正しくありません/,
+  );
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({
+      ...baseEnvelope(),
+      savedSetlists: {
+        activeId: 'setlist-1',
+        items: [{ id: 'setlist-1', title: 'S1', entries: [], updatedAt: '2026-11-18T00:00:00.000Z', extra: 1 }],
+      },
+    })),
+    /安全に読み込めませんでした/,
+  );
+
+  // 3. Invalid updatedAt inside savedSetlists
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({
+      ...baseEnvelope(),
+      savedSetlists: {
+        activeId: 'setlist-1',
+        items: [{ id: 'setlist-1', title: 'S1', entries: [], updatedAt: 'invalid-timestamp' }],
+      },
+    })),
+    /安全に読み込めませんでした/,
+  );
+
+  // 4. Excessive ID counts exceeding backup validation caps
+  const tooManyIds = Array.from({ length: 400 }, (_, i) => `spot-${i}`);
+  assert.throws(
+    () => parseFanRecordBackupWithSetlists(JSON.stringify({
+      ...baseEnvelope(),
+      records: { ...baseRecords, hasQuizAttempt: false, visitedSpotIds: tooManyIds },
+    })),
+    /安全に読み込めませんでした/,
+  );
+});

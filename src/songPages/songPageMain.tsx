@@ -2,7 +2,8 @@ import { Component, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EditorialSongPage } from './EditorialSongPage';
 import { autoSongPage } from './autoSongPage';
-import { applySongEditorial } from './applySongEditorial';
+import { loadSongEditorial } from './loadSongEditorial';
+import { mergeSongEditorial } from './mergeSongEditorial';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 import { registerPwaServiceWorker } from '../utils/pwaInstall';
 import './EditorialSongPage.css';
@@ -39,28 +40,37 @@ class SongPageErrorBoundary extends Component<{ children: ReactNode }, { hasErro
     return { hasError: true };
   }
 
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
+    console.error('楽曲ページの表示中にエラーが発生しました', error, errorInfo);
+  }
+
   render() {
     return this.state.hasError ? <SongPageErrorFallback /> : this.props.children;
   }
 }
 
-const root = document.getElementById('root')!;
-const songId = root.dataset.songId;
+const root = document.getElementById('root');
+const songId = root?.dataset.songId;
 const pages = import.meta.glob<{ default: EditorialSongPageData }>('./data/*.ts');
 const loadPage = songId ? pages[`./data/${songId}.ts`] : undefined;
 
-if (songId) {
+if (root && songId) {
   registerPwaServiceWorker();
   const reactRoot = createRoot(root);
-  void (loadPage ? loadPage().then(module => module.default) : Promise.resolve(autoSongPage(songId))).then(page => {
-    if (page.id !== songId) throw new Error('楽曲ページのIDが一致しません');
-    reactRoot.render(
-      <SongPageErrorBoundary>
-        <EditorialSongPage page={applySongEditorial(page)} />
-      </SongPageErrorBoundary>,
-    );
-  }).catch(error => {
-    console.error('楽曲ページを読み込めませんでした', error);
-    reactRoot.render(<SongPageErrorFallback />);
-  });
+  void Promise.all([
+    Promise.resolve().then(() => (loadPage ? loadPage().then(module => module.default) : autoSongPage(songId))),
+    loadSongEditorial(songId),
+  ])
+    .then(([page, article]) => {
+      if (page.id !== songId) throw new Error('楽曲ページのIDが一致しません');
+      reactRoot.render(
+        <SongPageErrorBoundary>
+          <EditorialSongPage page={mergeSongEditorial(page, article)} />
+        </SongPageErrorBoundary>,
+      );
+    })
+    .catch(error => {
+      console.error('楽曲ページを読み込めませんでした', error);
+      reactRoot.render(<SongPageErrorFallback />);
+    });
 }

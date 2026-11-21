@@ -1,4 +1,4 @@
-import { Fragment, lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { Fragment, lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronRight, ExternalLink, Menu, NotebookPen, Play, Plus } from 'lucide-react';
 import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
 import { songEvidence } from '../data/fullCatalogSongs';
@@ -6,7 +6,7 @@ import { useFanRecords } from '../hooks/useFanRecords';
 import { formatSongBpm, formatDuration } from '../utils/format';
 import { tempoAlternatives } from '../data/tempoAlternatives';
 import { isTempoUnderReview } from '../data/tempoReviewStatus';
-import { songReturnDestination } from '../utils/guideReturnState';
+import { songReturnDestination } from '../utils/songReturnTab';
 import { tabPath } from '../config/siteFeatures';
 import { SITE_NAV_ITEMS } from '../components/SiteHeader';
 import { infoPages } from '../components/info/infoPages';
@@ -21,7 +21,11 @@ import { songAppleArtwork } from '../data/songAppleArtwork';
 import { getQuoteSizeTier, splitCreditChunks, splitQuoteLinePhrases } from './quoteTypography';
 import { formatAlbumDisplayName } from '../utils/songCatalog';
 import { recordMyNoteSongRead } from '../utils/myNoteProfile';
-import { pwaInstallOutcomeMessage, usePwaInstall } from '../utils/pwaInstall';
+import { usePwaInstallAction } from '../utils/pwaInstall';
+import { MustacheMark } from '../components/MustacheMark';
+import { writeQuickAddSetlistId } from '../utils/quickAddSession';
+import { songPagePath } from './publishedSongPageIds';
+import { ErrorBoundary } from '../components/ErrorBoundary';
 import type { EditorialSongPageData } from './EditorialSongPageData';
 
 const MyNoteModal = lazy(() =>
@@ -55,36 +59,29 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
   const [artworkFailed, setArtworkFailed] = useState(false);
   const [isPlayerLoaded, setIsPlayerLoaded] = useState(false);
   const [isIntroOpen, setIsIntroOpen] = useState(false);
+  const [hasOpenedIntro, setHasOpenedIntro] = useState(false);
   const [introReplayToken, setIntroReplayToken] = useState(0);
+  const handleCloseIntro = useCallback(() => setIsIntroOpen(false), []);
   const [hasLoadedMyNote, setHasLoadedMyNote] = useState(false);
   const [isMyNoteOpen, setIsMyNoteOpen] = useState(false);
   const sourcesRef = useRef<HTMLDetailsElement>(null);
   const siteMenuRef = useRef<HTMLDetailsElement>(null);
   const toastTimer = useRef<number | null>(null);
-  const showBanner = (message: string) => {
+  const showBanner = useCallback((message: string) => {
     setToast(message);
     if (toastTimer.current !== null) window.clearTimeout(toastTimer.current);
     toastTimer.current = window.setTimeout(() => setToast(null), 3200);
-  };
+  }, []);
   const records = useFanRecords(showBanner);
-  const pwaInstall = usePwaInstall();
-
-  const handleInstallClick = async () => {
-    if (pwaInstall.isInstalling) return;
-    const outcome = await pwaInstall.install();
-    const message = pwaInstallOutcomeMessage(outcome);
-    if (message) showBanner(message);
-    if (outcome === 'accepted') {
-      siteMenuRef.current?.removeAttribute('open');
-      siteMenuRef.current?.querySelector('summary')?.focus();
-    } else if (outcome !== 'unavailable') {
-      requestAnimationFrame(() => {
-        if (!document.getElementById('pwa-install-btn') && document.activeElement === document.body) {
-          document.getElementById('kurun-replay-btn')?.focus();
-        }
-      });
-    }
-  };
+  const handleInstallAccepted = useCallback(() => {
+    siteMenuRef.current?.removeAttribute('open');
+    siteMenuRef.current?.querySelector('summary')?.focus();
+  }, []);
+  const pwaInstall = usePwaInstallAction({
+    onFeedback: showBanner,
+    onAccepted: handleInstallAccepted,
+  });
+  const handleInstallClick = pwaInstall.triggerInstall;
   const inSetlist = records.setlist.some(item => item.songId === song.id);
   const [returnDest] = useState(songReturnDestination);
 
@@ -117,31 +114,22 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
 
   return (
     <div className="song-page">
-      <Suspense fallback={null}>
-        {isIntroOpen && (
-          <KurunIntroOverlay
-            isOpen={isIntroOpen}
-            replayToken={introReplayToken}
-            onClose={() => setIsIntroOpen(false)}
-          />
-        )}
-      </Suspense>
+      <ErrorBoundary fallback={null}>
+        <Suspense fallback={null}>
+          {hasOpenedIntro && (
+            <KurunIntroOverlay
+              isOpen={isIntroOpen}
+              replayToken={introReplayToken}
+              onClose={handleCloseIntro}
+            />
+          )}
+        </Suspense>
+      </ErrorBoundary>
       <a className="skip-link" href="#main" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>本文へ移動</a>
       <header className="site-topbar" aria-hidden={isIntroOpen || undefined} inert={isIntroOpen || undefined}>
         <div className="site-topbar-inner">
           <a className="site-brand" href={base}>
-            <svg viewBox="0 0 100 55" aria-hidden="true" className="site-brand-logo">
-              <g transform="translate(50 28) scale(0.145) translate(-370 -125)">
-                <path
-                  fill="#2d3c3a"
-                  d="M370 86 C356 66 338 62 316 62 C254 62 234 156 174 156 C138 156 112 142 112 120 C112 102 125 94 140 94 C153 94 160 103 160 114 C160 124 151 130 142 130 C136 130 132 126 132 121 C132 117 125 117 125 122 C125 132 133 139 144 139 C159 139 170 128 170 112 C170 94 155 82 136 82 C108 82 88 104 88 134 C88 172 144 188 214 188 C286 188 336 156 362 128 C366 124 368 122 370 122 C372 122 374 124 378 128 C404 156 454 188 526 188 C596 188 652 172 652 134 C652 104 632 82 604 82 C585 82 570 94 570 112 C570 128 581 139 596 139 C607 139 615 132 615 122 C615 117 608 117 608 121 C608 126 604 130 598 130 C589 130 580 124 580 114 C580 103 587 94 600 94 C615 94 628 102 628 120 C628 142 602 156 566 156 C506 156 486 62 424 62 C402 62 384 66 370 86 Z"
-                />
-                <path
-                  d="M370 96 C360 82 346 88 349 101 C351 110 370 120 370 120 C370 120 389 110 391 101 C394 88 380 82 370 96 Z"
-                  fill="#bd604e"
-                />
-              </g>
-            </svg>
+            <MustacheMark className="site-brand-logo" />
             <span className="site-brand-text">
               <span className="site-brand-title">
                 <span>115万キロの</span><wbr /><span>ファンノート</span>
@@ -176,7 +164,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             }}>
             <summary aria-label="サイト内メニュー">
               <Menu className="song-menu-trigger-icon" aria-hidden="true" />
-              <span>メニュー</span>
+              <span className="song-menu-trigger-label">メニュー</span>
             </summary>
             <nav className="song-menu-panel" aria-label="サイト内メニュー">
               <div className="song-menu-header">
@@ -202,6 +190,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   className="song-menu-sublink"
                   onClick={() => {
                     siteMenuRef.current?.removeAttribute('open');
+                    setHasOpenedIntro(true);
                     setIntroReplayToken(token => token + 1);
                     setIsIntroOpen(true);
                   }}
@@ -284,7 +273,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                   onError={() => setArtworkFailed(true)}
                 />
               ) : (
-                <div className="cover-placeholder" role="img" aria-label="ジャケット画像の仮枠" />
+                <div className="cover-placeholder" aria-hidden="true" />
               )}
               <figcaption className="cover-caption">
                 <a
@@ -398,8 +387,9 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                     className="listen-video-frame"
                     src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&playsinline=1`}
                     title={`${song.title}の公式動画・音源`}
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
                     referrerPolicy="strict-origin-when-cross-origin"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allow="autoplay; encrypted-media; picture-in-picture"
                     allowFullScreen
                   />
                 </div>
@@ -426,7 +416,7 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
                 </a>
               )}
             </div>
-            <p className="listen-note">※ ジャケット画像および配信情報は Apple Music の公開情報から参照しています（上記リンクから公式配信を聴けます）。</p>
+            <p className="listen-note">※ ジャケット画像および配信情報は Apple Music の公開情報から参照しています。</p>
           </section>
 
           {related.length > 0 && <section className="related-section" aria-labelledby="related-title">
@@ -443,8 +433,6 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
               <dl className="source-facts">
                 <div><dt>配信日</dt><dd>{fact.release}</dd></div>
                 <div><dt>収録作品</dt><dd>{formatAlbumDisplayName(fact.album)}{page.albumTrack ? `（${page.albumTrack}曲目）` : ''}</dd></div>
-                <div><dt>演奏時間</dt><dd>{formatDuration(fact.seconds)}</dd></div>
-                <div><dt>音域</dt><dd>地声 {fact.low}〜{fact.chest} ／ 裏声最高 {fact.falsetto ?? '—'}</dd></div>
               </dl>
               {page.vocalVariants?.map(variant => (
                 <p className="vocal-variant" key={variant.label}>
@@ -512,31 +500,39 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
       </footer>
 
       {hasLoadedMyNote && (
-        <Suspense fallback={null}>
-          <MyNoteModal
-            isOpen={isMyNoteOpen}
-            onClose={() => setIsMyNoteOpen(false)}
-            songs={records.songs}
-            setlist={records.setlist}
-            setlistTitle={records.setlistTitle}
-            resetEpoch={records.resetEpoch}
-            visitedSpotIds={records.visitedSpotIds}
-            attendedTourIds={records.attendedTourIds}
-            bestQuizScore={records.bestQuizScore}
-            votedKeys={records.votedKeys}
-            reviews={records.reviews}
-            onNavigateTab={tab => {
-              setIsMyNoteOpen(false);
-              window.location.assign(tabPath(tab, base));
-            }}
-            onNavigateSong={id => {
-              setIsMyNoteOpen(false);
-              window.location.assign(`${base}songs/${id}/`);
-            }}
-            onSwitchSavedSetlist={records.replaceSetlistSilently}
-            onExportRecords={records.downloadRecords}
-          />
-        </Suspense>
+        <ErrorBoundary fallback={null}>
+          <Suspense fallback={null}>
+            <MyNoteModal
+              isOpen={isMyNoteOpen}
+              onClose={() => setIsMyNoteOpen(false)}
+              songs={records.songs}
+              setlist={records.setlist}
+              setlistTitle={records.setlistTitle}
+              resetEpoch={records.resetEpoch}
+              visitedSpotIds={records.visitedSpotIds}
+              attendedTourIds={records.attendedTourIds}
+              bestQuizScore={records.bestQuizScore}
+              votedKeys={records.votedKeys}
+              reviews={records.reviews}
+              onNavigateTab={tab => {
+                setIsMyNoteOpen(false);
+                window.location.assign(tabPath(tab, base));
+              }}
+              onNavigateSong={id => {
+                setIsMyNoteOpen(false);
+                const nextPath = songPagePath(id);
+                if (nextPath) {
+                  window.location.assign(`${base}${nextPath}`);
+                }
+              }}
+              onSwitchSavedSetlist={(entries, title) => {
+                writeQuickAddSetlistId(null, records.resetEpoch);
+                records.replaceSetlistSilently(entries, title);
+              }}
+              onExportRecords={records.downloadRecords}
+            />
+          </Suspense>
+        </ErrorBoundary>
       )}
     </div>
   );

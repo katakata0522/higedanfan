@@ -4,8 +4,9 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { HIGEDAN_SONGS, type EraTag } from './data/higedanData';
-import { sanitizeUserText } from './utils/fanLogic';
+import { verifiedSongs as HIGEDAN_SONGS } from './data/fullCatalogSongs';
+import type { EraTag } from './data/higedanTypes';
+import { sanitizeUserText } from './utils/userInput';
 import {
   canonicalUrlForTab,
   CORNER_BY_ID,
@@ -16,35 +17,53 @@ import {
   tabPath,
 } from './config/siteFeatures';
 import { HomePage } from './components/home/HomePage';
-import {
-  KurunIntroOverlay,
-  isKurunIntroSeen,
-  markKurunIntroSeen,
-} from './components/KurunIntroOverlay';
+import { isKurunIntroSeen, markKurunIntroSeen } from './utils/kurunIntroState';
 import { useFanRecords } from './hooks/useFanRecords';
 import { SiteHeader, ActiveFeatureTab, type SiteTab, SITE_NAV_ITEMS } from './components/SiteHeader';
 import { infoPages, infoPageDescriptions, isInfoPage } from './components/info/infoPages';
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { DiscographySection } from './components/DiscographySection';
 import type { QuizSession } from './components/quiz/quizSession';
 import { clearStaleQuizSession } from './components/quiz/quizSessionClear';
 import type { MoodSession } from './components/mood/moodSession';
 import { songPagePath } from './songPages/publishedSongPageIds';
 import { PUBLIC_FEATURES } from './config/publicFeatures';
-import { clearArchiveReturnState, clearGuideListReturnState, clearGuideReturnState, clearSongReturnTab, clearTourReturnState, saveSongReturnTab } from './utils/guideReturnState';
-import { recordMyNoteFeatureVisited, recordMyNoteSongRead } from './utils/myNoteProfile';
 import {
+  clearArchiveReturnState,
+  clearGuideListReturnState,
+  clearGuideReturnState,
+  clearTourReturnState,
+} from './utils/guideReturnState';
+import { clearSongReturnTab, saveSongReturnTab } from './utils/songReturnTab';
+import { recordMyNoteFeatureVisited, recordMyNoteSongRead, clearStaleMyNoteProfile } from './utils/myNoteProfile';
+import { readStoredResetEpoch } from './hooks/fanRecordStorage';
+import { VERIFIED_SONG_IDS } from './data/fullCatalogSongs';
+import {
+  appendOrCreateSavedSetlist,
   clearStaleSavedSetlists,
-  createNewSavedSetlist,
   loadSavedSetlists,
-  persistSavedSetlists,
   readQuickAddSetlistId,
+  readStoredSavedSetlists,
   syncActiveSavedSetlist,
   writeQuickAddSetlistId,
 } from './utils/savedSetlists';
 
+const KurunIntroOverlay = React.lazy(() =>
+  import('./components/KurunIntroOverlay').then(module => ({ default: module.KurunIntroOverlay }))
+);
 const MyNoteModal = React.lazy(() =>
   import('./components/MyNoteModal').then(module => ({ default: module.MyNoteModal }))
+);
+const DiscographySection = React.lazy(() =>
+  import('./components/DiscographySection').then(module => ({ default: module.DiscographySection }))
+);
+const SacredMapSection = React.lazy(() =>
+  import('./components/SacredMapSection').then(module => ({ default: module.SacredMapSection }))
+);
+const TourArchivePage = React.lazy(() =>
+  import('./components/TourArchivePage').then(module => ({ default: module.TourArchivePage }))
+);
+const QuizSourceArchivePage = React.lazy(() =>
+  import('./components/quiz/QuizSourceArchivePage').then(module => ({ default: module.QuizSourceArchivePage }))
 );
 
 const MoodFinderSection = React.lazy(() =>
@@ -132,6 +151,7 @@ export default function App() {
     const initial = readLocation();
     return initial.tab === 'home' && !initial.songId && !isKurunIntroSeen();
   });
+  const [hasOpenedIntro, setHasOpenedIntro] = useState<boolean>(() => isIntroOpen);
   const [introReplayToken, setIntroReplayToken] = useState(0);
 
   const handleCloseIntro = React.useCallback(() => {
@@ -140,6 +160,7 @@ export default function App() {
   }, []);
 
   const handleReplayIntro = React.useCallback(() => {
+    setHasOpenedIntro(true);
     setIntroReplayToken((n) => n + 1);
     setIsIntroOpen(true);
   }, []);
@@ -153,7 +174,7 @@ export default function App() {
     };
   }, []);
 
-  const showToast = (msg: string) => {
+  const showToast = React.useCallback((msg: string) => {
     const safeMsg = sanitizeUserText(msg, 120);
     setToastMessage(safeMsg);
     if (toastTimerRef.current !== null) {
@@ -163,7 +184,7 @@ export default function App() {
       setToastMessage(null);
       toastTimerRef.current = null;
     }, 2600);
-  };
+  }, []);
 
   useEffect(() => {
     const restore = (event?: Event) => {
@@ -177,7 +198,7 @@ export default function App() {
         window.location.replace(`${import.meta.env.BASE_URL}${pagePath}`);
         return;
       }
-      if (tab !== 'discography' && tab !== 'vocal_range' && tab !== 'quiz_archive' && tab !== 'tour_archive') {
+      if (tab !== 'discography' && tab !== 'vocal_range' && tab !== 'sacred_map' && tab !== 'quiz_archive' && tab !== 'tour_archive') {
         clearGuideReturnState();
       } else {
         clearSongReturnTab();
@@ -214,28 +235,7 @@ export default function App() {
     };
   }, []);
 
-  const selectSong = (id: string | null) => {
-    const editorialPath = id ? songPagePath(id) : null;
-    if (id) {
-      recordMyNoteSongRead(id, records.resetEpoch);
-    }
-    if (editorialPath) {
-      saveSongReturnTab(activeFeatureTab);
-      window.location.assign(`${import.meta.env.BASE_URL}${editorialPath}`);
-      return;
-    }
-    if (id === null) {
-      if (window.history.state?.songParent === activeFeatureTab) {
-        window.history.back();
-        return;
-      }
-      window.history.replaceState(null, '', '#' + activeFeatureTab);
-    } else {
-      window.history.pushState({songParent: activeFeatureTab}, '', '#' + activeFeatureTab + '/' + id);
-    }
-  };
-
-  const handleSelectTab = (tab: SiteTab, eraPreset: EraTag | 'all' = 'all') => {
+  const handleSelectTab = React.useCallback((tab: SiteTab, eraPreset: EraTag | 'all' = 'all') => {
     clearGuideReturnState();
     prevTabRef.current = tab;
     pendingFocusTabRef.current = tab;
@@ -250,7 +250,7 @@ export default function App() {
     }
     if (revisitingActivity) setActivityVisit(visit => visit + 1);
     window.scrollTo({ top: 0, behavior: 'instant' });
-  };
+  }, [activeFeatureTab]);
 
   useEffect(() => {
     const meta = isInfoPage(activeFeatureTab)
@@ -271,6 +271,26 @@ export default function App() {
   }, [activeFeatureTab]);
 
   const records = useFanRecords(showToast);
+  const selectSong = React.useCallback((id: string | null) => {
+    const editorialPath = id ? songPagePath(id) : null;
+    if (id) {
+      recordMyNoteSongRead(id, records.resetEpoch);
+    }
+    if (editorialPath) {
+      saveSongReturnTab(activeFeatureTab);
+      window.location.assign(`${import.meta.env.BASE_URL}${editorialPath}`);
+      return;
+    }
+    if (id === null) {
+      if (window.history.state?.songParent === activeFeatureTab) {
+        window.history.back();
+        return;
+      }
+      window.history.replaceState(null, '', '#' + activeFeatureTab);
+    } else {
+      window.history.pushState({songParent: activeFeatureTab}, '', '#' + activeFeatureTab + '/' + id);
+    }
+  }, [activeFeatureTab, records.resetEpoch]);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [hasLoadedMyNote, setHasLoadedMyNote] = React.useState(false);
   const [isMyNoteOpen, setIsMyNoteOpen] = React.useState(false);
@@ -308,27 +328,32 @@ export default function App() {
   const moodSession = React.useMemo<{current: MoodSession | null}>(() => ({current: null}), [records.resetEpoch]);
   const { songs, setlist } = records;
 
+  const [initialStoredEpoch] = useState(() => readStoredResetEpoch() ?? '');
   const [quickAddSetlistId, setQuickAddSetlistId] = useState<string | null>(() =>
-    readQuickAddSetlistId(records.resetEpoch),
+    readQuickAddSetlistId(initialStoredEpoch),
   );
   const updateQuickAddTarget = React.useCallback((id: string | null) => {
+    const activeEpoch = records.resetEpoch || initialStoredEpoch;
     setQuickAddSetlistId(id);
-    writeQuickAddSetlistId(id, records.resetEpoch);
-  }, [records.resetEpoch]);
-  const prevResetEpochRef = React.useRef(records.resetEpoch);
+    writeQuickAddSetlistId(id, activeEpoch);
+  }, [records.resetEpoch, initialStoredEpoch]);
+  const prevResetEpochRef = React.useRef(records.resetEpoch || initialStoredEpoch);
 
   useEffect(() => {
-    if (prevResetEpochRef.current !== records.resetEpoch) {
-      prevResetEpochRef.current = records.resetEpoch;
+    const currentEpoch = records.resetEpoch;
+    if (currentEpoch && prevResetEpochRef.current && prevResetEpochRef.current !== currentEpoch) {
+      prevResetEpochRef.current = currentEpoch;
       updateQuickAddTarget(null);
+    } else if (currentEpoch && !prevResetEpochRef.current) {
+      prevResetEpochRef.current = currentEpoch;
     }
-    if (!records.resetEpoch) return;
-    const epoch = records.resetEpoch;
+    if (!currentEpoch) return;
+    const epoch = currentEpoch;
     clearStaleQuizSession(epoch);
     clearStaleSavedSetlists(epoch);
     void import('./components/mood/moodSession').then(({ clearStaleMoodSession }) => clearStaleMoodSession(epoch));
     void import('./components/quiz/quizVolumeRecords').then(({ clearStaleQuizVolumeScores }) => clearStaleQuizVolumeScores(epoch));
-    void import('./utils/myNoteProfile').then(({ clearStaleMyNoteProfile }) => clearStaleMyNoteProfile(epoch));
+    clearStaleMyNoteProfile(epoch);
   }, [records.resetEpoch, updateQuickAddTarget]);
 
   useEffect(() => {
@@ -341,52 +366,70 @@ export default function App() {
     }
   }, [activeFeatureTab, records.resetEpoch, updateQuickAddTarget]);
 
-  const setlistSongIds = setlist.map((s) => s.songId);
-  const quickAddVisibleSongIds = setlist.length === 0 || Boolean(quickAddSetlistId) ? setlistSongIds : [];
+  const activeEpoch = records.resetEpoch || initialStoredEpoch;
+  const activeSavedSetlistId = React.useMemo(
+    () => readStoredSavedSetlists(VERIFIED_SONG_IDS, { expectedEpoch: activeEpoch })?.activeId ?? null,
+    [activeEpoch, setlist, setlistSyncVersion],
+  );
+  const setlistSongIds = React.useMemo(() => setlist.map((s) => s.songId), [setlist]);
+  const isQuickAddTargetActive =
+    Boolean(quickAddSetlistId) &&
+    (activeSavedSetlistId === null || activeSavedSetlistId === quickAddSetlistId);
+  const quickAddVisibleSongIds = React.useMemo(
+    () => (setlist.length === 0 || isQuickAddTargetActive ? setlistSongIds : []),
+    [setlist.length, isQuickAddTargetActive, setlistSongIds],
+  );
 
   const handleQuickAddToSetlist = React.useCallback((songId: string) => {
     const song = songs.find(s => s.id === songId);
     if (!song) return;
-    const validIds = new Set(songs.map(s => s.id));
     const currentTitle = sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ';
-    const loaded = loadSavedSetlists(validIds, currentTitle, setlist, {
-      expectedEpoch: records.resetEpoch,
-    });
-    const synced = syncActiveSavedSetlist(loaded, currentTitle, setlist);
 
     if (setlist.length === 0) {
+      const loaded = loadSavedSetlists(VERIFIED_SONG_IDS, currentTitle, setlist, {
+        expectedEpoch: records.resetEpoch,
+      });
+      const synced = syncActiveSavedSetlist(loaded, currentTitle, setlist);
       updateQuickAddTarget(synced.activeId);
       void records.addToSetlist(songId);
       return;
     }
 
+    const loaded = loadSavedSetlists(VERIFIED_SONG_IDS, currentTitle, setlist, {
+      expectedEpoch: records.resetEpoch,
+    });
+    const synced = syncActiveSavedSetlist(loaded, currentTitle, setlist);
     if (quickAddSetlistId && quickAddSetlistId === synced.activeId) {
       void records.addToSetlist(songId);
       return;
     }
 
-    const nextNum = synced.items.length + 1;
-    const newTitle = `MYセトリ ${nextNum}`;
-    const { state: nextSaved, created } = createNewSavedSetlist(synced, newTitle, [
-      { songId, isEncore: false },
-    ]);
-    persistSavedSetlists(nextSaved, {
+    const { created } = appendOrCreateSavedSetlist({
+      validSongIds: VERIFIED_SONG_IDS,
+      currentTitle,
+      currentEntries: setlist,
+      nextEntries: [{ songId, isEncore: false }],
       expectedEpoch: records.resetEpoch,
-      validSongIds: validIds,
     });
     records.replaceSetlistSilently(created.entries, created.title);
     setSetlistSyncVersion(v => v + 1);
     updateQuickAddTarget(created.id);
     showToast(`「${currentTitle}」を保存したまま、「${created.title}」を作成して「${song.title}」を追加しました！`);
-  }, [songs, records, setlist, quickAddSetlistId, updateQuickAddTarget]);
+  }, [songs, records, setlist, quickAddSetlistId, updateQuickAddTarget, showToast]);
 
   return (
     <div className="min-h-screen flex flex-col notebook-canvas text-[#253331]">
-      <KurunIntroOverlay
-        isOpen={isIntroOpen}
-        replayToken={introReplayToken}
-        onClose={handleCloseIntro}
-      />
+      {hasOpenedIntro && (
+        <ErrorBoundary fallback={null}>
+          <React.Suspense fallback={null}>
+            <KurunIntroOverlay
+              isOpen={isIntroOpen}
+              replayToken={introReplayToken}
+              onClose={handleCloseIntro}
+            />
+          </React.Suspense>
+        </ErrorBoundary>
+      )}
       <div
         className="flex flex-1 flex-col"
         aria-hidden={isIntroOpen || undefined}
@@ -401,7 +444,7 @@ export default function App() {
       {records.storageNotice && (
         <p role="alert" className="bg-amber-100 p-3 text-sm">
           {records.storageNotice}{' '}
-          <button className="underline" onClick={records.downloadRecords}>画面上の記録を書き出す</button>
+          <button type="button" className="underline" onClick={records.downloadRecords}>画面上の記録を書き出す</button>
         </p>
       )}
       <SiteHeader
@@ -463,33 +506,32 @@ export default function App() {
                 )}
 
                 {(activeFeatureTab === 'discography' ||
-                  activeFeatureTab === 'vocal_range' ||
-                  activeFeatureTab === 'sacred_map') && (
+                  activeFeatureTab === 'vocal_range') && (
                   <DiscographySection
-                    key={activeFeatureTab === 'sacred_map' ? 'map' : 'songs'}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
                     onSelectView={(view) => handleSelectTab(view)}
                     onAddToSetlist={handleQuickAddToSetlist}
                     onRemoveFromSetlist={records.removeFromSetlist}
                     setlistSongIds={quickAddVisibleSongIds}
-                    visitedSpotIds={records.visitedSpotIds}
-                    onToggleVisitedSpot={records.toggleVisitedSpot}
                     initialSubView={
-                      activeFeatureTab === 'sacred_map'
-                        ? 'sacred_map'
-                        : activeFeatureTab === 'vocal_range'
-                        ? 'vocal_range'
-                        : 'discography'
+                      activeFeatureTab === 'vocal_range' ? 'vocal_range' : 'discography'
                     }
                     initialEraFilter={discographyEraPreset}
                   />
                 )}
 
-                {(activeFeatureTab === 'setlist' ||
-                  activeFeatureTab === 'tour_archive') && (
+                {activeFeatureTab === 'sacred_map' && (
+                  <SacredMapSection
+                    songs={songs}
+                    visitedSpotIds={records.visitedSpotIds}
+                    onToggleVisitedSpot={records.toggleVisitedSpot}
+                  />
+                )}
+
+                {activeFeatureTab === 'setlist' && (
                   <SetlistBuilderSection
-                    key={`${activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'}:${records.resetEpoch}:${setlistSyncVersion}`}
+                    key={`builder:${records.resetEpoch}:${setlistSyncVersion}`}
                     songs={songs}
                     setlist={setlist}
                     setlistTitle={records.setlistTitle}
@@ -500,6 +542,25 @@ export default function App() {
                     onMoveSong={records.moveSetlistSong}
                     onToggleEncore={records.toggleEncore}
                     onLoadPresetSetlist={records.loadPresetSetlist}
+                    onReplaceSetlistSilently={records.replaceSetlistSilently}
+                    attendedTourIds={records.attendedTourIds}
+                    onToggleAttendedTour={records.toggleAttendedTour}
+                    onExportRecords={records.downloadRecords}
+                    onImportRecords={records.importRecords}
+                    onOpenPrivacy={() => handleSelectTab('privacy')}
+                    onSelectSong={(song) => selectSong(song.id)}
+                  />
+                )}
+
+                {activeFeatureTab === 'tour_archive' && (
+                  <TourArchivePage
+                    attendedTourIds={records.attendedTourIds}
+                    onToggleAttendedTour={records.toggleAttendedTour}
+                    validSongIds={VERIFIED_SONG_IDS}
+                    hasSetlistItems={setlist.length > 0}
+                    currentSetlistTitle={
+                      sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ'
+                    }
                     onCreateSetlistFromTour={(entries, title) => {
                       updateQuickAddTarget(null);
                       if (setlist.length === 0) {
@@ -508,52 +569,42 @@ export default function App() {
                         }
                         return;
                       }
-                      const validIds = new Set(songs.map(song => song.id));
-                      const cleanTitle = sanitizeUserText(title, 160) || 'MYセトリ';
-                      const loaded = loadSavedSetlists(validIds, records.setlistTitle, setlist, {
+                      const { created } = appendOrCreateSavedSetlist({
+                        validSongIds: VERIFIED_SONG_IDS,
+                        currentTitle: records.setlistTitle,
+                        currentEntries: setlist,
+                        nextTitle: title,
+                        nextEntries: entries,
                         expectedEpoch: records.resetEpoch,
-                      });
-                      const synced = syncActiveSavedSetlist(
-                        loaded,
-                        sanitizeUserText(records.setlistTitle, 160) || 'マイ・ドリームライブ',
-                        setlist,
-                      );
-                      const { state: nextSaved, created } = createNewSavedSetlist(synced, cleanTitle, entries);
-                      persistSavedSetlists(nextSaved, {
-                        expectedEpoch: records.resetEpoch,
-                        validSongIds: validIds,
                       });
                       records.replaceSetlistSilently(created.entries, created.title);
                       showToast(`「${created.title}」を新しいMYセトリとして作成しました（元のセトリも保存済みです）`);
                       handleSelectTab('setlist');
                     }}
-                    onReplaceSetlistSilently={records.replaceSetlistSilently}
-                    attendedTourIds={records.attendedTourIds}
-                    onToggleAttendedTour={records.toggleAttendedTour}
-                    onExportRecords={records.downloadRecords}
-                    onImportRecords={records.importRecords}
                     onOpenPrivacy={() => handleSelectTab('privacy')}
-                    onSelectSong={(song) => selectSong(song.id)}
-                    initialSubTab={
-                      activeFeatureTab === 'tour_archive' ? 'tours' : 'builder'
-                    }
+                    resetEpoch={records.resetEpoch}
                   />
                 )}
 
-                {(activeFeatureTab === 'quiz' ||
-                  activeFeatureTab === 'quiz_archive') && (
+                {activeFeatureTab === 'quiz' && (
                   <QuizSection
                     key={`${records.resetEpoch}:${activityVisit}`}
                     resetEpoch={records.resetEpoch}
                     sessionRef={quizSession}
                     songs={songs}
                     onSelectSong={(song) => selectSong(song.id)}
-                    initialTab={
-                      activeFeatureTab === 'quiz_archive' ? 'archive' : 'quiz'
-                    }
+                    initialTab="quiz"
                     bestQuizScore={records.bestQuizScore}
                     onUpdateBestScore={records.updateBestQuizScore}
                     onOpenArchive={() => handleSelectTab('quiz_archive')}
+                  />
+                )}
+
+                {activeFeatureTab === 'quiz_archive' && (
+                  <QuizSourceArchivePage
+                    songs={songs}
+                    onSelectSong={(song) => selectSong(song.id)}
+                    resetEpoch={records.resetEpoch}
                   />
                 )}
               </React.Suspense>
@@ -594,35 +645,55 @@ export default function App() {
       </div>
 
       {hasLoadedMyNote && (
-        <React.Suspense fallback={null}>
-          <MyNoteModal
-            isOpen={isMyNoteOpen}
-            onClose={() => setIsMyNoteOpen(false)}
-            songs={songs}
-            setlist={setlist}
-            setlistTitle={records.setlistTitle}
-            resetEpoch={records.resetEpoch}
-            visitedSpotIds={records.visitedSpotIds}
-            attendedTourIds={records.attendedTourIds}
-            bestQuizScore={records.bestQuizScore}
-            votedKeys={records.votedKeys}
-            reviews={records.reviews}
-            onNavigateTab={(tab) => {
-              setIsMyNoteOpen(false);
-              handleSelectTab(tab);
-            }}
-            onNavigateSong={(id) => {
-              setIsMyNoteOpen(false);
-              selectSong(id);
-            }}
-            onSwitchSavedSetlist={(entries, title) => {
-              updateQuickAddTarget(null);
-              records.replaceSetlistSilently(entries, title);
-              setSetlistSyncVersion((v) => v + 1);
-            }}
-            onExportRecords={records.downloadRecords}
-          />
-        </React.Suspense>
+        <ErrorBoundary
+          fallback={
+            isMyNoteOpen ? (
+              <div
+                role="alert"
+                className="fixed bottom-5 right-5 z-50 flex items-center gap-3 rounded-lg border border-[#D5CEC2] bg-[#FFFDF8] px-4 py-3 text-xs font-bold text-[#1C1917] shadow-lg"
+              >
+                <span>マイノートを開けませんでした。再読み込みをお試しください。</span>
+                <button
+                  type="button"
+                  onClick={() => setIsMyNoteOpen(false)}
+                  className="underline cursor-pointer"
+                >
+                  閉じる
+                </button>
+              </div>
+            ) : null
+          }
+        >
+          <React.Suspense fallback={null}>
+            <MyNoteModal
+              isOpen={isMyNoteOpen}
+              onClose={() => setIsMyNoteOpen(false)}
+              songs={songs}
+              setlist={setlist}
+              setlistTitle={records.setlistTitle}
+              resetEpoch={records.resetEpoch}
+              visitedSpotIds={records.visitedSpotIds}
+              attendedTourIds={records.attendedTourIds}
+              bestQuizScore={records.bestQuizScore}
+              votedKeys={records.votedKeys}
+              reviews={records.reviews}
+              onNavigateTab={(tab) => {
+                setIsMyNoteOpen(false);
+                handleSelectTab(tab);
+              }}
+              onNavigateSong={(id) => {
+                setIsMyNoteOpen(false);
+                selectSong(id);
+              }}
+              onSwitchSavedSetlist={(entries, title) => {
+                updateQuickAddTarget(null);
+                records.replaceSetlistSilently(entries, title);
+                setSetlistSyncVersion((v) => v + 1);
+              }}
+              onExportRecords={records.downloadRecords}
+            />
+          </React.Suspense>
+        </ErrorBoundary>
       )}
     </div>
   );

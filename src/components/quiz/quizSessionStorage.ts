@@ -1,3 +1,4 @@
+import { hasBlockedKey } from '../../utils/browserStorage';
 import {
   browserQuizStore as browserStore,
   clearStaleQuizSession,
@@ -87,7 +88,7 @@ export function readQuizSession(
     const raw = currentRaw ?? sessionStore.getItem(LEGACY_SESSION_KEY);
     if (!raw || raw.length > 100_000) return null;
     const saved: unknown = JSON.parse(raw);
-    if (!isObject(saved) || saved.version !== (currentRaw === null ? 1 : 2) || saved.resetEpoch !== epoch || !isObject(saved.session)) return null;
+    if (!isObject(saved) || hasBlockedKey(saved, 6) || saved.version !== (currentRaw === null ? 1 : 2) || saved.resetEpoch !== epoch || !isObject(saved.session)) return null;
     let session: unknown = currentRaw === null ? { ...saved.session, questionSet: 'legacy' } : saved.session;
     if ((!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) && currentRaw !== null &&
         (saved.session.questionSet === undefined || saved.session.questionSet === 'current')) {
@@ -103,7 +104,21 @@ export function readQuizSession(
     }
     if (!isQuizSession(session) || saved.courseSignature !== courseSignature(session)) return null;
     // A saved selection is not an in-progress attempt and can use the new picker.
-    return currentRaw === null && session.stage === 'select' ? null : session;
+    if (currentRaw === null && session.stage === 'select') return null;
+    return {
+      difficulty: session.difficulty,
+      scope: session.scope,
+      ...(session.questionSet !== undefined ? { questionSet: session.questionSet } : {}),
+      stage: session.stage,
+      currentIndex: session.currentIndex,
+      correctBefore: session.correctBefore,
+      answer: {
+        selectedOption: session.answer.selectedOption,
+        selectedOrder: [...session.answer.selectedOrder],
+        isOrderingSubmitted: session.answer.isOrderingSubmitted,
+      },
+      ...(session.outcomes !== undefined ? { outcomes: [...session.outcomes] } : {}),
+    };
   } catch { return null; }
 }
 

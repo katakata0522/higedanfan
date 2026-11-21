@@ -1,11 +1,10 @@
 import { prepareSongSearch } from '../utils/songSearch';
 import { ConfirmDialog } from './ConfirmDialog';
-import { SetlistImageModal } from './SetlistImageModal';
-import { SETLIST_TITLE_LIMIT, reorderSetlistEntries } from '../utils/setlist';
+import { SETLIST_TITLE_LIMIT, reorderSetlistEntries, calculateSetlistStats, type SetlistEntry } from '../utils/setlist';
 import { recordSetlistShareImageGenerated } from '../utils/myNoteProfile';
 import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { saveSongReturnTab } from '../utils/guideReturnState';
+import { saveSongReturnTab } from '../utils/songReturnTab';
 import {
   SAVED_SETLISTS_STORAGE_KEY,
   SavedSetlistsState,
@@ -18,7 +17,7 @@ import {
   switchSavedSetlist,
   syncActiveSavedSetlist,
 } from '../utils/savedSetlists';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ArrowUp,
   ArrowUpToLine,
@@ -34,15 +33,13 @@ import {
   Eye,
   Image as ImageIcon,
 } from 'lucide-react';
-import { SongItem } from '../data/higedanData';
-import {
-  calculateSetlistStats,
-  formatApproxBpm,
-  formatDuration,
-  sanitizeUserText,
-  SetlistEntry,
-} from '../utils/fanLogic';
+import type { SongItem } from '../data/higedanTypes';
+import { formatApproxBpm, formatDuration } from '../utils/format';
+import { sanitizeUserText } from '../utils/userInput';
 
+const SetlistImageModal = React.lazy(() =>
+  import('./SetlistImageModal').then((module) => ({ default: module.SetlistImageModal })),
+);
 const TourArchiveSection = React.lazy(() =>
   import('./TourArchiveSection').then((module) => ({ default: module.TourArchiveSection })),
 );
@@ -121,6 +118,8 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [isCompleteView, setIsCompleteView] = useState(false);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [hasOpenedImageModal, setHasOpenedImageModal] = useState(false);
+  const handleCloseImageModal = useCallback(() => setIsImageModalOpen(false), []);
   const [showAllSongMatches, setShowAllSongMatches] = useState(false);
   const [copiedFlyer, setCopiedFlyer] = useState<boolean>(false);
   const [pendingDeleteSaved, setPendingDeleteSaved] = useState<{ id: string; title: string } | null>(null);
@@ -128,14 +127,45 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const copyTimerRef = useRef<number | null>(null);
+  const scrollRafRef = useRef<number | null>(null);
+  const titleFocusRafRef = useRef<number | null>(null);
+  const switchingTimerRef = useRef<number | null>(null);
   const setlistPaperRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const editTitleBtnRef = useRef<HTMLButtonElement>(null);
   const songSearchInputRef = useRef<HTMLInputElement>(null);
   const albumSongSelectRef = useRef<HTMLSelectElement>(null);
 
   const scrollToSetlistPaper = () => {
-    window.requestAnimationFrame(() => {
-      setlistPaperRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (scrollRafRef.current !== null) {
+      window.cancelAnimationFrame(scrollRafRef.current);
+    }
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
+    scrollRafRef.current = window.requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      setlistPaperRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'nearest' });
+    });
+  };
+
+  const armSwitchingTarget = (target: { title: string; sig: string }) => {
+    switchingTargetRef.current = target;
+    if (switchingTimerRef.current !== null) {
+      window.clearTimeout(switchingTimerRef.current);
+    }
+    switchingTimerRef.current = window.setTimeout(() => {
+      switchingTargetRef.current = null;
+      switchingTimerRef.current = null;
+    }, 500);
+  };
+
+  const finishTitleEdit = () => {
+    setIsEditingTitle(false);
+    if (titleFocusRafRef.current !== null) {
+      window.cancelAnimationFrame(titleFocusRafRef.current);
+    }
+    titleFocusRafRef.current = window.requestAnimationFrame(() => {
+      titleFocusRafRef.current = null;
+      editTitleBtnRef.current?.focus({ preventScroll: true });
     });
   };
 
@@ -170,10 +200,20 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       if (copyTimerRef.current !== null) {
         window.clearTimeout(copyTimerRef.current);
       }
+      if (scrollRafRef.current !== null) {
+        window.cancelAnimationFrame(scrollRafRef.current);
+      }
+      if (titleFocusRafRef.current !== null) {
+        window.cancelAnimationFrame(titleFocusRafRef.current);
+      }
+      if (switchingTimerRef.current !== null) {
+        window.clearTimeout(switchingTimerRef.current);
+      }
     };
   }, []);
 
-  const stats = useMemo(() => calculateSetlistStats(setlist, songs), [setlist, songs]);
+  const songMap = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
+  const stats = useMemo(() => calculateSetlistStats(setlist, songs, songMap), [setlist, songs, songMap]);
   const durationLabelRef = useRef<HTMLSpanElement>(null);
   const previousDurationRef = useRef(stats.totalDurationSec);
 
@@ -196,7 +236,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     };
   }, [stats.totalDurationSec]);
 
-  const songMap = useMemo(() => new Map(songs.map((s) => [s.id, s])), [songs]);
   const setlistIdSet = useMemo(() => new Set(setlist.map((s) => s.songId)), [setlist]);
   const initialSuggestedSongs = useMemo(
     () =>
@@ -219,6 +258,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         return;
       }
       switchingTargetRef.current = null;
+      if (switchingTimerRef.current !== null) {
+        window.clearTimeout(switchingTimerRef.current);
+        switchingTimerRef.current = null;
+      }
     }
     const current = savedSetlistsRef.current;
     const next = syncActiveSavedSetlist(current, safeDisplayTitle, setlist);
@@ -278,10 +321,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const handleSwitchSavedSetlist = (targetId: string) => {
     const { state, target } = switchSavedSetlist(savedSetlists, targetId);
     if (!target || target.id === savedSetlists.activeId) return;
-    switchingTargetRef.current = {
+    armSwitchingTarget({
       title: target.title,
       sig: serializeSetlistEntries(target.entries),
-    };
+    });
     persistSavedSetlists(state, {
       expectedEpoch: resetEpoch,
       validSongIds,
@@ -302,10 +345,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       [],
     );
     deletedIdsRef.current.delete(created.id);
-    switchingTargetRef.current = {
+    armSwitchingTarget({
       title: created.title,
       sig: serializeSetlistEntries(created.entries),
-    };
+    });
     persistSavedSetlists(state, {
       expectedEpoch: resetEpoch,
       validSongIds,
@@ -324,10 +367,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     const copyTitle = sanitizeUserText(`${safeDisplayTitle} (コピー)`, SETLIST_TITLE_LIMIT) || 'MYセトリ';
     const { state, created } = createNewSavedSetlist(base, copyTitle, setlist);
     deletedIdsRef.current.delete(created.id);
-    switchingTargetRef.current = {
+    armSwitchingTarget({
       title: created.title,
       sig: serializeSetlistEntries(created.entries),
-    };
+    });
     persistSavedSetlists(state, {
       expectedEpoch: resetEpoch,
       validSongIds,
@@ -349,10 +392,10 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
       deletedIds: deletedIdsRef.current,
     };
     if (nextActive) {
-      switchingTargetRef.current = {
+      armSwitchingTarget({
         title: nextActive.title,
         sig: serializeSetlistEntries(nextActive.entries),
-      };
+      });
       persistSavedSetlists(state, persistOpts);
       setSavedSetlists(state);
       onReplaceSetlistSilently(nextActive.entries, nextActive.title);
@@ -402,16 +445,38 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
     }, 2500);
   };
 
-  const mainEntries = setlist.filter((entry) => !entry.isEncore);
-  const encoreEntries = setlist.filter((entry) => entry.isEncore);
-  const posterMainTracks = mainEntries
-    .map((entry) => songMap.get(entry.songId))
-    .filter((song): song is SongItem => Boolean(song))
-    .map((song) => ({ song }));
-  const posterEncoreTracks = encoreEntries
-    .map((entry) => songMap.get(entry.songId))
-    .filter((song): song is SongItem => Boolean(song))
-    .map((song) => ({ song }));
+  const mainEntries = useMemo(() => setlist.filter((entry) => !entry.isEncore), [setlist]);
+  const encoreEntries = useMemo(() => setlist.filter((entry) => entry.isEncore), [setlist]);
+  const setlistIndexBySongId = useMemo(
+    () => new Map(setlist.map((entry, idx) => [entry.songId, idx])),
+    [setlist],
+  );
+  const posterMainTracks = useMemo(
+    () =>
+      mainEntries
+        .map((entry) => songMap.get(entry.songId))
+        .filter((song): song is SongItem => Boolean(song))
+        .map((song) => ({ song })),
+    [mainEntries, songMap],
+  );
+  const posterEncoreTracks = useMemo(
+    () =>
+      encoreEntries
+        .map((entry) => songMap.get(entry.songId))
+        .filter((song): song is SongItem => Boolean(song))
+        .map((song) => ({ song })),
+    [encoreEntries, songMap],
+  );
+  const savedSetlistStatsById = useMemo(
+    () =>
+      new Map(
+        savedSetlists.items.map((item) => [
+          item.id,
+          calculateSetlistStats(item.entries, songs, songMap),
+        ]),
+      ),
+    [savedSetlists.items, songs, songMap],
+  );
 
   const renderInlinePickerPanel = (target: 'main' | 'encore') => (
     <div
@@ -458,7 +523,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             曲を探して追加
           </label>
           <div className="relative">
-            <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
+            <Search aria-hidden="true" className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#68625C]" />
             <input
               id="setlist-song-filter"
               ref={songSearchInputRef}
@@ -608,13 +673,13 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
             onClick={handleAddSelectedSong}
             className={`inline-flex min-h-[44px] items-center justify-center gap-1 rounded-lg px-3.5 py-2 text-xs font-bold transition-colors whitespace-nowrap shrink-0 ${
               isSelectedAlreadyInSetlist
-                ? 'bg-[#E6E1D6] text-[#78716C] cursor-not-allowed'
+                ? 'bg-[#E6E1D6] text-[#68625C] cursor-not-allowed'
                 : 'bg-[#C83E2B] text-white hover:bg-[#A93020] cursor-pointer'
             }`}
           >
             {isSelectedAlreadyInSetlist ? (
               <>
-                <Check className="h-3.5 w-3.5" />
+                <Check aria-hidden="true" className="h-3.5 w-3.5" />
                 追加済み
               </>
             ) : (
@@ -632,7 +697,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
   const renderTrackRow = (entry: SetlistEntry, sectionIdx: number, isEncoreSection: boolean) => {
     const song = songMap.get(entry.songId);
     if (!song) return null;
-    const idx = setlist.findIndex((item) => item.songId === entry.songId);
+    const idx = setlistIndexBySongId.get(entry.songId) ?? -1;
     if (idx < 0) return null;
     const trackBadge = entry.isEncore ? `EN${sectionIdx + 1}` : `M${(sectionIdx + 1).toString().padStart(2, '0')}`;
     const isFirstMain = !isEncoreSection && sectionIdx === 0;
@@ -687,7 +752,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         >
           {!isCompleteView && (
             <span
-              className="hidden sm:inline-flex items-center justify-center text-[#A8A29E] cursor-grab active:cursor-grabbing"
+              className="hidden sm:inline-flex items-center justify-center text-[#68625C] cursor-grab active:cursor-grabbing"
               aria-hidden="true"
               title="ドラッグして並び替え"
             >
@@ -709,7 +774,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               {trackBadge}
             </button>
           ) : (
-            <span className={`font-mono-num text-[11px] font-medium ${entry.isEncore ? 'text-[#B45309]' : 'text-[#78716C]'}`}>
+            <span className={`font-mono-num text-[11px] font-medium ${entry.isEncore ? 'text-[#B45309]' : 'text-[#68625C]'}`}>
               {trackBadge}
             </span>
           )}
@@ -728,7 +793,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   onClick={() => onMoveSong(idx, 'top')}
                   aria-label={`${song.title}を${entry.isEncore ? 'アンコール' : '本編'}の先頭へ移動`}
                   title="先頭へ移動"
-                  className="hidden min-[400px]:inline-flex h-7 w-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] transition-colors cursor-pointer"
+                  className="hidden min-[400px]:inline-flex h-7 w-7 items-center justify-center rounded-md text-[#68625C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] transition-colors cursor-pointer"
                 >
                   <ArrowUpToLine aria-hidden="true" className="h-3.5 w-3.5" />
                 </button>
@@ -737,7 +802,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 type="button"
                 onClick={() => onRemoveSong(song.id)}
                 aria-label={`${song.title}をセットリストから外す`}
-                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-md text-[#68625C] hover:bg-[#F2EFE9] hover:text-[#A93020] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
               >
                 <X aria-hidden="true" className="h-3.5 w-3.5" />
               </button>
@@ -751,7 +816,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               onClick={() => onMoveSong(idx, 'up')}
               disabled={isFirstMain}
               aria-label={`${song.title}を1つ上へ移動`}
-              className="inline-flex h-6 w-6 items-center justify-center rounded text-[#78716C] hover:bg-[#E6E1D6] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-25 cursor-pointer"
+              className="inline-flex h-6 w-6 items-center justify-center rounded text-[#68625C] hover:bg-[#E6E1D6] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-25 cursor-pointer"
             >
               <ArrowUp aria-hidden="true" className="h-3 w-3" />
             </button>
@@ -760,7 +825,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               onClick={() => onMoveSong(idx, 'down')}
               disabled={isLastEncore}
               aria-label={`${song.title}を1つ下へ移動`}
-              className="inline-flex h-6 w-6 items-center justify-center rounded text-[#78716C] hover:bg-[#E6E1D6] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-25 cursor-pointer"
+              className="inline-flex h-6 w-6 items-center justify-center rounded text-[#68625C] hover:bg-[#E6E1D6] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-25 cursor-pointer"
             >
               <ArrowDown aria-hidden="true" className="h-3 w-3" />
             </button>
@@ -834,18 +899,18 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                       }
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === 'Escape') {
-                          setIsEditingTitle(false);
+                          finishTitleEdit();
                         }
                       }}
-                      className="min-w-0 flex-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-sm font-bold text-[#1C1917] min-h-[36px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
+                      className="min-w-0 flex-1 rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-base sm:text-sm font-bold text-[#1C1917] min-h-[36px] focus:outline-none focus:ring-2 focus:ring-[#1C1917]"
                       placeholder="例: 私が聴きたい！夢のスタジアムライブ"
                     />
-                    <span className="shrink-0 text-[11px] font-mono-num text-[#78716C]">
+                    <span className="shrink-0 text-[11px] font-mono-num text-[#68625C]">
                       {setlistTitle.length}/{SETLIST_TITLE_LIMIT}
                     </span>
                     <button
                       type="button"
-                      onClick={() => setIsEditingTitle(false)}
+                      onClick={finishTitleEdit}
                       aria-label="タイトル編集を完了"
                       className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#1C1917] text-white hover:bg-[#3A3531] cursor-pointer"
                     >
@@ -863,10 +928,11 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                     </h2>
                     {!isCompleteView && (
                       <button
+                        ref={editTitleBtnRef}
                         type="button"
                         onClick={() => setIsEditingTitle(true)}
                         aria-label="セットリスト名を編集"
-                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#78716C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
+                        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#68625C] hover:bg-[#F2EFE9] hover:text-[#1C1917] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#1C1917] cursor-pointer"
                       >
                         <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
                       </button>
@@ -875,7 +941,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 )}
 
                 <div className="flex items-center gap-2 shrink-0">
-                  <p className="text-xs text-[#78716C]">
+                  <p className="text-xs text-[#68625C]">
                     {stats.totalSongs}曲 · <span ref={durationLabelRef} className="rounded-sm">{stats.formattedDuration}</span>
                   </p>
                   {setlist.length > 0 && (
@@ -964,6 +1030,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   disabled={setlist.length === 0}
                   onClick={() => {
                     recordSetlistShareImageGenerated(resetEpoch);
+                    setHasOpenedImageModal(true);
                     setIsImageModalOpen(true);
                   }}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-center text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] disabled:opacity-50 disabled:cursor-not-allowed transition-colors sm:whitespace-nowrap shrink-0 min-h-[40px] cursor-pointer"
@@ -980,7 +1047,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-sm font-bold text-[#1C1917]">
                   保存したMYセトリ
-                  <span className="ml-2 text-xs font-mono-num font-normal text-[#78716C]">
+                  <span className="ml-2 text-xs font-mono-num font-normal text-[#68625C]">
                     {savedSetlists.items.length}件
                   </span>
                 </h2>
@@ -1020,7 +1087,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               <ul aria-label="保存したMYセトリ一覧" className="space-y-1.5">
                 {savedSetlists.items.map((item) => {
                   const isActive = item.id === savedSetlists.activeId;
-                  const itemStats = calculateSetlistStats(item.entries, songs);
+                  const itemStats = savedSetlistStatsById.get(item.id) ?? stats;
                   return (
                     <li
                       key={item.id}
@@ -1046,7 +1113,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 text-xs font-mono-num text-[#78716C]">
+                        <span className="shrink-0 text-xs font-mono-num text-[#68625C]">
                           {itemStats.totalSongs}曲 · {itemStats.formattedDuration}
                         </span>
                       </button>
@@ -1055,7 +1122,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                           type="button"
                           onClick={() => handleDeleteSavedSetlist(item.id, item.title)}
                           aria-label={`${item.title}を削除`}
-                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#78716C] hover:bg-white hover:text-[#A93020] cursor-pointer"
+                          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[#68625C] hover:bg-white hover:text-[#A93020] cursor-pointer"
                         >
                           <X aria-hidden="true" className="h-3.5 w-3.5" />
                         </button>
@@ -1132,7 +1199,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   >
                     記録をファイルに書き出す
                   </button>
-                  <label className="inline-flex min-h-[38px] items-center rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] cursor-pointer">
+                  <label className="inline-flex min-h-[38px] items-center rounded-lg border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] focus-within:ring-2 focus-within:ring-[#1C1917] cursor-pointer">
                     <span>ファイルから記録を読み込む</span>
                     <input
                       type="file"
@@ -1155,7 +1222,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 </div>
               </details>
             ) : (
-              <p className="text-center text-[11px] text-[#78716C]">
+              <p className="text-center text-[11px] text-[#68625C]">
                 ※ 作成したセットリストや記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
                 <a
                   href={tabPath('privacy', import.meta.env.BASE_URL)}
@@ -1181,7 +1248,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 resetEpoch={resetEpoch}
               />
             </React.Suspense>
-            <p className="mt-4 text-center text-[11px] text-[#78716C]">
+            <p className="mt-4 text-center text-[11px] text-[#68625C]">
               ※ 参戦・視聴の記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
               <a
                 href={tabPath('privacy', import.meta.env.BASE_URL)}
@@ -1196,14 +1263,18 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
         )}
       </div>
 
-      <SetlistImageModal
-        isOpen={isImageModalOpen}
-        onClose={() => setIsImageModalOpen(false)}
-        title={safeDisplayTitle}
-        mainTracks={posterMainTracks}
-        encoreTracks={posterEncoreTracks}
-        formattedDuration={stats.formattedDuration}
-      />
+      {hasOpenedImageModal && (
+        <React.Suspense fallback={null}>
+          <SetlistImageModal
+            isOpen={isImageModalOpen}
+            onClose={handleCloseImageModal}
+            title={safeDisplayTitle}
+            mainTracks={posterMainTracks}
+            encoreTracks={posterEncoreTracks}
+            formattedDuration={stats.formattedDuration}
+          />
+        </React.Suspense>
+      )}
 
       <ConfirmDialog
         isOpen={pendingDeleteSaved !== null}

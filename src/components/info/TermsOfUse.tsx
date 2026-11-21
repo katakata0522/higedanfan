@@ -13,7 +13,7 @@ export function TermsOfUse({ onSelectTab }: { onSelectTab?: (tab: SiteTab) => vo
             onSelectTab('editor');
           }
         }}
-      >編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html">KatakataLab</a>）が制作・運営するOfficial髭男dismの非公式ファンサイトです。<a href="https://katakatalab.com/terms.html">KatakataLab共通の利用規約</a>が適用されます。</p>
+      >編集者（かたかた）</a>（<a href="https://katakatalab.com/who-is-katakata.html" rel="noopener noreferrer">KatakataLab</a>）が制作・運営するOfficial髭男dismの非公式ファンサイトです。<a href="https://katakatalab.com/terms.html" rel="noopener noreferrer">KatakataLab共通の利用規約</a>が適用されます。</p>
       <h2>楽曲情報と公演記録</h2>
       <p>音域は各曲の出典にある音域調査データをもとにしています。音源や地声・裏声の判定によって、資料ごとに値が異なることがあります。演奏時間は参照した配信音源の長さです。公演日・会場およびセットリストは公開資料を照合した参考記録であり、当サイトが実際の実演順を完全に保証するものではありません。</p>
       <h2>共有・引用・転載</h2>
@@ -22,7 +22,7 @@ export function TermsOfUse({ onSelectTab }: { onSelectTab?: (tab: SiteTab) => vo
       <h2>ブラウザに保存する記録</h2>
       <p>MYセトリ、マイノート（お名前や閲覧した楽曲ページ・探索スタンプの進捗）、訪問・ツアー参戦記録、検定の最高正答率・セット別の記録は、使っているブラウザに保存されます。現在非公開の人気投票と感想ノートで過去に保存した記録も、非公開にしただけでは消えません。このサイトのデータをブラウザから削除すると、これらの記録も消えます。</p>
       <h2>掲載内容や権利に関するお問い合わせ</h2>
-      <p>掲載内容の訂正や権利に関するご連絡は、対象のページや曲名を添えて<a href="https://katakatalab.com/contact.html">KatakataLabのお問い合わせ窓口</a>にお寄せください。</p>
+      <p>掲載内容の訂正や権利に関するご連絡は、対象のページや曲名を添えて<a href="https://katakatalab.com/contact.html" rel="noopener noreferrer">KatakataLabのお問い合わせ窓口</a>にお寄せください。</p>
     </article>
   );
 }

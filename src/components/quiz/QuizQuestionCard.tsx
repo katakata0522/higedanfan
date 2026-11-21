@@ -1,12 +1,12 @@
 import { CheckCircle2, XCircle, ArrowRight, BookOpen, ExternalLink, Newspaper, Check, ListOrdered, ChevronDown, Lightbulb } from 'lucide-react';
 import { useLayoutEffect, useRef, useState } from 'react';
-import type { QuizQuestion, SongItem } from '../../data/higedanData';
-import { formatOrderingSequence } from '../../utils/fanLogic';
+import type { QuizQuestion, SongItem } from '../../data/higedanTypes';
+import { formatOrderingSequence } from '../../utils/quizScoring';
 import { isAnswerCorrect, type QuizAnswer, type QuizQuestionOutcome } from './quizSession';
-import { DIFFICULTY_LABEL } from './quizCourses';
+import { DIFFICULTY_LABEL } from './quizCourseMeta';
 import { visibleQuizSourceSummary } from './quizSourceSummary';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
-import { saveSongReturnTab } from '../../utils/guideReturnState';
+import { saveSongReturnTab } from '../../utils/songReturnTab';
 
 interface Props {
   visible: boolean;
@@ -73,7 +73,7 @@ export function QuizQuestionCard({
   return (
     <div className="mt-6 rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7 shadow-[0_2px_12px_rgba(28,25,23,0.03)]">
       <div className="border-b border-[#E6E1D6] pb-3.5 space-y-2.5">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#78716C]">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#68625C]">
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-bold text-[#1C1917]">
               第 {currentIndex + 1} 問 / 全 {questionCount} 問 ·{' '}
@@ -81,7 +81,7 @@ export function QuizQuestionCard({
             </span>
             {isOrderingQuestion && (
               <span className="inline-flex items-center gap-1 rounded-md bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-bold text-[#92400E]">
-                <ListOrdered className="h-3 w-3" />
+                <ListOrdered aria-hidden="true" className="h-3 w-3" />
                 順番に並べる問題
               </span>
             )}
@@ -182,18 +182,18 @@ export function QuizQuestionCard({
           {/* Confirm Order Button */}
           {!isOrderingSubmitted && (
             <div className="flex items-center justify-end gap-3 pt-1">
-              <span className="text-xs text-[#78716C]">
-                {selectedOrder.length < 4
-                  ? `あと ${4 - selectedOrder.length} 個選択してください`
-                  : '1番目〜4番目まで選択完了！'}
+              <span className="text-xs text-[#68625C]">
+                {selectedOrder.length < question.options.length
+                  ? `あと ${question.options.length - selectedOrder.length} 個選択してください`
+                  : `1番目〜${question.options.length}番目まで選択完了！`}
               </span>
               <button
                 type="button"
-                disabled={selectedOrder.length !== 4}
+                disabled={selectedOrder.length !== question.options.length}
                 onClick={handleSubmitOrdering}
                 className="inline-flex items-center gap-1.5 rounded-xl bg-[#C83E2B] px-5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-[#A93020] disabled:opacity-40 transition-colors cursor-pointer"
               >
-                <Check className="h-4 w-4" />
+                <Check aria-hidden="true" className="h-4 w-4" />
                 この順番で回答する
               </button>
             </div>
@@ -217,7 +217,7 @@ export function QuizQuestionCard({
               } else if (isChosen && !isCorrect) {
                 btnStyle = 'border-[#C83E2B] bg-[#FDF3F1] text-[#7F1D1D]';
               } else {
-                btnStyle = 'border-[#E6E1D6] bg-white text-[#78716C] opacity-60';
+                btnStyle = 'border-[#E6E1D6] bg-[#FAF6EB]/60 text-[#57534E]';
               }
             }
 
@@ -233,10 +233,10 @@ export function QuizQuestionCard({
                   {idx + 1}. {opt}
                 </span>
                 {isAnswered && isCorrect && (
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-[#15803D]" />
+                  <CheckCircle2 aria-hidden="true" className="h-5 w-5 shrink-0 text-[#15803D]" />
                 )}
                 {isAnswered && isChosen && !isCorrect && (
-                  <XCircle className="h-5 w-5 shrink-0 text-[#C83E2B]" />
+                  <XCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-[#C83E2B]" />
                 )}
               </button>
             );
@@ -285,7 +285,7 @@ export function QuizQuestionCard({
                 onClick={() => saveSongReturnTab('quiz')}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors"
               >
-                <BookOpen className="h-3.5 w-3.5 text-[#1E3A5F]" />
+                <BookOpen aria-hidden="true" className="h-3.5 w-3.5 text-[#1E3A5F]" />
                 『{relatedSong.title}』の楽曲解説を読む
               </a>
             ) : (
@@ -300,7 +300,7 @@ export function QuizQuestionCard({
               {currentIndex + 1 < questionCount
                 ? '次の問題へ進む'
                 : '検定結果を見る'}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>
 
@@ -308,7 +308,7 @@ export function QuizQuestionCard({
           {question.sources && question.sources.length > 0 && (
             <details className="group rounded-xl border border-[#E6E1D6] bg-white p-3.5 sm:p-4">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-bold text-[#1E3A5F] [&::-webkit-details-marker]:hidden">
-                <Newspaper className="h-3.5 w-3.5 shrink-0" />
+                <Newspaper aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
                 <span>出典・参考資料</span>
                 <ChevronDown aria-hidden="true" className="ml-auto h-4 w-4 transition-transform group-open:rotate-180" />
               </summary>
@@ -331,7 +331,7 @@ export function QuizQuestionCard({
                           className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E3A5F] hover:underline"
                         >
                           記事・公式情報を開く
-                          <ExternalLink className="h-3 w-3" />
+                          <ExternalLink aria-hidden="true" className="h-3 w-3" />
                         </a>
                       </div>
                       <div className="mt-1 text-xs sm:text-sm font-bold text-[#1C1917]">

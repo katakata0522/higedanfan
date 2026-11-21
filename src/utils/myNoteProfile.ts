@@ -4,7 +4,10 @@ import {
   readCurrentQuizRecordEpoch,
   type QuizSessionStore,
 } from '../components/quiz/quizSessionClear';
+import { hasBlockedKey, safeJsonParseBounded } from './browserStorage';
 import { sanitizeSafeId, sanitizeUserText } from './userInput';
+
+const MAX_MY_NOTE_BYTES = 20_000;
 
 export const MY_NOTE_PROFILE_STORAGE_KEY = 'higedanfan:my-note-profile:v1';
 export const MY_NOTE_TITLE_MODE_STORAGE_KEY = 'higedanfan:my-note-title-mode:v1';
@@ -136,17 +139,13 @@ export function isDefaultMyNoteProfile(profile: MyNoteProfile): boolean {
 export function loadMyNoteProfile(
   expectedEpoch = '',
   store: QuizSessionStore | null = browserQuizStore('localStorage'),
+  validSongIds?: ReadonlySet<string>,
 ): MyNoteProfile {
   if (!store) return createDefaultMyNoteProfile();
   try {
     const raw = store.getItem(MY_NOTE_PROFILE_STORAGE_KEY);
-    if (!raw) return createDefaultMyNoteProfile();
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      !isPlainObject(parsed) ||
-      (Object.getPrototypeOf(parsed) !== Object.prototype && Object.getPrototypeOf(parsed) !== null) ||
-      typeof parsed.resetEpoch !== 'string'
-    ) {
+    const parsed = safeJsonParseBounded(raw, MAX_MY_NOTE_BYTES);
+    if (!isPlainObject(parsed) || hasBlockedKey(parsed, 5) || typeof parsed.resetEpoch !== 'string') {
       return createDefaultMyNoteProfile();
     }
     const currentEpoch = readCurrentQuizRecordEpoch(store);
@@ -156,7 +155,7 @@ export function loadMyNoteProfile(
     if (currentEpoch === null && expectedEpoch !== parsed.resetEpoch) {
       return createDefaultMyNoteProfile();
     }
-    return sanitizeMyNoteProfilePayload(parsed);
+    return sanitizeMyNoteProfilePayload(parsed, validSongIds);
   } catch {
     return createDefaultMyNoteProfile();
   }
@@ -270,13 +269,8 @@ export function loadMyNoteTitleMode(
   if (!store) return 'rank';
   try {
     const raw = store.getItem(MY_NOTE_TITLE_MODE_STORAGE_KEY);
-    if (!raw) return 'rank';
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      !isPlainObject(parsed) ||
-      (Object.getPrototypeOf(parsed) !== Object.prototype && Object.getPrototypeOf(parsed) !== null) ||
-      typeof parsed.resetEpoch !== 'string'
-    ) {
+    const parsed = safeJsonParseBounded(raw, MAX_MY_NOTE_BYTES);
+    if (!isPlainObject(parsed) || hasBlockedKey(parsed, 4) || typeof parsed.resetEpoch !== 'string') {
       return 'rank';
     }
     const currentEpoch = readCurrentQuizRecordEpoch(store);
@@ -316,13 +310,8 @@ export function loadSetlistShareImageGenerated(
   if (!store) return false;
   try {
     const raw = store.getItem(MY_NOTE_SETLIST_IMAGE_STORAGE_KEY);
-    if (!raw) return false;
-    const parsed: unknown = JSON.parse(raw);
-    if (
-      !isPlainObject(parsed) ||
-      (Object.getPrototypeOf(parsed) !== Object.prototype && Object.getPrototypeOf(parsed) !== null) ||
-      typeof parsed.resetEpoch !== 'string'
-    ) {
+    const parsed = safeJsonParseBounded(raw, MAX_MY_NOTE_BYTES);
+    if (!isPlainObject(parsed) || hasBlockedKey(parsed, 4) || typeof parsed.resetEpoch !== 'string') {
       return false;
     }
     const currentEpoch = readCurrentQuizRecordEpoch(store);
@@ -394,8 +383,8 @@ export function clearStaleMyNoteProfile(
     ]) {
       const raw = store.getItem(key);
       if (!raw) continue;
-      const parsed: unknown = JSON.parse(raw);
-      if (isPlainObject(parsed) && typeof parsed.resetEpoch === 'string' && parsed.resetEpoch !== expectedEpoch) {
+      const parsed = safeJsonParseBounded(raw, MAX_MY_NOTE_BYTES);
+      if (isPlainObject(parsed) && !hasBlockedKey(parsed, 5) && typeof parsed.resetEpoch === 'string' && parsed.resetEpoch !== expectedEpoch) {
         store.removeItem(key);
         cleared = true;
       }

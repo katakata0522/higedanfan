@@ -1,11 +1,13 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { ArrowRight, Mic2, Newspaper } from 'lucide-react';
-import { HIGEDAN_MEMBERS, type EraTag, type SongItem } from '../../data/higedanData';
+import { HIGEDAN_MEMBERS } from '../../data/membersData';
+import type { EraTag, SongItem } from '../../data/higedanTypes';
 import { isPlainLeftClick, tabPath } from '../../config/siteFeatures';
 import type { ActiveFeatureTab } from '../SiteHeader';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
-import { saveSongReturnTab } from '../../utils/guideReturnState';
+import { saveSongReturnTab } from '../../utils/songReturnTab';
 import { HOME_STICKY_NOTES, type HomeStickyNote } from './homeContent';
+import { MustacheMark } from '../MustacheMark';
 
 const MEMBER_TAPE_COLORS = ['#f5c6be', '#f6e39c', '#bce3f8', '#c0e6c7'] as const;
 
@@ -178,7 +180,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                 </span>
               </span>
             </span>
-            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#68625C]" />
           </a>
 
           <a
@@ -202,7 +204,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                 </span>
               </span>
             </span>
-            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#78716C]" />
+            <ArrowRight aria-hidden="true" className="h-4 w-4 shrink-0 text-[#68625C]" />
           </a>
         </div>
       </section>
@@ -215,14 +217,14 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
         <div className="relative flex items-center justify-center mb-[15px]" aria-hidden="true">
           <div className="absolute inset-x-0 top-1/2 h-[2px] bg-[#e5dccb]" />
           <span className="relative z-[1] inline-flex items-center justify-center bg-[#faf6eb] px-4">
-            <svg viewBox="0 0 100 55" width="64" height="36" className="overflow-visible">
-              <g transform="translate(50 28) scale(0.125) translate(-370 -125)">
-                <path
-                  fill="#78716C"
-                  d="M370 86 C356 66 338 62 316 62 C254 62 234 156 174 156 C138 156 112 142 112 120 C112 102 125 94 140 94 C153 94 160 103 160 114 C160 124 151 130 142 130 C136 130 132 126 132 121 C132 117 125 117 125 122 C125 132 133 139 144 139 C159 139 170 128 170 112 C170 94 155 82 136 82 C108 82 88 104 88 134 C88 172 144 188 214 188 C286 188 336 156 362 128 C366 124 368 122 370 122 C372 122 374 124 378 128 C404 156 454 188 526 188 C596 188 652 172 652 134 C652 104 632 82 604 82 C585 82 570 94 570 112 C570 128 581 139 596 139 C607 139 615 132 615 122 C615 117 608 117 608 121 C608 126 604 130 598 130 C589 130 580 124 580 114 C580 103 587 94 600 94 C615 94 628 102 628 120 C628 142 602 156 566 156 C506 156 486 62 424 62 C402 62 384 66 370 86 Z"
-                />
-              </g>
-            </svg>
+            <MustacheMark
+              width={64}
+              height={36}
+              className="overflow-visible"
+              fill="#68625C"
+              accentFill={null}
+              scale={0.125}
+            />
           </span>
         </div>
 
@@ -247,7 +249,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                 style={tapeStyle}
               >
                 <div>
-                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-[#78716C]">
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[11px] text-[#68625C]">
                     <span className="font-bold text-[#C83E2B]">{member.role}</span>
                     <span>{member.birthplace}</span>
                   </div>
@@ -255,7 +257,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                     <h3 className="font-note-serif text-base sm:text-lg font-bold text-[#253331]">
                       {member.name}
                     </h3>
-                    <span className="text-xs text-[#78716C]">
+                    <span className="text-xs text-[#68625C]">
                       （{member.nickname}）
                     </span>
                   </div>

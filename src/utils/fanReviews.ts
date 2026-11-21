@@ -39,22 +39,28 @@ export function validateReviewInput(input: {
   };
 }
 
+const MAX_REVIEWS = 200;
+
 export function sanitizeReviewsList(
   rawReviews: unknown,
   validSongIds: Set<string>
 ): FanReview[] | null {
   if (!Array.isArray(rawReviews)) return null;
   const allowedCategories = new Set(['歌詞考察', 'ライブ体験', '楽曲アレンジ', '人生の支え']);
+  const seenIds = new Set<string>();
   const safe: FanReview[] = [];
 
   for (const item of rawReviews) {
-    if (!item || typeof item !== 'object') continue;
+    if (safe.length >= MAX_REVIEWS) break;
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
     const r = item as Record<string, unknown>;
     const author = sanitizeUserText(String(r.author ?? ''), 30);
     const songId = sanitizeSafeId(String(r.songId ?? ''), 40);
     const title = sanitizeUserText(String(r.title ?? ''), 60);
     const comment = sanitizeUserText(String(r.comment ?? ''), 400);
     const category = String(r.category ?? '歌詞考察');
+    const reviewId = sanitizeSafeId(String(r.id ?? `rev-${safe.length}`), 40) || `rev-${safe.length}`;
+    if (seenIds.has(reviewId)) continue;
 
     if (
       author.length >= 2 &&
@@ -63,8 +69,9 @@ export function sanitizeReviewsList(
       comment.length >= 10 &&
       allowedCategories.has(category)
     ) {
+      seenIds.add(reviewId);
       safe.push({
-        id: sanitizeSafeId(String(r.id ?? `rev-${safe.length}`), 40) || `rev-${safe.length}`,
+        id: reviewId,
         author,
         fanTenure: sanitizeUserText(String(r.fanTenure ?? 'ファン歴 3〜5年'), 30),
         songId,
