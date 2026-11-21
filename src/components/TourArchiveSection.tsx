@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, ListMusic, RotateCcw, Search, Ticket, X } from 'lucide-react';
-import { TOUR_ARCHIVES, type TourArchive, type TourEventRecord, type TourSetlistTrack } from '../data/higedanData';
+import { TOUR_ARCHIVES } from '../data/tourArchivesData';
+import type { TourArchive, TourEventRecord, TourSetlistTrack } from '../data/higedanTypes';
 import { extractCatalogSetlistEntries, getTourEventSetlist } from '../data/tourSetlists';
 import { songPagePath } from '../songPages/publishedSongPageIds';
-import { sortTourArchives } from '../utils/fanLogic';
+import { sortTourArchives } from '../utils/discography';
+import { formatIsoDateDot as displayDate } from '../utils/format';
 import { sanitizeSetlistTitle, SETLIST_TITLE_LIMIT, type SetlistEntry } from '../utils/setlist';
 import {
   clearTourReturnState,
@@ -32,7 +34,6 @@ const CATEGORY_OPTIONS: { id: TourCategoryFilter; label: string }[] = [
   { id: 'free_special', label: 'フリー・特別公演' },
 ];
 
-const displayDate = (date: string) => date.replaceAll('-', '.');
 const concertCount = TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0);
 const setlistEventCount = TOUR_ARCHIVES.reduce(
   (count, tour) => count + tour.events.filter(event => event.hasSetlist).length,
@@ -82,19 +83,21 @@ export function TourArchiveSection({
   const consumedReturnRef = useRef(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
-    if (consumedReturnRef.current) return;
+    if (consumedReturnRef.current) return undefined;
     consumedReturnRef.current = true;
     if (initialReturn) {
       clearTourReturnState();
       if (initialReturn.openEventId) {
-        window.requestAnimationFrame(() => {
+        const rafId = window.requestAnimationFrame(() => {
           document.getElementById(`setlist-panel-${initialReturn.openEventId}`)?.scrollIntoView({
             block: 'center',
             behavior: 'instant',
           });
         });
+        return () => window.cancelAnimationFrame(rafId);
       }
     }
+    return undefined;
   }, [initialReturn]);
 
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>(() => initialReturn?.sortOrder ?? 'newest');
@@ -210,7 +213,7 @@ export function TourArchiveSection({
           isMatchedTrack ? 'rounded-md bg-[#FFF3D6] px-2 py-1 -mx-2' : ''
         }`}
       >
-        <span className="w-8 shrink-0 font-mono-num text-[11px] font-bold text-[#78716C]">
+        <span className="w-8 shrink-0 font-mono-num text-[11px] font-bold text-[#68625C]">
           {prefix}
         </span>
         <div className="min-w-0 flex-1">
@@ -287,12 +290,17 @@ export function TourArchiveSection({
                   ? `（本編${mainTracks.length}曲 / アンコール${encoreTracks.length}曲）`
                   : `（本編${mainTracks.length}曲）`}
               </span>
-              <span className="whitespace-nowrap text-[#78716C]">曲名から楽曲解説へ</span>
+              <span className="whitespace-nowrap text-[#68625C]">曲名から楽曲解説へ</span>
             </p>
           </div>
           <button
             type="button"
-            onClick={() => toggleEventSetlist(tour.id, event.id)}
+            onClick={() => {
+              toggleEventSetlist(tour.id, event.id);
+              document
+                .querySelector<HTMLElement>(`[aria-controls="setlist-panel-${event.id}"]`)
+                ?.focus({ preventScroll: true });
+            }}
             aria-label="セットリストを閉じる"
             className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#dfd7c7] bg-[#fffdf8] text-[#57534E] hover:border-[#253331] hover:text-[#253331] transition-colors cursor-pointer"
           >
@@ -363,7 +371,7 @@ export function TourArchiveSection({
   const renderEventAction = (tour: TourArchive, event: TourEventRecord) => {
     if (!event.hasSetlist) {
       return (
-        <span className="inline-flex min-h-[28px] items-center py-1 text-xs text-[#78716C]">
+        <span className="inline-flex min-h-[28px] items-center py-1 text-xs text-[#68625C]">
           セトリ未確認
         </span>
       );
@@ -399,16 +407,18 @@ export function TourArchiveSection({
     <div className="mt-5 space-y-4">
       <div className="space-y-2.5 rounded-xl border border-[#dfd7c7] bg-[#fffdf8] p-3.5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <label className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#253331]">
-            <span className="shrink-0">
+          <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#253331]">
+            <label htmlFor="tour-archive-search" className="shrink-0">
               日付・会場を探す
-              <span className="ml-1 font-normal text-[#78716C]">（曲名も可）</span>
-            </span>
+              <span className="ml-1 font-normal text-[#68625C]">（曲名も可）</span>
+            </label>
             <div className="relative min-w-0 w-full sm:flex-1">
-              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#78716C]" />
+              <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#68625C]" />
               <input
                 ref={searchInputRef}
+                id="tour-archive-search"
                 type="search"
+                maxLength={60}
                 enterKeyHint="search"
                 value={query}
                 onChange={event => {
@@ -416,7 +426,7 @@ export function TourArchiveSection({
                   setClosedDuringSearchIds(new Set());
                 }}
                 placeholder="例：2025-05-31 / 日産スタジアム / Pretender"
-                className="min-w-0 w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-9 py-2 font-normal text-[#1C1917] [&::-webkit-search-cancel-button]:appearance-none"
+                className="min-w-0 w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-9 py-2 text-base sm:text-xs font-normal text-[#1C1917] placeholder:text-[#68625C] [&::-webkit-search-cancel-button]:appearance-none"
               />
               {query && (
                 <button
@@ -433,7 +443,7 @@ export function TourArchiveSection({
                 </button>
               )}
             </div>
-          </label>
+          </div>
           <div className="flex gap-1 self-start sm:self-auto rounded-lg bg-[#F2EFE9] p-1" role="group" aria-label="開催順">
             <button
               type="button"

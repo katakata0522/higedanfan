@@ -14,11 +14,22 @@ export function escapeHtml(value: string): string {
   })[character]!);
 }
 
+export function serializeJsonLd(value: unknown): string {
+  return JSON.stringify(value)
+    .replace(/[<>&\u2028\u2029]/g, ch => ({
+      '<': '\\u003c',
+      '>': '\\u003e',
+      '&': '\\u0026',
+      '\u2028': '\\u2028',
+      '\u2029': '\\u2029',
+    })[ch]!);
+}
+
 // 開発時のVite用コードと接続だけを例外にし、本番では直接書かれたスクリプトを実行させない。
 export function contentSecurityPolicy(development = false): string {
   return [
     "default-src 'self'",
-    "img-src 'self' data: blob: https://i.ytimg.com https://*.mzstatic.com",
+    "img-src 'self' data: https://i.ytimg.com https://*.mzstatic.com",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     `script-src 'self'${development ? " 'unsafe-inline'" : ''}`,
@@ -28,7 +39,8 @@ export function contentSecurityPolicy(development = false): string {
     "worker-src 'self'",
     'frame-src https://maps.google.com https://www.google.com https://www.youtube-nocookie.com',
     "object-src 'none'",
-    "base-uri 'self'",
+    "base-uri 'none'",
     "form-action 'self'",
+    ...(development ? [] : ['upgrade-insecure-requests']),
   ].join('; ') + ';';
 }

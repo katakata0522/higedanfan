@@ -1,16 +1,16 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
-import { editorialArticles } from '../editorialArticles';
+import { editorialShard1 } from '../editorial/shard1';
 
 const page = {
   id: 'white-noise',
   artwork: { theme: '/images/live_stadium_confetti_1793849699286.jpg', alt: 'ホワイトノイズをイメージしたアート' },
   feature: {
-    text: editorialArticles['white-noise'].feature,
-    credit: editorialArticles['white-noise'].featureCredit ?? '— 楽曲ガイドより',
-    kind: editorialArticles['white-noise'].featureKind,
-    citeUrl: editorialArticles['white-noise'].featureCiteUrl,
+    text: editorialShard1['white-noise'].feature,
+    credit: editorialShard1['white-noise'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialShard1['white-noise'].featureKind,
+    citeUrl: editorialShard1['white-noise'].featureCiteUrl,
   },
-  overview: editorialArticles['white-noise'].paragraphs,
+  overview: editorialShard1['white-noise'].paragraphs,
   albumTrack: 12,
   sources: [
     { label: '楽曲の公式特設サイト', purpose: '配信日と聖夜決戦編のタイアップ', url: 'https://whitenoise.ponycanyon.co.jp/' },

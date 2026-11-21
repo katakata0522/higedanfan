@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Download, X } from 'lucide-react';
-import { SongItem } from '../data/higedanData';
-import { formatDuration } from '../utils/fanLogic';
+import type { SongItem } from '../data/higedanTypes';
+import { formatDuration } from '../utils/format';
+import { useModalDialog } from '../hooks/useModalDialog';
 
 export type PosterTheme = 'notebook' | 'stage';
 
@@ -32,11 +33,11 @@ function wrapTextLines(
   let current = '';
 
   const clampLastLine = (): string[] => {
-    let last = lines[maxLines - 1];
-    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
-      last = last.slice(0, -1);
+    const chars = Array.from(lines[maxLines - 1]);
+    while (chars.length > 1 && ctx.measureText(`${chars.join('')}…`).width > maxWidth) {
+      chars.pop();
     }
-    lines[maxLines - 1] = `${last}…`;
+    lines[maxLines - 1] = `${chars.join('')}…`;
     return lines;
   };
 
@@ -79,11 +80,24 @@ function wrapTextLines(
 
 function truncateText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
-  let trimmed = text;
-  while (trimmed.length > 1 && ctx.measureText(`${trimmed}…`).width > maxWidth) {
-    trimmed = trimmed.slice(0, -1);
+  const chars = Array.from(text);
+  while (chars.length > 1 && ctx.measureText(`${chars.join('')}…`).width > maxWidth) {
+    chars.pop();
   }
-  return `${trimmed}…`;
+  return `${chars.join('')}…`;
+}
+
+function buildSafeFileBase(rawTitle: string): string {
+  const cleaned = rawTitle
+    .replace(/[\u0000-\u001F\u007F]/g, '')
+    .replace(/[\\/:*?"<>|]/g, '')
+    .replace(/^\.+/, '')
+    .trim()
+    .replace(/\s+/g, '-');
+  if (!cleaned || /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(cleaned)) {
+    return 'higedan-setlist';
+  }
+  return Array.from(cleaned).slice(0, 40).join('');
 }
 
 function drawMustacheEmblem(ctx: CanvasRenderingContext2D, cx: number, cy: number, color: string) {
@@ -171,8 +185,8 @@ export function renderSetlistPosterDataUrl({
   const ctx = canvas.getContext('2d');
   if (!ctx) return '';
 
-  const fontDisplay = '"Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", serif';
-  const fontBody = '"Hiragino Sans", "Yu Gothic", system-ui, sans-serif';
+  const fontDisplay = '"Fan Note Kiwi", "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", serif';
+  const fontBody = '"Fan Note Sans", "Noto Sans JP", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif';
   const fontMono = 'ui-monospace, "SFMono-Regular", Consolas, monospace';
 
   const totalCount = mainTracks.length + encoreTracks.length;
@@ -225,7 +239,7 @@ export function renderSetlistPosterDataUrl({
   const mainSectionHeight = mainTracks.length > 0 ? 58 + mainTracks.length * rowHeight : 78;
   const encoreSectionHeight = encoreTracks.length > 0 ? 84 + encoreTracks.length * rowHeight : 0;
   const bodyHeight = twoColumns
-    ? 58 + twoColRowCount * rowHeight
+    ? (mainTracks.length > 0 ? 58 : 24) + twoColRowCount * rowHeight
     : mainSectionHeight + encoreSectionHeight;
   const totalHeight = Math.max(760, headerHeight + bodyHeight + footerHeight);
 
@@ -318,10 +332,12 @@ export function renderSetlistPosterDataUrl({
   const fonts = { body: fontBody, mono: fontMono };
 
   if (twoColumns) {
-    ctx.font = `700 20px ${fontMono}`;
-    ctx.fillStyle = textMuted;
-    ctx.fillText('MAIN SET', paddingX, cursorY);
-    cursorY += 34;
+    if (mainTracks.length > 0) {
+      ctx.font = `700 20px ${fontMono}`;
+      ctx.fillStyle = textMuted;
+      ctx.fillText('MAIN SET', paddingX, cursorY);
+      cursorY += 34;
+    }
 
     const rightX = paddingX + colWidth + columnGap;
     leftRows.forEach((row, index) => {
@@ -411,53 +427,31 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
   encoreTracks,
   formattedDuration,
 }) => {
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const { dialogRef, dialogProps } = useModalDialog({
+    isOpen,
+    onClose,
+    initialFocusRef: closeButtonRef,
+  });
   const [theme, setTheme] = useState<PosterTheme>('notebook');
   const [previewUrl, setPreviewUrl] = useState<string>('');
+  const [generationError, setGenerationError] = useState<boolean>(false);
+  const [retryNonce, setRetryNonce] = useState<number>(0);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || !isOpen) return;
-
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    if (!dialog.open) {
-      dialog.showModal();
+    if (!isOpen) {
+      setGenerationError(false);
+      return;
     }
-    const timer = window.setTimeout(() => closeButtonRef.current?.focus(), 0);
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-
-    return () => {
-      window.clearTimeout(timer);
-      window.removeEventListener('keydown', handleKeyDown);
-      if (dialog.open) {
-        dialog.close();
-      }
-      document.body.style.overflow = previousOverflow;
-      if (previousFocus?.isConnected) {
-        previousFocus.focus({ preventScroll: true });
-      }
-    };
-  }, [isOpen, onClose]);
-
-  useEffect(() => {
-    if (!isOpen) return;
     let cancelled = false;
+    setGenerationError(false);
+    setPreviewUrl('');
     const generate = async () => {
       try {
         if (document.fonts) {
           await Promise.allSettled([
             document.fonts.ready,
-            document.fonts.load('500 50px "Kiwi Maru"'),
+            document.fonts.load('500 50px "Fan Note Kiwi"'),
           ]);
         }
       } catch {
@@ -472,32 +466,36 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
           formattedDuration,
           theme,
         });
-        if (!cancelled) setPreviewUrl(url);
+        if (!cancelled) {
+          if (url) {
+            setPreviewUrl(url);
+          } else {
+            setPreviewUrl('');
+            setGenerationError(true);
+          }
+        }
       } catch {
-        if (!cancelled) setPreviewUrl('');
+        if (!cancelled) {
+          setPreviewUrl('');
+          setGenerationError(true);
+        }
       }
     };
     void generate();
     return () => {
       cancelled = true;
     };
-  }, [isOpen, title, mainTracks, encoreTracks, formattedDuration, theme]);
+  }, [isOpen, title, mainTracks, encoreTracks, formattedDuration, theme, retryNonce]);
 
   if (!isOpen) return null;
 
-  const safeFileBase = (title.replace(/[\\/:*?"<>|]/g, '').trim() || 'my-setlist').slice(0, 40);
+  const safeFileBase = buildSafeFileBase(title);
 
   return (
     <dialog
       ref={dialogRef}
       aria-labelledby="setlist-image-modal-title"
-      onCancel={(e) => {
-        e.preventDefault();
-        onClose();
-      }}
-      onClick={(e) => {
-        if (e.target === dialogRef.current) onClose();
-      }}
+      {...dialogProps}
       className="fixed inset-0 m-auto max-h-[92vh] w-[calc(100vw-1.5rem)] max-w-xl rounded-2xl border border-[#D5CEC2] bg-[#FFFDF8] p-0 text-[#1C1917] shadow-2xl backdrop:bg-black/55"
     >
       <div className="flex items-center justify-between border-b border-[#E6E1D6] px-5 py-3.5">
@@ -517,9 +515,14 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
 
       <div className="space-y-4 p-5 overflow-y-auto max-h-[calc(92vh-4rem)]">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex rounded-lg border border-[#D5CEC2] bg-[#F2EFE9] p-1 text-xs font-bold">
+          <div
+            role="group"
+            aria-label="画像テーマの選択"
+            className="inline-flex rounded-lg border border-[#D5CEC2] bg-[#F2EFE9] p-1 text-xs font-bold"
+          >
             <button
               type="button"
+              aria-pressed={theme === 'notebook'}
               onClick={() => setTheme('notebook')}
               className={`rounded-md px-3 py-1.5 transition-colors cursor-pointer ${
                 theme === 'notebook'
@@ -531,6 +534,7 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
             </button>
             <button
               type="button"
+              aria-pressed={theme === 'stage'}
               onClick={() => setTheme('stage')}
               className={`rounded-md px-3 py-1.5 transition-colors cursor-pointer ${
                 theme === 'stage'
@@ -564,6 +568,20 @@ export const SetlistImageModal: React.FC<SetlistImageModalProps> = ({
             <p className="mt-2 text-[11px] text-[#57534E]">
               ※ スマホでは上の画像を長押しして「写真に保存」することもできます
             </p>
+          </div>
+        ) : generationError ? (
+          <div
+            role="alert"
+            className="rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] p-6 text-center text-xs text-[#57534E] space-y-3"
+          >
+            <p>画像の生成に失敗しました。もう一度お試しください。</p>
+            <button
+              type="button"
+              onClick={() => setRetryNonce((n) => n + 1)}
+              className="inline-flex min-h-9 items-center justify-center rounded-lg border border-[#D5CEC2] bg-white px-4 py-1.5 text-xs font-bold text-[#1C1917] hover:bg-[#FAF6EB] cursor-pointer"
+            >
+              再試行
+            </button>
           </div>
         ) : (
           <p className="rounded-xl border border-[#E6E1D6] bg-[#F2EFE9] p-6 text-center text-xs text-[#57534E]">

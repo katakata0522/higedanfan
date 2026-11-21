@@ -1,4 +1,5 @@
-import { useLayoutEffect, useState, type RefObject } from 'react';
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
+import { readStoredResetEpoch } from '../hooks/fanRecordStorage';
 import { MoodQuestionnaire } from './mood/MoodQuestionnaire';
 import { MoodResults, type MoodLibraryProps } from './mood/MoodResults';
 import {
@@ -28,9 +29,12 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
   });
   const [session, setSession] = useState<MoodSession>(visit.initial);
   const [sessionSaveUnavailable, setSessionSaveUnavailable] = useState(false);
+  const shouldFocusResultsRef = useRef(false);
   useLayoutEffect(() => {
     sessionRef.current = session;
     const entry = window.history.state;
+    const storedEpoch = readStoredResetEpoch();
+    if (storedEpoch !== null && storedEpoch !== resetEpoch) return;
     // 履歴から開いた結果も、楽曲ページの「診断に戻る」で復元できるようにする。
     if (session === visit.initial) saveMoodSession(session, resetEpoch);
     try {
@@ -77,22 +81,35 @@ export function MoodFinderSection({ resetEpoch, sessionRef, ...props }: MoodFind
             {...props}
             criteria={criteria}
             page={session.page ?? 0}
+            focusOnMount={shouldFocusResultsRef.current}
+            onMountFocused={() => {
+              shouldFocusResultsRef.current = false;
+            }}
             onPageChange={page => updateSession({ ...session, page })}
             onEditAnswer={step => updateSession(editMoodAnswer(session, step))}
-            onRestart={() => updateSession(newMoodSession())}
+            onRestart={() => {
+              shouldFocusResultsRef.current = false;
+              updateSession(newMoodSession());
+            }}
           />
         ) : (
           <MoodQuestionnaire
             session={session}
             onChoose={answer => {
               const next = selectMoodAnswer(session, answer);
+              if (next.completed) {
+                shouldFocusResultsRef.current = true;
+              }
               if (!session.editing && !session.completed && next.completed && isCompleteMoodCriteria(next.answers)) {
                 recordMyNoteMoodCompleted(next.answers.mood, resetEpoch);
               }
               updateSession(next);
             }}
             onBack={() => updateSession(previousMoodStep(session))}
-            onCancelEdit={() => updateSession(cancelMoodEdit(session))}
+            onCancelEdit={() => {
+              shouldFocusResultsRef.current = true;
+              updateSession(cancelMoodEdit(session));
+            }}
           />
         )}
         {!session.completed && !session.editing && session.step === 1 && visit.previous && (

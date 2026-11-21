@@ -1,5 +1,6 @@
-import { useEffect, useId, useRef } from 'react';
+import { useId, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useModalDialog } from '../hooks/useModalDialog';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -25,41 +26,13 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const titleId = useId();
   const descId = useId();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const cancelButtonRef = useRef<HTMLButtonElement>(null);
   const confirmButtonRef = useRef<HTMLButtonElement>(null);
-
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || !isOpen) return undefined;
-
-    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-
-    if (!dialog.open) {
-      dialog.showModal();
-    }
-
-    const focusTimer = window.setTimeout(() => {
-      if (tone === 'danger') {
-        cancelButtonRef.current?.focus({ preventScroll: true });
-      } else {
-        confirmButtonRef.current?.focus({ preventScroll: true });
-      }
-    }, 0);
-
-    return () => {
-      window.clearTimeout(focusTimer);
-      if (dialog.open) {
-        dialog.close();
-      }
-      document.body.style.overflow = previousOverflow;
-      if (previousFocus?.isConnected) {
-        previousFocus.focus({ preventScroll: true });
-      }
-    };
-  }, [isOpen, tone]);
+  const { dialogRef, dialogProps } = useModalDialog({
+    isOpen,
+    onClose: onCancel,
+    initialFocusRef: tone === 'danger' ? cancelButtonRef : confirmButtonRef,
+  });
 
   if (!isOpen) return null;
 
@@ -73,13 +46,7 @@ export function ConfirmDialog({
       ref={dialogRef}
       aria-labelledby={titleId}
       aria-describedby={descId}
-      onCancel={(event) => {
-        event.preventDefault();
-        onCancel();
-      }}
-      onClick={(event) => {
-        if (event.target === dialogRef.current) onCancel();
-      }}
+      {...dialogProps}
       className="fixed inset-0 m-auto w-[calc(100vw-2rem)] max-w-md rounded-2xl border border-[#D5CEC2] bg-[#FFFDF8] p-0 text-[#1C1917] shadow-2xl backdrop:bg-black/45"
     >
       <div className="flex items-start justify-between gap-3 border-b border-[#E6E1D6] px-5 py-3.5">

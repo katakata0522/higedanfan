@@ -1,4 +1,5 @@
 import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useModalDialog } from '../hooks/useModalDialog';
 import {
   ArrowLeftRight,
   ArrowRight,
@@ -17,9 +18,11 @@ import {
   Ticket,
   X,
 } from 'lucide-react';
-import { SACRED_SPOTS, TOUR_ARCHIVES, type FanReview, type SongItem } from '../data/higedanData';
+import { SACRED_SPOTS } from '../data/sacredSpotsData';
+import { TOUR_ARCHIVES } from '../data/tourArchivesData';
+import type { FanReview, SongItem } from '../data/higedanTypes';
 import { DEFAULT_SETLIST_TITLE } from '../hooks/fanRecordStore';
-import { calculateSetlistStats } from '../utils/fanLogic';
+import { calculateSetlistStats } from '../utils/setlist';
 import {
   displayMyNoteNickname,
   hasCustomMyNoteNickname,
@@ -42,7 +45,6 @@ import {
   isCustomSetlistTitle,
   type MyNoteDetailTab,
   type MyNoteEngagementInput,
-  type MyNoteRadarAxis,
   type MyNoteStampItem,
 } from '../utils/myNoteSummary';
 import {
@@ -51,9 +53,11 @@ import {
   switchSavedSetlist,
 } from '../utils/savedSetlists';
 import { SETLIST_TITLE_LIMIT, type SetlistEntry } from '../utils/setlist';
+import { formatIsoDateDot as formatDisplayDate } from '../utils/format';
 import { sanitizeUserText } from '../utils/userInput';
 import { loadQuizVolumeScores } from './quiz/quizVolumeRecords';
 import type { SiteTab } from './SiteHeader';
+import { MyNoteRadarChart as RadarPentagonChart } from './myNote/MyNoteRadarChart';
 import './MyNoteModal.css';
 
 interface MyNoteModalProps {
@@ -73,8 +77,6 @@ interface MyNoteModalProps {
   onSwitchSavedSetlist: (entries: SetlistEntry[], title: string) => void;
   onExportRecords: () => void;
 }
-
-const formatDisplayDate = (date: string) => date.replaceAll('-', '.');
 
 const STAMPS_PER_PAGE = 20;
 
@@ -141,128 +143,24 @@ function StampGlyph({ stamp }: { stamp: MyNoteStampItem }) {
   }
 }
 
-function RadarPentagonChart({
-  axes,
-  hasAnyActivity,
-}: {
-  axes: readonly MyNoteRadarAxis[];
-  hasAnyActivity: boolean;
-}) {
-  const cx = 160;
-  const cy = 124;
-  const maxRadius = 80;
-  const rings = [0.25, 0.5, 0.75, 1];
-
-  const pointAt = (index: number, ratio: number): [number, number] => {
-    const angle = -Math.PI / 2 + (index * Math.PI * 2) / 5;
-    return [
-      Number((cx + maxRadius * ratio * Math.cos(angle)).toFixed(2)),
-      Number((cy + maxRadius * ratio * Math.sin(angle)).toFixed(2)),
-    ];
-  };
-
-  const labelAnchor = (index: number): { x: number; y: number; anchor: 'middle' | 'start' | 'end' } => {
-    const [x, y] = pointAt(index, 1.15);
-    if (index === 0) return { x, y: y - 6, anchor: 'middle' };
-    if (index === 1 || index === 2) return { x: x + 6, y: y + 4, anchor: 'start' };
-    return { x: x - 6, y: y + 4, anchor: 'end' };
-  };
-
-  const polygonPoints = axes
-    .map((axis, idx) => pointAt(idx, Math.max(0.08, axis.value)).join(','))
-    .join(' ');
-
-  return (
-    <div className="mn-radar-wrap">
-      <svg
-        viewBox="0 0 320 240"
-        className="mn-radar-svg"
-        role="img"
-        aria-label={`推し活バランスグラフ: ${axes.map((a) => `${a.label} ${a.rawLabel}`).join(' / ')}`}
-      >
-        {rings.map((ratio) => {
-          const pts = Array.from({ length: 5 }, (_, idx) => pointAt(idx, ratio).join(',')).join(' ');
-          return (
-            <polygon
-              key={ratio}
-              points={pts}
-              fill="none"
-              stroke="#e5dccb"
-              strokeWidth="1"
-            />
-          );
-        })}
-
-        {axes.map((axis, idx) => {
-          const [px, py] = pointAt(idx, 1);
-          const lbl = labelAnchor(idx);
-          return (
-            <g key={axis.id}>
-              <line
-                x1={cx}
-                y1={cy}
-                x2={px}
-                y2={py}
-                stroke="#dcd1bd"
-                strokeWidth="1"
-                strokeDasharray="3 3"
-              />
-              <text
-                x={lbl.x}
-                y={lbl.y}
-                textAnchor={lbl.anchor}
-                fontSize="11"
-                fontWeight="700"
-                fill="#44403C"
-              >
-                {axis.label}
-              </text>
-            </g>
-          );
-        })}
-
-        {hasAnyActivity ? (
-          <g>
-            <polygon
-              points={polygonPoints}
-              fill="rgba(200, 62, 43, 0.17)"
-              stroke="#C83E2B"
-              strokeWidth="1.8"
-              strokeLinejoin="round"
-            />
-            {axes.map((axis, idx) => {
-              const [px, py] = pointAt(idx, Math.max(0.08, axis.value));
-              return (
-                <circle
-                  key={axis.id}
-                  cx={px}
-                  cy={py}
-                  r="3.2"
-                  fill="#C83E2B"
-                  stroke="#ffffff"
-                  strokeWidth="1.2"
-                />
-              );
-            })}
-          </g>
-        ) : (
-          <text
-            x={cx}
-            y={cy + 4}
-            textAnchor="middle"
-            fontSize="10.5"
-            fontWeight="700"
-            fill="#78716C"
-          >
-            記録が増えると形が育ちます
-          </text>
-        )}
-      </svg>
-    </div>
-  );
+interface MyNoteModalOpenProps extends MyNoteModalProps {
+  activeTab: MyNoteDetailTab;
+  onSelectActiveTab: (tab: MyNoteDetailTab) => void;
 }
 
-export const MyNoteModal: React.FC<MyNoteModalProps> = ({
+export const MyNoteModal: React.FC<MyNoteModalProps> = (props) => {
+  const [activeTab, setActiveTab] = useState<MyNoteDetailTab>('tours');
+  if (!props.isOpen) return null;
+  return (
+    <MyNoteModalOpen
+      {...props}
+      activeTab={activeTab}
+      onSelectActiveTab={setActiveTab}
+    />
+  );
+};
+
+const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
   isOpen,
   onClose,
   songs,
@@ -278,13 +176,26 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   onNavigateSong,
   onSwitchSavedSetlist,
   onExportRecords,
+  activeTab,
+  onSelectActiveTab,
 }) => {
   const titleId = useId();
-  const dialogRef = useRef<HTMLDialogElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
   const detailBoxRef = useRef<HTMLElement>(null);
+  const detailScrollRafRef = useRef<number | null>(null);
+  const detailTabRefs = useRef<Partial<Record<MyNoteDetailTab, HTMLButtonElement | null>>>({});
   const nameInputRef = useRef<HTMLInputElement>(null);
-  const [profile, setProfile] = useState<MyNoteProfile>(() => loadMyNoteProfile(resetEpoch));
+  const validSongIds = useMemo(() => new Set(songs.map((song) => song.id)), [songs]);
+  const songById = useMemo(() => new Map(songs.map((song) => [song.id, song])), [songs]);
+  const { dialogRef, dialogProps } = useModalDialog({
+    isOpen,
+    onClose,
+    initialFocusRef: closeButtonRef,
+  });
+  const [profile, setProfile] = useState<MyNoteProfile>(() =>
+    loadMyNoteProfile(resetEpoch, undefined, validSongIds),
+  );
   const [titleMode, setTitleMode] = useState<MyNoteTitleDisplayMode>(() =>
     loadMyNoteTitleMode(resetEpoch),
   );
@@ -294,78 +205,43 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   const [stampCountMode, setStampCountMode] = useState<StampCountMode>('all');
   const [isEditingName, setIsEditingName] = useState(false);
   const [draftName, setDraftName] = useState('');
-  const [activeTab, setActiveTab] = useState<MyNoteDetailTab>('tours');
   const [stampFilter, setStampFilter] = useState<StampCategoryFilter>('all');
   const [stampPage, setStampPage] = useState(0);
   const [selectedStampId, setSelectedStampId] = useState<string | null>(null);
   const [switchNotice, setSwitchNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    setProfile(loadMyNoteProfile(resetEpoch));
+    setProfile(loadMyNoteProfile(resetEpoch, undefined, validSongIds));
     setTitleMode(loadMyNoteTitleMode(resetEpoch));
     setHasSetlistShareImage(loadSetlistShareImageGenerated(resetEpoch));
-  }, [resetEpoch]);
+  }, [resetEpoch, validSongIds]);
 
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen) {
-      const latest = loadMyNoteProfile(resetEpoch);
-      const openedProfile = latest.opened ? latest : { ...latest, opened: true };
-      if (!latest.opened) {
-        persistMyNoteProfile(openedProfile, resetEpoch);
-      }
-      setProfile(openedProfile);
-      setTitleMode(loadMyNoteTitleMode(resetEpoch));
-      setHasSetlistShareImage(loadSetlistShareImageGenerated(resetEpoch));
-      setStampCountMode('all');
-      setIsEditingName(false);
-      setSwitchNotice(null);
-      setSelectedStampId(null);
-      setStampFilter('all');
-      setStampPage(0);
-      if (!dialog.open) {
-        dialog.showModal();
-      }
-      if (bodyRef.current) {
-        bodyRef.current.scrollTop = 0;
-      }
-    } else if (dialog.open) {
-      dialog.close();
+    if (!isOpen) return;
+    const latest = loadMyNoteProfile(resetEpoch, undefined, validSongIds);
+    const openedProfile = latest.opened ? latest : { ...latest, opened: true };
+    if (!latest.opened) {
+      persistMyNoteProfile(openedProfile, resetEpoch);
     }
-  }, [isOpen, resetEpoch]);
+    setProfile(openedProfile);
+    setTitleMode(loadMyNoteTitleMode(resetEpoch));
+    setHasSetlistShareImage(loadSetlistShareImageGenerated(resetEpoch));
+    setStampCountMode('all');
+    setIsEditingName(false);
+    setSwitchNotice(null);
+    setSelectedStampId(null);
+    setStampFilter('all');
+    setStampPage(0);
+    if (bodyRef.current) {
+      bodyRef.current.scrollTop = 0;
+    }
+  }, [isOpen, resetEpoch, validSongIds]);
 
-  // Safari fallback for <dialog closedby="any">
   useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog || 'closedBy' in HTMLDialogElement.prototype) return undefined;
-
-    const isOutside = (e: PointerEvent) => {
-      const rect = dialog.getBoundingClientRect();
-      return (
-        e.clientX < rect.left ||
-        e.clientX > rect.right ||
-        e.clientY < rect.top ||
-        e.clientY > rect.bottom
-      );
-    };
-
-    let pressedOutside = false;
-    const handlePointerDown = (e: PointerEvent) => {
-      pressedOutside = isOutside(e);
-    };
-    const handlePointerUp = (e: PointerEvent) => {
-      if (pressedOutside && isOutside(e)) {
-        dialog.close();
-      }
-      pressedOutside = false;
-    };
-
-    dialog.addEventListener('pointerdown', handlePointerDown);
-    dialog.addEventListener('pointerup', handlePointerUp);
     return () => {
-      dialog.removeEventListener('pointerdown', handlePointerDown);
-      dialog.removeEventListener('pointerup', handlePointerUp);
+      if (detailScrollRafRef.current !== null) {
+        window.cancelAnimationFrame(detailScrollRafRef.current);
+      }
     };
   }, []);
 
@@ -374,9 +250,6 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
       nameInputRef.current?.focus();
     }
   }, [isEditingName]);
-
-  const validSongIds = useMemo(() => new Set(songs.map((song) => song.id)), [songs]);
-  const songById = useMemo(() => new Map(songs.map((song) => [song.id, song])), [songs]);
 
   const timeline = useMemo(
     () => buildAttendedTimeline(TOUR_ARCHIVES, attendedTourIds),
@@ -469,8 +342,12 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   };
 
   const handleSelectDetailTab = (nextTab: MyNoteDetailTab) => {
-    setActiveTab(nextTab);
-    window.requestAnimationFrame(() => {
+    onSelectActiveTab(nextTab);
+    if (detailScrollRafRef.current !== null) {
+      window.cancelAnimationFrame(detailScrollRafRef.current);
+    }
+    detailScrollRafRef.current = window.requestAnimationFrame(() => {
+      detailScrollRafRef.current = null;
       const body = bodyRef.current;
       const box = detailBoxRef.current;
       if (!body || !box) return;
@@ -483,6 +360,26 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
         });
       }
     });
+  };
+
+  const handleDetailTabKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const detailTabs: readonly MyNoteDetailTab[] = ['tours', 'spots', 'setlists', 'quiz'];
+    const currentIndex = detailTabs.indexOf(activeTab);
+    if (currentIndex === -1) return;
+    let nextTab: MyNoteDetailTab | null = null;
+    if (event.key === 'ArrowRight') {
+      nextTab = detailTabs[(currentIndex + 1) % detailTabs.length];
+    } else if (event.key === 'ArrowLeft') {
+      nextTab = detailTabs[(currentIndex - 1 + detailTabs.length) % detailTabs.length];
+    } else if (event.key === 'Home') {
+      nextTab = detailTabs[0];
+    } else if (event.key === 'End') {
+      nextTab = detailTabs[detailTabs.length - 1];
+    }
+    if (!nextTab) return;
+    event.preventDefault();
+    handleSelectDetailTab(nextTab);
+    detailTabRefs.current[nextTab]?.focus();
   };
 
   const handleCycleStampCountMode = () => {
@@ -541,7 +438,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   );
 
   const handleRequestClose = () => {
-    dialogRef.current?.close();
+    onClose();
   };
 
   const handleSaveNickname = (event: React.FormEvent) => {
@@ -553,7 +450,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
       opened: true,
     };
     persistMyNoteProfile(nextProfile, resetEpoch);
-    setProfile(loadMyNoteProfile(resetEpoch));
+    setProfile(loadMyNoteProfile(resetEpoch, undefined, validSongIds));
     setIsEditingName(false);
   };
 
@@ -572,15 +469,9 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
   return (
     <dialog
       ref={dialogRef}
-      {...({ closedby: 'any' } as Record<string, string>)}
       aria-labelledby={titleId}
       className="my-note-dialog"
-      onClose={() => {
-        if (dialogRef.current) {
-          dialogRef.current.returnValue = '';
-        }
-        onClose();
-      }}
+      {...dialogProps}
     >
       <header className="mn-head">
         <h2 id={titleId} className="mn-head-title">
@@ -590,13 +481,13 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
           集めたスタンプとあなたの推し旅の記録を一冊に。
         </p>
         <button
+          ref={closeButtonRef}
           type="button"
           className="mn-close-x"
           aria-label="マイノートを閉じる"
-          autoFocus
           onClick={handleRequestClose}
         >
-          <X size={16} aria-hidden="true" />
+          <X size={20} aria-hidden="true" />
         </button>
       </header>
 
@@ -650,7 +541,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
                       onClick={() => {
                         setSelectedStampId(stamp.id);
                         if (stamp.targetTab) {
-                          setActiveTab(stamp.targetTab);
+                          onSelectActiveTab(stamp.targetTab);
                         }
                       }}
                       aria-pressed={selectedStampId === stamp.id}
@@ -711,7 +602,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               {activeStamp && activeDetails ? (
                 <div className="mn-hint-body">
                   <div className="mn-hint-top">
-                    <span className="mn-hint-serial">No.{activeStamp.serialCode} / 115</span>
+                    <span className="mn-hint-serial">No.{activeStamp.serialCode} / {stamps.length}</span>
                     <span
                       className={`mn-stamp-tier-pill ${
                         activeStamp.tier === 'gold' ? 'mn-stamp-tier-pill--gold' : ''
@@ -845,12 +736,21 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
 
         {/* Detailed Records Tabs */}
         <section ref={detailBoxRef} className="mn-detail-box" aria-label="くわしい記録一覧">
-          <div className="mn-detail-tabs" role="tablist" aria-label="記録の切り替え">
+          <div
+            className="mn-detail-tabs"
+            role="tablist"
+            aria-label="記録の切り替え"
+            onKeyDown={handleDetailTabKeyDown}
+          >
             <button
+              ref={(el) => {
+                detailTabRefs.current.tours = el;
+              }}
               id={`${titleId}-tab-tours`}
               type="button"
               role="tab"
               aria-selected={activeTab === 'tours'}
+              tabIndex={activeTab === 'tours' ? 0 : -1}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'tours' ? 'mn-tab-btn--active' : ''}`}
               onClick={() => handleSelectDetailTab('tours')}
@@ -859,10 +759,14 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               <span>参戦年表 ({timeline.totalAttended})</span>
             </button>
             <button
+              ref={(el) => {
+                detailTabRefs.current.spots = el;
+              }}
               id={`${titleId}-tab-spots`}
               type="button"
               role="tab"
               aria-selected={activeTab === 'spots'}
+              tabIndex={activeTab === 'spots' ? 0 : -1}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'spots' ? 'mn-tab-btn--active' : ''}`}
               onClick={() => handleSelectDetailTab('spots')}
@@ -873,10 +777,14 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               </span>
             </button>
             <button
+              ref={(el) => {
+                detailTabRefs.current.setlists = el;
+              }}
               id={`${titleId}-tab-setlists`}
               type="button"
               role="tab"
               aria-selected={activeTab === 'setlists'}
+              tabIndex={activeTab === 'setlists' ? 0 : -1}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'setlists' ? 'mn-tab-btn--active' : ''}`}
               onClick={() => handleSelectDetailTab('setlists')}
@@ -885,10 +793,14 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
               <span>MYセトリ ({savedSetlists.items.length})</span>
             </button>
             <button
+              ref={(el) => {
+                detailTabRefs.current.quiz = el;
+              }}
               id={`${titleId}-tab-quiz`}
               type="button"
               role="tab"
               aria-selected={activeTab === 'quiz'}
+              tabIndex={activeTab === 'quiz' ? 0 : -1}
               aria-controls={`${titleId}-panel`}
               className={`mn-tab-btn ${activeTab === 'quiz' ? 'mn-tab-btn--active' : ''}`}
               onClick={() => handleSelectDetailTab('quiz')}
@@ -1002,7 +914,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <p style={{ margin: 0, fontSize: '11px', color: '#78716C' }}>
+                          <p style={{ margin: 0, fontSize: '11px', color: '#68625C' }}>
                             このエリアはまだ未チェック
                           </p>
                         )}
@@ -1108,7 +1020,7 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
                               );
                             })}
                             {liveEntries.length > 6 && (
-                              <span style={{ fontSize: '11px', color: '#78716C', alignSelf: 'center' }}>
+                              <span style={{ fontSize: '11px', color: '#68625C', alignSelf: 'center' }}>
                                 ほか {liveEntries.length - 6} 曲
                               </span>
                             )}
@@ -1184,22 +1096,17 @@ export const MyNoteModal: React.FC<MyNoteModalProps> = ({
       </div>
 
       <footer className="mn-footer">
-        <div className="mn-footer-left">
-          <span className="mn-footer-note">※記録はお使いのブラウザ内に保存</span>
-          <button
-            type="button"
-            className="mn-export-btn"
-            onClick={() => {
-              onExportRecords();
-              setProfile(loadMyNoteProfile(resetEpoch));
-            }}
-          >
-            <Download size={14} aria-hidden="true" />
-            <span>ファイルに保存</span>
-          </button>
-        </div>
-        <button type="button" className="mn-close-btn" onClick={handleRequestClose}>
-          とじる
+        <span className="mn-footer-note">※記録はお使いのブラウザ内に保存</span>
+        <button
+          type="button"
+          className="mn-export-btn"
+          onClick={() => {
+            onExportRecords();
+            setProfile(loadMyNoteProfile(resetEpoch, undefined, validSongIds));
+          }}
+        >
+          <Download size={14} aria-hidden="true" />
+          <span>ファイルに保存</span>
         </button>
       </footer>
     </dialog>

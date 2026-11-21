@@ -1,5 +1,5 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
-import { editorialArticles } from '../editorialArticles';
+import { editorialShard1 } from '../editorial/shard1';
 
 const page = {
   id: 'cry-baby',
@@ -8,12 +8,12 @@ const page = {
     alt: '雨の練習室、赤いランプ、ピアノ、ドラムスティックを描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: editorialArticles['cry-baby'].feature,
-    credit: editorialArticles['cry-baby'].featureCredit ?? '— 楽曲ガイドより',
-    kind: editorialArticles['cry-baby'].featureKind,
-    citeUrl: editorialArticles['cry-baby'].featureCiteUrl,
+    text: editorialShard1['cry-baby'].feature,
+    credit: editorialShard1['cry-baby'].featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialShard1['cry-baby'].featureKind,
+    citeUrl: editorialShard1['cry-baby'].featureCiteUrl,
   },
-  overview: editorialArticles['cry-baby'].paragraphs,
+  overview: editorialShard1['cry-baby'].paragraphs,
   albumTrack: 6,
   sources: [
     { label: 'アニメ『東京リベンジャーズ』公式サイト', purpose: 'オープニング主題歌', url: 'https://tokyo-revengers-anime.com/news/archives/103' },

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { ChevronDown, RotateCcw, Search, X } from 'lucide-react';
-import type { EraTag, SoundTag } from '../data/higedanData';
+import type { EraTag, SoundTag } from '../data/higedanTypes';
 import type { DiscographySortOption } from '../utils/discography';
 import { ERA_SHORT_LABELS } from '../utils/songLabels';
 import { SONG_TABLE_SORT_LABELS, type SongTableSort } from '../utils/songTableSort';
@@ -61,7 +61,7 @@ interface Props {
   onReset?: () => void;
 }
 
-const selectClass = 'w-full min-w-0 rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-2 text-xs font-medium text-[#253331] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#253331]';
+const selectClass = 'w-full min-w-0 rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-2 text-base sm:text-xs font-medium text-[#253331] min-h-[40px] focus:outline-none focus:ring-2 focus:ring-[#253331]';
 
 export function SongGuideFilters({ values, onChange, resultCount, shownCount, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
@@ -102,7 +102,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
               }
             }}
             placeholder="例：プリテンダー"
-            className="w-full min-h-[44px] rounded-lg border border-[#dfd7c7] bg-[#faf6eb] pl-9 pr-11 py-2 text-base sm:text-sm text-[#253331] placeholder:text-[#78716C] focus:outline-none focus:ring-2 focus:ring-[#253331] [&::-webkit-search-cancel-button]:appearance-none"
+            className="w-full min-h-[44px] rounded-lg border border-[#dfd7c7] bg-[#faf6eb] pl-9 pr-11 py-2 text-base sm:text-sm text-[#253331] placeholder:text-[#68625C] focus:outline-none focus:ring-2 focus:ring-[#253331] [&::-webkit-search-cancel-button]:appearance-none"
           />
           {searchQuery && (
             <button type="button" aria-label="検索キーワードをクリア"
@@ -174,7 +174,7 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
             <RotateCcw aria-hidden="true" className="h-3.5 w-3.5" />条件リセット
           </button>
         ) : (
-          <span className="text-[11px] text-[#78716C]">並び順：代表曲 → アルバム順</span>
+          <span className="text-[11px] text-[#68625C]">並び順：代表曲 → アルバム順</span>
         )}
       </div>
     </div>

@@ -18,3 +18,27 @@
   --fan-note-font: "Fan Note Kiwi", "Kiwi Maru", "Shippori Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
   --fan-ui-font: "Fan Note Sans", "Noto Sans JP", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
 }
+
+.skip-link {
+  position: absolute;
+  z-index: 60;
+  top: -60px;
+  left: 16px;
+  padding: 8px 14px;
+  border-radius: 9999px;
+  border: 1px solid #253331;
+  background: #fffdf8;
+  color: #253331;
+  font-family: var(--fan-ui-font);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(24, 34, 32, 0.12);
+  transition: top 120ms ease-out;
+}
+
+.skip-link:focus {
+  top: 12px;
+  outline: 2px solid #c83e2b;
+  outline-offset: 2px;
+}

@@ -1,5 +1,5 @@
 import type { EditorialSongPageData } from '../EditorialSongPageData';
-import { editorialArticles } from '../editorialArticles';
+import { editorialShard1 } from '../editorial/shard1';
 
 const page = {
   id: 'pretender',
@@ -8,12 +8,12 @@ const page = {
     alt: '赤い劇場の客席、ピアノ、仮面を描いた当サイト制作のイメージ画像',
   },
   feature: {
-    text: editorialArticles.pretender.feature,
-    credit: editorialArticles.pretender.featureCredit ?? '— 楽曲ガイドより',
-    kind: editorialArticles.pretender.featureKind,
-    citeUrl: editorialArticles.pretender.featureCiteUrl,
+    text: editorialShard1.pretender.feature,
+    credit: editorialShard1.pretender.featureCredit ?? '— 楽曲ガイドより',
+    kind: editorialShard1.pretender.featureKind,
+    citeUrl: editorialShard1.pretender.featureCiteUrl,
   },
-  overview: editorialArticles.pretender.paragraphs,
+  overview: editorialShard1.pretender.paragraphs,
   albumTrack: 12,
   sources: [
     { label: '『Pretender』公式特設サイト', purpose: '映画主題歌、シングル発売日、アーティストコメント', url: 'https://pretender.ponycanyon.co.jp/' },

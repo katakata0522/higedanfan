@@ -1,8 +1,9 @@
-import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import { VERIFIED_SONG_IDS } from '../data/fullCatalogSongs';
+import { safeJsonParseBounded, safeRandomUuid } from '../utils/browserStorage';
 
 // 同じタブの再読み込みを越えて、保存待ちの追加操作だけを復元する。
 const PREFIX = 'higedan_pending_setlist_add_v1:';
-const validSongIds = new Set(HIGEDAN_SONGS.map(song => song.id));
+const MAX_JOURNAL_ENTRY_BYTES = 10_000;
 
 export interface PendingSetlistAdd {
   songId: string;
@@ -16,10 +17,10 @@ export interface PendingSetlistAdd {
 export type JournalStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem' | 'key' | 'length'>;
 
 function isPendingSetlistAdd(value: unknown): value is PendingSetlistAdd {
-  if (!value || typeof value !== 'object') return false;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const item = value as Partial<PendingSetlistAdd>;
-  return typeof item.songId === 'string' && validSongIds.has(item.songId) &&
-    typeof item.isEncore === 'boolean' && typeof item.resetEpoch === 'string' &&
+  return typeof item.songId === 'string' && VERIFIED_SONG_IDS.has(item.songId) &&
+    typeof item.isEncore === 'boolean' && typeof item.resetEpoch === 'string' && item.resetEpoch.length <= 120 &&
     typeof item.membershipVersion === 'number' && Number.isSafeInteger(item.membershipVersion) && item.membershipVersion >= 0 &&
     typeof item.hadSavedRecord === 'boolean' && typeof item.order === 'number' &&
     Number.isSafeInteger(item.order) && item.order >= 0;
@@ -33,7 +34,7 @@ export function readPendingSetlistAdds(storage: JournalStorage) {
     if (!key?.startsWith(PREFIX)) continue;
     try {
       const raw = storage.getItem(key);
-      const value: unknown = raw === null ? null : JSON.parse(raw);
+      const value = safeJsonParseBounded(raw, MAX_JOURNAL_ENTRY_BYTES);
       if (isPendingSetlistAdd(value)) entries.push({ key, add: value });
       else unreadable = true;
     } catch { unreadable = true; }
@@ -43,7 +44,7 @@ export function readPendingSetlistAdds(storage: JournalStorage) {
 }
 
 export function writePendingSetlistAdd(storage: JournalStorage, add: PendingSetlistAdd) {
-  const key = PREFIX + crypto.randomUUID();
+  const key = PREFIX + safeRandomUuid();
   storage.setItem(key, JSON.stringify(add));
   return key;
 }

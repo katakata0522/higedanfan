@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ArrowRight, Award } from 'lucide-react';
-import { QUIZ_COURSES, type CourseDifficulty, type QuestionScopeFilter } from './quizCourses';
+import { QUIZ_COURSES, type CourseDifficulty, type QuestionScopeFilter } from './quizCourseMeta';
 import { quizVolumeKey, type QuizVolumeRecordMap } from './quizVolumeRecords';
 
 interface Props {
@@ -95,7 +95,7 @@ export function QuizCoursePicker({ onStart, initialDifficulty = 'beginner', best
               >
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                    <span className="font-editorial text-lg font-bold text-[#C83E2B]">
+                    <span className="font-editorial text-lg font-semibold text-[#C83E2B]">
                       Vol.{volNumber}
                     </span>
                     <span className="text-xs font-medium text-[#57534E]">

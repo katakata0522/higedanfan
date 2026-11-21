@@ -1,33 +1,38 @@
 import type { SongGuideFilterValues } from '../components/SongGuideFilters';
-import type { SacredSpotCategory } from '../data/higedanData';
+import type { SacredSpotCategory } from '../data/higedanTypes';
+import {
+  getBrowserSessionStorage,
+  hasBlockedKey,
+  isPlainObject,
+  safeJsonParseBounded,
+  type BrowserStorageLike,
+} from './browserStorage';
 import { SACRED_SPOT_REGIONS, SPOT_CATEGORIES, type SacredSpotRegion } from './sacredSpotAreas';
 import { ALBUM_CHRONOLOGY_RANK } from './songCatalog';
 import { SONG_TABLE_SORT_KEYS } from './songTableSort';
+import {
+  clearSongReturnTab,
+  guideReturnView,
+  saveSongReturnTab,
+  songReturnDestination,
+  type GuideReturnView,
+} from './songReturnTab';
+
+export { clearSongReturnTab, guideReturnView, saveSongReturnTab, songReturnDestination };
+export type { GuideReturnView };
+
+const CONTROL_OR_BIDI_RE = /[\u0000-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/;
+const MAX_RETURN_STATE_BYTES = 10_000;
 
 const key = 'higedanfan:guide-return:v1';
 const archiveKey = 'higedanfan:archive-return:v1';
 const tourKey = 'higedanfan:tour-return:v1';
 const originTabKey = 'higedanfan:song-origin-tab:v1';
-const originTabs = new Set([
-  'home', 'mood', 'discography', 'vocal_range', 'sacred_map', 'setlist', 'tour_archive', 'quiz', 'quiz_archive',
-]);
-const ORIGIN_DESTINATIONS: Record<string, { hash: string; label: string }> = {
-  home: { hash: 'home', label: 'トップページに戻る' },
-  mood: { hash: 'mood', label: '今日の1曲診断に戻る' },
-  discography: { hash: 'discography', label: '楽曲ガイドに戻る' },
-  vocal_range: { hash: 'vocal_range', label: '音域一覧に戻る' },
-  sacred_map: { hash: 'sacred_map', label: '聖地巡礼マップに戻る' },
-  setlist: { hash: 'setlist', label: 'MYセトリ作成に戻る' },
-  tour_archive: { hash: 'tour_archive', label: '歴代ツアー記録に戻る' },
-  quiz: { hash: 'quiz', label: 'Official髭男dism検定に戻る' },
-  quiz_archive: { hash: 'quiz_archive', label: '参考記事・インタビューに戻る' },
-};
 const eras = new Set(['all', 'indies_escaparade', 'traveler', 'editorial', 'rejoice', 'latest_2025_2026']);
 const sounds = new Set(['all', 'piano_pop', 'brass_funk', 'emotional_ballad', 'stadium_rock']);
 const sorts = new Set(['guide_order', 'album_track_order', 'popular', 'newest', 'release_oldest', 'highest_note', 'vocal_span', 'bpm']);
 
-type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
-export type GuideReturnView = 'discography' | 'vocal_range';
+type Store = Pick<BrowserStorageLike, 'getItem' | 'setItem' | 'removeItem'>;
 export type GuideReturnState = {
   filters: SongGuideFilterValues;
   visibleCount: number;
@@ -66,16 +71,7 @@ export type TourReturnState = {
 };
 
 function browserStore(): Store | null {
-  try { return window.sessionStorage; } catch { return null; }
-}
-
-export function saveSongReturnTab(tab: string, store: Store | null = browserStore()): void {
-  if (!originTabs.has(tab)) return;
-  try { store?.setItem(originTabKey, tab); } catch { /* 保存できない環境では既定の戻り先を使う。 */ }
-}
-
-export function clearSongReturnTab(store: Store | null = browserStore()): void {
-  try { store?.removeItem(originTabKey); } catch { /* ignore */ }
+  return getBrowserSessionStorage();
 }
 
 export function clearGuideListReturnState(store: Store | null = browserStore()): void {
@@ -117,32 +113,32 @@ export function takeMapReturnState(spotIds: readonly string[], store: Store | nu
   try {
     const raw = store?.getItem(key);
     store?.removeItem(key);
-    if (!raw || raw.length > 2000) return null;
-    const state = JSON.parse(raw) as (MapReturnState & { view: string }) | null;
-    if (state?.view !== 'sacred_map' ||
-        !SACRED_SPOT_REGIONS.some(region => region.id === state.region) || !SPOT_CATEGORIES.includes(state.category) ||
-        typeof state.visitedOnly !== 'boolean' || typeof state.filtersOpen !== 'boolean' ||
-        !spotIds.includes(state.originSpotId) || (state.mapSpotId !== '' && !spotIds.includes(state.mapSpotId)) ||
-        (state.pinnedSpotId !== null && !spotIds.includes(state.pinnedSpotId))) return null;
-    return state;
-  } catch { return null; }
-}
-
-export function guideReturnView(store: Store | null = browserStore()): GuideReturnView {
-  try {
-    const value = JSON.parse(store?.getItem(key) ?? 'null') as Partial<GuideReturnState> | null;
-    return value?.view === 'vocal_range' ? 'vocal_range' : 'discography';
-  } catch { return 'discography'; }
-}
-
-export function songReturnDestination(store: Store | null = browserStore()): { hash: string; label: string } {
-  try {
-    const savedTab = store?.getItem(originTabKey);
-    if (savedTab && Object.hasOwn(ORIGIN_DESTINATIONS, savedTab)) {
-      return ORIGIN_DESTINATIONS[savedTab];
+    const parsed = safeJsonParseBounded(raw, 2000);
+    if (!isPlainObject(parsed) || hasBlockedKey(parsed, 4)) return null;
+    if (
+      parsed.view !== 'sacred_map' ||
+      !SACRED_SPOT_REGIONS.some(region => region.id === parsed.region) ||
+      !SPOT_CATEGORIES.includes(parsed.category as SacredSpotCategory | 'all') ||
+      typeof parsed.visitedOnly !== 'boolean' ||
+      typeof parsed.filtersOpen !== 'boolean' ||
+      typeof parsed.originSpotId !== 'string' ||
+      !spotIds.includes(parsed.originSpotId) ||
+      typeof parsed.mapSpotId !== 'string' ||
+      (parsed.mapSpotId !== '' && !spotIds.includes(parsed.mapSpotId)) ||
+      (parsed.pinnedSpotId !== null && (typeof parsed.pinnedSpotId !== 'string' || !spotIds.includes(parsed.pinnedSpotId)))
+    ) {
+      return null;
     }
-  } catch { /* fall through to guideReturnView */ }
-  return ORIGIN_DESTINATIONS[guideReturnView(store)];
+    return {
+      region: parsed.region as SacredSpotRegion,
+      category: parsed.category as SacredSpotCategory | 'all',
+      visitedOnly: parsed.visitedOnly,
+      filtersOpen: parsed.filtersOpen,
+      mapSpotId: parsed.mapSpotId,
+      pinnedSpotId: parsed.pinnedSpotId,
+      originSpotId: parsed.originSpotId,
+    };
+  } catch { return null; }
 }
 
 export function takeGuideReturnState(songCount: number, store: Store | null = browserStore()): GuideReturnState | null {
@@ -151,28 +147,69 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
     const raw = store.getItem(key);
     store.removeItem(key);
     store.removeItem(originTabKey);
-    if (!raw) return null;
-    const value: unknown = JSON.parse(raw);
-    if (!value || typeof value !== 'object') return null;
-    const { filters, visibleCount, view, originSongId, voice, showTieUps } = value as Partial<GuideReturnState>;
-    if (!filters || typeof filters !== 'object' ||
+    const value = safeJsonParseBounded(raw, MAX_RETURN_STATE_BYTES);
+    if (!isPlainObject(value) || hasBlockedKey(value, 5)) return null;
+    const { filters: rawFilters, visibleCount, view, originSongId, voice: rawVoice, showTieUps } = value;
+    if (!isPlainObject(rawFilters) ||
         (view !== 'discography' && view !== 'vocal_range') ||
-        !eras.has(filters.era) || !sounds.has(filters.sound) || !sorts.has(filters.sortBy) ||
-        (filters.album !== 'all' && !Object.hasOwn(ALBUM_CHRONOLOGY_RANK, filters.album)) ||
-        typeof filters.searchQuery !== 'string' || filters.searchQuery.length > 60 ||
-        !Number.isInteger(visibleCount) || visibleCount! < 1 || visibleCount! > songCount) return null;
+        typeof rawFilters.era !== 'string' || !eras.has(rawFilters.era) ||
+        typeof rawFilters.sound !== 'string' || !sounds.has(rawFilters.sound) ||
+        typeof rawFilters.sortBy !== 'string' || !sorts.has(rawFilters.sortBy) ||
+        typeof rawFilters.album !== 'string' ||
+        (rawFilters.album !== 'all' && !Object.hasOwn(ALBUM_CHRONOLOGY_RANK, rawFilters.album)) ||
+        typeof rawFilters.searchQuery !== 'string' ||
+        rawFilters.searchQuery.length > 60 ||
+        CONTROL_OR_BIDI_RE.test(rawFilters.searchQuery) ||
+        !Number.isInteger(visibleCount) || Number(visibleCount) < 1 || Number(visibleCount) > songCount) return null;
     if (originSongId !== undefined && (typeof originSongId !== 'string' || !/^[a-z0-9-]+$/.test(originSongId) || originSongId.length > 60)) return null;
-    if (filters.tableSort !== undefined && (!filters.tableSort ||
-        !SONG_TABLE_SORT_KEYS.includes(filters.tableSort.key) ||
-        !['ascending', 'descending'].includes(filters.tableSort.direction))) return null;
+    let tableSort: SongGuideFilterValues['tableSort'];
+    if (rawFilters.tableSort !== undefined) {
+      if (
+        !isPlainObject(rawFilters.tableSort) ||
+        typeof rawFilters.tableSort.key !== 'string' ||
+        !SONG_TABLE_SORT_KEYS.includes(rawFilters.tableSort.key as NonNullable<SongGuideFilterValues['tableSort']>['key']) ||
+        (rawFilters.tableSort.direction !== 'ascending' && rawFilters.tableSort.direction !== 'descending')
+      ) {
+        return null;
+      }
+      tableSort = {
+        key: rawFilters.tableSort.key as NonNullable<SongGuideFilterValues['tableSort']>['key'],
+        direction: rawFilters.tableSort.direction,
+      };
+    }
+    const filters: SongGuideFilterValues = {
+      era: rawFilters.era as SongGuideFilterValues['era'],
+      sound: rawFilters.sound as SongGuideFilterValues['sound'],
+      sortBy: rawFilters.sortBy as SongGuideFilterValues['sortBy'],
+      album: rawFilters.album,
+      searchQuery: rawFilters.searchQuery,
+      ...(tableSort ? { tableSort } : {}),
+    };
     const comparison = showTieUps === true ? { showTieUps: true } : {};
     const origin = originSongId !== undefined ? { originSongId } : {};
-    if (voice !== undefined) {
-      const pitchValid = (pitch: unknown) => typeof pitch === 'string' && (pitch === '' || (/^\d+$/.test(pitch) && Number(pitch) >= 36 && Number(pitch) <= 84));
-      if (!voice || !pitchValid(voice.low) || !pitchValid(voice.high) || !Number.isInteger(voice.keyShift) || voice.keyShift < -12 || voice.keyShift > 12) return null;
-      return { filters, visibleCount: visibleCount!, view, voice, ...comparison, ...origin };
+    if (rawVoice !== undefined) {
+      const pitchValid = (pitch: unknown): pitch is string =>
+        typeof pitch === 'string' && (pitch === '' || (/^\d+$/.test(pitch) && Number(pitch) >= 36 && Number(pitch) <= 84));
+      if (
+        !isPlainObject(rawVoice) ||
+        !pitchValid(rawVoice.low) ||
+        !pitchValid(rawVoice.high) ||
+        !Number.isInteger(rawVoice.keyShift) ||
+        Number(rawVoice.keyShift) < -12 ||
+        Number(rawVoice.keyShift) > 12
+      ) {
+        return null;
+      }
+      return {
+        filters,
+        visibleCount: Number(visibleCount),
+        view,
+        voice: { low: rawVoice.low, high: rawVoice.high, keyShift: Number(rawVoice.keyShift) },
+        ...comparison,
+        ...origin,
+      };
     }
-    return { filters, visibleCount: visibleCount!, view, ...comparison, ...origin };
+    return { filters, visibleCount: Number(visibleCount), view, ...comparison, ...origin };
   } catch { return null; }
 }
 
@@ -201,20 +238,20 @@ export function readArchiveReturnState(
   if (!store) return null;
   try {
     const raw = store.getItem(archiveKey);
-    if (!raw || raw.length > 10_000) return null;
-    const value: unknown = JSON.parse(raw);
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-    const record = value as Record<string, unknown>;
+    const value = safeJsonParseBounded(raw, MAX_RETURN_STATE_BYTES);
+    if (!isPlainObject(value) || hasBlockedKey(value, 4)) return null;
+    const record = value;
     const stateEpoch = typeof record.resetEpoch === 'string' ? record.resetEpoch : '';
     if (stateEpoch !== expectedEpoch) return null;
     if (
       typeof record.publisher !== 'string' ||
       record.publisher.length < 1 ||
       record.publisher.length > 80 ||
-      /[\u0000-\u001F\u007F]/.test(record.publisher) ||
+      CONTROL_OR_BIDI_RE.test(record.publisher) ||
       (allowedPublishers && record.publisher !== 'all' && !allowedPublishers.includes(record.publisher)) ||
       typeof record.query !== 'string' ||
       record.query.length > 60 ||
+      CONTROL_OR_BIDI_RE.test(record.query) ||
       (record.order !== 'newest' && record.order !== 'oldest') ||
       !Number.isInteger(record.visibleCount) ||
       Number(record.visibleCount) < 1 ||
@@ -278,20 +315,20 @@ export function readTourReturnState(
   if (!store) return null;
   try {
     const raw = store.getItem(tourKey);
-    if (!raw || raw.length > 10_000) return null;
-    const value: unknown = JSON.parse(raw);
-    if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
-    const record = value as Record<string, unknown>;
+    const value = safeJsonParseBounded(raw, MAX_RETURN_STATE_BYTES);
+    if (!isPlainObject(value) || hasBlockedKey(value, 4)) return null;
+    const record = value;
     const stateEpoch = typeof record.resetEpoch === 'string' ? record.resetEpoch : '';
     if (stateEpoch !== expectedEpoch) return null;
     const validOptionalId = (val: unknown) =>
-      val === undefined || (typeof val === 'string' && val.length > 0 && val.length <= 80 && !/[\u0000-\u001F\u007F]/.test(val));
+      val === undefined || (typeof val === 'string' && val.length > 0 && val.length <= 80 && !CONTROL_OR_BIDI_RE.test(val));
     const validOptionalYear =
       record.year === undefined || (typeof record.year === 'string' && (record.year === 'all' || /^\d{4}$/.test(record.year)));
     const validOptionalBool = (val: unknown) => val === undefined || typeof val === 'boolean';
     if (
       typeof record.query !== 'string' ||
       record.query.length > 60 ||
+      CONTROL_OR_BIDI_RE.test(record.query) ||
       (record.sortOrder !== 'newest' && record.sortOrder !== 'oldest') ||
       !tourCategories.has(record.category as TourCategoryFilter) ||
       !validOptionalYear ||

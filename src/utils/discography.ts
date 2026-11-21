@@ -58,12 +58,28 @@ export function filterAndSortDiscography(
     return filtered;
   }
 
+  if (albumInOrder && (filter.sortBy === 'album_track_order' || (filter.sortBy === 'guide_order' && queriedAlbum))) {
+    return filtered
+      .map((song) => ({
+        song,
+        track: songAlbums(song).find(release => release.album === albumInOrder)?.trackNumber ?? 99,
+      }))
+      .sort((a, b) => a.track - b.track || a.song.guideOrder - b.song.guideOrder)
+      .map((entry) => entry.song);
+  }
+
+  if (filter.sortBy === 'bpm') {
+    return filtered
+      .map((song) => ({ song, pending: isTempoUnderReview(song.id) }))
+      .sort((a, b) => {
+        if (a.pending !== b.pending) return a.pending ? 1 : -1;
+        if (a.pending) return a.song.guideOrder - b.song.guideOrder;
+        return b.song.bpm - a.song.bpm || b.song.votes.overall - a.song.votes.overall;
+      })
+      .map((entry) => entry.song);
+  }
+
   return filtered.sort((a, b) => {
-    if (albumInOrder && (filter.sortBy === 'album_track_order' || (filter.sortBy === 'guide_order' && queriedAlbum))) {
-      const trackA = songAlbums(a).find(release => release.album === albumInOrder)?.trackNumber ?? 99;
-      const trackB = songAlbums(b).find(release => release.album === albumInOrder)?.trackNumber ?? 99;
-      return trackA - trackB || a.guideOrder - b.guideOrder;
-    }
     switch (filter.sortBy) {
       case 'guide_order':
         return (ranks.get(a.id) ?? 0) - (ranks.get(b.id) ?? 0) || a.guideOrder - b.guideOrder;
@@ -99,13 +115,6 @@ export function filterAndSortDiscography(
           b.vocalRange.chestSemitoneScore - a.vocalRange.chestSemitoneScore ||
           a.guideOrder - b.guideOrder
         );
-      case 'bpm': {
-        const aPending = isTempoUnderReview(a.id);
-        const bPending = isTempoUnderReview(b.id);
-        if (aPending !== bPending) return aPending ? 1 : -1;
-        if (aPending) return a.guideOrder - b.guideOrder;
-        return b.bpm - a.bpm || b.votes.overall - a.votes.overall;
-      }
       default:
         return 0;
     }

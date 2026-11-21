@@ -1,7 +1,16 @@
-import type { MoodCriteria } from '../../utils/fanLogic';
-import { STORAGE_KEY, restoreFanRecords } from '../../hooks/fanRecordStorage';
+import type { MoodCriteria } from '../../utils/moodMatching';
+import { readStoredResetEpoch } from '../../hooks/fanRecordStorage';
+import {
+  getBrowserLocalStorage,
+  getBrowserSessionStorage,
+  hasBlockedKey,
+  isPlainObject,
+  safeJsonParseBounded,
+  type BrowserStorageLike,
+} from '../../utils/browserStorage';
 
 export const MOOD_SESSION_KEY = 'higedanfan:mood-session:v1';
+const MAX_MOOD_BYTES = 10_000;
 export type MoodStep = 1 | 2 | 3 | 4 | 5;
 export type MoodAnswers = Partial<MoodCriteria>;
 export type CompleteMoodCriteria = MoodCriteria & Required<Pick<MoodCriteria, 'era' | 'length'>>;
@@ -15,11 +24,7 @@ export interface MoodSession {
   page?: number;
 }
 
-export interface MoodStorage {
-  getItem: (key: string) => string | null;
-  setItem: (key: string, value: string) => void;
-  removeItem: (key: string) => void;
-}
+export type MoodStorage = BrowserStorageLike;
 
 const allowedAnswers = {
   mood: ['push_back', 'heartbreak_night', 'euphoric_drive', 'deep_lyric'],
@@ -45,21 +50,11 @@ function validAnswer(field: typeof fields[number], answer: unknown): answer is M
 }
 
 function browserStorage(kind: 'sessionStorage' | 'localStorage'): MoodStorage | null {
-  try {
-    return typeof window === 'undefined' ? null : window[kind];
-  } catch {
-    return null;
-  }
+  return kind === 'sessionStorage' ? getBrowserSessionStorage() : getBrowserLocalStorage();
 }
 
 function recordEpoch(storage: MoodStorage | null): string | null {
-  if (!storage) return null;
-  try {
-    const raw = storage.getItem(STORAGE_KEY);
-    return raw === null ? '' : restoreFanRecords(raw).resetEpoch;
-  } catch {
-    return null;
-  }
+  return readStoredResetEpoch(storage);
 }
 
 /** Only known answer IDs are restored; malformed or stale browser state is discarded. */
@@ -72,9 +67,8 @@ export function restoreMoodSession(
     const epoch = recordEpoch(records);
     if (epoch === null) return newMoodSession();
     const saved = historySnapshot ?? storage?.getItem(MOOD_SESSION_KEY);
-    if (!saved || saved.length > 10_000) return newMoodSession();
-    const value: unknown = JSON.parse(saved);
-    if (!value || typeof value !== 'object') return newMoodSession();
+    const value = safeJsonParseBounded(saved, MAX_MOOD_BYTES);
+    if (!isPlainObject(value) || hasBlockedKey(value, 5)) return newMoodSession();
     const data = value as Record<string, unknown>;
     if (data.version !== 1 || data.resetEpoch !== epoch || !Number.isInteger(data.step) || Number(data.step) < 1 || Number(data.step) > 5 ||
       typeof data.completed !== 'boolean' || typeof data.editing !== 'boolean' ||
@@ -140,10 +134,9 @@ export function clearStaleMoodSession(
   try {
     const raw = storage.getItem(MOOD_SESSION_KEY);
     if (!raw) return false;
-    const saved: unknown = JSON.parse(raw);
-    if (!saved || typeof saved !== 'object' || Array.isArray(saved)) return false;
-    const data = saved as Record<string, unknown>;
-    if (data.version !== 1 || typeof data.resetEpoch !== 'string' || data.resetEpoch === expectedEpoch) return false;
+    const saved = safeJsonParseBounded(raw, MAX_MOOD_BYTES);
+    if (!isPlainObject(saved) || hasBlockedKey(saved, 5)) return false;
+    if (saved.version !== 1 || typeof saved.resetEpoch !== 'string' || saved.resetEpoch === expectedEpoch) return false;
     storage.removeItem(MOOD_SESSION_KEY);
     return true;
   } catch {

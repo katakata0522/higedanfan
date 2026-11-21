@@ -1,6 +1,6 @@
 import { ExternalLink, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { SongItem } from '../../data/higedanData';
+import type { SongItem } from '../../data/higedanTypes';
 import { REFERENCE_ARTICLES, REFERENCE_CHECKED_ON, type ReferenceArticle } from '../../data/referenceArticles';
 import { prepareReferenceSearch, referenceDateLabel, referenceKindLabel, sortReferenceArticles } from './quizArchiveSearch';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
@@ -81,17 +81,17 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           <span>{referenceKindLabel(article.kind)}</span>
           {article.date ? <time dateTime={article.date}>{referenceDateLabel(article)}</time> : <span>公開日未確認</span>}
         </div>
-        {article.unavailable && <p className="mt-2 text-xs text-[#78716C]">参考サイト名のみ記録が残っている資料です（記事ページを確認できないためサイト名で表示しています）。</p>}
+        {article.unavailable && <p className="mt-2 text-xs text-[#68625C]">参考サイト名のみ記録が残っている資料です（記事ページを確認できないためサイト名で表示しています）。</p>}
         <a href={article.url} target="_blank" rel="noopener noreferrer"
           className="group mt-2 block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
           <h2 className="text-base sm:text-lg font-bold leading-relaxed text-[#1C1917] group-hover:text-[#C83E2B] [overflow-wrap:anywhere]">
-            {article.title}<ExternalLink aria-label="新しいタブで開く" className="ml-2 inline h-3.5 w-3.5 align-baseline text-[#78716C]" />
+            {article.title}<ExternalLink aria-hidden="true" className="ml-2 inline h-3.5 w-3.5 align-baseline text-[#68625C]" /><span className="sr-only">（新しいタブで開く）</span>
           </h2>
-          <p className="mt-1.5 text-xs leading-relaxed text-[#78716C] group-hover:underline">
+          <p className="mt-1.5 text-xs leading-relaxed text-[#68625C] group-hover:underline">
             {formatSourceDomain(article.url, article.publisher)}
           </p>
         </a>
-        {article.note && <p className="mt-2 text-xs leading-relaxed text-[#78716C]">{article.note}</p>}
+        {article.note && <p className="mt-2 text-xs leading-relaxed text-[#68625C]">{article.note}</p>}
         {onSelectSong && primarySongs.length > 0 && <div className="mt-2 flex flex-wrap items-center gap-x-4 text-[#57534E]">
           <span className="text-xs">関連曲</span>
           {primarySongs.map(songLink)}
@@ -105,20 +105,22 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
   }
 
   if (!visible) return null;
+  const shownCount = Math.min(visibleCount, available.length);
   return (
     <div className="mt-5 space-y-5">
       <div className="space-y-3">
         <div className="relative">
           <label htmlFor="quiz-archive-search" className="sr-only">記事名・媒体・曲名・年で検索</label>
-          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#78716C]" />
+          <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#68625C]" />
           <input
             ref={searchInputRef}
             id="quiz-archive-search"
             type="search"
+            maxLength={60}
             value={query}
             onChange={event => { setQuery(event.target.value); setVisibleCount(PAGE_SIZE); }}
             placeholder="記事名・媒体・曲名・年で検索"
-            className="min-h-11 w-full rounded-xl border border-[#D5CEC2] bg-white pl-9 pr-10 py-2 text-base text-[#1C1917] placeholder:text-[#78716C] focus:border-[#1C1917] focus:outline-none [&::-webkit-search-cancel-button]:appearance-none"
+            className="min-h-11 w-full rounded-xl border border-[#D5CEC2] bg-white pl-9 pr-10 py-2 text-base text-[#1C1917] placeholder:text-[#68625C] focus:border-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1C1917]/20 [&::-webkit-search-cancel-button]:appearance-none"
           />
           {query && (
             <button
@@ -159,10 +161,10 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
         <p className="text-sm text-[#57534E]">条件に一致する参考記事が見つかりませんでした。</p>
         <button type="button" onClick={resetFilters} className="mt-3 min-h-11 px-4 py-2 text-sm font-bold underline underline-offset-4 cursor-pointer">検索条件をリセット</button>
       </div> : <>
-        <div data-reference-list>{available.slice(0, visibleCount).map(renderArticle)}</div>
-        {available.length > visibleCount && <button type="button" onClick={() => setVisibleCount(count => count + PAGE_SIZE)}
+        <div data-reference-list>{available.slice(0, shownCount).map(renderArticle)}</div>
+        {available.length > shownCount && <button type="button" onClick={() => setVisibleCount(count => Math.min(available.length, count + PAGE_SIZE))}
           className="mx-auto block min-h-11 rounded-lg border border-[#D5CEC2] bg-white px-5 py-3 text-sm font-bold text-[#1C1917] hover:border-[#1C1917] cursor-pointer">
-          さらに{Math.min(PAGE_SIZE, available.length - visibleCount)}件を見る（残り{available.length - visibleCount}件）
+          さらに{Math.min(PAGE_SIZE, available.length - shownCount)}件を見る（残り{available.length - shownCount}件）
         </button>}
         {unavailable.length > 0 && <details className="border-b border-[#E6E1D6] text-[#57534E]">
           <summary className="min-h-11 py-3 text-sm cursor-pointer">リンク先を確認できない資料（{unavailable.length}件）</summary>
@@ -170,7 +172,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           {unavailable.map(renderArticle)}
         </details>}
       </>}
-      <p className="text-xs leading-relaxed text-[#78716C]">日付は掲載元で確認できたものです。更新日・放送日・発行日・発売日は区別して表示し、確認できないものは「公開日未確認」としています。</p>
+      <p className="text-xs leading-relaxed text-[#68625C]">日付は掲載元で確認できたものです。更新日・放送日・発行日・発売日は区別して表示し、確認できないものは「公開日未確認」としています。</p>
     </div>
   );
 }

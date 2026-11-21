@@ -4,6 +4,7 @@ import { STORAGE_KEY } from '../hooks/fanRecordStorage';
 import {
   MAX_SAVED_SETLISTS,
   SAVED_SETLISTS_STORAGE_KEY,
+  appendOrCreateSavedSetlist,
   clearStaleSavedSetlists,
   createInitialSavedSetlistsState,
   createNewSavedSetlist,
@@ -214,4 +215,74 @@ test('quick-add session draft id round-trips, clears, and rejects mismatched res
 
   writeQuickAddSetlistId(null, 'epoch-1', storage);
   assert.equal(readQuickAddSetlistId('epoch-1', storage), null);
+});
+
+test('sanitizeSavedSetlistsState validates updatedAt timestamps and rejects oversized payloads in storage', () => {
+  const validTs = '2026-11-18T09:30:00.000Z';
+  const sanitized = sanitizeSavedSetlistsState(
+    {
+      activeId: 'setlist-1',
+      items: [
+        {
+          id: 'setlist-1',
+          title: '有効タイムスタンプ',
+          entries: [{ songId: 'pretender', isEncore: false }],
+          updatedAt: validTs,
+        },
+        {
+          id: 'setlist-2',
+          title: '不正タイムスタンプ',
+          entries: [{ songId: 'subtitle', isEncore: false }],
+          updatedAt: 'not-a-date',
+        },
+      ],
+    },
+    VALID_IDS,
+  );
+  assert.ok(sanitized);
+  assert.equal(sanitized.items[0].updatedAt, validTs);
+  assert.match(sanitized.items[1].updatedAt, /^\d{4}-\d{2}-\d{2}T/);
+  assert.notEqual(sanitized.items[1].updatedAt, 'not-a-date');
+
+  const storage = memoryStore({ [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-1' }) });
+  storage.setItem(
+    SAVED_SETLISTS_STORAGE_KEY,
+    JSON.stringify({
+      resetEpoch: 'epoch-1',
+      activeId: 'setlist-1',
+      items: [{ id: 'setlist-1', title: 'A'.repeat(205_000), entries: [], updatedAt: validTs }],
+    }),
+  );
+  assert.equal(readStoredSavedSetlists(VALID_IDS, { expectedEpoch: 'epoch-1', storage }), null);
+});
+
+test('appendOrCreateSavedSetlist syncs current setlist edits before appending and persisting the new list', () => {
+  const storage = memoryStore({ [STORAGE_KEY]: JSON.stringify({ resetEpoch: 'epoch-1' }) });
+  const initial = createInitialSavedSetlistsState(
+    '元のセトリ',
+    [{ songId: 'pretender', isEncore: false }],
+    VALID_IDS,
+    '2026-11-18T10:00:00.000Z',
+  );
+  assert.equal(persistSavedSetlists(initial, { expectedEpoch: 'epoch-1', validSongIds: VALID_IDS, storage }), true);
+
+  const { state, created } = appendOrCreateSavedSetlist({
+    validSongIds: VALID_IDS,
+    currentTitle: '編集後の元のセトリ',
+    currentEntries: [
+      { songId: 'pretender', isEncore: false },
+      { songId: 'subtitle', isEncore: false },
+    ],
+    nextEntries: [{ songId: 'cry-baby', isEncore: false }],
+    expectedEpoch: 'epoch-1',
+    storage,
+    now: '2026-11-18T10:05:00.000Z',
+  });
+
+  assert.equal(created.title, 'MYセトリ 2');
+  assert.equal(state.activeId, created.id);
+  const stored = readStoredSavedSetlists(VALID_IDS, { expectedEpoch: 'epoch-1', storage });
+  assert.equal(stored?.items.length, 2);
+  assert.equal(stored?.items.find((i) => i.id === 'setlist-1')?.title, '編集後の元のセトリ');
+  assert.equal(stored?.items.find((i) => i.id === created.id)?.entries[0]?.songId, 'cry-baby');
 });

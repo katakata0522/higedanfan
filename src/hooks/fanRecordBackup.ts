@@ -1,4 +1,4 @@
-import { verifiedSongs as HIGEDAN_SONGS } from '../data/fullCatalogSongs';
+import { VERIFIED_SONG_IDS } from '../data/fullCatalogSongs';
 import {
   sanitizeQuizVolumeRecordMap,
   type QuizVolumeRecordMap,
@@ -12,17 +12,59 @@ import {
   sanitizeMyNoteProfilePayload,
   type MyNoteProfile,
 } from '../utils/myNoteProfile';
+import { hasBlockedKey, isPlainObject } from '../utils/browserStorage';
 import { restoreFanRecords } from './fanRecordStorage';
 import type { FanRecords } from './fanRecordStore';
 
 const BACKUP_FORMAT = 'higedan-fan-notebook';
 const MAX_BACKUP_BYTES = 2_000_000;
-const validSongIds = new Set(HIGEDAN_SONGS.map((song) => song.id));
-function comparable(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(comparable);
-  if (value && typeof value === 'object') return Object.fromEntries(
-    Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, comparable(item)]),
-  );
+const MAX_COMPARE_DEPTH = 12;
+const validSongIds = new Set(VERIFIED_SONG_IDS);
+
+const ALLOWED_OUTER_KEYS = new Set([
+  'format',
+  'version',
+  'records',
+  'savedSetlists',
+  'quizVolumeScores',
+  'myNoteProfile',
+  'setlistShareImageGenerated',
+]);
+const ALLOWED_RECORD_KEYS = new Set([
+  'songs',
+  'setlist',
+  'setlistTitle',
+  'reviews',
+  'likedReviewIds',
+  'visitedSpotIds',
+  'attendedTourIds',
+  'votedKeys',
+  'bestQuizScore',
+  'hasQuizAttempt',
+  'resetEpoch',
+  'setlistMembershipVersions',
+]);
+const ALLOWED_SAVED_SETLISTS_KEYS = new Set(['activeId', 'items']);
+const ALLOWED_SAVED_SETLIST_ITEM_KEYS = new Set(['id', 'title', 'entries', 'updatedAt']);
+
+function assertAllowedKeys(obj: Record<string, unknown>, allowed: ReadonlySet<string>, errorMessage: string) {
+  for (const key of Object.getOwnPropertyNames(obj)) {
+    if (!allowed.has(key)) throw new TypeError(errorMessage);
+  }
+}
+
+function comparable(value: unknown, depth = 0): unknown {
+  if (depth > MAX_COMPARE_DEPTH) {
+    throw new TypeError('記録データの階層が深すぎます。');
+  }
+  if (Array.isArray(value)) return value.map((item) => comparable(item, depth + 1));
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, item]) => [key, comparable(item, depth + 1)]),
+    );
+  }
   return value;
 }
 
@@ -64,24 +106,32 @@ export function createFanRecordBackup(
 }
 
 function validateSavedSetlistsBackup(raw: unknown): SavedSetlistsState {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+  if (!isPlainObject(raw)) {
     throw new TypeError('保存したセットリスト一覧を読み取れませんでした。');
   }
-  const obj = raw as Record<string, unknown>;
-  if (typeof obj.activeId !== 'string' || !Array.isArray(obj.items)) {
+  assertAllowedKeys(raw, ALLOWED_SAVED_SETLISTS_KEYS, '保存したセットリスト一覧の形式が正しくありません。');
+  if (typeof raw.activeId !== 'string' || !Array.isArray(raw.items)) {
     throw new TypeError('保存したセットリスト一覧の形式が正しくありません。');
   }
   const sanitized = sanitizeSavedSetlistsState(raw, validSongIds);
-  if (!sanitized || sanitized.items.length !== obj.items.length || sanitized.activeId !== obj.activeId) {
+  if (!sanitized || sanitized.items.length !== raw.items.length || sanitized.activeId !== raw.activeId) {
     throw new TypeError('保存したセットリスト一覧を安全に読み込めませんでした。');
   }
-  for (let i = 0; i < obj.items.length; i += 1) {
-    const rawItem = obj.items[i] as Record<string, unknown> | null;
+  for (let i = 0; i < raw.items.length; i += 1) {
+    const rawItem = raw.items[i];
     const cleanItem = sanitized.items[i];
+    if (!isPlainObject(rawItem)) {
+      throw new TypeError('保存したセットリスト一覧の曲情報を安全に読み込めませんでした。');
+    }
+    assertAllowedKeys(
+      rawItem,
+      ALLOWED_SAVED_SETLIST_ITEM_KEYS,
+      '保存したセットリスト一覧の曲情報を安全に読み込めませんでした。',
+    );
     if (
-      !rawItem ||
       rawItem.id !== cleanItem.id ||
       rawItem.title !== cleanItem.title ||
+      rawItem.updatedAt !== cleanItem.updatedAt ||
       !Array.isArray(rawItem.entries) ||
       JSON.stringify(comparable(cleanItem.entries)) !== JSON.stringify(comparable(rawItem.entries))
     ) {
@@ -160,11 +210,19 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
 } {
   if (raw.length > MAX_BACKUP_BYTES) throw new TypeError('記録ファイルが大きすぎます。');
   const value: unknown = JSON.parse(raw);
-  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new TypeError('記録ファイルの形式を確認してください。');
-  const outer = value as Record<string, unknown>;
-  if ('format' in outer && (outer.format !== BACKUP_FORMAT || outer.version !== 1)) throw new TypeError('この記録ファイルの形式には対応していません。');
-  const data = ('format' in outer ? outer.records : outer) as Record<string, unknown> | null;
-  if (!data || typeof data !== 'object' || Array.isArray(data)) throw new TypeError('記録の内容を読み取れませんでした。');
+  if (!isPlainObject(value) || hasBlockedKey(value, MAX_COMPARE_DEPTH)) {
+    throw new TypeError('記録ファイルの形式を確認してください。');
+  }
+  const hasEnvelope = Object.hasOwn(value, 'format');
+  if (hasEnvelope) {
+    assertAllowedKeys(value, ALLOWED_OUTER_KEYS, 'この記録ファイルの形式には対応していません。');
+    if (value.format !== BACKUP_FORMAT || value.version !== 1) {
+      throw new TypeError('この記録ファイルの形式には対応していません。');
+    }
+  }
+  const data = (hasEnvelope ? value.records : value) as Record<string, unknown> | null;
+  if (!isPlainObject(data)) throw new TypeError('記録の内容を読み取れませんでした。');
+  assertAllowedKeys(data, ALLOWED_RECORD_KEYS, '記録の内容を読み取れませんでした。');
   const arrays = ['setlist', 'visitedSpotIds', 'attendedTourIds', 'votedKeys', 'reviews', 'likedReviewIds'] as const;
   if (arrays.some(key => !Array.isArray(data[key])) || typeof data.setlistTitle !== 'string' ||
       !(data.bestQuizScore === null || (typeof data.bestQuizScore === 'number' && Number.isInteger(data.bestQuizScore) && data.bestQuizScore >= 0 && data.bestQuizScore <= 100))) {
@@ -178,23 +236,23 @@ export function parseFanRecordBackupWithSetlists(raw: string): {
     throw new TypeError('曲や公演などの記録を安全に読み込めませんでした。');
   }
   const savedSetlists =
-    'format' in outer && outer.savedSetlists !== undefined
-      ? validateSavedSetlistsBackup(outer.savedSetlists)
+    hasEnvelope && value.savedSetlists !== undefined
+      ? validateSavedSetlistsBackup(value.savedSetlists)
       : undefined;
   const quizVolumeScores =
-    'format' in outer && outer.quizVolumeScores !== undefined
-      ? validateQuizVolumeScoresBackup(outer.quizVolumeScores)
+    hasEnvelope && value.quizVolumeScores !== undefined
+      ? validateQuizVolumeScoresBackup(value.quizVolumeScores)
       : undefined;
   const myNoteProfile =
-    'format' in outer && outer.myNoteProfile !== undefined
-      ? validateMyNoteProfileBackup(outer.myNoteProfile)
+    hasEnvelope && value.myNoteProfile !== undefined
+      ? validateMyNoteProfileBackup(value.myNoteProfile)
       : undefined;
   let setlistShareImageGenerated: boolean | undefined;
-  if ('format' in outer && outer.setlistShareImageGenerated !== undefined) {
-    if (typeof outer.setlistShareImageGenerated !== 'boolean') {
+  if (hasEnvelope && value.setlistShareImageGenerated !== undefined) {
+    if (typeof value.setlistShareImageGenerated !== 'boolean') {
       throw new TypeError('MYセトリ画像生成の記録を安全に読み込めませんでした。');
     }
-    setlistShareImageGenerated = outer.setlistShareImageGenerated;
+    setlistShareImageGenerated = value.setlistShareImageGenerated;
   }
   return {
     records: {

@@ -58,3 +58,9 @@ export const verifiedSongs: SongItem[] = catalogEntries.map(entry => {
     votes: { overall: 0, lyric: 0, live: 0, hiddenGem: 0 },
   };
 });
+
+export const VERIFIED_SONG_BY_ID: ReadonlyMap<string, SongItem> = new Map(
+  verifiedSongs.map(song => [song.id, song]),
+);
+
+export const VERIFIED_SONG_IDS: ReadonlySet<string> = new Set(VERIFIED_SONG_BY_ID.keys());

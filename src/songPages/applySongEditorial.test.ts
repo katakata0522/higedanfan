@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { songEvidence } from '../data/fullCatalogSongs';
 import pretender from './data/pretender';
 import mixedNuts from './data/mixed-nuts';
 import { applySongEditorial } from './applySongEditorial';
@@ -57,4 +58,28 @@ test('lyric quote songs preserve attribution while editorial songs keep default 
 
   const autoBase = autoSongPage('lady-song');
   assert.equal(autoBase.feature.credit, '— サウンドの特徴');
+});
+
+test('115man-kilo sources deduplicate vocal-range links, drop style summary, consolidate 194 BPM, and keep curated links', () => {
+  const page = applySongEditorial(autoSongPage('115man-kilo'));
+  const fact = songEvidence['115man-kilo'];
+  const resolvedUrls = page.sources.map(source => (source.evidence ? fact[source.evidence] : source.url));
+
+  assert.equal(
+    resolvedUrls.filter(url => url === 'https://vocal-range.com/archives/19105698.html').length,
+    1,
+  );
+  assert.equal(
+    page.sources.some(source => source.purpose === '曲調の参考'),
+    false,
+  );
+  assert.equal(page.sources[0].label, 'FM福岡 藤原聡インタビュー');
+  assert.equal(page.sources[1].label, '歌ネット『エスカパレード』インタビュー');
+  assert.equal(
+    page.sources.some(source => source.label === '別のテンポ表記' || source.url === 'https://khufrudamonotes.com/officialhigedism-data'),
+    false,
+  );
+  const movieTieUp = page.sources.find(source => source.url === 'https://natalie.mu/music/news/383576');
+  assert.ok(movieTieUp);
+  assert.equal(movieTieUp.label, 'タイアップ');
 });

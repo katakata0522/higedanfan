@@ -1,8 +1,8 @@
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import type { SongItem } from '../data/higedanData';
+import type { SongItem } from '../data/higedanTypes';
 import { tabFromPathname } from '../config/siteFeatures';
-import { calculateQuizResult } from '../utils/fanLogic';
+import { calculateQuizResult } from '../utils/quizScoring';
 import { QuizCoursePicker } from './quiz/QuizCoursePicker';
 import { QuizQuestionCard } from './quiz/QuizQuestionCard';
 import { QuizResultCard } from './quiz/QuizResultCard';
@@ -51,7 +51,12 @@ export function QuizSection({
     if (sessionRef.current && sessionRef.current.stage !== 'select') return undefined;
     let cancelled = false;
     void readQuizSessionAsync().then((restored) => {
-      if (!cancelled && restored && restored.stage !== 'select') {
+      if (
+        !cancelled &&
+        restored &&
+        restored.stage !== 'select' &&
+        (!sessionRef.current || sessionRef.current.stage === 'select')
+      ) {
         sessionRef.current = restored;
         setSession(restored);
       }

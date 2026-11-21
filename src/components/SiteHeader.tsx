@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { isPlainLeftClick, tabPath } from '../config/siteFeatures';
 import { PUBLIC_FEATURES } from '../config/publicFeatures';
-import { pwaInstallOutcomeMessage, usePwaInstall } from '../utils/pwaInstall';
+import { usePwaInstallAction } from '../utils/pwaInstall';
+import { MustacheMark } from './MustacheMark';
 import { infoPages, isInfoPage, type InfoPageId } from './info/infoPages';
 import {
   Menu,
@@ -139,24 +140,15 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const menuButton = React.useRef<HTMLButtonElement>(null);
   const menuDrawer = React.useRef<HTMLElement>(null);
-  const pwaInstall = usePwaInstall();
-
-  const handleInstallClick = async () => {
-    if (pwaInstall.isInstalling) return;
-    const outcome = await pwaInstall.install();
-    const message = pwaInstallOutcomeMessage(outcome);
-    if (message) onInstallFeedback?.(message);
-    if (outcome === 'accepted') {
-      setIsMenuOpen(false);
-      menuButton.current?.focus();
-    } else if (outcome !== 'unavailable') {
-      requestAnimationFrame(() => {
-        if (!document.getElementById('pwa-install-btn') && document.activeElement === document.body) {
-          document.getElementById('kurun-replay-btn')?.focus();
-        }
-      });
-    }
-  };
+  const handleInstallAccepted = React.useCallback(() => {
+    setIsMenuOpen(false);
+    menuButton.current?.focus();
+  }, []);
+  const pwaInstall = usePwaInstallAction({
+    onFeedback: onInstallFeedback,
+    onAccepted: handleInstallAccepted,
+  });
+  const handleInstallClick = pwaInstall.triggerInstall;
 
   useEffect(() => {
     onMenuOpenChange?.(isMenuOpen);
@@ -240,28 +232,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           }}
           className="flex items-center gap-1.5 sm:gap-2.5 text-left min-w-0 group no-underline text-inherit"
         >
-          <svg
-            viewBox="0 0 100 55"
-            aria-hidden="true"
-            className="h-5 w-7 sm:h-7 sm:w-11 shrink-0 overflow-visible transition-transform duration-300 ease-out group-hover:scale-105 group-hover:-rotate-3"
-          >
-            <g transform="translate(50 28) scale(0.145) translate(-370 -125)">
-              <path
-                fill="#2d3c3a"
-                d="M370 86 C356 66 338 62 316 62 C254 62 234 156 174 156 C138 156 112 142 112 120 C112 102 125 94 140 94 C153 94 160 103 160 114 C160 124 151 130 142 130 C136 130 132 126 132 121 C132 117 125 117 125 122 C125 132 133 139 144 139 C159 139 170 128 170 112 C170 94 155 82 136 82 C108 82 88 104 88 134 C88 172 144 188 214 188 C286 188 336 156 362 128 C366 124 368 122 370 122 C372 122 374 124 378 128 C404 156 454 188 526 188 C596 188 652 172 652 134 C652 104 632 82 604 82 C585 82 570 94 570 112 C570 128 581 139 596 139 C607 139 615 132 615 122 C615 117 608 117 608 121 C608 126 604 130 598 130 C589 130 580 124 580 114 C580 103 587 94 600 94 C615 94 628 102 628 120 C628 142 602 156 566 156 C506 156 486 62 424 62 C402 62 384 66 370 86 Z"
-              />
-              <path
-                d="M370 96 C360 82 346 88 349 101 C351 110 370 120 370 120 C370 120 389 110 391 101 C394 88 380 82 370 96 Z"
-                fill="#bd604e"
-              />
-            </g>
-          </svg>
-          <span className="min-w-0">
+          <MustacheMark className="h-5 w-7 sm:h-7 sm:w-11 shrink-0 overflow-visible transition-transform duration-300 ease-out group-hover:scale-105 group-hover:-rotate-3" />
+          <span className="min-w-0 overflow-hidden">
             <span className="block font-note-serif text-xs min-[380px]:text-[13px] sm:text-base font-bold tracking-normal sm:tracking-[.03em] leading-tight text-[#253331] group-hover:text-[#C83E2B] transition-colors min-w-0">
               <span className="whitespace-nowrap">115万キロの</span><wbr /><span className="whitespace-nowrap">ファンノート</span>
             </span>
             {' '}
-            <span className="sr-only sm:not-sr-only sm:block text-[10.5px] text-[#78716C] min-w-0 wrap-anywhere whitespace-normal">
+            <span className="sr-only sm:not-sr-only sm:block text-[10.5px] text-[#68625C] min-w-0 wrap-anywhere whitespace-normal">
               Official髭男dism 非公式ファンサイト
             </span>
           </span>
@@ -299,7 +276,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
             aria-expanded={isMenuOpen}
             aria-controls="global-nav-drawer"
             aria-label={isMenuOpen ? 'メニューを閉じる' : 'メニューを開く'}
-            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
+            className={`inline-flex items-center justify-center gap-1 sm:gap-1.5 rounded-full border w-9 min-[360px]:w-auto px-0 min-[360px]:px-2 min-[380px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs sm:text-sm font-bold transition-colors min-h-[36px] sm:min-h-[38px] whitespace-nowrap shrink-0 cursor-pointer ${
               isMenuOpen
                 ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
                 : 'border-[#dfd7c7] bg-[#fffcf5] text-[#253331] hover:border-[#253331] hover:bg-[#f2ece0]'
@@ -307,13 +284,13 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
           >
             {isMenuOpen ? (
               <>
-                <X className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span>閉じる</span>
+                <X aria-hidden="true" className="h-4 w-4 min-[360px]:h-3.5 min-[360px]:w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden min-[360px]:inline">閉じる</span>
               </>
             ) : (
               <>
-                <Menu className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
-                <span>メニュー</span>
+                <Menu aria-hidden="true" className="h-4 w-4 min-[360px]:h-3.5 min-[360px]:w-3.5 sm:h-4 sm:w-4 shrink-0" />
+                <span className="hidden min-[360px]:inline">メニュー</span>
               </>
             )}
           </button>
@@ -338,7 +315,7 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                   <span className="font-note-serif text-xs font-bold text-[#253331]">
                     ファンノートの目次
                   </span>
-                  <span className="text-[11px] text-[#78716C]">
+                  <span className="text-[11px] text-[#68625C]">
                     コーナー一覧
                   </span>
                 </div>
@@ -407,10 +384,11 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                         </div>
 
                         <ChevronRight
+                          aria-hidden="true"
                           className={`h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5 ${
                             isCurrent
                               ? 'text-[#f5d0c9]'
-                              : 'text-[#78716C] group-hover:text-[#253331]'
+                              : 'text-[#68625C] group-hover:text-[#253331]'
                           }`}
                         />
                       </a>

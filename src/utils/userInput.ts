@@ -46,13 +46,20 @@ function stripTags(input: string, opening: string, closing: string): string {
 export function sanitizeUserText(input: unknown, maxLength = 200, { trim = true } = {}): string {
   if (typeof input !== 'string') return '';
   const safeMax = Math.max(1, Math.min(2000, Math.floor(maxLength) || 200));
-  const controlsRemoved = input.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F\u202A-\u202E\u2066-\u2069]/g, '');
+  const controlsRemoved = input.replace(
+    /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g,
+    '',
+  );
   const commentsRemoved = stripComments(controlsRemoved);
   const asciiTagsRemoved = stripTags(commentsRemoved, '<', '>');
-  const cleaned = stripTags(asciiTagsRemoved, '＜', '＞')
-    .replace(/[<>＜＞]/g, '')
-    .replace(/\b(?:javascript|data|vbscript|file|blob)\s*:/gi, '')
-    .replace(/\bon[a-z]+\s*=/gi, '');
+  let cleaned = stripTags(asciiTagsRemoved, '＜', '＞').replace(/[<>＜＞]/g, '');
+  let prev = '';
+  for (let i = 0; i < 4 && cleaned !== prev; i += 1) {
+    prev = cleaned;
+    cleaned = cleaned
+      .replace(/\b(?:javascript|data|vbscript|file|blob)\s*:/gi, '')
+      .replace(/\bon[a-z]+\s*=/gi, '');
+  }
   return (trim ? cleaned.trim() : cleaned).slice(0, safeMax);
 }
 

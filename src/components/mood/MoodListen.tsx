@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { ExternalLink, Music2, Play } from 'lucide-react';
 import { songEvidence } from '../../data/fullCatalogSongs';
 import { officialVideoDescription, officialVideoId, officialVideos, youtubeExternalOnlySongs } from '../../songPages/songConnections';
-import type { SongItem } from '../../data/higedanData';
+import type { SongItem } from '../../data/higedanTypes';
 
 export { officialVideoId };
 
@@ -81,8 +81,9 @@ export function MoodListen({ song, lazyFacade = false }: { song: SongItem; lazyF
               src={`https://www.youtube-nocookie.com/embed/${videoId}?playsinline=1${lazyFacade ? '&autoplay=1' : ''}`}
               title={`${song.title}の公式動画・音源`}
               loading="lazy"
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups allow-popups-to-escape-sandbox"
               referrerPolicy="strict-origin-when-cross-origin"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allow="autoplay; encrypted-media; picture-in-picture"
               allowFullScreen
             />
           )}

@@ -1,3 +1,4 @@
+import { safeJsonParseBounded } from '../../utils/browserStorage';
 import {
   browserQuizStore,
   isPlainObject,
@@ -7,6 +8,7 @@ import {
 import type { CourseDifficulty, QuestionScopeFilter } from './quizCourses';
 
 export const QUIZ_VOLUME_SCORES_STORAGE_KEY = 'higedan_quiz_volume_scores_v1';
+const MAX_VOLUME_BYTES = 20_000;
 
 export interface QuizVolumeRecord {
   score: number;
@@ -82,8 +84,7 @@ export function loadQuizVolumeScores(
   if (!store) return createEmptyRecordMap();
   try {
     const raw = store.getItem(QUIZ_VOLUME_SCORES_STORAGE_KEY);
-    if (!raw) return createEmptyRecordMap();
-    const parsed: unknown = JSON.parse(raw);
+    const parsed = safeJsonParseBounded(raw, MAX_VOLUME_BYTES);
     if (!isPlainObject(parsed) || typeof parsed.resetEpoch !== 'string') {
       return createEmptyRecordMap();
     }
@@ -168,13 +169,9 @@ export function clearStaleQuizVolumeScores(
   try {
     const raw = store.getItem(QUIZ_VOLUME_SCORES_STORAGE_KEY);
     if (!raw) return false;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (isPlainObject(parsed) && parsed.resetEpoch === expectedEpoch) {
-        return false;
-      }
-    } catch {
-      // malformed JSON from earlier epoch should also be cleared
+    const parsed = safeJsonParseBounded(raw, MAX_VOLUME_BYTES);
+    if (isPlainObject(parsed) && parsed.resetEpoch === expectedEpoch) {
+      return false;
     }
     store.removeItem(QUIZ_VOLUME_SCORES_STORAGE_KEY);
     return true;

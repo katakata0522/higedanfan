@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import {
+  isKurunIntroSeen,
+  KURUN_INTRO_SEEN_KEY,
+  markKurunIntroSeen,
+} from '../utils/kurunIntroState';
+import './KurunIntroOverlay.css';
 
-export const KURUN_INTRO_SEEN_KEY = 'higedan_intro_seen_v2';
+export { isKurunIntroSeen, KURUN_INTRO_SEEN_KEY, markKurunIntroSeen };
+
 const INTRO_TOTAL_MS = 5700;
 const INTRO_LEAVE_MS = 1150;
 const INTRO_STATIC_MS = 1100;
@@ -35,22 +42,6 @@ const CRAYON_B_PATHS = [
   'M277 25 C287 28, 298 33, 307 38',
 ] as const;
 
-export function markKurunIntroSeen(): void {
-  try {
-    window.localStorage.setItem(KURUN_INTRO_SEEN_KEY, '1');
-  } catch {
-    // Ignore storage quota or sandbox restrictions
-  }
-}
-
-export function isKurunIntroSeen(): boolean {
-  try {
-    return window.localStorage.getItem(KURUN_INTRO_SEEN_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
 interface KurunIntroOverlayProps {
   isOpen: boolean;
   replayToken: number;
@@ -71,6 +62,8 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
   const timersRef = useRef<Set<number>>(new Set());
   const rafRef = useRef<number | null>(null);
   const isClosingRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   const clearScheduledWork = useCallback(() => {
     timersRef.current.forEach((id) => window.clearTimeout(id));
@@ -98,17 +91,17 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
     document.body.classList.remove('kurun-intro-active');
     setPhase('leaving');
     scheduleTimer(() => {
-      onClose();
+      onCloseRef.current();
     }, INTRO_LEAVE_MS);
-  }, [clearScheduledWork, onClose, scheduleTimer]);
+  }, [clearScheduledWork, scheduleTimer]);
 
   const skipIntro = useCallback(() => {
     clearScheduledWork();
     isClosingRef.current = true;
     markKurunIntroSeen();
     document.body.classList.remove('kurun-intro-active');
-    onClose();
-  }, [clearScheduledWork, onClose]);
+    onCloseRef.current();
+  }, [clearScheduledWork]);
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -344,7 +337,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
         </svg>
 
         <h2 className="kurun-title" aria-label="115万キロのファンノート">
-          <svg ref={crayonARef} className="kurun-crayon-a" viewBox="0 0 326 56" role="img" aria-label="115万キロの">
+          <svg ref={crayonARef} className="kurun-crayon-a" viewBox="0 0 326 56" aria-hidden="true">
             <g filter="url(#kurun-crayon-coral)" stroke="#C83E2B" strokeWidth="5.1">
               {CRAYON_A_PATHS.map((d, idx) => (
                 <path key={idx} className="kurun-stroke" d={d} />
@@ -352,7 +345,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
             </g>
           </svg>
 
-          <svg ref={crayonBRef} className="kurun-crayon-b" viewBox="0 0 326 60" role="img" aria-label="ファンノート">
+          <svg ref={crayonBRef} className="kurun-crayon-b" viewBox="0 0 326 60" aria-hidden="true">
             <g filter="url(#kurun-crayon-ink)" stroke="#253331" strokeWidth="5.8">
               {CRAYON_B_PATHS.map((d, idx) => (
                 <path key={idx} className="kurun-stroke" d={d} />

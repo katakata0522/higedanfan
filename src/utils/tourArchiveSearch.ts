@@ -2,15 +2,16 @@ import type { TourArchive, TourEventRecord } from '../data/higedanData';
 import { songLatinReadings, songTitleAliases } from '../data/songLatinReadings';
 import { songReadings } from '../data/songReadings';
 import { getTourEventSetlist } from '../data/tourSetlists';
+import { hiraganaFromKatakana } from './jaTextNormalize';
 
 // Normalize date delimiters, full-width text, and kana case for forgiving tour & song lookup.
 function normalizeTourSearch(value: string): string {
-  return value
-    .normalize('NFKC')
-    .trim()
-    .toLocaleLowerCase('ja')
-    .replace(/[ァ-ヶ]/g, kana => String.fromCharCode(kana.charCodeAt(0) - 0x60))
-    .replace(/(\d)[./](?=\d)/g, '$1-');
+  return hiraganaFromKatakana(
+    value
+      .normalize('NFKC')
+      .trim()
+      .toLocaleLowerCase('ja'),
+  ).replace(/(\d)[./](?=\d)/g, '$1-');
 }
 
 function trackSearchText(title: string, songId?: string, artist?: string, note?: string): string {
@@ -31,8 +32,21 @@ export interface TourSearchMatchResult {
   matchedSongsByEventId: ReadonlyMap<string, string[]>;
 }
 
-export function createTourArchiveSearch(tours: readonly TourArchive[]) {
-  const index = tours.map(tour => ({
+interface IndexedTourEntry {
+  tour: TourArchive;
+  events: {
+    event: TourEventRecord;
+    metaText: string;
+    tracks: { title: string; text: string }[];
+  }[];
+}
+
+const tourIndexCache = new WeakMap<TourArchive, IndexedTourEntry>();
+
+function getIndexedTour(tour: TourArchive): IndexedTourEntry {
+  const cached = tourIndexCache.get(tour);
+  if (cached) return cached;
+  const entry: IndexedTourEntry = {
     tour,
     events: tour.events.map(event => {
       const setlist = event.hasSetlist ? getTourEventSetlist(event.id) : null;
@@ -48,7 +62,13 @@ export function createTourArchiveSearch(tours: readonly TourArchive[]) {
         tracks,
       };
     }),
-  }));
+  };
+  tourIndexCache.set(tour, entry);
+  return entry;
+}
+
+export function createTourArchiveSearch(tours: readonly TourArchive[]) {
+  const index = tours.map(getIndexedTour);
 
   return (query: string): TourSearchMatchResult[] => {
     const needle = normalizeTourSearch(query);

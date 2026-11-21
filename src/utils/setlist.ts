@@ -73,7 +73,7 @@ export function reorderSetlistEntries(
 
 export function sanitizeSetlistEntries(
   rawEntries: unknown,
-  validSongIds: Set<string>
+  validSongIds: ReadonlySet<string>
 ): SetlistEntry[] | null {
   if (!Array.isArray(rawEntries)) return null;
   const safe: SetlistEntry[] = [];
@@ -98,9 +98,10 @@ export function sanitizeSetlistEntries(
 
 export function calculateSetlistStats(
   entries: SetlistEntry[],
-  allSongs: SongItem[]
+  allSongs: SongItem[],
+  songById?: ReadonlyMap<string, SongItem>,
 ): SetlistStats {
-  const songMap = new Map(allSongs.map((s) => [s.id, s]));
+  const songMap = songById ?? new Map(allSongs.map((s) => [s.id, s]));
   const resolved = entries
     .map((entry, idx) => {
       const song = songMap.get(entry.songId);
