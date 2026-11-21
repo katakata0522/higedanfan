@@ -57,7 +57,7 @@ export type ArchiveReturnState = {
   visibleCount: number;
   resetEpoch?: string;
 };
-export type TourCategoryFilter = 'all' | 'tour' | 'one_man' | 'online_fc' | 'free_special';
+export type TourCategoryFilter = 'all' | 'tour' | 'one_man' | 'online_fc' | 'free_special' | 'two_man';
 export type TourReturnState = {
   query: string;
   sortOrder: 'newest' | 'oldest';
@@ -303,7 +303,7 @@ export function takeArchiveReturnState(
   return restored;
 }
 
-const tourCategories = new Set<TourCategoryFilter>(['all', 'tour', 'one_man', 'online_fc', 'free_special']);
+const tourCategories = new Set<TourCategoryFilter>(['all', 'tour', 'one_man', 'online_fc', 'free_special', 'two_man']);
 
 export function saveTourReturnState(
   state: TourReturnState,

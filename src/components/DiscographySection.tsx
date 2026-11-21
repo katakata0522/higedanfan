@@ -340,7 +340,21 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                           </dl>
                         </div>
 
-                        <div className="mt-3 flex justify-end border-t border-[#ece3d2] pt-3">
+                        <footer className="mt-3 flex items-center justify-between gap-2 border-t border-[#ece3d2] pt-3">
+                          <a
+                            href={pagePath ? `${import.meta.env.BASE_URL}${pagePath}` : `${import.meta.env.BASE_URL}#discography/${song.id}`}
+                            onClick={event => {
+                              if (!isPlainLeftClick(event)) return;
+                              rememberGuide(song.id);
+                              if (!pagePath) {
+                                event.preventDefault();
+                                onSelectSong(song);
+                              }
+                            }}
+                            className="inline-flex min-h-[34px] items-center gap-1 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1.5 text-xs font-bold text-[#253331] whitespace-nowrap shrink-0 hover:border-[#253331] hover:bg-[#f2ece0] transition-colors"
+                          >
+                            解説を見る<span className="sr-only">（{song.title}）</span>
+                          </a>
                           <button
                             type="button"
                             aria-pressed={inSetlist}
@@ -366,7 +380,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
                               </>
                             )}
                           </button>
-                        </div>
+                        </footer>
                       </article>
                     );
                   })}

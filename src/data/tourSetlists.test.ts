@@ -33,8 +33,8 @@ test('every tour archive event with hasSetlist resolves to valid catalog song ID
     }
   }
 
-  assert.equal(seenEventIds.size, 251);
-  assert.equal(totalWithSetlist, 200);
+  assert.equal(seenEventIds.size, 260);
+  assert.equal(totalWithSetlist, 204);
 });
 
 test('cross-checked fact fixes are applied across Rejoice, 2026 tour, and ASIA TOUR 2026', () => {

@@ -26,10 +26,23 @@ export async function verifyGuideAndDiagnosis(browser, root) {
         assert.equal(cells[0].x, cells[2].x);
         assert.equal(cells[1].x, cells[3].x);
         assert.ok(cells[2].y > cells[0].y);
+        const detailLink = current.locator('footer').getByRole('link', { name: /^解説を見る/ });
+        const addButton = current.getByRole('button', { name: `${title}をセトリに追加`, exact: true });
+        await detailLink.waitFor();
+        assert.ok((await detailLink.textContent())?.includes(title), `解説リンクに曲名(${title})が含まれていません`);
+        const [detailBox, addBox] = await Promise.all([detailLink.boundingBox(), addButton.boundingBox()]);
+        assert.ok(detailBox && addBox, '解説を見る・セトリに追加の位置を取得できません');
+        assert.ok(detailBox.x + detailBox.width <= addBox.x, `width=${width}: 解説を見るがセトリに追加の左側に収まっていません`);
+        assert.ok(Math.abs(detailBox.y - addBox.y) <= 4, `width=${width}: 解説を見るとセトリに追加が同じ行に並んでいません`);
       }
     }
     await page.setViewportSize({ width: 390, height: 844 });
     await search.fill('Pretender');
+    const cardBottomDetail = card('Pretender').locator('footer').getByRole('link', { name: /^解説を見る/ });
+    await cardBottomDetail.click();
+    await page.getByRole('heading', { name: 'Pretender', exact: true }).waitFor();
+    await page.getByRole('link', { name: '楽曲ガイドに戻る', exact: true }).first().click();
+    assert.equal(await search.inputValue(), 'Pretender');
     const songLink = card('Pretender').getByRole('link', { name: 'Pretender：曲のページを見る' });
     // The placeholder remains a tap target if an external jacket image is unavailable.
     await songLink.locator(':scope > :first-child').click();
@@ -41,10 +54,12 @@ export async function verifyGuideAndDiagnosis(browser, root) {
     await page.waitForURL('**/songs/pretender/');
 
     await page.goto(root + 'vocal-range/');
+    assert.equal(await page.locator('main select').count(), 0, 'スマホ画面を覆うselect要素が残っています');
     await page.getByRole('button', { name: /条件を絞る・並べ替える/ }).click();
-    const albums = page.getByLabel('収録アルバム・EPで絞り込み');
-    assert.equal(await albums.locator('option[value="ラブとピースは君の中"]').innerText(), 'ラブとピースは君の中');
-    await albums.selectOption('エスカパレード');
+    const albums = page.locator('#album-filter-group');
+    await albums.getByRole('button', { name: 'ラブとピースは君の中', exact: true }).waitFor();
+    await albums.getByRole('button', { name: 'エスカパレード', exact: true }).click();
+    assert.equal(await albums.getByRole('button', { name: 'エスカパレード', exact: true }).getAttribute('aria-pressed'), 'true');
     await search.fill('115万キロのフィルム');
     await page.getByRole('button', { name: 'タイアップ', exact: true }).click();
     const list = page.getByRole('list', { name: '楽曲別のタイアップ' });
@@ -59,7 +74,9 @@ export async function verifyGuideAndDiagnosis(browser, root) {
     await page.getByRole('link', { name: '音域一覧に戻る', exact: true }).first().click();
     await list.waitFor();
     assert.equal(await search.inputValue(), '115万キロのフィルム');
-    assert.equal(await albums.inputValue(), 'エスカパレード');
+    await page.getByRole('button', { name: 'エスカパレードの条件を解除', exact: true }).waitFor();
+    await page.getByRole('button', { name: 'エスカパレードの条件を解除', exact: true }).click();
+    assert.equal(await page.getByRole('button', { name: 'エスカパレードの条件を解除', exact: true }).count(), 0);
     await page.getByRole('button', { name: '音域・テンポ', exact: true }).click();
     const table = page.getByRole('table', { name: /音域・発売日比較表/ });
     await table.waitFor();

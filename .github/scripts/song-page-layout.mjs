@@ -159,6 +159,16 @@ async function inspectAllPages(browser, scenario) {
               + document.querySelectorAll('iframe[src*="music.apple.com"]').length,
             overviewFont: parseFloat(getComputedStyle(document.querySelector('.overview-copy p')).fontSize),
             tempoText: document.querySelectorAll('.fact-item')[1].querySelector('dd').textContent,
+            listenLinks: [...document.querySelectorAll('.listen-links a')].map(link => {
+              const r = link.getBoundingClientRect();
+              return {
+                text: (link.textContent || '').trim(),
+                href: link.getAttribute('href') ?? '',
+                top: r.top,
+                right: r.right,
+                height: r.height,
+              };
+            }),
             facts,
           };
         });
@@ -172,6 +182,19 @@ async function inspectAllPages(browser, scenario) {
         assert.ok(result.badgeTop - result.coverBottom >= 4, 'ジャケットとApple Musicバッジの間隔が狭すぎます');
         assert.ok(result.backLink.clickable, `一覧に戻るリンクを押せません ${JSON.stringify(result.backLink)}`);
         assert.equal(result.legacyBadges, 0, '旧ストアバッジやプレーヤー埋め込みが残っています');
+        assert.deepEqual(
+          result.listenLinks.map(item => item.text),
+          ['Apple Music', 'Spotify', 'Amazon Music'],
+          '聴くリンクがTop3（Apple Music / Spotify / Amazon Music）になっていません',
+        );
+        assert.match(result.listenLinks[0].href, /^https:\/\/music\.apple\.com\//);
+        assert.match(result.listenLinks[1].href, /^https:\/\/open\.spotify\.com\/track\//);
+        assert.match(result.listenLinks[2].href, /^https:\/\/music\.amazon\.co\.jp\//);
+        assert.ok(result.listenLinks.every(item => item.height >= 40 && item.right <= result.viewport + 1), '配信リンクのサイズまたは横幅が不正です');
+        if (!scenario.mobile || scenario.context?.viewport?.width >= 390) {
+          const tops = result.listenLinks.map(item => Math.round(item.top));
+          assert.ok(Math.max(...tops) - Math.min(...tops) <= 4, '配信リンク3つが1行に収まっていません');
+        }
         assert.match(result.tempoText, isTempoUnderReview(id) ? /^調査中$/ : /^約\d+(?:\.\d+)?\s+BPM$/, 'テンポの表示が調査状況と一致しません');
         assert.ok(Math.abs(result.coverWidth - result.coverHeight) < 1, 'ジャケット画像枠が正方形ではありません');
         assert.ok(result.width <= result.viewport, '横にはみ出しています');
@@ -381,7 +404,7 @@ async function verifyGuideAndSetlistUsability(browser) {
   assert.equal(await table.locator('tbody tr').count(), 90, '音域比較表で最初から全90曲を比較できません');
   const colWidthsBefore = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
   await page.getByRole('button', { name: /条件を絞る・並べ替える/ }).click();
-  await page.getByLabel('並び替え', { exact: true }).selectOption('highest_note');
+  await page.locator('#discography-sort-group').getByRole('button', { name: '地声最高音が高い順', exact: true }).click();
   assert.match(await table.locator('tbody tr').first().innerText(), /hiE \(E5\)/, '地声最高音順に並びません');
   assert.equal(await table.locator('tbody tr').count(), 90, '並び替えた後に表示曲数が減っています');
   const colWidthsAfter = await table.locator('thead th').evaluateAll(ths => ths.map(th => Math.round(th.getBoundingClientRect().width)));
@@ -611,8 +634,12 @@ async function verifyTourArchiveSetlists(browser) {
   await page.getByRole('button', { name: /参戦・視聴済みのみ（1）/ }).click();
   assert.equal(await page.locator('article').count(), 1);
   await page.getByRole('button', { name: /参戦・視聴済みのみ（1）/ }).click();
-  await page.locator('#tour-year-filter').selectOption('2024');
+  await page.locator('#tour-year-filter').click();
+  await page.locator('#tour-year-panel').getByRole('button', { name: /^2024年/ }).click();
   assert.ok(await page.locator('#section-setlist article').count() > 0 && await page.locator('#section-setlist article').count() < 10, '歴代ツアーの年度絞り込みが効いていません');
+  await page.getByRole('button', { name: '2024年の絞り込みを解除', exact: true }).click();
+  await page.getByRole('button', { name: '対バン・ツーマン', exact: true }).click();
+  assert.equal(await page.locator('#section-setlist article').count(), 7, '対バン・ツーマン絞り込みの件数が一致しません');
   await page.getByRole('button', { name: '条件をリセット', exact: true }).click();
 
   await page.goto(`${root}tour-archive/`, { waitUntil: 'load' });

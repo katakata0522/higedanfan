@@ -7,6 +7,7 @@ import { applySongEditorial } from '../src/songPages/applySongEditorial';
 import { editorialArticles } from '../src/songPages/editorialArticles';
 import { officialVideoDescription, officialVideos, relatedSongs } from '../src/songPages/songConnections';
 import { songAppleArtwork } from '../src/data/songAppleArtwork';
+import { songStreamingLinks } from '../src/data/songStreamingLinks';
 import { tempoAlternatives } from '../src/data/tempoAlternatives';
 import { songwriterInfo } from '../src/utils/songCatalog';
 import type { EditorialSongPageData } from '../src/songPages/EditorialSongPageData';
@@ -65,9 +66,13 @@ function renderHtml(page: EditorialSongPageData, title: string): string {
   const description = buildSongDescription(title, page.overview[0] ?? '');
   const credit = songwriterInfo({ id: page.id, title });
   const paragraphs = page.overview.map(paragraph => `            <p>${escapeHtml(paragraph)}</p>`).join('\n');
-  const listening = `<a href="${escapeHtml(fact.apple)}" target="_blank" rel="noopener noreferrer">Apple Musicで聴く</a>`;
-  const video = officialVideos[page.id]
-    ? ` <a href="${escapeHtml(officialVideos[page.id])}" target="_blank" rel="noopener noreferrer">YouTubeで聴く${officialVideoDescription(page.id) ? `（${escapeHtml(officialVideoDescription(page.id) ?? '')}）` : ''}</a>` : '';
+  const streaming = songStreamingLinks[page.id];
+  const listening = [
+    `<a href="${escapeHtml(fact.apple)}" target="_blank" rel="noopener noreferrer">Apple Music</a>`,
+    `<a href="${escapeHtml(streaming.spotifyUrl)}" target="_blank" rel="noopener noreferrer">Spotify</a>`,
+    `<a href="${escapeHtml(streaming.amazonUrl)}" target="_blank" rel="noopener noreferrer">Amazon Music</a>`,
+  ].join(' ');
+  const video = '';
   const related = relatedSongs(page.id).map(item =>
     `<li><a href="/higedanfan/songs/${escapeHtml(item.id)}/">${escapeHtml(item.title)}</a>：${escapeHtml(item.reason)}</li>`).join('');
   const releaseIso = /^\d{4}\.\d{2}\.\d{2}$/.test(fact.release) ? fact.release.replace(/\./g, '-') : undefined;
@@ -254,8 +259,12 @@ for (const song of [...catalogEntries].sort((a, b) => a.guideOrder - b.guideOrde
   if (tempoAlternatives[id]?.some(alt => !isHttpsUrl(alt.url))) {
     throw new Error(`${id}: テンポ別資料URLが不正です`);
   }
+  const streaming = songStreamingLinks[id];
   if (!appleArtwork || !isHttpsUrl(appleArtwork.artworkUrl) || !isHttpsUrl(appleArtwork.appleUrl)) {
     throw new Error(`${id}: Apple Music ジャケットURLと公式リンクを確認してください`);
+  }
+  if (!streaming || !isHttpsUrl(streaming.spotifyUrl) || !isHttpsUrl(streaming.amazonUrl)) {
+    throw new Error(`${id}: Spotify と Amazon Music の公式リンクを確認してください`);
   }
   if (!page.feature.text || !page.feature.credit || page.overview.length === 0 || page.overview.some(text => !text.trim())) {
     throw new Error(`${id}: 紹介文と概要を入力してください`);

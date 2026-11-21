@@ -58,7 +58,7 @@ function getIndexedTour(tour: TourArchive): IndexedTourEntry {
         : [];
       return {
         event,
-        metaText: normalizeTourSearch(`${tour.tourTitle} ${event.date} ${event.venue} ${event.label ?? ''}`),
+        metaText: normalizeTourSearch(`${tour.tourTitle} ${(tour.coArtists ?? []).join(' ')} ${event.date} ${event.venue} ${event.label ?? ''}`),
         tracks,
       };
     }),

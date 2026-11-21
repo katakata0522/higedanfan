@@ -182,6 +182,7 @@ function computeMetrics(input: MyNoteEngagementInput): ComputedMetrics {
     one_man: 0,
     online_fc: 0,
     free_special: 0,
+    two_man: 0,
   };
   for (const tour of TOUR_ARCHIVES) {
     if (!attendedSet.has(tour.id)) continue;
