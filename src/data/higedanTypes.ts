@@ -90,6 +90,13 @@ export interface TourSetlistTrack {
   note?: string;
 }
 
+export interface TourCoArtistSetlist {
+  artist: string;
+  orderLabel?: string;
+  tracks: TourSetlistTrack[];
+  note?: string;
+}
+
 export interface TourEventRecord {
   id: string;
   date: string;

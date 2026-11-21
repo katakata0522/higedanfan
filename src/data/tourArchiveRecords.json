@@ -116,6 +116,25 @@
     ]
   },
   {
+    "id": "live-hotaban-2016",
+    "startDate": "2016-12-11",
+    "endDate": "2016-12-11",
+    "tourTitle": "ホタルライトヒルズバンド「センスオブワンダーTOUR 2016」ファイナルツーマンライブ",
+    "category": "two_man",
+    "coArtists": [
+      "ホタルライトヒルズバンド"
+    ],
+    "events": [
+      {
+        "id": "live-2016-hotaban-shibuya",
+        "date": "2016-12-11",
+        "venue": "渋谷La.mama",
+        "hasSetlist": false,
+        "trackCount": 0
+      }
+    ]
+  },
+  {
     "id": "tour-higedan-summit-2017",
     "startDate": "2017-02-18",
     "endDate": "2017-03-04",
@@ -165,7 +184,7 @@
     "id": "live-akahige-2017",
     "startDate": "2017-05-05",
     "endDate": "2017-05-05",
-    "tourTitle": "ヒゲダン×赤い公園 ツーマンライブ「赤ひげ危機一髪！」",
+    "tourTitle": "Official髭男dism × 赤い公園 2マンLIVE「赤ひげ危機一髪！」",
     "category": "two_man",
     "coArtists": [
       "赤い公園"

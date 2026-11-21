@@ -25,6 +25,17 @@ test('every tour archive event with hasSetlist resolves to valid catalog song ID
             assert.ok(validCatalogIds.has(track.songId), `Invalid catalog songId ${track.songId} in ${event.id}`);
             assert.ok(publishedSongPageIds.has(track.songId), `Missing published page for ${track.songId}`);
           }
+          for (const coSet of data.coArtistSets ?? []) {
+            assert.ok(coSet.artist.trim().length > 0, `Blank partner artist in ${event.id}`);
+            assert.ok(coSet.tracks.length > 0, `Empty partner setlist in ${event.id}`);
+            for (const track of coSet.tracks) {
+              assert.ok(track.title.trim().length > 0, `Blank partner track title in ${event.id}`);
+              if (track.songId) {
+                assert.ok(validCatalogIds.has(track.songId), `Invalid partner songId ${track.songId} in ${event.id}`);
+                assert.ok(publishedSongPageIds.has(track.songId), `Missing partner page for ${track.songId}`);
+              }
+            }
+          }
         }
       } else {
         assert.equal(event.trackCount, 0, `Unexpected trackCount on unconfirmed ${event.id}`);
@@ -33,7 +44,7 @@ test('every tour archive event with hasSetlist resolves to valid catalog song ID
     }
   }
 
-  assert.equal(seenEventIds.size, 260);
+  assert.equal(seenEventIds.size, 261);
   assert.equal(totalWithSetlist, 204);
 });
 
@@ -92,4 +103,19 @@ test('extractCatalogSetlistEntries preserves main/encore order and skips non-cat
   assert.equal(toyota.skippedCount, 1); // I'm home (Interlude)
   assert.equal(toyota.entries.length, 18);
   assert.ok(toyota.entries.some(e => e.isEncore));
+
+  // Two-man full co-artist setlists are exposed via getTourEventSetlist while MYセトリ stays Higedan-only.
+  const uverVs = getTourEventSetlist('live-2024-uverworld-vs-budokan');
+  assert.equal(uverVs?.higedanOrderLabel, '先攻');
+  assert.equal(uverVs?.coArtistSets?.[0]?.artist, 'UVERworld');
+  assert.equal(uverVs?.coArtistSets?.[0]?.tracks.length, 12);
+  const uverEntries = extractCatalogSetlistEntries('live-2024-uverworld-vs-budokan', validIds);
+  assert.equal(uverEntries?.entries.length, 8);
+  assert.equal(uverEntries?.skippedCount, 2);
+
+  const musicFreaks = getTourEventSetlist('live-2020-music-freaks-osaka');
+  assert.equal(musicFreaks?.coArtistSets?.[0]?.tracks.length, 9);
+  assert.equal(musicFreaks?.coArtistSets?.[0]?.tracks[3]?.songId, 'vintage-song');
+  const musicFreaksEntries = extractCatalogSetlistEntries('live-2020-music-freaks-osaka', validIds);
+  assert.equal(musicFreaksEntries?.entries.length, 8);
 });

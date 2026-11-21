@@ -1,25 +1,44 @@
-import type { TourSetlistTrack } from './higedanData';
+import type { TourCoArtistSetlist, TourSetlistTrack } from './higedanData';
 import { normalizeSetlistOrder, type SetlistEntry } from '../utils/setlist';
 import bundle from './tourSetlistRecords.json';
 
+interface TourSetlistEventEntry {
+  templateId: string;
+  note?: string;
+  higedanOrderLabel?: string;
+  coArtistSets?: TourCoArtistSetlist[];
+}
+
 interface TourSetlistBundle {
   templates: Record<string, TourSetlistTrack[]>;
-  events: Record<string, { templateId: string; note?: string }>;
+  events: Record<string, TourSetlistEventEntry>;
 }
 
 const data = bundle as TourSetlistBundle;
 
-/** Look up the verified setlist tracks and editorial note for a concert event ID. */
+export interface TourEventSetlistData {
+  tracks: TourSetlistTrack[];
+  note?: string;
+  higedanOrderLabel?: string;
+  coArtistSets?: TourCoArtistSetlist[];
+}
+
+/** Look up the verified setlist tracks, optional co-artist sets, and editorial note for a concert event ID. */
 export function getTourEventSetlist(
   eventId: string,
-): { tracks: TourSetlistTrack[]; note?: string } | null {
+): TourEventSetlistData | null {
   const ref = Object.hasOwn(data.events, eventId) ? data.events[eventId] : undefined;
   if (!ref) return null;
   const tracks = Object.hasOwn(data.templates, ref.templateId)
     ? data.templates[ref.templateId]
     : undefined;
   if (!tracks || tracks.length === 0) return null;
-  return ref.note ? { tracks, note: ref.note } : { tracks };
+  return {
+    tracks,
+    ...(ref.note ? { note: ref.note } : {}),
+    ...(ref.higedanOrderLabel ? { higedanOrderLabel: ref.higedanOrderLabel } : {}),
+    ...(ref.coArtistSets?.length ? { coArtistSets: ref.coArtistSets } : {}),
+  };
 }
 
 /** Extracts catalog songs from a verified concert setlist for loading into MYセトリ. */

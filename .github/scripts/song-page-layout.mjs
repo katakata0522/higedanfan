@@ -639,7 +639,41 @@ async function verifyTourArchiveSetlists(browser) {
   assert.ok(await page.locator('#section-setlist article').count() > 0 && await page.locator('#section-setlist article').count() < 10, '歴代ツアーの年度絞り込みが効いていません');
   await page.getByRole('button', { name: '2024年の絞り込みを解除', exact: true }).click();
   await page.getByRole('button', { name: '対バン・ツーマン', exact: true }).click();
-  assert.equal(await page.locator('#section-setlist article').count(), 7, '対バン・ツーマン絞り込みの件数が一致しません');
+  assert.equal(await page.locator('#section-setlist article').count(), 8, '対バン・ツーマン絞り込みの件数が一致しません');
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.getByRole('button', { name: /2024-12-26 日本武道館のセットリストを見る/ }).click();
+  const vsDrawer = page.locator('#setlist-panel-live-2024-uverworld-vs-budokan');
+  await vsDrawer.waitFor();
+  const tabList = vsDrawer.getByRole('tablist', { name: 'セットリスト表示切替' });
+  const higedanTab = vsDrawer.getByRole('tab', { name: 'Official髭男dism', exact: true });
+  const fullTab = vsDrawer.getByRole('tab', { name: '対バン完全版', exact: true });
+  assert.equal(await tabList.evaluate(el => el.scrollWidth <= el.clientWidth), true, '320pxで対バンタブバーが横にはみ出しています');
+  const [hBox, fBox] = await Promise.all([higedanTab.boundingBox(), fullTab.boundingBox()]);
+  assert.ok(hBox && fBox && Math.abs(hBox.y - fBox.y) <= 2, '320pxで2つのタブが1行に並んでいません');
+  await fullTab.click();
+  assert.equal(await fullTab.getAttribute('aria-selected'), 'true');
+  assert.match(await vsDrawer.innerText(), /先攻：Official髭男dism[\s\S]*後攻：UVERworld[\s\S]*Touch off[\s\S]*ナノ・セカンド/);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '対バン完全版タブ表示時に横はみ出しがあります');
+  await fullTab.focus();
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await higedanTab.getAttribute('aria-selected'), 'true', 'キーボード矢印キーでタブ切替が効いていません');
+  await page.keyboard.press('ArrowRight');
+  assert.equal(await fullTab.getAttribute('aria-selected'), 'true', 'キーボード矢印キーで対バン完全版に戻りません');
+
+  await page.getByRole('button', { name: /2020-02-19 Zepp Osaka Baysideのセットリストを見る/ }).click();
+  const mfDrawer = page.locator('#setlist-panel-live-2020-music-freaks-osaka');
+  await mfDrawer.waitFor();
+  await mfDrawer.getByRole('tab', { name: '対バン完全版', exact: true }).click();
+  await mfDrawer.getByRole('link', { name: 'ビンテージ' }).click();
+  await page.getByRole('heading', { name: 'ビンテージ', exact: true }).waitFor();
+  await page.getByRole('link', { name: '歴代ツアー記録に戻る', exact: true }).first().click();
+  await page.locator('#setlist-panel-live-2020-music-freaks-osaka').waitFor();
+  assert.equal(
+    await page.locator('#setlist-panel-live-2020-music-freaks-osaka').getByRole('tab', { name: '対バン完全版', exact: true }).getAttribute('aria-selected'),
+    'true',
+    '楽曲解説から戻った際に対バン完全版タブの状態が復元されていません',
+  );
+  await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole('button', { name: '条件をリセット', exact: true }).click();
 
   await page.goto(`${root}tour-archive/`, { waitUntil: 'load' });

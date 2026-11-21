@@ -41,6 +41,7 @@ export const VALID_TOUR_IDS: ReadonlySet<string> = new Set([
   'live-korea-understage-2016',
   'tour-daily-mirror-2016',
   'tour-oneman-2016',
+  'live-hotaban-2016',
   'tour-higedan-summit-2017',
   'live-report-free-2017',
   'tour-oneman-2017',

@@ -457,8 +457,11 @@ test('all 90 setlist entries and encore assignments survive validation', () => {
 });
 
 test('tour archive contains dated public concert records and valid in-site event metadata', () => {
-  assert.equal(TOUR_ARCHIVES.length, 44);
-  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 260);
+  assert.equal(TOUR_ARCHIVES.length, 45);
+  assert.equal(TOUR_ARCHIVES.reduce((count, tour) => count + tour.events.length, 0), 261);
+  const akahige = TOUR_ARCHIVES.find(tour => tour.id === 'live-akahige-2017');
+  assert.equal(akahige?.tourTitle, 'Official髭男dism × 赤い公園 2マンLIVE「赤ひげ危機一髪！」');
+  assert.ok(TOUR_ARCHIVES.some(tour => tour.id === 'live-hotaban-2016' && tour.category === 'two_man'));
   for (const tour of TOUR_ARCHIVES) {
     assert.ok(tour.events.length > 0, tour.tourTitle);
     assert.equal(tour.startDate, tour.events[0].date);

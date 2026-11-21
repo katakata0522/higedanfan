@@ -28,6 +28,8 @@ test('tour search finds two-man concerts by co-starring artist name', () => {
   );
   const uverMatches = search('UVERworld');
   assert.equal(uverMatches[0]?.tour.id, 'live-uverworld-vs-2024');
+  const hotabanMatches = search('ホタルライト');
+  assert.equal(hotabanMatches[0]?.tour.id, 'live-hotaban-2016');
 });
 
 test('tour search finds concerts by performed song title and kana reading', () => {
