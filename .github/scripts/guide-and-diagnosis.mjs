@@ -34,6 +34,7 @@ export async function verifyGuideAndDiagnosis(browser, root) {
     // The placeholder remains a tap target if an external jacket image is unavailable.
     await songLink.locator(':scope > :first-child').click();
     await page.getByRole('heading', { name: 'Pretender', exact: true }).waitFor();
+    await page.locator('.song-mynote-btn').waitFor();
     await page.getByRole('link', { name: '楽曲ガイドに戻る', exact: true }).first().click();
     assert.equal(await search.inputValue(), 'Pretender');
     await card('Pretender').getByRole('heading', { name: 'Pretender' }).click();
