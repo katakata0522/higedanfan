@@ -146,7 +146,7 @@ export function QuizSection({
             id="quiz-heading"
             className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
           >
-            {viewTab === 'archive' ? '参考記事・インタビュー' : 'Official髭男dism検定'}
+            {viewTab === 'archive' ? '参考記事・インタビュー・SNS' : 'Official髭男dism検定'}
           </h1>
           {viewTab === 'quiz' && questionSet && questionSet !== 'current' && quizStage !== 'select' && (
             <p className="mt-1.5 text-xs text-[#57534E]">

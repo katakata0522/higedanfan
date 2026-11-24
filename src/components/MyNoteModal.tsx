@@ -1,4 +1,4 @@
-import React, { useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useEffect, useId, useMemo, useRef, useState } from 'react';
 import { useModalDialog } from '../hooks/useModalDialog';
 import {
   ArrowLeftRight,
@@ -79,6 +79,118 @@ interface MyNoteModalProps {
 }
 
 const STAMPS_PER_PAGE = 20;
+
+const STAMP_TILE_PHRASES: Record<string, readonly string[]> = {
+  記憶のタイムカプセル: ['記憶の', 'タイムカプセル'],
+  '2つめのワクワクへ': ['2つめの', 'ワクワクへ'],
+  広がる推し活の景色: ['広がる', '推し活の景色'],
+  '4つの世界をまたぐ者': ['4つの世界を', 'またぐ者'],
+  すべてを楽しむ全力髭団: ['すべてを楽しむ', '全力髭団'],
+  'これからも、ここからも': ['これからも、', 'ここからも'],
+  アンコールの余韻: ['アンコールの', '余韻'],
+  ライブの常連さん: ['ライブの', '常連さん'],
+  歓声のなかで生きる: ['歓声のなかで', '生きる'],
+  ステージを追い続けて: ['ステージを', '追い続けて'],
+  ライブハウスの生き字引: ['ライブハウスの', '生き字引'],
+  歴代ライブの生き証人: ['歴代ライブの', '生き証人'],
+  ツアーバスを追いかけて: ['ツアーバスを', '追いかけて'],
+  日本列島ライブ行脚: ['日本列島', 'ライブ行脚'],
+  全国ツアーの覇者: ['全国ツアーの', '覇者'],
+  ワンマンの熱気に飲まれて: ['ワンマンの', '熱気に飲まれて'],
+  特別な夜の目撃者: ['特別な夜の', '目撃者'],
+  画面越しの最前列: ['画面越しの', '最前列'],
+  街角に響いたフリーライブ: ['街角に響いた', 'フリーライブ'],
+  インディーズの初期衝動: ['インディーズの', '初期衝動'],
+  夢の武道館の景色: ['夢の', '武道館の景色'],
+  Travelerの航海日誌: ['Travelerの', '航海日誌'],
+  Editorialの夜明け: ['Editorialの', '夜明け'],
+  'SHOCKING NUTSの衝撃': ['SHOCKING', ' NUTSの衝撃'],
+  スタジアムを揺らした歓声: ['スタジアムを', '揺らした歓声'],
+  国境を越えたシンガロング: ['国境を越えた', 'シンガロング'],
+  ゆかりの地コレクション: ['ゆかりの地', 'コレクション'],
+  あの風景をこの目で: ['あの風景を', 'この目で'],
+  音と景色をつなぐ足あと: ['音と景色を', 'つなぐ足あと'],
+  記憶の地図を塗りつぶす旅人: ['記憶の地図を', '塗りつぶす旅人'],
+  はじまりの街の風: ['はじまりの', '街の風'],
+  原点の地をめぐる旅: ['原点の地を', 'めぐる旅'],
+  山陰の路地まで知り尽くす: ['山陰の路地まで', '知り尽くす'],
+  ヒゲダンの生まれ育った地: ['ヒゲダンの', '生まれ育った地'],
+  都会の片隅でみつけた聖地: ['都会の片隅で', 'みつけた聖地'],
+  ネオンとメロディの散歩道: ['ネオンと', 'メロディの', '散歩道'],
+  関東エリアのコンパス: ['関東エリアの', 'コンパス'],
+  まだ見ぬ街へトランクひとつ: ['まだ見ぬ街へ', 'トランクひとつ'],
+  ちょっと遠い国へ行って: ['ちょっと遠い', '国へ行って'],
+  パスポートにヒゲダンの記憶: ['パスポートに', 'ヒゲダンの記憶'],
+  MVの風景を追いかけて: ['MVの風景を', '追いかけて'],
+  '4人の青春の足あと': ['4人の青春の', '足あと'],
+  お墨付きの寄り道: ['お墨付きの', '寄り道'],
+  街角にひそむヒゲダンの気配: ['街角にひそむ', 'ヒゲダンの気配'],
+  二大スタジアムのアンセム: ['二大', 'スタジアムの', 'アンセム'],
+  それじゃ夢の中へ: ['それじゃ', '夢の中へ'],
+  ちいさなミニライブ開幕: ['ちいさな', 'ミニライブ開幕'],
+  フェス枠のセットリスト: ['フェス枠の', 'セットリスト'],
+  ホール公演の演出家: ['ホール公演の', '演出家'],
+  夢のフルスケール公演: ['夢の', 'フルスケール', '公演'],
+  鳴りやまないアンコール: ['鳴りやまない', 'アンコール'],
+  奇跡の開幕3曲シンクロ: ['奇跡の開幕', '3曲シンクロ'],
+  自分だけのツアーに名を: ['自分だけの', 'ツアーに名を'],
+  ふたつめの妄想ステージ: ['ふたつめの', '妄想ステージ'],
+  気分で着替える3つの宴: ['気分で着替える', '3つの宴'],
+  セットリスト編集長: ['セットリスト', '編集長'],
+  夢の公演アーカイブ館長: ['夢の公演', 'アーカイブ館長'],
+  '115万キロから始まる夜': ['115万キロから', '始まる夜'],
+  涙と笑顔の大団円: ['涙と笑顔の', '大団円'],
+  '灼熱のアッパー・フロア': ['灼熱の', 'アッパー・フロア'],
+  星降るバラード夜会: ['星降る', 'バラード夜会'],
+  鍵盤とブラスの饗宴: ['鍵盤と', 'ブラスの饗宴'],
+  ハイトーンの極限へ: ['ハイトーンの', '極限へ'],
+  時代を駆け抜けるタイムマシン: ['時代を', '駆け抜ける', 'タイムマシン'],
+  '4人のペンが交差する夜': ['4人のペンが', '交差する夜'],
+  '拍手喝采のマイ・ベスト公演': ['拍手喝采の', 'マイ・ベスト公演'],
+  はじめてのクイズ挑戦状: ['はじめての', 'クイズ挑戦状'],
+  知識欲に火がついた: ['知識欲に', '火がついた'],
+  検定ロードの折り返し: ['検定ロードの', '折り返し'],
+  難問の森を突き進む: ['難問の森を', '突き進む'],
+  '12のステージを駆け抜けて': ['12のステージを', '駆け抜けて'],
+  髭団のたまご卒業: ['髭団の', 'たまご卒業'],
+  ディープな沼の案内役: ['ディープな', '沼の案内役'],
+  '難問 BROTHERS級の生還者': ['難問 ', 'BROTHERS級の', '生還者'],
+  ディスコグラフィの探検家: ['ディスコグラフィの', '探検家'],
+  溢れるヒゲダン愛: ['溢れる', 'ヒゲダン愛'],
+  完璧まであとひとかけ: ['完璧まで', 'あとひとかけ'],
+  満点のファンファーレ: ['満点の', 'ファンファーレ'],
+  知識のハットトリック: ['知識の', 'ハットトリック'],
+  ウォーミングアップ完了: ['ウォーミング', 'アップ完了'],
+  頼れる先輩髭団: ['頼れる', '先輩髭団'],
+  髭男知識のグランドマスター: ['髭男知識の', 'グランドマスター'],
+  '1ページ目のライナーノーツ': ['1ページ目の', 'ライナーノーツ'],
+  曲の秘密を知りし者: ['曲の秘密を', '知りし者'],
+  音と言葉に酔いしれて: ['音と言葉に', '酔いしれて'],
+  深まる楽曲のラビリンス: ['深まる楽曲の', 'ラビリンス'],
+  全曲制覇のカウントダウン: ['全曲制覇の', 'カウントダウン'],
+  すべての物語を抱きしめて: ['すべての物語を', '抱きしめて'],
+  ラブとピースは君の中: ['ラブとピースは', '君の中'],
+  それぞれの音楽性: ['それぞれの', '音楽性'],
+  今日のわたしに届く1曲: ['今日のわたしに', '届く1曲'],
+  気分の処方箋コレクター: ['気分の処方箋', 'コレクター'],
+  喜怒哀楽を愛す者: ['喜怒哀楽を', '愛す者'],
+  カラオケの達人: ['カラオケの', '達人'],
+  インタビュー資料室の常連: ['インタビュー', '資料室の常連'],
+  '115万キロのフィルム': ['115万キロの', 'フィルム'],
+};
+
+function renderStampTileLabel(label: string): React.ReactNode {
+  const segments = Object.hasOwn(STAMP_TILE_PHRASES, label)
+    ? STAMP_TILE_PHRASES[label]
+    : null;
+  if (!segments) return label;
+  return segments.map((segment, index) => (
+    <Fragment key={index}>
+      {index > 0 && <wbr />}
+      {segment}
+    </Fragment>
+  ));
+}
 
 // Rank subtitles and playstyle descriptions remain curated in myNoteSummary.ts
 // so they can be surfaced cleanly once copy review is complete.
@@ -391,8 +503,6 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
   const isPlaystyleMain = titleMode === 'playstyle';
   const mainTitle = isPlaystyleMain ? playstyle.title : rank.title;
   const mainSubtitle = isPlaystyleMain ? playstyle.subtitle : rank.subtitle;
-  const secondaryLabel = isPlaystyleMain ? '総合ランク' : '推し活タイプ';
-  const secondaryTitle = isPlaystyleMain ? rank.title : playstyle.title;
   const stampCountVisibleText =
     stampCountMode === 'all'
       ? `${rank.unlockedCount} / ${rank.totalStamps}`
@@ -561,7 +671,7 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
                         {stamp.serialCode}
                       </span>
                       <StampGlyph stamp={stamp} />
-                      <span className="mn-stamp-text">{details.tileLabel}</span>
+                      <span className="mn-stamp-text">{renderStampTileLabel(details.tileLabel)}</span>
                     </button>
                   );
                 })}
@@ -705,10 +815,6 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
               {SHOW_TITLE_SUBTITLES && mainSubtitle && (
                 <p className="mn-rank-sub">{mainSubtitle}</p>
               )}
-              <p className="mn-secondary-identity">
-                <span className="mn-secondary-label">{secondaryLabel}</span>
-                <span className="mn-secondary-value">{secondaryTitle}</span>
-              </p>
               <div
                 className="mn-progress-track"
                 role="progressbar"

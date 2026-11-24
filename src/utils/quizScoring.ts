@@ -36,7 +36,7 @@ export function calculateQuizResult(
       rankTitle: 'グッドミュージック特派員',
       rankBadgeCode: 'RANK A · GOOD MUSIC FAN',
       editorialMessage:
-        'たくさんの楽曲エピソードをご存じですね！気になった問題の背景は、参考記事・インタビュー一覧からさらに深くたどれます。',
+        'たくさんの楽曲エピソードをご存じですね！気になった問題の背景は、参考記事・インタビュー・SNS一覧からさらに深くたどれます。',
     };
   }
   return {

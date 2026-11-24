@@ -197,10 +197,10 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
               <Newspaper aria-hidden="true" className="h-4 w-4 shrink-0 text-[#265c34]" />
               <span className="min-w-0">
                 <span className="block font-note-serif text-sm font-bold text-[#253331]">
-                  参考記事・インタビュー一覧
+                  参考記事・インタビュー・SNS一覧
                 </span>
                 <span className="block text-[11px] text-[#57534E]">
-                  曲の背景や検定で参照した公式・取材記事を探す
+                  曲の背景・ライブレポ・公式YouTubeやSNSの発信を探す
                 </span>
               </span>
             </span>

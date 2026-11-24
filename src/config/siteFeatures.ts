@@ -94,11 +94,11 @@ export const PUBLIC_CORNERS: readonly PublicCornerMeta[] = [
   {
     id: 'quiz_archive',
     slug: 'quiz-archive',
-    heading: '参考記事・インタビュー',
-    title: `参考記事・インタビュー｜${SITE_FULL_TITLE}`,
+    heading: '参考記事・インタビュー・SNS',
+    title: `参考記事・インタビュー・SNS｜${SITE_FULL_TITLE}`,
     description:
-      'Official髭男dismの楽曲ガイドや検定で参照した公式インタビュー、ディスクレビュー、メディア記事を媒体・曲名・公開年別に探せる資料集。',
-    summary: '各曲解説や検定の根拠として参照した公式インタビューや音楽メディア記事を、媒体名・曲名から横断検索できます。',
+      'Official髭男dismの楽曲ガイド・歴代ツアー記録・検定で参照した公式インタビュー、ライブレポート、公式YouTube・SNS発信を種別・媒体・曲名別に探せる資料集。',
+    summary: '楽曲解説・ツアー記録・検定の根拠として参照した公式インタビュー、ライブレポート、公式SNSやYouTube発信を横断検索できます。',
   },
 ];
 

@@ -1,7 +1,7 @@
 // 掲載元の記事名・日付を確認した参考資料。問題文・解答・解説は含めない。
 // 公開日未確認の資料は null。発売日・更新日・放送日・発行日は種別を区別する。
 // referencedUrls は曲解説・検定に残る参照URLの対応表（分割ページや移転前URLを含む）。
-export type ReferenceKind = 'interview' | 'review' | 'news' | 'official' | 'lyrics' | 'video' | 'score';
+export type ReferenceKind = 'interview' | 'review' | 'news' | 'official' | 'lyrics' | 'video' | 'score' | 'sns';
 export type ReferenceDateKind = 'published' | 'updated' | 'broadcast' | 'issued' | 'released';
 
 export interface ReferenceArticle {
@@ -17,7 +17,7 @@ export interface ReferenceArticle {
   unavailable?: boolean;
 }
 
-export const REFERENCE_CHECKED_ON = '2026-11-13';
+export const REFERENCE_CHECKED_ON = '2026-11-24';
 export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
   {
     "title": "【7/24 Digital Release / 7/31 CD Release】New Album 「Rejoice」",
@@ -1938,5 +1938,955 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "referencedUrls": [
       "https://www.uta-net.com/song/268710/"
     ]
+  },
+  {
+    "title": "Official髭男dism 公式X（@officialhige）",
+    "publisher": "X（@officialhige）",
+    "url": "https://x.com/officialhige",
+    "kind": "sns",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "新譜・ライブ公演・ツアー振替案内や舞台裏など、最新情報や発信を届ける公式Xアカウント。"
+  },
+  {
+    "title": "Official髭男dism 公式Instagram（@officialhigedandism）",
+    "publisher": "Instagram（@officialhigedandism）",
+    "url": "https://www.instagram.com/officialhigedandism/",
+    "kind": "sns",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "ライブ写真や告知、メンバーのストーリーズ発信・リクエスト募集などが行われる公式Instagramアカウント。"
+  },
+  {
+    "title": "Official髭男dism 公式YouTubeチャンネル",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/@officialhigedandism",
+    "kind": "video",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "MV、ライブダイジェスト、Behind The Scenes、スタジオライブ生配信などを公開する公式チャンネル。"
+  },
+  {
+    "title": "OFFICIAL HIGE DANDISM one-man tour 2026 一部公演のチケット追加販売決定（公式YouTube投稿）",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/post/UgkxFWW-0r1Tzk-ywmZxlh4zIUaygrKnfauk",
+    "kind": "sns",
+    "date": "2026-06-05",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "公式YouTubeコミュニティ投稿による2026年夏のアリーナ公演（SGC HALL ARIAKE・大阪城ホール・Kアリーナ横浜）追加販売の告知。"
+  },
+  {
+    "title": "Official髭男dism - Pretender (Acoustic ver.)［Official Video］",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=0sDmhAItwbI",
+    "kind": "video",
+    "date": "2019-05-22",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender"
+    ],
+    "referencedUrls": [],
+    "note": "2019年5月12日のYouTube Space Tokyo生配信特番の時期にあわせて公開・収録されたアコースティック版映像。"
+  },
+  {
+    "title": "[BD/DVD Digest] Official髭男dism 「Road to \"one man tour 2021-2022\" from 2021.06.23 ぴあアリーナMM –」",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=1i9IfhFqxXM",
+    "kind": "video",
+    "date": "2022-06-02",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "i-love",
+      "hello-song",
+      "pretender",
+      "cry-baby",
+      "universe-song"
+    ],
+    "referencedUrls": [],
+    "note": "2021年6月23日・24日 ぴあアリーナMM公演（約1年4か月ぶりの有観客ワンマン）の公式ダイジェスト映像。"
+  },
+  {
+    "title": "［BD/DVD Digest］Official髭男dism「one-man tour 2021-2022 -Editorial-」＠SAITAMA SUPER ARENA",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=6T8pCwKVQHY",
+    "kind": "video",
+    "date": "2022-09-30",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "universe-song",
+      "anarchy-song",
+      "cry-baby",
+      "editorial-song",
+      "pretender",
+      "i-love"
+    ],
+    "referencedUrls": [],
+    "note": "2022年3月21日 さいたまスーパーアリーナ公演（Editorialツアー追加公演最終日）映像作品の公式ダイジェスト。"
+  },
+  {
+    "title": "[BD/DVD Digest] Official髭男dism「Editorial」発売記念 ONLINE FREE LIVE in Tokyo Opera City",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=CfiY_yta4-k",
+    "kind": "video",
+    "date": "2023-09-12",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "i-love",
+      "universe-song",
+      "cry-baby",
+      "editorial-song"
+    ],
+    "referencedUrls": [],
+    "note": "2021年8月28日 東京オペラシティ コンサートホール無料配信ライブ（「アポトーシス」ライブ初披露）のダイジェスト映像。"
+  },
+  {
+    "title": "[Digest] Official髭男dism \"Live at Radio\"",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=g--p8_sgGXE",
+    "kind": "video",
+    "date": "2024-05-08",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "nichijou-song",
+      "tattoo",
+      "chessboard-song",
+      "mixed-nuts",
+      "soulsoup"
+    ],
+    "referencedUrls": [],
+    "note": "2024年5月7日に全国ラジオ同時生放送として届けられた10人編成スタジオライブ「Live at Radio」の公式ダイジェスト。"
+  },
+  {
+    "title": "[BD/DVD Digest] Official髭男dism「SHOCKING NUTS TOUR selected from NIPPON BUDOKAN」",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=q7oSGQ0ZHxY",
+    "kind": "video",
+    "date": "2024-06-21",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender",
+      "subtitle",
+      "mixed-nuts",
+      "white-noise"
+    ],
+    "referencedUrls": [],
+    "note": "アルバム『Rejoice』特典Blu-ray/DVD収録の2023年2月16日 日本武道館ツアーファイナル公演ダイジェスト映像。"
+  },
+  {
+    "title": "[本予告] 劇場版 OFFICIAL HIGE DANDISM LIVE at STADIUM 2025",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=8RlPowQ0jms",
+    "kind": "video",
+    "date": "2025-09-18",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender",
+      "shukumei",
+      "same-blue",
+      "fifty-percent",
+      "tattoo"
+    ],
+    "referencedUrls": [],
+    "note": "2025年6月1日 日産スタジアム公演を中心に収録した劇場版映画の本予告映像。"
+  },
+  {
+    "title": "[BD/DVD Digest] Official髭男dism「one-man tour FOUR-RE:ISM selected from Zepp Nagoya(2026.01.22)」",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=-HlybtZvqd4",
+    "kind": "video",
+    "date": "2026-04-22",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "white-noise",
+      "no-doubt",
+      "subtitle",
+      "hagan-song",
+      "fire-ground"
+    ],
+    "referencedUrls": [],
+    "note": "メンバー4人編成によるFC限定ツアー「FOUR-RE:ISM」ファイナル（2026年1月22日 Zepp Nagoya・松浦匡希誕生日当日）のダイジェスト映像。"
+  },
+  {
+    "title": "Pretender (OFFICIAL HIGE DANDISM LIVE at STADIUM 2025)",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=Js8YCUGxzeU",
+    "kind": "video",
+    "date": "2026-07-14",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender"
+    ],
+    "referencedUrls": [],
+    "note": "2025年6月1日 日産スタジアム公演より公式YouTube公開された「Pretender」ライブ映像。"
+  },
+  {
+    "title": "ASIA TOUR 2026 in SINGAPORE",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=ABDEtVqaHpc",
+    "kind": "video",
+    "date": "2026-08-21",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "tattoo",
+      "nichijou-song",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2026年8月21日 シンガポール公演（The Star Theatre）の公式ダイジェスト動画。"
+  },
+  {
+    "title": "ASIA TOUR 2026 in TAIPEI",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=Tgahqq7yul0",
+    "kind": "video",
+    "date": "2026-08-30",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "115man-kilo",
+      "subtitle",
+      "pretender"
+    ],
+    "referencedUrls": [],
+    "note": "2026年8月29日・30日 台北アリーナ公演の公式ダイジェスト動画。"
+  },
+  {
+    "title": "ASIA TOUR 2026 in BANGKOK",
+    "publisher": "YouTube",
+    "url": "https://www.youtube.com/watch?v=105tIfw5AjU",
+    "kind": "video",
+    "date": "2026-09-06",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "same-blue",
+      "mixed-nuts",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2026年9月6日 バンコク公演（ASIA TOUR 2026ファイナル）の公式ダイジェスト動画。"
+  },
+  {
+    "title": "［DVD］LIVE COLLECTION 2016-2018",
+    "publisher": "Official髭男dism",
+    "url": "https://higedan-store.jp/products/li-ohd-00014",
+    "kind": "official",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "koi-no-maenarae",
+      "coffee-to-syrup",
+      "zero-no-mamade"
+    ],
+    "referencedUrls": [],
+    "note": "2016年7月23日 SHIBUYA TAKE OFF 7（THE DAILY MIRROR tour 2016）のライブ映像などを収録した公式通販作品。"
+  },
+  {
+    "title": "Official髭男dism、赤坂BLITZ含むワンマンツアー開催決定",
+    "publisher": "BARKS",
+    "url": "https://barks.jp/news/793845/",
+    "kind": "news",
+    "date": "2017-06-19",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "2017年11月〜12月開催『one-man tour 2017 -winter-』（島根県民会館中ホール〜赤坂BLITZ）の告知記事。"
+  },
+  {
+    "title": "Official髭男dism 「one-man tour 2017 -winter-」ツアーファイナルの模様をフォトライブレポート！",
+    "publisher": "DI:GA ONLINE",
+    "url": "https://diskgarage.com/digaonline/liverepo/71457",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "koi-no-maenarae",
+      "brothers-song",
+      "lady-song",
+      "tell-me-baby",
+      "rolling-song"
+    ],
+    "referencedUrls": [],
+    "note": "2017年12月8日 マイナビBLITZ赤坂公演（のちに『エスカパレード』初回盤DVDへ10曲収録）のライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、渋谷に人だかりを作ったイベントでメジャーデビュー発表（イベントレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/277467",
+    "kind": "review",
+    "date": "2018-04-10",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "no-doubt",
+      "koi-no-maenarae",
+      "tell-me-baby"
+    ],
+    "referencedUrls": [],
+    "note": "2018年4月10日 渋谷モディでの『エスカパレード』発売記念フリーライブ＆「ノーダウト」ゲリラ発売・メジャーデビュー発表レポート。"
+  },
+  {
+    "title": "Official髭男dism、メジャーデビュー決定。「ノーダウト」シングルが突如店頭に",
+    "publisher": "BARKS",
+    "url": "https://barks.jp/news/814066/",
+    "kind": "news",
+    "date": "2018-04-10",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "no-doubt"
+    ],
+    "referencedUrls": [],
+    "note": "渋谷モディでのメジャーデビュー発表と「ノーダウト」サプライズリリース、渋谷での号外配布を伝える記事。"
+  },
+  {
+    "title": "Official髭男dism「夢のような景色」広がった中野サンプラザワンマン（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/290188",
+    "kind": "review",
+    "date": "2018-07-07",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "no-doubt",
+      "115man-kilo",
+      "hatsumeika-song"
+    ],
+    "referencedUrls": [],
+    "note": "2018年7月5日 中野サンプラザホール公演（小手伸也ナレーション・『Stand By You EP』初回盤DVD収録）のライブレポート。"
+  },
+  {
+    "title": "【ライブレポート】Official髭男dism、グッドミュージックで湧かせた過去最大規模の饗宴",
+    "publisher": "BARKS",
+    "url": "https://barks.jp/news/820843/",
+    "kind": "review",
+    "date": "2018-07-09",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "no-doubt",
+      "tell-me-baby",
+      "hatsumeika-song"
+    ],
+    "referencedUrls": [],
+    "note": "2018年7月5日 中野サンプラザホール『one-man tour 2018』ファイナル公演のライブレポート。"
+  },
+  {
+    "title": "Official髭男dism ＠ ヒューリックホール東京 (東京都) (2018.10.13)",
+    "publisher": "LiveFans",
+    "url": "https://www.livefans.jp/events/1008039",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "stand-by-you",
+      "115man-kilo",
+      "yuugure-zoi"
+    ],
+    "referencedUrls": [],
+    "note": "2018年10月13日 ヒューリックホール東京『HIGEDAN acoustic one-man live 2018 -Autumn-』のセットリスト記録。"
+  },
+  {
+    "title": "Official髭男dism、4人のハーモニー響かせたラゾーナフリーライブ（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/303673",
+    "kind": "review",
+    "date": "2018-10-14",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "stand-by-you",
+      "115man-kilo",
+      "bad-for-me",
+      "no-doubt"
+    ],
+    "referencedUrls": [],
+    "note": "2018年10月14日 ラゾーナ川崎プラザ『Stand By You EP』フリーアコースティックライブのレポート。"
+  },
+  {
+    "title": "Official髭男dism、初の日本武道館ワンマンが決定",
+    "publisher": "BARKS",
+    "url": "https://barks.jp/news/833731/",
+    "kind": "news",
+    "date": "2019-01-24",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "2019年1月24日 NHKホール公演で発表された自身初の日本武道館単独公演決定ニュース。"
+  },
+  {
+    "title": "ヒゲダン、初の9人編成ライブで魅了 『Official髭男dism one-man tour 18/19』NHKホール公演",
+    "publisher": "ぴあ音楽",
+    "url": "https://lp.p.pia.jp/article/news/35059/index.html",
+    "kind": "review",
+    "date": "2019-02-02",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "escapade-song",
+      "115man-kilo",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2019年1月24日 NHKホール公演（初の9人編成・『Traveler』初回盤収録）のライブレポート。"
+  },
+  {
+    "title": "Official髭男dismの音楽はここから生まれた！ 地元・島根への里帰り密着特番を観て",
+    "publisher": "rockinon.com",
+    "url": "https://rockinon.com/news/detail/186057",
+    "kind": "review",
+    "date": "2019-05-08",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "2019年2月2日 島根県民会館大ホール凱旋ファイナルにも密着したNHK広島放送局特番『髭男“ヒゲダン”ふるさとへ』のレビュー。"
+  },
+  {
+    "title": "Official髭男dism、5/12にニュー・シングル『Pretender』発売記念した特番を生配信",
+    "publisher": "Skream!",
+    "url": "https://skream.jp/news/2019/05/higedan_new_single_youtube_space_tokyo.php",
+    "kind": "news",
+    "date": "2019-05-01",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender"
+    ],
+    "referencedUrls": [],
+    "note": "2019年5月12日 YouTube Space Tokyoからの公式生配信特番『Talk & Live Session』告知記事。"
+  },
+  {
+    "title": "Official髭男dism、お台場フリーライブに5000人が熱狂（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/332013",
+    "kind": "review",
+    "date": "2019-05-18",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender",
+      "no-doubt",
+      "115man-kilo",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2019年5月18日 ダイバーシティ東京プラザ『Pretender』発売記念フリーライブのレポート。"
+  },
+  {
+    "title": "Official髭男dism、初の武道館で1万2000人にグッドミュージック届ける（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/339000",
+    "kind": "review",
+    "date": "2019-07-09",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "115man-kilo",
+      "pretender",
+      "shukumei",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2019年7月8日 初の日本武道館公演（360度客席・『Traveler』＆全国ホールツアー発表）の公式ライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、メジャーデビュー1年で夢の舞台へ",
+    "publisher": "DI:GA ONLINE",
+    "url": "https://diskgarage.com/digaonline/liverepo/121706",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "115man-kilo",
+      "pretender",
+      "shukumei",
+      "stand-by-you"
+    ],
+    "referencedUrls": [],
+    "note": "2019年7月8日 日本武道館公演のライブレポート。"
+  },
+  {
+    "title": "ヒゲダンとsumika、サプライズと熱狂に満ちた華麗なる競演",
+    "publisher": "Rolling Stone Japan",
+    "url": "https://rollingstonejapan.com/articles/detail/33248/2/1/1",
+    "kind": "review",
+    "date": "2020-02-21",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "vintage-song",
+      "tell-me-baby"
+    ],
+    "referencedUrls": [],
+    "note": "2020年2月19日 FM802 MUSIC FREAKS LIVE（sumikaとの相互カバー）ライブレポート。"
+  },
+  {
+    "title": "Official髭男dism最長ホールツアー、“期待感を500倍くらい上回って”鳥取で大団円（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/368464",
+    "kind": "review",
+    "date": "2020-02-24",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "yesterday-song",
+      "fire-ground",
+      "i-love"
+    ],
+    "referencedUrls": [],
+    "note": "2020年2月22日 米子市公会堂（振替ファイナル「ボーナスステージ」）公演の音楽ナタリー公式ライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、自身最長ホールツアーが閉幕 米子公会堂にて行われたツアーファイナルのレポートが到着",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/85289/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "yesterday-song",
+      "i-love"
+    ],
+    "referencedUrls": [],
+    "note": "2020年2月22日 米子市公会堂『Hall Travelers』ツアーファイナルのレポート記事。"
+  },
+  {
+    "title": "Official髭男dism／「ONLINE LIVE 2020 - Arena Travelers -」＠東京ガーデンシアター",
+    "publisher": "rockinon.com",
+    "url": "https://rockinon.com/live/detail/195867",
+    "kind": "review",
+    "date": "2020-09-28",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "hello-song",
+      "rowan-song",
+      "vintage-song"
+    ],
+    "referencedUrls": [],
+    "note": "2020年9月26日『ONLINE LIVE 2020 - Arena Travelers -』（12万人超視聴・12人編成）のライブレポート。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dismが初のオンラインライブ開催 画面越しでも伝わった“音楽を共有する楽しさ”",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/92604/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "hello-song",
+      "pretender",
+      "i-love"
+    ],
+    "referencedUrls": [],
+    "note": "2020年9月26日 初の無観客オンラインライブのレポート。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dism、ファンとメンバーが選んだ名曲揃いのFCライブ開催",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/99133/",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "zero-no-mamade",
+      "cry-baby"
+    ],
+    "referencedUrls": [],
+    "note": "2021年4月18日『FC Tour Vol.2 - The Blooming Universe ONLINE -』（投票1位「ゼロのままでいられたら」・新曲「Cry Baby」＆初アリーナツアー発表）のレポート。"
+  },
+  {
+    "title": "Official髭男dismに圧倒され続けた待望の有観客ライブ ワンマンツアー前哨戦で見せたパワーアップした姿",
+    "publisher": "Real Sound",
+    "url": "https://realsound.jp/2021/07/post-810614.html",
+    "kind": "review",
+    "date": "2021-07-10",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "i-love",
+      "cry-baby",
+      "universe-song"
+    ],
+    "referencedUrls": [],
+    "note": "2021年6月23日・24日 ぴあアリーナMM『Road to 「one-man tour 2021-2022」』ライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、東京オペラシティにてオンラインフリーライブ開催",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/103446/2",
+    "kind": "news",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "editorial-song",
+      "cry-baby"
+    ],
+    "referencedUrls": [],
+    "note": "2021年8月28日 東京オペラシティ コンサートホールでのYouTube無料生配信（同時視聴約19万人・「アポトーシス」初披露）記事。"
+  },
+  {
+    "title": "Official髭男dism、2021年に東京オペラシティで開催したフリーライブのダイジェスト映像を公開",
+    "publisher": "THE FIRST TIMES",
+    "url": "https://www.thefirsttimes.jp/news/0000325242/",
+    "kind": "news",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "editorial-song",
+      "i-love"
+    ],
+    "referencedUrls": [],
+    "note": "東京オペラシティ公演のダイジェスト映像公開を伝えるニュース。"
+  },
+  {
+    "title": "Official髭男dism ＠ ぴあアリーナMM (神奈川県) (2021.09.04)",
+    "publisher": "LiveFans",
+    "url": "https://www.livefans.jp/events/1310540",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "universe-song",
+      "hello-song",
+      "editorial-song"
+    ],
+    "referencedUrls": [],
+    "note": "2021年9月4日 ぴあアリーナMM（『Editorial』全国アリーナツアー初日）のセットリスト記録。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dism、届ける先は一人ひとり。バンドのまっすぐな信念が感じられたSSA公演",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/111613/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "universe-song",
+      "anarchy-song",
+      "editorial-title-track"
+    ],
+    "referencedUrls": [],
+    "note": "2022年3月21日 さいたまスーパーアリーナ公演（『Editorial』ツアー映像作品収録公演）のライブレポート。"
+  },
+  {
+    "title": "sumikaとヒゲダンが豊洲PITで対バン！お互いの楽曲カバーも飛び出した特別な夜（ライブレポート）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/493495",
+    "kind": "review",
+    "date": "2022-09-13",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "vintage-song",
+      "stand-by-you",
+      "mixed-nuts"
+    ],
+    "referencedUrls": [],
+    "note": "2022年9月12日 豊洲PIT『sumika presents「TOOY」#1』（相互カバー曲披露）の公式ライブレポート。"
+  },
+  {
+    "title": "【セットリスト】Official髭男dism LIVEツアー2022『SHOCKING NUTS TOUR』",
+    "publisher": "ゾノサイト",
+    "url": "https://zonosite.com/2022/09/28/post-8128/",
+    "kind": "review",
+    "date": "2022-09-28",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "subtitle",
+      "escapade-song",
+      "mixed-nuts"
+    ],
+    "referencedUrls": [],
+    "note": "2022年9月28日 青森初日公演（「Subtitle」ピアノ弾き語り初披露・初日限定「ESCAPADE」）の詳細ライブレポート。"
+  },
+  {
+    "title": "Official髭男dismメンバー3人コロナ陽性、本日の武道館含むツアー3公演が延期もしくは中止に",
+    "publisher": "JOYSOUND 音楽ニュース",
+    "url": "https://news.joysound.com/article/499500",
+    "kind": "news",
+    "date": "2022-10-30",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "『SHOCKING NUTS TOUR』2022年10月30日武道館・11月4〜5日大阪公演の延期・振替経緯を伝えるニュース。"
+  },
+  {
+    "title": "Official髭男dism ＠ 旭川市民文化会館 大ホール (北海道) (2022.11.16)",
+    "publisher": "LiveFans",
+    "url": "https://www.livefans.jp/events/1419731",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "mixed-nuts",
+      "subtitle"
+    ],
+    "referencedUrls": [],
+    "note": "2022年11月16日 旭川公演（一部公演延期からのSHOCKING NUTSツアー再開回）のセットリスト記録。"
+  },
+  {
+    "title": "REPORT OF 『Official髭男dism SHOCKING NUTS TOUR』in 仙台サンプラザホール",
+    "publisher": "note（瑞野蒼人）",
+    "url": "https://note.com/mizuno_aohito/n/na7665c9ac50c",
+    "kind": "review",
+    "date": "2022-12-31",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "universe-song",
+      "fire-ground",
+      "clap-clap"
+    ],
+    "referencedUrls": [],
+    "note": "2022年12月22日 仙台サンプラザホール2日目公演（「FIRE GROUND」急遽1コーラス演奏の経緯）の参加レポート。"
+  },
+  {
+    "title": "Official髭男dism ＠ 日本武道館 (東京都) (2023.02.15)",
+    "publisher": "LiveFans",
+    "url": "https://www.livefans.jp/events/1499384",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "parade-indies",
+      "universe-song",
+      "nichiyoubi-no-loveletter"
+    ],
+    "referencedUrls": [],
+    "note": "2023年2月15日 日本武道館Day3公演（楢﨑誠の鈴木常吉「思ひで」繋ぎ弾き語り・アンコール順）のセットリスト記録。"
+  },
+  {
+    "title": "Official髭男dism、満員の武道館でツアー終幕「声を出せない、最後のライブになるかもしれないね」（ライブレポート / 写真14枚）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/513561",
+    "kind": "review",
+    "date": "2023-02-22",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "parade-indies",
+      "subtitle",
+      "white-noise",
+      "mixed-nuts"
+    ],
+    "referencedUrls": [],
+    "note": "2023年2月16日 日本武道館ファイナル公演（「楢﨑まさよし」ビジョン演出やカノンロック等）の公式ライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、「SHOCKING NUTS」ツアー日本武道館公演を全国40カ所の映画館で上映",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/573829",
+    "kind": "news",
+    "date": "2024-05-17",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "mixed-nuts",
+      "white-noise"
+    ],
+    "referencedUrls": [],
+    "note": "『SHOCKING NUTS TOUR selected from NIPPON BUDOKAN』の全国劇場上映＆『Rejoice』特典収録を伝える記事。"
+  },
+  {
+    "title": "Official髭男dism、メジャー3rdアルバム『Rejoice』リリース 全国5都市を巡るアリーナツアー開催も",
+    "publisher": "Real Sound",
+    "url": "https://realsound.jp/2024/05/post-1654282.html",
+    "kind": "news",
+    "date": "2024-05-07",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "soulsoup",
+      "nichijou-song",
+      "chessboard-song"
+    ],
+    "referencedUrls": [],
+    "note": "2024年5月7日『Live at Radio』生放送での『Rejoice』発売＆アリーナツアー発表ニュース。"
+  },
+  {
+    "title": "Official髭男dism Arena Tour 2024 - Rejoice – 開催決定！",
+    "publisher": "Official髭男dism",
+    "url": "https://higedan.com/news/detail/100959",
+    "kind": "official",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "『Arena Tour 2024 - Rejoice -』全日程の公式開催案内。"
+  },
+  {
+    "title": "Official髭男dismがライブの喜び噛み締めた“UNOFFICIAL”ワンマン「俺たちの人生が帰ってきたー!!」（ライブレポート / 写真6枚）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/583562",
+    "kind": "review",
+    "date": "2024-07-24",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "mixed-nuts",
+      "choral-a-song",
+      "filament-song",
+      "rowan-song"
+    ],
+    "referencedUrls": [],
+    "note": "2024年7月23日 Zepp Haneda『one-man live 2024 -UNOFFICIAL-』（約1年5か月ぶり復帰・声出し解禁）の公式ライブレポート。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dism「生きててよかった！」1年5か月ぶりのワンマンライブで見せた圧巻のステージ",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/139995/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "mixed-nuts",
+      "choral-a-song",
+      "no-doubt"
+    ],
+    "referencedUrls": [],
+    "note": "2024年7月23日 Zepp Haneda『-UNOFFICIAL-』ワンマン公演のBillboard JAPANライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、「Official髭男dism Arena Tour 2024 - Rejoice -」Kアリーナ横浜公演をPrime Videoにて独占配信決定！「Same Blue」のライブ映像を公開！",
+    "publisher": "Official髭男dism／ポニーキャニオン",
+    "url": "https://irorirecords.com/news-entry/2229",
+    "kind": "official",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "same-blue"
+    ],
+    "referencedUrls": [],
+    "note": "2024年11月13日 Kアリーナ横浜公演のPrime Video世界独占配信決定ニュース。"
+  },
+  {
+    "title": "Official髭男dism、ライブ映像作品『Official髭男dism Arena Tour 2024 - Rejoice -』発売＆ライブ音源配信開始",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/156427/2",
+    "kind": "news",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "same-blue",
+      "sharon"
+    ],
+    "referencedUrls": [],
+    "note": "2024年11月13日 Kアリーナ横浜公演の映像作品・ライブ音源リリースを伝えるニュース。"
+  },
+  {
+    "title": "2024.11.20 Official 髭男dism Arena Tour 2024 Rejoice@真駒内アイスアリーナ",
+    "publisher": "note（真っ白のウニ）",
+    "url": "https://note.com/masshironouni/n/n87032e9a2305",
+    "kind": "review",
+    "date": "2025-01-16",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender",
+      "i-love",
+      "soulsoup"
+    ],
+    "referencedUrls": [],
+    "note": "2024年11月20日 真駒内ファイナル公演（ゼリーハプニング〜ELLEGARDEN即興カバー〜お詫びの追加演奏）の参加レポート。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dism、レアなセットリストで特別な夜をお届け スタジアムライブに向け更なる熱狂へ",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/149125/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "fifty-percent",
+      "universe-song",
+      "stand-by-you",
+      "sweet-tweet"
+    ],
+    "referencedUrls": [],
+    "note": "2025年4月24日 KT Zepp Yokohama『-UNOFFICIAL-』（「50%」初披露＆急遽リクエスト2曲追加）のライブレポート。"
+  },
+  {
+    "title": "【ライブレポート】Official髭男dism、スタジアムツアーを完走！「今日はネガティブなものが何ひとつない素晴らしい日にしたい！」",
+    "publisher": "THE FIRST TIMES",
+    "url": "https://www.thefirsttimes.jp/report/0000631289/",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender",
+      "itan-na-star",
+      "fifty-percent",
+      "same-blue"
+    ],
+    "referencedUrls": [],
+    "note": "2025年6月1日 日産スタジアム『LIVE at STADIUM 2025』ファイナル公演のライブレポート。"
+  },
+  {
+    "title": "Official髭男dism、初のスタジアムライブより「Pretender」の映像を公開（動画あり）",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/674355",
+    "kind": "news",
+    "date": "2026-06-01",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "pretender"
+    ],
+    "referencedUrls": [],
+    "note": "初のスタジアムライブ映像公開と映像作品・劇場版公開を伝えるニュース。"
+  },
+  {
+    "title": "＜ライブレポート＞Official髭男dismの可能性は無限大――TOYOTA ARENA TOKYOこけら落とし公演で見せた進化し続ける姿",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/154596/2",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "get-back-to-jinsei",
+      "brothers-song"
+    ],
+    "referencedUrls": [],
+    "note": "2025年10月11日・12日『TOYOTA ARENA TOKYO』音楽ライブこけら落とし公演のレポート。"
+  },
+  {
+    "title": "Official髭男dism、メンバー4人編成でのZeppツアーファイナル公演FC限定生配信決定",
+    "publisher": "Billboard JAPAN",
+    "url": "https://www.billboard-japan.com/d_news/detail/156856/2",
+    "kind": "news",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "white-noise",
+      "hagan-song",
+      "fire-ground"
+    ],
+    "referencedUrls": [],
+    "note": "2026年1月22日『FOUR-RE:ISM』Zepp Nagoyaファイナル（松浦匡希誕生日当日）のFC限定生配信決定ニュース。"
+  },
+  {
+    "title": "OFFICIAL HIGE DANDISM ASIA TOUR 2026 シンガポール セットリスト",
+    "publisher": "ヒゲダンセトリ",
+    "url": "https://higedan-setlist.net/live/2026-08-21/",
+    "kind": "review",
+    "date": null,
+    "dateKind": "published",
+    "relatedSongIds": [
+      "tattoo",
+      "nichijou-song",
+      "same-blue"
+    ],
+    "referencedUrls": [],
+    "note": "2026年8月21日 シンガポール公演（「TATTOO」〜「日常」リクエストメドレー）のセットリスト記録。"
+  },
+  {
+    "title": "【セトリ】Official髭男dism(ヒゲダン) LIVE 全日程セットリスト【FOUR-RE:ISM】",
+    "publisher": "新時代レポ",
+    "url": "https://report-newage.com/32617",
+    "kind": "review",
+    "date": "2019-09-29",
+    "dateKind": "published",
+    "relatedSongIds": [],
+    "referencedUrls": [],
+    "note": "Editorial・SHOCKING NUTS・Rejoiceなど各ツアーの日替わり曲、機材トラブルやMCエピソードも記録した全日程まとめ。"
+  },
+  {
+    "title": "Official髭男dism、赤い公園参加の新曲で老夫婦になる＆フリーライブ開催発表",
+    "publisher": "音楽ナタリー",
+    "url": "https://natalie.mu/music/news/225020",
+    "kind": "news",
+    "date": "2017-03-17",
+    "dateKind": "published",
+    "relatedSongIds": [
+      "inu-ka-cat-ka"
+    ],
+    "referencedUrls": [],
+    "note": "2017年4月23日 渋谷duo MUSIC EXCHANGE『「レポート」FREE LIVE』開催発表記事。"
   }
 ];

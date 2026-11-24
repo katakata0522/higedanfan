@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { ChevronDown, ChevronUp, ListMusic, RotateCcw, Search, Ticket, X } from 'lucide-react';
+import { Fragment, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { ChevronDown, ChevronUp, ListMusic, MessageSquareText, RotateCcw, Search, Ticket, X } from 'lucide-react';
 import { TOUR_ARCHIVES } from '../data/tourArchivesData';
 import type { TourArchive, TourEventRecord, TourSetlistTrack } from '../data/higedanTypes';
 import { extractCatalogSetlistEntries, getTourEventSetlist } from '../data/tourSetlists';
@@ -589,10 +589,35 @@ export function TourArchiveSection({
           </div>
         )}
 
-        {data.note && (
-          <p className="mt-3 pt-2.5 border-t border-[#ece4d6] text-xs leading-relaxed text-[#57534E]">
-            ※ {data.note}
-          </p>
+        {(data.note || (data.sources && data.sources.length > 0)) && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg bg-[#fffdf8]/90 px-3 py-2.5 text-xs leading-relaxed text-[#44403C]">
+            <MessageSquareText
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#9B3021]"
+              aria-hidden="true"
+            />
+            <p className="min-w-0 flex-1">
+              {data.note}
+              {data.sources && data.sources.length > 0 && (
+                <span className={data.note ? 'ml-1 text-[#57534E]' : 'text-[#57534E]'}>
+                  （
+                  {data.sources.map((src, idx) => (
+                    <Fragment key={src.url}>
+                      {idx > 0 && '・'}
+                      <a
+                        href={src.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#1E3A5F] underline decoration-[#1E3A5F]/45 underline-offset-2 hover:text-[#C83E2B] hover:decoration-[#C83E2B]"
+                      >
+                        {src.label} ↗
+                      </a>
+                    </Fragment>
+                  ))}
+                  ）
+                </span>
+              )}
+            </p>
+          </div>
         )}
       </div>
     );

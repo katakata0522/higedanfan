@@ -23,8 +23,28 @@ function getSongSearchKeys(song: SearchableSong): string[] {
   return keys;
 }
 
+export const REFERENCE_KINDS: readonly ReferenceKind[] = [
+  'interview',
+  'review',
+  'news',
+  'official',
+  'video',
+  'sns',
+  'lyrics',
+  'score',
+];
+
 export function referenceKindLabel(kind: ReferenceKind): string {
-  return {interview: 'インタビュー', review: 'レビュー・レポート', news: 'ニュース', official: '公式・作品資料', lyrics: '歌詞', video: '映像・対談', score: '楽譜'}[kind];
+  return {
+    interview: 'インタビュー',
+    review: 'レビュー・レポート',
+    news: 'ニュース',
+    official: '公式・作品資料',
+    lyrics: '歌詞',
+    video: '映像・YouTube',
+    score: '楽譜',
+    sns: 'SNS・公式発信',
+  }[kind];
 }
 
 export function referenceDateLabel(article: ReferenceArticle): string {
@@ -36,7 +56,15 @@ export function referenceDateLabel(article: ReferenceArticle): string {
 function getArticleSearchKeys(article: ReferenceArticle): string[] {
   const cached = articleSearchKeyCache.get(article);
   if (cached) return cached;
-  const keys = [article.title, article.publisher, article.url, referenceKindLabel(article.kind), referenceDateLabel(article)]
+  const keys = [
+    article.title,
+    article.publisher,
+    article.url,
+    referenceKindLabel(article.kind),
+    referenceDateLabel(article),
+    article.note ?? '',
+  ]
+    .filter(Boolean)
     .map(searchKey);
   articleSearchKeyCache.set(article, keys);
   return keys;

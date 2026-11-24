@@ -91,6 +91,13 @@ test('cross-checked fact fixes are applied across Rejoice, 2026 tour, and ASIA T
       if (data.note) {
         assert.equal(/@|さとっちゃん|report-newage\.com|unipa\.co/.test(data.note), false, `Unedited source note in ${event.id}`);
       }
+      if (data.sources) {
+        assert.ok(data.sources.length > 0, `Empty sources in ${event.id}`);
+        for (const source of data.sources) {
+          assert.ok(source.label.trim().length > 0, `Blank source label in ${event.id}`);
+          assert.equal(new URL(source.url).protocol, 'https:', `Non-HTTPS source url in ${event.id}: ${source.url}`);
+        }
+      }
     }
   }
 });

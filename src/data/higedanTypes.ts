@@ -97,6 +97,12 @@ export interface TourCoArtistSetlist {
   note?: string;
 }
 
+export interface TourEventSource {
+  label: string;
+  url: string;
+  kind?: 'official' | 'report' | 'video' | 'sns' | 'setlist';
+}
+
 export interface TourEventRecord {
   id: string;
   date: string;
