@@ -170,7 +170,6 @@ export function EditorialSongPage({ page }: { page: EditorialSongPageData }) {
             <nav className="song-menu-panel" aria-label="サイト内メニュー">
               <div className="song-menu-header">
                 <span className="song-menu-heading">ファンノートの目次</span>
-                <span className="song-menu-note">コーナー一覧</span>
               </div>
               <div className="song-menu-items">
                 {SITE_NAV_ITEMS.map(item => (

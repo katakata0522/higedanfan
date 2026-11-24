@@ -55,7 +55,7 @@ export function QuizCoursePicker({ onStart, initialDifficulty = 'beginner', best
                     </span>
                   )}
                 </div>
-                <p className="mt-1 font-note-serif text-sm sm:text-base font-bold tracking-[.02em]">
+                <p className="mt-1 font-note-serif text-[13px] min-[400px]:text-sm sm:text-base font-bold tracking-[.01em] sm:tracking-[.02em] [word-break:auto-phrase]">
                   {course.title}
                 </p>
                 <p
@@ -81,7 +81,7 @@ export function QuizCoursePicker({ onStart, initialDifficulty = 'beginner', best
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-4 grid grid-cols-1 min-[420px]:grid-cols-2 gap-3">
           {Array.from({ length: volumes }, (_, index) => {
             const volNumber = index + 1;
             const scope = `vol${volNumber}` as QuestionScopeFilter;

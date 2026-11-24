@@ -15,6 +15,30 @@ export function pitchNumber(note: string): number {
   return pitchBases[match[1]] + noteOffsets[match[2]] + Number(Boolean(match[3]));
 }
 
+export function formatMidiPitch(midi: number): string {
+  const band =
+    midi >= 81 ? 'hihi' : midi >= 69 ? 'hi' : midi >= 57 ? 'mid2' : midi >= 45 ? 'mid1' : 'low';
+  const offset = (midi - pitchBases[band]) % 12;
+  const noteName = noteNames[midi % 12];
+  const octave = Math.floor(midi / 12) - 1;
+  const baseLetters: Record<number, string> = {
+    0: 'A', 1: 'A#', 2: 'B', 3: 'C', 4: 'C#', 5: 'D',
+    6: 'D#', 7: 'E', 8: 'F', 9: 'F#', 10: 'G', 11: 'G#',
+  };
+  return `${band}${baseLetters[offset] ?? noteName} (${noteName}${octave})`;
+}
+
+export function formatShortMidiPitch(midi: number): string {
+  const band =
+    midi >= 81 ? 'hihi' : midi >= 69 ? 'hi' : midi >= 57 ? 'mid2' : midi >= 45 ? 'mid1' : 'low';
+  const offset = (midi - pitchBases[band]) % 12;
+  const baseLetters: Record<number, string> = {
+    0: 'A', 1: 'A#', 2: 'B', 3: 'C', 4: 'C#', 5: 'D',
+    6: 'D#', 7: 'E', 8: 'F', 9: 'F#', 10: 'G', 11: 'G#',
+  };
+  return `${band}${baseLetters[offset] ?? ''}`;
+}
+
 function displayPitch(note: string | null): string {
   if (!note) return '—';
   const midi = pitchNumber(note);

@@ -1104,7 +1104,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'quiz-brothers-done',
       label: '難問 BROTHERS級の生還者',
-      hint: '難問 BROTHERS級コース（Vol.1 / Vol.2）を両方完了する',
+      hint: '上級コース（Vol.1 / Vol.2）を両方完了する',
       unlocked: m.courseDone.brothers >= 2,
       category: 'quiz',
       tier: 'normal',
@@ -1114,7 +1114,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'quiz-allcourse-half',
       label: 'ディスコグラフィの探検家',
-      hint: '全曲総合コース（Vol.1〜6）のうち3セット以上を完了する',
+      hint: '総合チャレンジコース（Vol.1〜6）のうち3セット以上を完了する',
       unlocked: m.courseDone.all >= 3,
       category: 'quiz',
       tier: 'normal',
@@ -1124,7 +1124,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'quiz-allcourse-done',
       label: '完全踏破',
-      hint: '全曲総合コース Vol.1〜Vol.6 をすべて完了する',
+      hint: '総合チャレンジコース Vol.1〜Vol.6 をすべて完了する',
       unlocked: m.courseDone.all >= 6,
       category: 'quiz',
       tier: 'gold',
@@ -1209,7 +1209,7 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'quiz-brothers-perfect',
       label: '髭男知識のグランドマスター',
-      hint: 'BROTHERS級コース Vol.1 / Vol.2 を両方100%でクリアする',
+      hint: '上級コース Vol.1 / Vol.2 を両方100%でクリアする',
       unlocked: m.coursePerfect.brothers >= 2,
       category: 'quiz',
       tier: 'gold',

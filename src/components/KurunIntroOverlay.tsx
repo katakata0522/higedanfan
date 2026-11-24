@@ -252,7 +252,7 @@ export function KurunIntroOverlay({ isOpen, replayToken, onClose }: KurunIntroOv
           skipIntro();
         }}
       >
-        スキップする ↗
+        スキップする
       </button>
 
       {/* 背景の手描きクレヨンモチーフ（雪の結晶・コーヒーカップ・ライブ風船・フィルム） */}

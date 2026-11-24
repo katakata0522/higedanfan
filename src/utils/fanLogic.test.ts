@@ -1,4 +1,5 @@
-import { songEvidence, pitchNumber } from '../data/fullCatalogSongs';
+import { formatMidiPitch, formatShortMidiPitch, songEvidence, pitchNumber } from '../data/fullCatalogSongs';
+import { fitsVoiceRange } from './voiceRange';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HIGEDAN_SONGS, TOUR_ARCHIVES } from '../data/higedanData';
@@ -486,4 +487,17 @@ test('restores 51 journal entries with intact paragraphs', () => {
   }));
   const recovered = sanitizeReviewsList(entries, new Set([songId]));
   assert.deepEqual(recovered?.map(r => [r.id, r.comment]), entries.map(r => [r.id, r.comment]));
+});
+
+test('formats shifted MIDI pitches and evaluates karaoke key-shift voice range', () => {
+  assert.equal(formatMidiPitch(pitchNumber('hiA')), 'hiA (A4)');
+  assert.equal(formatMidiPitch(pitchNumber('mid2G#')), 'mid2G# (G#4)');
+  assert.equal(formatMidiPitch(pitchNumber('hiA') - 1), 'mid2G# (G#4)');
+  assert.equal(formatShortMidiPitch(pitchNumber('mid2G#')), 'mid2G#');
+  assert.equal(formatShortMidiPitch(pitchNumber('hiC')), 'hiC');
+
+  const pretenderChest = pitchNumber(songEvidence['pretender'].chest);
+  assert.equal(fitsVoiceRange(songEvidence['pretender'], undefined, pretenderChest, 0), true);
+  assert.equal(fitsVoiceRange(songEvidence['pretender'], undefined, pretenderChest - 1, 0), false);
+  assert.equal(fitsVoiceRange(songEvidence['pretender'], undefined, pretenderChest - 1, -1), true);
 });

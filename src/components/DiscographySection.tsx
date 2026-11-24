@@ -7,6 +7,7 @@ import { DEFAULT_GUIDE_FILTERS, SongGuideFilters } from './SongGuideFilters';
 import { songEvidence } from '../data/fullCatalogSongs';
 import { songAppleArtwork } from '../data/songAppleArtwork';
 import { sortSongTable } from '../utils/songTableSort';
+import { fitsVoiceRange } from '../utils/voiceRange';
 import { VocalRangeTable } from './discography/VocalRangeTable';
 import { songPagePath } from '../songPages/publishedSongPageIds';
 import {
@@ -88,6 +89,8 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const consumedReturnRef = useRef(false);
   const restored = initialEraFilter === 'all' ? returnState : null;
   const [showTieUps, setShowTieUps] = useState(restored?.showTieUps === true);
+  const [voiceHigh, setVoiceHigh] = useState<string>(() => restored?.voice?.high ?? '');
+  const [keyShift, setKeyShift] = useState<number>(() => restored?.voice?.keyShift ?? 0);
   const [filters, setFilters] = useState(() =>
     restored?.filters
       ? {
@@ -139,8 +142,12 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
   const filteredSongs = useMemo(() => {
     const matching = filterAndSortDiscography(songs, filters);
     if (activeSubView !== 'vocal_range') return matching;
-    return sortSongTable(matching, filters.tableSort ?? null);
-  }, [songs, filters, activeSubView]);
+    const highLimit = voiceHigh ? Number(voiceHigh) : undefined;
+    const voiceMatched = highLimit !== undefined
+      ? matching.filter(song => fitsVoiceRange(songEvidence[song.id as keyof typeof songEvidence], undefined, highLimit, keyShift))
+      : matching;
+    return sortSongTable(voiceMatched, filters.tableSort ?? null);
+  }, [songs, filters, activeSubView, voiceHigh, keyShift]);
   const resultAlbum = albumFilter !== 'all' ? albumFilter : albumForSearch(searchQuery);
   const epCoverage = resultAlbum ? partialEpCoverage[resultAlbum] : undefined;
   const globalMatchCount = useMemo(() => {
@@ -165,11 +172,15 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     const restoredCount = activeSubView === 'vocal_range'
       ? Math.max(1, Math.min(songs.length, filteredSongs.length))
       : Math.min(Math.max(1, songs.length), Math.max(1, safeCardPage * CARDS_PER_PAGE));
+    const hasVoiceFilter = voiceHigh !== '' || keyShift !== 0;
     saveGuideReturnState({
       filters,
       visibleCount: restoredCount,
       showTieUps,
       view: activeSubView === 'vocal_range' ? 'vocal_range' : 'discography',
+      ...(activeSubView === 'vocal_range' && hasVoiceFilter
+        ? { voice: { low: '', high: voiceHigh, keyShift } }
+        : {}),
       ...(originSongId ? { originSongId } : {}),
     });
   };
@@ -194,7 +205,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           全{songs.length}曲から「{searchQuery.trim()}」を探す（{globalMatchCount}曲）
         </button>
       ) : (
-        <button type="button" onClick={() => setFilters(DEFAULT_GUIDE_FILTERS)}
+        <button type="button" onClick={() => { setFilters(DEFAULT_GUIDE_FILTERS); setVoiceHigh(''); setKeyShift(0); }}
           className="mt-3 min-h-[44px] rounded-full bg-[#253331] px-5 py-2 text-sm font-bold text-[#faf6eb] cursor-pointer">
           絞り込みをリセット
         </button>
@@ -216,7 +227,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
           >
             {activeSubView === 'vocal_range'
-              ? '掲載90曲の音域・発売日一覧'
+              ? <>掲載90曲の<wbr />音域・発売日一覧</>
               : '楽曲ガイド（掲載90曲）'}
           </h1>
 
@@ -265,7 +276,11 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           onChange={setFilters}
           resultCount={filteredSongs.length}
           shownCount={displayedSongs.length}
-          onReset={() => setFilters(DEFAULT_GUIDE_FILTERS)}
+          onReset={() => {
+            setFilters(DEFAULT_GUIDE_FILTERS);
+            setVoiceHigh('');
+            setKeyShift(0);
+          }}
         />
 
         {epCoverage && (
@@ -454,6 +469,14 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
             }
             showTieUps={showTieUps}
             onToggleShowTieUps={setShowTieUps}
+            voiceHigh={voiceHigh}
+            keyShift={keyShift}
+            onChangeVoiceHigh={setVoiceHigh}
+            onChangeKeyShift={setKeyShift}
+            onResetVoice={() => {
+              setVoiceHigh('');
+              setKeyShift(0);
+            }}
             originSongId={restored?.originSongId}
             onOriginSongRef={(el) => {
               originSongRef.current = el;

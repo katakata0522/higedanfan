@@ -315,9 +315,6 @@ export const SiteHeader: React.FC<SiteHeaderProps> = ({
                   <span className="font-note-serif text-xs font-bold text-[#253331]">
                     ファンノートの目次
                   </span>
-                  <span className="text-[11px] text-[#68625C]">
-                    コーナー一覧
-                  </span>
                 </div>
 
                 {/* Vertical Stack of Content Items */}

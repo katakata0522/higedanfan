@@ -82,7 +82,7 @@ export function MoodResults({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="mt-6 space-y-6">
       {recommendations.length === 0 && (
         <div className="rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7">
           <h2 ref={resultHeadingRef} tabIndex={-1} className="scroll-mt-28 text-base font-bold text-[#1C1917] focus:outline-none">ぴったりの曲が見つからなかったみたい。</h2>
@@ -109,10 +109,7 @@ export function MoodResults({
                   <Disc aria-hidden="true" className="h-3.5 w-3.5 shrink-0 text-[#A93020]" />
                   <span>{bestMatch.song.album}</span>
                 </div>
-                <div className="mt-2.5 text-base font-bold text-[#1C1917] min-w-0 wrap-anywhere whitespace-normal">
-                  {bestMatch.song.title}
-                </div>
-                <div className="mt-1 text-[11px] font-mono-num text-[#57534E]">
+                <div className="mt-2 text-xs font-mono-num text-[#57534E]">
                   {bestMatch.song.releaseDate} · {SOUND_LABELS[bestMatch.song.sound]}
                 </div>
               </div>
@@ -121,7 +118,7 @@ export function MoodResults({
             <MoodListen song={bestMatch.song} />
           </div>
 
-          <div className="mt-5 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-6">
+          <div className="mt-5 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-6 [word-break:auto-phrase] [text-wrap:pretty]">
             {bestCopy.feature && <h3 className="text-base font-bold leading-relaxed text-[#1C1917]">{bestCopy.feature}</h3>}
             <p className="mt-2 text-sm leading-7 text-[#292524]">{bestCopy.introduction}</p>
             {bestCopy.invitation && <p className="mt-3 text-sm leading-7 text-[#57534E]">{bestCopy.invitation}</p>}
@@ -243,6 +240,15 @@ export function MoodResults({
       )}
 
       <div className="flex flex-wrap items-center justify-center gap-3">
+        {activePage > 0 && (
+          <button
+            type="button"
+            onClick={() => changePage(activePage - 1)}
+            className="min-h-11 rounded-lg border border-[#D5CEC2] bg-white px-4 py-2.5 text-sm font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C83E2B] transition-colors cursor-pointer"
+          >
+            {activePage === 1 ? '最初のおすすめに戻る' : '前のおすすめに戻る'}
+          </button>
+        )}
         <button
           type="button"
           onClick={onRestart}

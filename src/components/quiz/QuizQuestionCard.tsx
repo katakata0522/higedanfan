@@ -29,6 +29,7 @@ export function QuizQuestionCard({
   const [showHint, setShowHint] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
   const resultHeading = useRef<HTMLHeadingElement>(null);
+  const nextButton = useRef<HTMLButtonElement>(null);
   useLayoutEffect(() => {
     if (visible && heading.current) {
       heading.current.focus({ preventScroll: true });
@@ -41,7 +42,7 @@ export function QuizQuestionCard({
   useLayoutEffect(() => {
     if (visible && isQuestionAnswered && resultHeading.current) {
       resultHeading.current.focus({ preventScroll: true });
-      resultHeading.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+      (nextButton.current ?? resultHeading.current).scrollIntoView({ block: 'nearest', behavior: 'instant' });
     }
   }, [visible, isQuestionAnswered]);
 
@@ -71,7 +72,7 @@ export function QuizQuestionCard({
 
   if (!visible) return null;
   return (
-    <div className="mt-6 rounded-2xl border border-[#E6E1D6] bg-white p-5 sm:p-7 shadow-[0_2px_12px_rgba(28,25,23,0.03)]">
+    <div className="mt-5 sm:mt-6 rounded-2xl border border-[#E6E1D6] bg-white p-4 sm:p-7 shadow-[0_2px_12px_rgba(28,25,23,0.03)]">
       <div className="border-b border-[#E6E1D6] pb-3.5 space-y-2.5">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#68625C]">
           <div className="flex flex-wrap items-center gap-2">
@@ -203,7 +204,7 @@ export function QuizQuestionCard({
         /* ============================================================
            STANDARD 4-OPTION SINGLE CHOICE UI
            ============================================================ */
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="mt-4 sm:mt-5 grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
           {question.options.map((opt, idx) => {
             const isAnswered = selectedOption !== null;
             const isChosen = selectedOption === idx;
@@ -227,7 +228,7 @@ export function QuizQuestionCard({
                 type="button"
                 disabled={isAnswered}
                 onClick={() => handleAnswerSingleChoice(idx)}
-                className={`flex items-center justify-between gap-3 rounded-xl border p-3.5 sm:p-4 text-left text-sm font-bold transition-colors ${btnStyle}`}
+                className={`flex items-center justify-between gap-3 rounded-xl border p-3 sm:p-4 text-left text-sm font-bold transition-colors ${btnStyle}`}
               >
                 <span>
                   {idx + 1}. {opt}
@@ -246,7 +247,7 @@ export function QuizQuestionCard({
 
       {/* Explanation, Sources & Next Button */}
       {isQuestionAnswered && (
-        <div className="mt-5 scroll-mt-20 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-4 sm:p-5 space-y-4">
+        <div className="mt-4 sm:mt-5 scroll-mt-20 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] p-3.5 sm:p-5 space-y-3 sm:space-y-4">
           <div>
             <h3 ref={resultHeading} tabIndex={-1} className="scroll-mt-20 scroll-mb-6 text-sm font-bold text-[#1C1917]">
               {isCurrentQuestionCorrect ? '正解！' : isOrderingQuestion ? 'おしい！正解はこちら' : 'おしい！'}
@@ -278,24 +279,25 @@ export function QuizQuestionCard({
             </p>
           </div>
 
-          <div className="pt-1 flex flex-wrap items-center justify-between gap-2">
+          <div className="pt-1 flex flex-col-reverse sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2">
             {relatedSong ? (
               <a
                 href={`${import.meta.env.BASE_URL}${songPagePath(relatedSong.id) ?? ''}`}
                 onClick={() => saveSongReturnTab('quiz')}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors"
+                className="inline-flex min-h-[38px] items-center justify-center gap-1.5 rounded-lg border border-[#D5CEC2] bg-white px-3.5 py-2 text-xs font-bold text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9] transition-colors"
               >
                 <BookOpen aria-hidden="true" className="h-3.5 w-3.5 text-[#1E3A5F]" />
                 『{relatedSong.title}』の楽曲解説を読む
               </a>
             ) : (
-              <span />
+              <span className="hidden sm:inline" />
             )}
 
             <button
+              ref={nextButton}
               type="button"
               onClick={onNext}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-[#FBF9F5] hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              className="scroll-mb-5 inline-flex min-h-[42px] items-center justify-center gap-1.5 rounded-lg bg-[#1C1917] px-5 py-2.5 text-xs font-bold text-[#FBF9F5] hover:bg-[#C83E2B] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               {currentIndex + 1 < questionCount
                 ? '次の問題へ進む'

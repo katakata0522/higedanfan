@@ -546,6 +546,54 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
     () => (activeStamp ? getStampDisplayDetails(activeStamp) : null),
     [activeStamp],
   );
+  const stampHintRef = useRef<HTMLDivElement>(null);
+
+  const stampHintAction = useMemo(() => {
+    if (!activeStamp) return null;
+    if (activeStamp.id === 'named-note' && !activeStamp.unlocked) {
+      return {
+        label: 'お名前を設定する',
+        onClick: () => {
+          setDraftName(hasCustomMyNoteNickname(profile) ? profile.nickname : '');
+          setIsEditingName(true);
+        },
+      };
+    }
+    if (activeStamp.id === 'backup-keeper' && !activeStamp.unlocked) {
+      return {
+        label: 'ファイルに保存する',
+        onClick: () => {
+          onExportRecords();
+          setProfile(loadMyNoteProfile(resetEpoch, undefined, validSongIds));
+        },
+      };
+    }
+    if (activeStamp.category === 'tour') {
+      return { label: '歴代ツアー記録へ', onClick: () => onNavigateTab('tour_archive') };
+    }
+    if (activeStamp.category === 'spot') {
+      return { label: '聖地巡礼マップへ', onClick: () => onNavigateTab('sacred_map') };
+    }
+    if (activeStamp.category === 'setlist') {
+      return { label: 'MYセトリ作成へ', onClick: () => onNavigateTab('setlist') };
+    }
+    if (activeStamp.category === 'quiz') {
+      return { label: '検定へ挑戦する', onClick: () => onNavigateTab('quiz') };
+    }
+    if (activeStamp.id.startsWith('mood-')) {
+      return { label: '今日の1曲診断へ', onClick: () => onNavigateTab('mood') };
+    }
+    if (activeStamp.id === 'vocal-range-visit') {
+      return { label: '音域一覧へ', onClick: () => onNavigateTab('vocal_range') };
+    }
+    if (activeStamp.id === 'archive-visit') {
+      return { label: '参考記事・SNSへ', onClick: () => onNavigateTab('quiz_archive') };
+    }
+    if (activeStamp.category === 'explore') {
+      return { label: '楽曲ガイドへ', onClick: () => onNavigateTab('discography') };
+    }
+    return null;
+  }, [activeStamp, profile.nickname, onExportRecords, resetEpoch, validSongIds, onNavigateTab]);
 
   const handleRequestClose = () => {
     onClose();
@@ -588,7 +636,7 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
           マイノート
         </h2>
         <p className="mn-head-sub">
-          集めたスタンプとあなたの推し旅の記録を一冊に。
+          集めたスタンプと<wbr />あなたの推し旅の記録を一冊に。
         </p>
         <button
           ref={closeButtonRef}
@@ -617,6 +665,7 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
               >
                 {stampCountMode === 'gold' && <SpecialSealIcon />}
                 <span>{stampCountVisibleText}</span>
+                <ArrowLeftRight size={10} aria-hidden="true" />
               </button>
             </div>
 
@@ -653,6 +702,17 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
                         if (stamp.targetTab) {
                           onSelectActiveTab(stamp.targetTab);
                         }
+                        window.requestAnimationFrame(() => {
+                          const body = bodyRef.current;
+                          const hint = stampHintRef.current;
+                          if (body && hint) {
+                            const bodyRect = body.getBoundingClientRect();
+                            const hintRect = hint.getBoundingClientRect();
+                            if (hintRect.bottom > bodyRect.bottom || hintRect.top < bodyRect.top) {
+                              hint.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                            }
+                          }
+                        });
                       }}
                       aria-pressed={selectedStampId === stamp.id}
                       aria-label={details.buttonAriaLabel}
@@ -708,7 +768,7 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
               </button>
             </div>
 
-            <div className="mn-stamp-hint" aria-live="polite">
+            <div ref={stampHintRef} className="mn-stamp-hint" aria-live="polite">
               {activeStamp && activeDetails ? (
                 <div className="mn-hint-body">
                   <div className="mn-hint-top">
@@ -723,7 +783,19 @@ const MyNoteModalOpen: React.FC<MyNoteModalOpenProps> = ({
                     <strong className="mn-hint-title">{activeDetails.titleText}</strong>
                     <span className="mn-stamp-progress-pill">{activeDetails.progressLabel}</span>
                   </div>
-                  <p className="mn-hint-desc">{activeDetails.descriptionText}</p>
+                  <div className="mn-hint-desc-row">
+                    <p className="mn-hint-desc">{activeDetails.descriptionText}</p>
+                    {stampHintAction && (
+                      <button
+                        type="button"
+                        onClick={stampHintAction.onClick}
+                        className="mn-hint-action"
+                      >
+                        <span>{stampHintAction.label}</span>
+                        <ArrowRight size={11} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
                 <span>各枠を押すと、条件や進捗を確認できます（★特別称号は達成まで詳細シークレット）。</span>

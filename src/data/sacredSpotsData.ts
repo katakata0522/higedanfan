@@ -544,5 +544,4 @@ export const HISTORICAL_SACRED_SPOTS: HistoricalSacredSpot[] = [
     ],
   },
 ];
-import tourArchiveRecords from './tourArchiveRecords.json';
 
