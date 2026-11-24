@@ -17,7 +17,7 @@ const ORIGIN_DESTINATIONS: Record<string, { hash: string; label: string }> = {
   setlist: { hash: 'setlist', label: 'MYセトリ作成に戻る' },
   tour_archive: { hash: 'tour_archive', label: '歴代ツアー記録に戻る' },
   quiz: { hash: 'quiz', label: 'Official髭男dism検定に戻る' },
-  quiz_archive: { hash: 'quiz_archive', label: '参考記事・インタビューに戻る' },
+  quiz_archive: { hash: 'quiz_archive', label: '参考記事・インタビュー・SNSに戻る' },
 };
 
 export type ReturnTabStore = Pick<BrowserStorageLike, 'getItem' | 'setItem' | 'removeItem'>;

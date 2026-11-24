@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { HIGEDAN_SONGS } from '../../data/higedanData';
 import { REFERENCE_ARTICLES, type ReferenceArticle } from '../../data/referenceArticles';
-import { prepareReferenceSearch, referenceDateLabel, sortReferenceArticles } from './quizArchiveSearch';
+import { prepareReferenceSearch, referenceDateLabel, referenceKindLabel, sortReferenceArticles } from './quizArchiveSearch';
 
 function find(query: string) {
   return REFERENCE_ARTICLES.filter(prepareReferenceSearch(query, HIGEDAN_SONGS).matches);
@@ -48,4 +48,13 @@ test('記事公開日と、更新日・放送日・発行日・発売日を区�
   assert.equal(referenceDateLabel({...base, dateKind: 'issued'}), '2024/07/31 発行');
   assert.equal(referenceDateLabel({...base, dateKind: 'released'}), '2024/07/31 発売');
   assert.equal(referenceDateLabel({...base, date: null}), '公開日未確認');
+});
+
+test('SNS・YouTube種別ラベルと公演メモキーワード検索に対応する', () => {
+  assert.equal(referenceKindLabel('sns'), 'SNS・公式発信');
+  assert.equal(referenceKindLabel('video'), '映像・YouTube');
+  const snsMatches = REFERENCE_ARTICLES.filter(article => article.kind === 'sns');
+  assert.ok(snsMatches.length >= 2);
+  const budokanResults = find('楢﨑まさよし');
+  assert.ok(budokanResults.some(article => article.url === 'https://natalie.mu/music/news/513561'));
 });

@@ -758,12 +758,12 @@ async function verifyReferenceLibrary(browser) {
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`${root}#quiz_archive`, { waitUntil: 'load' });
     const library = page.locator('#section-quiz');
-    await library.getByRole('heading', { name: '参考記事・インタビュー', exact: true }).waitFor();
+    await library.getByRole('heading', { name: '参考記事・インタビュー・SNS', exact: true }).waitFor();
     const cards = library.locator('[data-reference-list] > article');
     assert.equal(await cards.count(), 24, '最初の24件が表示されません');
     assert.equal(await library.getByText(/正解：|^Q\./).count(), 0, '資料一覧にクイズの問題や正解が残っています');
     await library.getByLabel('媒体', { exact: true }).selectOption('rockinon.com');
-    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('Rejoice');
+    await library.getByLabel('記事名・媒体・SNS・曲名・年で検索').fill('Rejoice');
     assert.equal(await cards.count(), 1, '記事名と媒体で絞り込めません');
     await cards.getByRole('link', { name: /新作『Rejoice』のすべて/ }).waitFor();
     assert.equal(await cards.locator('time').getAttribute('datetime'), '2024-07-31');
@@ -778,10 +778,10 @@ async function verifyReferenceLibrary(browser) {
     assert.ok(layout.width <= layout.viewport, `${width}pxで資料一覧が横にはみ出します`);
     assert.ok(layout.links.every(link => link.left >= 0 && link.right <= layout.viewport), `${width}pxで記事リンクが画面外にはみ出します`);
     await library.getByLabel('媒体', { exact: true }).selectOption('all');
-    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('ぷりてんだー');
+    await library.getByLabel('記事名・媒体・SNS・曲名・年で検索').fill('ぷりてんだー');
     await cards.getByRole('link', { name: /研究と向上心を欠かさない4人/ }).waitFor();
-    await library.getByLabel('記事名・媒体・曲名・年で検索').fill('該当しない参考記事XYZ');
-    await library.getByText('条件に一致する参考記事が見つかりませんでした。').waitFor();
+    await library.getByLabel('記事名・媒体・SNS・曲名・年で検索').fill('該当しない参考記事XYZ');
+    await library.getByText('条件に一致する参考資料が見つかりませんでした。').waitFor();
     await library.getByRole('button', { name: '検索条件をリセット', exact: true }).click();
     assert.equal(await cards.count(), 24);
     await library.getByRole('button', { name: /さらに24件を見る/ }).click();
@@ -899,7 +899,7 @@ async function verifyMyNoteModal(browser) {
   assert.ok(closeXBox && closeXBox.width >= 44 && closeXBox.height >= 44, '右上の閉じるボタンは44px以上のタップ領域が必要です');
   await dialog.getByText('はじめの一歩').waitFor();
   await dialog.getByText('総合ランク', { exact: true }).waitFor();
-  await dialog.getByText('ダイヤの原石', { exact: true }).waitFor();
+  assert.equal(await dialog.locator('.mn-secondary-identity').count(), 0, '名前下の重複した称号表示は削除されている必要があります');
   assert.equal(await dialog.getByText('ファンノート・ランク', { exact: true }).count(), 0, 'ランク表示名が旧表記のままです');
   assert.equal(await dialog.locator('.mn-gold-count').count(), 0, '右上の32分金バッジは削除されている必要があります');
   await dialog.getByText('1 / 115').waitFor();
@@ -946,7 +946,7 @@ async function verifyMyNoteModal(browser) {
   await dialog.getByRole('button', { name: /^ファンノートの新人/ }).click();
   await dialog.getByText('推し活タイプ', { exact: true }).waitFor();
   await dialog.locator('.mn-rank-badge--playstyle', { hasText: 'ダイヤの原石' }).waitFor();
-  await dialog.locator('.mn-secondary-value', { hasText: 'ファンノートの新人' }).waitFor();
+  assert.equal(await dialog.locator('.mn-secondary-identity').count(), 0, '名前下の重複した称号表示は削除されている必要があります');
 
   await Promise.all([
     page.waitForEvent('download'),

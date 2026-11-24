@@ -1417,8 +1417,8 @@ function buildStampsFromMetrics(input: MyNoteEngagementInput, m: ComputedMetrics
     {
       id: 'archive-visit',
       label: 'インタビュー資料室の常連',
-      hint: '「参考記事・インタビュー一覧」ページを開く',
-      areaHint: '参考記事・インタビュー',
+      hint: '「参考記事・インタビュー・SNS一覧」ページを開く',
+      areaHint: '参考記事・インタビュー・SNS',
       unlocked: input.visitedReferenceArchive,
       category: 'explore',
       tier: 'normal',

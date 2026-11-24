@@ -52,6 +52,7 @@ export type MapReturnState = {
 };
 export type ArchiveReturnState = {
   publisher: string;
+  kind?: string;
   query: string;
   order: 'newest' | 'oldest';
   visibleCount: number;
@@ -232,6 +233,8 @@ export function takeGuideReturnState(songCount: number, store: Store | null = br
   return restored;
 }
 
+const archiveKinds = new Set(['all', 'interview', 'review', 'news', 'official', 'lyrics', 'video', 'score', 'sns']);
+
 export function saveArchiveReturnState(
   state: ArchiveReturnState,
   store: Store | null = browserStore(),
@@ -239,6 +242,7 @@ export function saveArchiveReturnState(
   try {
     store?.setItem(archiveKey, JSON.stringify({
       publisher: state.publisher,
+      ...(state.kind && state.kind !== 'all' ? { kind: state.kind } : {}),
       query: state.query,
       order: state.order,
       visibleCount: state.visibleCount,
@@ -268,6 +272,7 @@ export function readArchiveReturnState(
       record.publisher.length > 80 ||
       CONTROL_OR_BIDI_RE.test(record.publisher) ||
       (allowedPublishers && record.publisher !== 'all' && !allowedPublishers.includes(record.publisher)) ||
+      (record.kind !== undefined && (typeof record.kind !== 'string' || !archiveKinds.has(record.kind))) ||
       typeof record.query !== 'string' ||
       record.query.length > 60 ||
       CONTROL_OR_BIDI_RE.test(record.query) ||
@@ -280,6 +285,7 @@ export function readArchiveReturnState(
     }
     return {
       publisher: record.publisher,
+      ...(typeof record.kind === 'string' && record.kind !== 'all' ? { kind: record.kind } : {}),
       query: record.query,
       order: record.order,
       visibleCount: Number(record.visibleCount),

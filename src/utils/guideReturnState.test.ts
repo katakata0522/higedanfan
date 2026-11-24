@@ -116,7 +116,7 @@ test('参考記事一覧の状態は楽曲ページからの戻り時に1度だ�
     resetEpoch: 'epoch-1',
   };
   saveArchiveReturnState(state, store);
-  assert.deepEqual(songReturnDestination(store), { hash: 'quiz_archive', label: '参考記事・インタビューに戻る' });
+  assert.deepEqual(songReturnDestination(store), { hash: 'quiz_archive', label: '参考記事・インタビュー・SNSに戻る' });
 
   // Mismatched epoch cannot restore, and consumes cleanly.
   assert.equal(takeArchiveReturnState(120, 'epoch-2', ['音楽ナタリー'], store), null);

@@ -65,7 +65,7 @@ function buildCornerBody(
     const items = REFERENCE_ARTICLES.slice(0, 40)
       .map((article) => `<li>${escapeHtml(article.publisher)}：${escapeHtml(article.title)}</li>`)
       .join('\n');
-    detailHtml = `<section aria-label="参考資料の一部"><p>全${REFERENCE_ARTICLES.length}件の参考記事・インタビュー資料を掲載しています。</p><ul>\n${items}\n</ul></section>`;
+    detailHtml = `<section aria-label="参考資料の一部"><p>全${REFERENCE_ARTICLES.length}件の参考記事・インタビュー・SNS資料を掲載しています。</p><ul>\n${items}\n</ul></section>`;
   } else {
     detailHtml = `<section aria-label="コーナー案内"><p>各機能のインタラクティブな操作（診断の回答、セットリスト並び替え・画像書き出し、検定の挑戦）はブラウザのJavaScript画面からすぐにご利用いただけます。</p></section>`;
   }

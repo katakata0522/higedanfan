@@ -1,10 +1,11 @@
-import type { TourCoArtistSetlist, TourSetlistTrack } from './higedanData';
+import type { TourCoArtistSetlist, TourEventSource, TourSetlistTrack } from './higedanData';
 import { normalizeSetlistOrder, type SetlistEntry } from '../utils/setlist';
 import bundle from './tourSetlistRecords.json';
 
 interface TourSetlistEventEntry {
   templateId: string;
   note?: string;
+  sources?: TourEventSource[];
   higedanOrderLabel?: string;
   coArtistSets?: TourCoArtistSetlist[];
 }
@@ -19,6 +20,7 @@ const data = bundle as TourSetlistBundle;
 export interface TourEventSetlistData {
   tracks: TourSetlistTrack[];
   note?: string;
+  sources?: TourEventSource[];
   higedanOrderLabel?: string;
   coArtistSets?: TourCoArtistSetlist[];
 }
@@ -36,6 +38,7 @@ export function getTourEventSetlist(
   return {
     tracks,
     ...(ref.note ? { note: ref.note } : {}),
+    ...(ref.sources?.length ? { sources: ref.sources } : {}),
     ...(ref.higedanOrderLabel ? { higedanOrderLabel: ref.higedanOrderLabel } : {}),
     ...(ref.coArtistSets?.length ? { coArtistSets: ref.coArtistSets } : {}),
   };

@@ -1,8 +1,8 @@
 import { ExternalLink, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SongItem } from '../../data/higedanTypes';
-import { REFERENCE_ARTICLES, REFERENCE_CHECKED_ON, type ReferenceArticle } from '../../data/referenceArticles';
-import { prepareReferenceSearch, referenceDateLabel, referenceKindLabel, sortReferenceArticles } from './quizArchiveSearch';
+import { REFERENCE_ARTICLES, REFERENCE_CHECKED_ON, type ReferenceArticle, type ReferenceKind } from '../../data/referenceArticles';
+import { prepareReferenceSearch, REFERENCE_KINDS, referenceDateLabel, referenceKindLabel, sortReferenceArticles } from './quizArchiveSearch';
 import { songPagePath } from '../../songPages/publishedSongPageIds';
 import { clearArchiveReturnState, readArchiveReturnState, saveArchiveReturnState } from '../../utils/guideReturnState';
 
@@ -36,6 +36,11 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
     if (initialReturn) clearArchiveReturnState();
   }, [visible, initialReturn]);
   const [publisher, setPublisher] = useState(() => initialReturn?.publisher ?? 'all');
+  const [kind, setKind] = useState<ReferenceKind | 'all'>(() =>
+    initialReturn?.kind && REFERENCE_KINDS.includes(initialReturn.kind as ReferenceKind)
+      ? (initialReturn.kind as ReferenceKind)
+      : 'all',
+  );
   const [query, setQuery] = useState(() => initialReturn?.query ?? '');
   const [order, setOrder] = useState<'newest' | 'oldest'>(() => initialReturn?.order ?? 'newest');
   const [visibleCount, setVisibleCount] = useState(() => initialReturn?.visibleCount ?? PAGE_SIZE);
@@ -43,13 +48,16 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
   const songsById = useMemo(() => new Map(songs.map(song => [song.id, song])), [songs]);
   const search = useMemo(() => prepareReferenceSearch(query, songs), [query, songs]);
   const articles = useMemo(() => visible ? sortReferenceArticles(REFERENCE_ARTICLES.filter(article =>
-    (publisher === 'all' || article.publisher === publisher) && search.matches(article),
-  ), order) : [], [visible, publisher, search, order]);
+    (publisher === 'all' || article.publisher === publisher) &&
+    (kind === 'all' || article.kind === kind) &&
+    search.matches(article),
+  ), order) : [], [visible, publisher, kind, search, order]);
   const available = articles.filter(article => !article.unavailable);
   const unavailable = articles.filter(article => article.unavailable);
 
   function resetFilters() {
     setPublisher('all');
+    setKind('all');
     setQuery('');
     setVisibleCount(PAGE_SIZE);
   }
@@ -67,7 +75,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
       <a
         key={song.id}
         href={`${import.meta.env.BASE_URL}${songPagePath(song.id) ?? ''}`}
-        onClick={() => saveArchiveReturnState({ publisher, query, order, visibleCount, resetEpoch })}
+        onClick={() => saveArchiveReturnState({ publisher, kind, query, order, visibleCount, resetEpoch })}
         className="inline-flex min-h-11 items-center py-2 text-left text-sm underline decoration-[#D5CEC2] underline-offset-4 hover:text-[#C83E2B] focus-visible:outline-2 focus-visible:outline-offset-2"
       >
         {song.title}
@@ -110,7 +118,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
     <div className="mt-5 space-y-5">
       <div className="space-y-3">
         <div className="relative">
-          <label htmlFor="quiz-archive-search" className="sr-only">記事名・媒体・曲名・年で検索</label>
+          <label htmlFor="quiz-archive-search" className="sr-only">記事名・媒体・SNS・曲名・年で検索</label>
           <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#68625C]" />
           <input
             ref={searchInputRef}
@@ -119,7 +127,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
             maxLength={60}
             value={query}
             onChange={event => { setQuery(event.target.value); setVisibleCount(PAGE_SIZE); }}
-            placeholder="記事名・媒体・曲名・年で検索"
+            placeholder="記事名・媒体・SNS・ライブ・曲名・年で検索"
             className="min-h-11 w-full rounded-xl border border-[#D5CEC2] bg-white pl-9 pr-10 py-2 text-base text-[#1C1917] placeholder:text-[#68625C] focus:border-[#1C1917] focus:outline-none focus:ring-2 focus:ring-[#1C1917]/20 [&::-webkit-search-cancel-button]:appearance-none"
           />
           {query && (
@@ -137,7 +145,15 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
             </button>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)]">
+        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,10rem)]">
+          <div className="min-w-0">
+            <label htmlFor="quiz-kind-filter" className="mb-1 block text-xs font-bold text-[#57534E]">種別</label>
+            <select id="quiz-kind-filter" value={kind} onChange={event => { setKind(event.target.value as ReferenceKind | 'all'); setVisibleCount(PAGE_SIZE); }}
+              className="min-h-11 w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base text-[#1C1917] sm:text-sm">
+              <option value="all">すべての種別</option>
+              {REFERENCE_KINDS.map(itemKind => <option key={itemKind} value={itemKind}>{referenceKindLabel(itemKind)}</option>)}
+            </select>
+          </div>
           <div className="min-w-0">
             <label htmlFor="quiz-publisher-filter" className="mb-1 block text-xs font-bold text-[#57534E]">媒体</label>
             <select id="quiz-publisher-filter" value={publisher} onChange={event => { setPublisher(event.target.value); setVisibleCount(PAGE_SIZE); }}
@@ -154,11 +170,11 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
             </select>
           </div>
         </div>
-        <p role="status" className="text-xs text-[#57534E]">{available.length}件の記事・資料</p>
+        <p role="status" className="text-xs text-[#57534E]">{available.length}件の記事・SNS・映像資料</p>
       </div>
 
       {articles.length === 0 ? <div className="py-8 text-center">
-        <p className="text-sm text-[#57534E]">条件に一致する参考記事が見つかりませんでした。</p>
+        <p className="text-sm text-[#57534E]">条件に一致する参考資料が見つかりませんでした。</p>
         <button type="button" onClick={resetFilters} className="mt-3 min-h-11 px-4 py-2 text-sm font-bold underline underline-offset-4 cursor-pointer">検索条件をリセット</button>
       </div> : <>
         <div data-reference-list>{available.slice(0, shownCount).map(renderArticle)}</div>

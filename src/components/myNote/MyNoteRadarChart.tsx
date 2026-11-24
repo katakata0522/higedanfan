@@ -13,9 +13,9 @@ export const MyNoteRadarChart: React.FC<MyNoteRadarChartProps> = ({
   axes,
   hasAnyActivity,
 }) => {
-  const cx = 160;
-  const cy = 124;
-  const maxRadius = 80;
+  const cx = 166;
+  const cy = 125;
+  const maxRadius = 92;
   const rings = [0.25, 0.5, 0.75, 1];
 
   const pointAt = (index: number, ratio: number): [number, number] => {
@@ -27,10 +27,10 @@ export const MyNoteRadarChart: React.FC<MyNoteRadarChartProps> = ({
   };
 
   const labelAnchor = (index: number): { x: number; y: number; anchor: 'middle' | 'start' | 'end' } => {
-    const [x, y] = pointAt(index, 1.15);
-    if (index === 0) return { x, y: y - 6, anchor: 'middle' };
-    if (index === 1 || index === 2) return { x: x + 6, y: y + 4, anchor: 'start' };
-    return { x: x - 6, y: y + 4, anchor: 'end' };
+    const [x, y] = pointAt(index, 1.11);
+    if (index === 0) return { x, y: y - 5, anchor: 'middle' };
+    if (index === 1 || index === 2) return { x: x + 5, y: y + 4, anchor: 'start' };
+    return { x: x - 5, y: y + 4, anchor: 'end' };
   };
 
   const polygonPoints = axes
@@ -40,7 +40,7 @@ export const MyNoteRadarChart: React.FC<MyNoteRadarChartProps> = ({
   return (
     <div className="mn-radar-wrap">
       <svg
-        viewBox="0 0 320 240"
+        viewBox="0 0 332 226"
         className="mn-radar-svg"
         role="img"
         aria-label={`推し活バランスグラフ: ${axes.map((a) => `${a.label} ${a.rawLabel}`).join(' / ')}`}
