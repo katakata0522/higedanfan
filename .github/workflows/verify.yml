@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: song-guide-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 permissions:
   contents: read
 
@@ -36,9 +40,9 @@ jobs:
           scope=$(node .github/scripts/announcement-ci-scope.mjs)
           echo "scope=$scope" >> "$GITHUB_OUTPUT"
       - run: npm run build
-      - name: 告知データから生成したHTMLの一致を確認する
-        if: steps.browser.outputs.scope == 'announcements'
-        run: git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code HEAD -- discography/index.html vocal-range/index.html
+      - name: 限定検証の生成HTMLを照合する
+        if: steps.browser.outputs.scope != 'full'
+        run: git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code HEAD -- '*.html'
       - name: Verify the bundled Chromium matches the locked Playwright
         run: |
           node <<'NODE'
@@ -48,7 +52,12 @@ jobs:
           assert.equal(require('playwright/package.json').version, driverVersion);
           fs.accessSync(require('playwright').chromium.executablePath(), fs.constants.X_OK);
           NODE
-      - run: npm run test:browser
-        if: steps.browser.outputs.scope != 'announcements'
-      - run: npm run test:browser -- --announcements-only
-        if: steps.browser.outputs.scope == 'announcements'
+      - name: 変更範囲のブラウザー検証
+        env:
+          BROWSER_SCOPE: ${{ steps.browser.outputs.scope }}
+        run: |
+          case "$BROWSER_SCOPE" in
+            announcements|home|tour) npm run test:browser -- "--$BROWSER_SCOPE-only" ;;
+            full) npm run test:browser ;;
+            *) exit 1 ;;
+          esac

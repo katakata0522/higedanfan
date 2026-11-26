@@ -1103,8 +1103,17 @@ let browser;
 try {
   await waitForServer();
   browser = await chromium.launch({ headless: true, executablePath: resolveChromiumExecutable() });
-  await verifyAnnouncements(browser, root);
-  if (!process.argv.includes('--announcements-only')) await verifyFullSite(browser);
+  if (process.argv.includes('--home-only')) {
+    await verifyStaticSeo(browser, root, ids, []);
+    await verifyKurunIntroAndStickyNotes(browser);
+  } else if (process.argv.includes('--tour-only')) {
+    await verifyStaticSeo(browser, root, ids, ['tour-archive']);
+    await runPool([() => verifyTourArchiveSetlists(browser), () => verifyMyNoteModal(browser),
+      () => verifyRecordFileImport(browser, root)], 3);
+  } else {
+    await verifyAnnouncements(browser, root);
+    if (!process.argv.includes('--announcements-only')) await verifyFullSite(browser);
+  }
 } finally {
   await browser?.close();
   server.kill();
