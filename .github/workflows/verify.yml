@@ -17,6 +17,8 @@ jobs:
       options: --ipc=host
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -25,7 +27,18 @@ jobs:
       - run: npm audit --audit-level=low
       - run: npm run lint
       - run: npm test
+      - run: node --test .github/scripts/announcement-ci-scope.test.mjs
+      - name: ブラウザー検証の範囲を選ぶ
+        id: browser
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          scope=$(node .github/scripts/announcement-ci-scope.mjs)
+          echo "scope=$scope" >> "$GITHUB_OUTPUT"
       - run: npm run build
+      - name: 告知データから生成したHTMLの一致を確認する
+        if: steps.browser.outputs.scope == 'announcements'
+        run: git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code HEAD -- discography/index.html vocal-range/index.html
       - name: Verify the bundled Chromium matches the locked Playwright
         run: |
           node <<'NODE'
@@ -36,3 +49,6 @@ jobs:
           fs.accessSync(require('playwright').chromium.executablePath(), fs.constants.X_OK);
           NODE
       - run: npm run test:browser
+        if: steps.browser.outputs.scope != 'announcements'
+      - run: npm run test:browser -- --announcements-only
+        if: steps.browser.outputs.scope == 'announcements'
