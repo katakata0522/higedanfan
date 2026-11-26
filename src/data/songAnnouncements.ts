@@ -1,4 +1,5 @@
 import type { EraTag } from './higedanTypes';
+import records from './songAnnouncementRecords.json';
 
 interface SongAnnouncement {
   readonly id: string;
@@ -10,16 +11,4 @@ interface SongAnnouncement {
 }
 
 // 配信前に確認できた事項を掲載する。曲別ページの生成には catalogEntries を使う。
-export const songAnnouncements: readonly SongAnnouncement[] = [
-  {
-    id: 'evergreen',
-    title: 'エバーグリーン',
-    era: 'latest_2025_2026',
-    aliases: ['Evergreen', 'エヴァーグリーン', 'ebagurin'],
-    facts: [
-      '2026年12月1日 配信予定',
-      'ポケモン30周年「ポケモンとつづく」のスペシャルMV楽曲',
-    ],
-    sourceUrl: 'https://higedan.com/news/detail/101753',
-  },
-];
+export const songAnnouncements = records as readonly SongAnnouncement[];

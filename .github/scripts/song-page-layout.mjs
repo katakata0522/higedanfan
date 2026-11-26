@@ -12,6 +12,7 @@ import { publishedSongPageIds } from '../../src/songPages/publishedSongPageIds.t
 import { isTempoUnderReview } from '../../src/data/tempoReviewStatus.ts';
 import { getCourseQuestions } from '../../src/components/quiz/quizCourses.ts';
 import { verifyGuideAndDiagnosis } from './guide-and-diagnosis.mjs';
+import { verifyAnnouncements } from './announcement-browser.mjs';
 import { verifyStaticSeo, verifyInputAndScriptBoundaries, verifyRecordFileImport, openSetlistEditor, verifyPwaReadinessAndInstall } from './site-security-seo.mjs';
 
 // 生成済みのページと台帳が一致することを確認し、公開用ビルドそのものを検証する。
@@ -1069,10 +1070,7 @@ async function runPool(tasks, concurrency) {
   await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, runWorker));
 }
 
-let browser;
-try {
-  await waitForServer();
-  browser = await chromium.launch({ headless: true, executablePath: resolveChromiumExecutable() });
+async function verifyFullSite(browser) {
   await runPool([
     () => verifyStaticSeo(browser, root, ids),
     () => verifyInputAndScriptBoundaries(browser, root),
@@ -1099,6 +1097,14 @@ try {
     await inspectAllPages(browser, { name: 'スマホ 390px', mobile: true, context: { viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true } });
     await inspectAllPages(browser, { name: 'PC 大きな文字 521px', readable: true, context: { viewport: { width: 521, height: 844 } } });
   }
+}
+
+let browser;
+try {
+  await waitForServer();
+  browser = await chromium.launch({ headless: true, executablePath: resolveChromiumExecutable() });
+  await verifyAnnouncements(browser, root);
+  if (!process.argv.includes('--announcements-only')) await verifyFullSite(browser);
 } finally {
   await browser?.close();
   server.kill();
