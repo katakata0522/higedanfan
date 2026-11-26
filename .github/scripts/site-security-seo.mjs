@@ -8,12 +8,13 @@ import songEvidence from '../../src/data/songEvidence.json' with { type: 'json' 
 import { formatSongBpm } from '../../src/utils/format.ts';
 
 // JavaScript実行前のHTMLを検査する。画面だけ正しくても検索用HTMLが古ければ失敗させる。
-export async function verifyStaticSeo(browser, root, ids) {
+export async function verifyStaticSeo(browser, root, ids, onlyCorners) {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
   const descriptions = new Set();
   const cornerSlugs = PUBLIC_CORNERS.map(corner => corner.slug);
-  const targets = [null, ...cornerSlugs.map(slug => ({ kind: 'corner', slug })), ...ids.map(id => ({ kind: 'song', id }))];
+  const targets = [null, ...(onlyCorners ?? cornerSlugs).map(slug => ({ kind: 'corner', slug })),
+    ...(onlyCorners ? [] : ids).map(id => ({ kind: 'song', id }))];
   try {
     for (const target of targets) {
       const relative = !target
@@ -97,7 +98,7 @@ export async function verifyStaticSeo(browser, root, ids) {
       }
     }
   } finally { await context.close(); }
-  console.log(`JavaScriptなしで${targets.length}ページ（トップ・コーナー${cornerSlugs.length}種・楽曲${ids.length}曲）の見出し・canonical・固有説明・本番CSPを確認`);
+  console.log(`JavaScriptなしで${targets.length}ページの見出し・canonical・固有説明・本番CSPを確認`);
 }
 
 export async function verifyInputAndScriptBoundaries(browser, root) {
