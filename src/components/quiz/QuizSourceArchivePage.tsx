@@ -24,7 +24,7 @@ export const QuizSourceArchivePage: React.FC<QuizSourceArchivePageProps> = ({
           id="quiz-heading"
           className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
         >
-          参考記事・インタビュー・SNS
+          参考記事・<wbr />インタビュー・SNS
         </h1>
       </div>
 

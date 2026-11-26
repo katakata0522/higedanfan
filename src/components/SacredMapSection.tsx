@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { ChevronDown, MapPin } from 'lucide-react';
+import { ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { HISTORICAL_SACRED_SPOTS, SACRED_SPOTS } from '../data/sacredSpotsData';
 import type { SacredSpotCategory, SongItem } from '../data/higedanTypes';
 import { songPagePath } from '../songPages/publishedSongPageIds';
@@ -49,6 +49,7 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
   );
   const [visitedSpotsOnly, setVisitedSpotsOnly] = useState(mapReturn?.visitedOnly ?? false);
   const [isSpotFilterOpen, setIsSpotFilterOpen] = useState(mapReturn?.filtersOpen ?? false);
+  const [isMobileMapOpen, setIsMobileMapOpen] = useState(Boolean(mapReturn?.pinnedSpotId));
   const [pinnedSpotId, setPinnedSpotId] = useState<string | null>(mapReturn?.pinnedSpotId ?? null);
   const [mapSpotId, setMapSpotId] = useState(mapReturn?.mapSpotId ?? '');
   const originSpotHeading = useRef<HTMLHeadingElement>(null);
@@ -171,7 +172,7 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
             聖地巡礼マップ
           </h1>
 
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] shrink-0">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#dfd7c7] bg-[#fffdf8] px-3 py-1 text-xs font-bold text-[#253331] shrink-0 whitespace-nowrap">
             <MapPin className="h-3.5 w-3.5 text-[#2e6f40]" aria-hidden="true" />
             <span>訪問記録：{visitedSpotCount} / {totalCheckableSpotCount} スポット</span>
           </span>
@@ -187,12 +188,12 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
                 onClick={() => setIsSpotFilterOpen((current) => !current)}
                 className="flex min-h-[40px] flex-1 items-center justify-between gap-2 rounded-lg border border-[#e5dccb] bg-[#faf6eb]/70 px-3 py-1.5 text-left text-xs font-bold text-[#253331] hover:bg-[#f4efe4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#253331] cursor-pointer"
               >
-                <span className="min-w-0">
+                <span className="min-w-0 [word-break:auto-phrase] [text-wrap:pretty]">
                   絞り込み条件
                   <span className="ml-1.5 font-normal text-[#57534E]">
                     （{hasSpotFilter
                       ? `${spotFilterChoices.join(' ／ ')} · ${filteredSpots.length}か所`
-                      : `全${filteredSpots.length}件（訪問記録対象 ${totalCheckableSpotCount}スポット） ／ つながり・エリア・訪問済み`}）
+                      : `全${filteredSpots.length}スポット ／ つながり・エリア・訪問済み`}）
                   </span>
                 </span>
                 <ChevronDown
@@ -267,57 +268,84 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
           </div>
 
           {mapSpot && (
-            <section
-              id="sacred-map-viewer"
-              className="fusen-memo-card scroll-mt-24 !p-3.5 sm:!p-4"
-              style={{ '--tape-bg': '#bce3f8' } as CSSProperties}
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="font-note-serif text-sm font-bold text-[#253331]" htmlFor="map-place">
-                    地図で見る場所
-                  </label>
-                  <select
-                    id="map-place"
-                    className="min-h-[38px] max-w-full rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-3 py-1 text-base sm:text-sm font-medium text-[#253331] focus:outline-none focus:ring-2 focus:ring-[#253331]"
-                    value={mapSpot.id}
-                    onChange={(e) => {
-                      setMapSpotId(e.target.value);
-                      setPinnedSpotId(e.target.value);
-                    }}
-                  >
-                    {mapSpots.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}{s.mapScope === 'area' ? '（エリアの目安）' : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <a
-                  className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1d5a7a] underline underline-offset-4 hover:text-[#C83E2B]"
-                  href={'https://www.google.com/maps/search/?api=1&query=' + mapQuery}
-                  target="_blank"
-                  rel="noopener noreferrer"
+            <>
+              {!isMobileMapOpen && (
+                <button
+                  type="button"
+                  aria-expanded={isMobileMapOpen}
+                  aria-controls="sacred-map-viewer"
+                  onClick={() => setIsMobileMapOpen(true)}
+                  className="md:hidden flex w-full min-h-[42px] items-center justify-between gap-2 rounded-xl border border-[#dfd7c7] bg-[#fffdf8] px-3.5 py-2 text-left text-xs font-bold text-[#253331] hover:border-[#253331] cursor-pointer"
                 >
-                  Google マップで開く・経路検索 ↗
-                </a>
-              </div>
-              {mapSpot.mapScope === 'area' && (
-                <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
-                  {mapSpot.mapAreaNote ?? '撮影が行われた街・エリア全体の位置を表示しています。'}
-                </p>
+                  <span className="inline-flex min-w-0 items-center gap-1.5">
+                    <MapPin className="h-4 w-4 shrink-0 text-[#1d5a7a]" aria-hidden="true" />
+                    <span className="truncate">地図をひらく（{mapSpot.name}）</span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 text-[#57534E]" aria-hidden="true" />
+                </button>
               )}
-              <div className="mt-2.5 overflow-hidden rounded-lg border border-[#e5dccb] bg-[#f4efe4]">
-                <iframe
-                  className="block h-[196px] sm:h-[220px] w-full"
-                  title={mapSpot.name + 'の地図'}
-                  loading="lazy"
-                  sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
-                  referrerPolicy="no-referrer"
-                  src={'https://maps.google.com/maps?output=embed&q=' + mapQuery}
-                />
-              </div>
-            </section>
+              <section
+                id="sacred-map-viewer"
+                className={`${isMobileMapOpen ? 'block' : 'hidden md:block'} fusen-memo-card scroll-mt-24 !p-3.5 sm:!p-4`}
+                style={{ '--tape-bg': '#bce3f8' } as CSSProperties}
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="font-note-serif text-sm font-bold text-[#253331]" htmlFor="map-place">
+                      地図で見る場所
+                    </label>
+                    <select
+                      id="map-place"
+                      className="min-h-[38px] max-w-full rounded-lg border border-[#dfd7c7] bg-[#faf6eb] px-3 py-1 text-base sm:text-sm font-medium text-[#253331] focus:outline-none focus:ring-2 focus:ring-[#253331]"
+                      value={mapSpot.id}
+                      onChange={(e) => {
+                        setMapSpotId(e.target.value);
+                        setPinnedSpotId(e.target.value);
+                      }}
+                    >
+                      {mapSpots.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}{s.mapScope === 'area' ? '（エリアの目安）' : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <a
+                      className="inline-flex min-h-[28px] items-center gap-1 py-0.5 text-xs font-bold text-[#1d5a7a] underline underline-offset-4 hover:text-[#C83E2B]"
+                      href={'https://www.google.com/maps/search/?api=1&query=' + mapQuery}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Google マップで開く・経路検索 ↗
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setIsMobileMapOpen(false)}
+                      className="md:hidden inline-flex min-h-[32px] items-center gap-1 rounded-full border border-[#dfd7c7] bg-[#faf6eb] px-2.5 py-1 text-[11px] font-bold text-[#57534E] hover:text-[#253331] cursor-pointer"
+                    >
+                      <span>地図をとじる</span>
+                      <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />
+                    </button>
+                  </div>
+                </div>
+                {mapSpot.mapScope === 'area' && (
+                  <p className="mt-2 text-xs leading-relaxed text-[#57534E]">
+                    {mapSpot.mapAreaNote ?? '撮影が行われた街・エリア全体の位置を表示しています。'}
+                  </p>
+                )}
+                <div className="mt-2.5 h-[196px] sm:h-[220px] overflow-hidden rounded-lg border border-[#e5dccb] bg-[#f4efe4]">
+                  <iframe
+                    className="block h-full w-full"
+                    title={mapSpot.name + 'の地図'}
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox"
+                    referrerPolicy="no-referrer"
+                    src={'https://maps.google.com/maps?output=embed&q=' + mapQuery}
+                  />
+                </div>
+              </section>
+            </>
           )}
 
           {filteredSpots.length === 0 && filteredHistoricalSpots.length === 0 ? (
@@ -357,7 +385,7 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
                         <h2
                           ref={spot.id === mapReturn?.originSpotId ? originSpotHeading : undefined}
                           tabIndex={spot.id === mapReturn?.originSpotId ? -1 : undefined}
-                          className="scroll-mt-20 font-note-serif text-base font-bold text-[#253331]"
+                          className="scroll-mt-20 font-note-serif text-base font-bold text-[#253331] [word-break:auto-phrase] [text-wrap:pretty]"
                         >
                           {spot.name}
                         </h2>
@@ -403,6 +431,7 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
                               onClick={() => {
                                 setMapSpotId(spot.id);
                                 setPinnedSpotId(spot.id);
+                                setIsMobileMapOpen(true);
                                 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
                                 window.requestAnimationFrame(() => {
                                   document.getElementById('sacred-map-viewer')?.scrollIntoView({
@@ -488,7 +517,7 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
                       <p className="text-xs font-bold text-[#C83E2B]">
                         {spot.area} <span className="ml-2 text-[#57534E]">{spot.status}</span>
                       </p>
-                      <h3 className="mt-1.5 font-note-serif text-base font-bold text-[#253331]">{spot.name}</h3>
+                      <h3 className="mt-1.5 font-note-serif text-base font-bold text-[#253331] [word-break:auto-phrase] [text-wrap:pretty]">{spot.name}</h3>
                       <p className="mt-2 text-xs leading-relaxed text-[#57534E]">{spot.description}</p>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-3 border-t border-[#ece3d2] pt-3 text-xs">
@@ -503,7 +532,6 @@ export const SacredMapSection: React.FC<SacredMapSectionProps> = ({
               </div>
             </section>
           )}
-          <p className="text-center text-[11px] text-[#68625C]">※ 訪問済みの記録はお使いのブラウザ内に保存されます。</p>
         </div>
       </div>
     </section>

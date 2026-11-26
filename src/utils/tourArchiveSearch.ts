@@ -50,15 +50,29 @@ function getIndexedTour(tour: TourArchive): IndexedTourEntry {
     tour,
     events: tour.events.map(event => {
       const setlist = event.hasSetlist ? getTourEventSetlist(event.id) : null;
+      const coArtistSets = setlist?.coArtistSets ?? [];
+      const coArtistText = coArtistSets
+        .map(co => `${co.artist} ${co.note ?? ''}`)
+        .join(' ');
       const tracks = setlist
-        ? setlist.tracks.map(track => ({
-            title: track.title,
-            text: trackSearchText(track.title, track.songId, track.artist, track.note),
-          }))
+        ? [
+            ...setlist.tracks.map(track => ({
+              title: track.title,
+              text: trackSearchText(track.title, track.songId, track.artist, track.note),
+            })),
+            ...coArtistSets.flatMap(co =>
+              co.tracks.map(track => ({
+                title: `${track.title}（${co.artist}）`,
+                text: trackSearchText(track.title, undefined, undefined, track.note),
+              })),
+            ),
+          ]
         : [];
       return {
         event,
-        metaText: normalizeTourSearch(`${tour.tourTitle} ${(tour.coArtists ?? []).join(' ')} ${event.date} ${event.venue} ${event.label ?? ''}`),
+        metaText: normalizeTourSearch(
+          `${tour.tourTitle} ${(tour.coArtists ?? []).join(' ')} ${event.date} ${event.venue} ${event.label ?? ''} ${setlist?.note ?? ''} ${coArtistText}`,
+        ),
         tracks,
       };
     }),

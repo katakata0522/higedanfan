@@ -665,7 +665,7 @@ export function TourArchiveSection({
           <div className="flex min-w-0 flex-1 flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 text-xs font-bold text-[#253331]">
             <label htmlFor="tour-archive-search" className="shrink-0">
               日付・会場を探す
-              <span className="ml-1 font-normal text-[#68625C]">（曲名も可）</span>
+              <span className="ml-1 font-normal text-[#68625C]">（曲名・エピソードも可）</span>
             </label>
             <div className="relative min-w-0 w-full sm:flex-1">
               <Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#68625C]" />
@@ -680,7 +680,7 @@ export function TourArchiveSection({
                   setQuery(event.target.value);
                   setClosedDuringSearchIds(new Set());
                 }}
-                placeholder="例：2025-05-31 / 日産スタジアム / Pretender"
+                placeholder="例：武道館 / 宿命 / 弾き語り"
                 className="min-w-0 w-full rounded-lg border border-[#D5CEC2] bg-white pl-8 pr-9 py-2 text-base sm:text-xs font-normal text-[#1C1917] placeholder:text-[#68625C] [&::-webkit-search-cancel-button]:appearance-none"
               />
               {query && (
@@ -934,8 +934,17 @@ export function TourArchiveSection({
                       </span>
                     )}
                   </p>
-                  <h2 className="mt-1 font-note-serif text-base font-bold text-[#253331] sm:text-lg">
-                    {tour.tourTitle}
+                  <h2 className="mt-1 font-note-serif text-base font-bold text-[#253331] sm:text-lg [word-break:auto-phrase] [text-wrap:pretty]">
+                    {(() => {
+                      const hyphenTag = /^(.*\S)\s+(-[A-Za-z0-9: .]+-)$/.exec(tour.tourTitle);
+                      if (!hyphenTag) return tour.tourTitle;
+                      return (
+                        <>
+                          {hyphenTag[1]}{' '}
+                          <span className="inline-block whitespace-nowrap">{hyphenTag[2]}</span>
+                        </>
+                      );
+                    })()}
                   </h2>
                   {tour.coArtists && tour.coArtists.length > 0 && (
                     <p className="mt-1 text-xs font-medium text-[#57534E]">

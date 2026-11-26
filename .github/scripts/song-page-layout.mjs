@@ -973,8 +973,9 @@ async function verifyMyNoteModal(browser) {
   assert.ok(await menuBtn.locator('svg').isVisible(), '320pxでメニューアイコンが非表示になっています');
 
   await page.goto(`${root}songs/pretender/`, { waitUntil: 'load' });
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxで楽曲ページヘッダー（マイノート＋メニュー）が横にはみ出しています');
   const songMyNoteBtn = page.getByRole('button', { name: 'マイノート', exact: true });
+  await songMyNoteBtn.waitFor({ state: 'visible' });
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), '320pxで楽曲ページヘッダー（マイノート＋メニュー）が横にはみ出しています');
   assert.ok(await songMyNoteBtn.locator('svg').isVisible(), '320pxの楽曲ページでマイノートアイコンが非表示になっています');
   assert.ok(await page.locator('.song-site-menu > summary svg').isVisible(), '320pxの楽曲ページでメニューアイコンが非表示になっています');
   await songMyNoteBtn.click();

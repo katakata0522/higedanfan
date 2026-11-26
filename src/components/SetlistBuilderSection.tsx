@@ -1183,7 +1183,7 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
               </div>
             </details>
 
-            {onExportRecords && onImportRecords ? (
+            {onExportRecords && onImportRecords && (
               <details className="rounded-xl border border-[#E6E1D6] bg-white p-3.5 text-xs text-[#57534E]">
                 <summary className="cursor-pointer font-semibold text-[#253331]">
                   記録の書き出し・読み込み（別端末への引き継ぎ）
@@ -1221,18 +1221,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                   </a>
                 </div>
               </details>
-            ) : (
-              <p className="text-center text-[11px] text-[#68625C]">
-                ※ 作成したセットリストや記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
-                <a
-                  href={tabPath('privacy', import.meta.env.BASE_URL)}
-                  onClick={handlePrivacyClick}
-                  className="underline underline-offset-2 hover:text-[#1C1917]"
-                >
-                  プライバシーポリシー
-                </a>{' '}
-                から）。
-              </p>
             )}
           </div>
         ) : (
@@ -1248,17 +1236,6 @@ export const SetlistBuilderSection: React.FC<SetlistBuilderSectionProps> = ({
                 resetEpoch={resetEpoch}
               />
             </React.Suspense>
-            <p className="mt-4 text-center text-[11px] text-[#68625C]">
-              ※ 参戦・視聴の記録はお使いのブラウザ内に保存されます（バックアップ・初期化は{' '}
-              <a
-                href={tabPath('privacy', import.meta.env.BASE_URL)}
-                onClick={handlePrivacyClick}
-                className="underline underline-offset-2 hover:text-[#1C1917]"
-              >
-                プライバシーポリシー
-              </a>{' '}
-              から）。
-            </p>
           </>
         )}
       </div>

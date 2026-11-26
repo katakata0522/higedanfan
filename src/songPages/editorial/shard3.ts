@@ -140,7 +140,7 @@ export const editorialShard3: Record<string, SongEditorial> = {
     paragraphs: [
       "相手の過去は変えられないと分かっていても、気になってしまう。大人になっても消えない独占欲や幼さを、「LADY」は静かなピアノバラードの中に置く。",
       "藤原聡は、記憶を紙にたとえ、二人で新しい記憶を上書きする表現を思いついたと話している。曲作りでは、幅広い人に言葉が届くよう、難しい表現を減らしたという。抑えた伴奏と、内に熱を持った歌の対比も本人が意識したところ。",
-      "2017年の配信EP『LADY』で、バンドが初めてリード曲にバラードを選んだ。アイスリンクで撮影されたMVはメンバーの演奏場面で構成されており、歌の感情にじっくり向き合える。",
+      "2017年の配信EP『LADY』は、バンドにとって初のバラード・リード曲。アイスリンクで撮影されたMVはメンバーの演奏場面で構成されており、歌の感情にじっくり向き合える。",
     ],
     sources: [{"label":"DI:GA ONLINE『LADY』インタビュー","purpose":"記憶の比喩と歌唱・アレンジの意図","url":"https://diskgarage.com/digaonline/interview/51424/2"}, { label: 'Fanplus Music「LADY」MV公開記事', purpose: '初のバラードのリード曲と藤原聡のコメント', url: 'https://music.fanplus.co.jp/news/20170910656f47bce' }],
   },

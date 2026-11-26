@@ -14,7 +14,10 @@ test('tour search accepts the displayed date and common date formats', () => {
 test('tour search preserves title, venue, empty and no-match searches', () => {
   const search = createTourArchiveSearch(TOUR_ARCHIVES);
   assert.equal(search('  shocking nuts  ')[0]?.events.length, 21);
-  assert.equal(search('武道館').flatMap(result => result.events).length, 7);
+  const budokanMatches = search('武道館').flatMap(result => result.events);
+  // 7 concerts held at 日本武道館 plus 2 events mentioning 武道館 in episode notes
+  assert.equal(budokanMatches.filter(event => event.venue.includes('武道館')).length, 7);
+  assert.equal(budokanMatches.length, 9);
   assert.equal(search('').length, TOUR_ARCHIVES.length);
   assert.deepEqual(search('該当しない会場名'), []);
 });
@@ -40,4 +43,20 @@ test('tour search finds concerts by performed song title and kana reading', () =
   const fukuokaMatch = byHiragana.find(r => r.events.some(e => e.id === 'live-2026-one-man-fukuoka-1'));
   assert.ok(fukuokaMatch);
   assert.deepEqual(fukuokaMatch.matchedSongsByEventId.get('live-2026-one-man-fukuoka-1'), ['エルダーフラワー']);
+});
+
+test('tour search indexes setlist episode notes and co-artist tracks', () => {
+  const search = createTourArchiveSearch(TOUR_ARCHIVES);
+  const byEpisodeNote = search('360度ステージ');
+  assert.ok(byEpisodeNote.some(r => r.events.some(e => e.id === 'live-2024-uverworld-vs-budokan')));
+
+  const byCoArtistTrack = search('ナノ・セカンド');
+  const budokanMatch = byCoArtistTrack.find(r => r.events.some(e => e.id === 'live-2024-uverworld-vs-budokan'));
+  assert.ok(budokanMatch);
+  assert.deepEqual(budokanMatch.matchedSongsByEventId.get('live-2024-uverworld-vs-budokan'), ['ナノ・セカンド（UVERworld）']);
+
+  const byTrackNote = search('弾き語りワンコーラス');
+  const osakaMatch = byTrackNote.find(r => r.events.some(e => e.id === 'live-2020-music-freaks-osaka'));
+  assert.ok(osakaMatch);
+  assert.ok(osakaMatch.matchedSongsByEventId.get('live-2020-music-freaks-osaka')?.includes('ビンテージ（sumika）'));
 });

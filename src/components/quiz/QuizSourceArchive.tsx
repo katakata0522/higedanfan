@@ -47,6 +47,19 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
   const searchInputRef = useRef<HTMLInputElement>(null);
   const songsById = useMemo(() => new Map(songs.map(song => [song.id, song])), [songs]);
   const search = useMemo(() => prepareReferenceSearch(query, songs), [query, songs]);
+  const kindCounts = useMemo(() => {
+    const counts = new Map<ReferenceKind | 'all', number>();
+    let availableAll = 0;
+    for (const article of REFERENCE_ARTICLES) {
+      if (article.unavailable) continue;
+      if ((publisher === 'all' || article.publisher === publisher) && search.matches(article)) {
+        availableAll += 1;
+        counts.set(article.kind, (counts.get(article.kind) ?? 0) + 1);
+      }
+    }
+    counts.set('all', availableAll);
+    return counts;
+  }, [publisher, search]);
   const articles = useMemo(() => visible ? sortReferenceArticles(REFERENCE_ARTICLES.filter(article =>
     (publisher === 'all' || article.publisher === publisher) &&
     (kind === 'all' || article.kind === kind) &&
@@ -54,6 +67,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
   ), order) : [], [visible, publisher, kind, search, order]);
   const available = articles.filter(article => !article.unavailable);
   const unavailable = articles.filter(article => article.unavailable);
+  const hasActiveFilters = publisher !== 'all' || kind !== 'all' || query.trim() !== '';
 
   function resetFilters() {
     setPublisher('all');
@@ -83,13 +97,25 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
     );
 
     return (
-      <article key={article.url} className="min-w-0 border-b border-[#E6E1D6] py-5 first:pt-1">
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#57534E]">
+      <article key={article.url} className="min-w-0 border-b border-[#E6E1D6] py-4 sm:py-5 first:pt-1">
+        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs text-[#57534E]">
           <span className="font-bold text-[#C83E2B]">{article.publisher}</span>
-          <span>{referenceKindLabel(article.kind)}</span>
-          {article.date ? <time dateTime={article.date}>{referenceDateLabel(article)}</time> : <span>公開日未確認</span>}
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold ${
+            article.kind === 'sns'
+              ? 'bg-[#eef6fb] text-[#1d5a7a]'
+              : article.kind === 'video'
+                ? 'bg-[#fef3f0] text-[#9b3021]'
+                : article.kind === 'interview'
+                  ? 'bg-[#eef9f0] text-[#265c34]'
+                  : 'bg-[#f4efe4] text-[#45413C]'
+          }`}>{referenceKindLabel(article.kind)}</span>
+          {article.date ? (
+            <time dateTime={article.date}>{referenceDateLabel(article)}</time>
+          ) : article.kind === 'sns' ? (
+            <span>公式アカウント</span>
+          ) : null}
         </div>
-        {article.unavailable && <p className="mt-2 text-xs text-[#68625C]">参考サイト名のみ記録が残っている資料です（記事ページを確認できないためサイト名で表示しています）。</p>}
+        {article.unavailable && <p className="mt-2 text-xs text-[#68625C]">以前の参照元に媒体名が残っている資料です（リンク先を開けないため媒体名を表示しています）。</p>}
         <a href={article.url} target="_blank" rel="noopener noreferrer"
           className="group mt-2 block rounded-sm focus-visible:outline-2 focus-visible:outline-offset-4">
           <h2 className="text-base sm:text-lg font-bold leading-relaxed text-[#1C1917] group-hover:text-[#C83E2B] [overflow-wrap:anywhere]">
@@ -145,19 +171,43 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
             </button>
           )}
         </div>
-        <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,10rem)]">
-          <div className="min-w-0">
-            <label htmlFor="quiz-kind-filter" className="mb-1 block text-xs font-bold text-[#57534E]">種別</label>
-            <select id="quiz-kind-filter" value={kind} onChange={event => { setKind(event.target.value as ReferenceKind | 'all'); setVisibleCount(PAGE_SIZE); }}
-              className="min-h-11 w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base text-[#1C1917] sm:text-sm">
-              <option value="all">すべての種別</option>
-              {REFERENCE_KINDS.map(itemKind => <option key={itemKind} value={itemKind}>{referenceKindLabel(itemKind)}</option>)}
-            </select>
-          </div>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="資料の種類で絞り込む">
+          <button
+            type="button"
+            aria-pressed={kind === 'all'}
+            onClick={() => { setKind('all'); setVisibleCount(PAGE_SIZE); }}
+            className={`min-h-[32px] whitespace-nowrap rounded-full border px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+              kind === 'all'
+                ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
+                : 'border-[#dfd7c7] bg-white text-[#45413C] hover:border-[#253331]'
+            }`}
+          >
+            すべて ({kindCounts.get('all') ?? 0})
+          </button>
+          {REFERENCE_KINDS.map(itemKind => {
+            const active = kind === itemKind;
+            return (
+              <button
+                key={itemKind}
+                type="button"
+                aria-pressed={active}
+                onClick={() => { setKind(active ? 'all' : itemKind); setVisibleCount(PAGE_SIZE); }}
+                className={`min-h-[32px] whitespace-nowrap rounded-full border px-3 py-1 text-xs font-bold transition-colors cursor-pointer ${
+                  active
+                    ? 'border-[#253331] bg-[#253331] text-[#faf6eb]'
+                    : 'border-[#dfd7c7] bg-white text-[#45413C] hover:border-[#253331]'
+                }`}
+              >
+                {referenceKindLabel(itemKind)} ({kindCounts.get(itemKind) ?? 0})
+              </button>
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-[minmax(0,1fr)_7.5rem] gap-2 sm:grid-cols-[minmax(0,1fr)_10rem] sm:gap-3">
           <div className="min-w-0">
             <label htmlFor="quiz-publisher-filter" className="mb-1 block text-xs font-bold text-[#57534E]">媒体</label>
             <select id="quiz-publisher-filter" value={publisher} onChange={event => { setPublisher(event.target.value); setVisibleCount(PAGE_SIZE); }}
-              className="min-h-11 w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base text-[#1C1917] sm:text-sm">
+              className="min-h-10 w-full min-w-0 rounded-lg border border-[#D5CEC2] bg-white px-2.5 sm:px-3 py-1.5 text-base text-[#1C1917] sm:text-sm">
               <option value="all">すべての媒体</option>
               {PUBLISHERS.map(name => <option key={name} value={name}>{name}</option>)}
             </select>
@@ -165,12 +215,23 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           <div className="min-w-0">
             <label htmlFor="reference-date-order" className="mb-1 block text-xs font-bold text-[#57534E]">日付順</label>
             <select id="reference-date-order" value={order} onChange={event => { setOrder(event.target.value as typeof order); setVisibleCount(PAGE_SIZE); }}
-              className="min-h-11 w-full rounded-lg border border-[#D5CEC2] bg-white px-3 py-2 text-base text-[#1C1917] sm:text-sm">
+              className="min-h-10 w-full rounded-lg border border-[#D5CEC2] bg-white px-2.5 sm:px-3 py-1.5 text-base text-[#1C1917] sm:text-sm">
               <option value="newest">新しい順</option><option value="oldest">古い順</option>
             </select>
           </div>
         </div>
-        <p role="status" className="text-xs text-[#57534E]">{available.length}件の記事・SNS・映像資料</p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p role="status" className="text-xs text-[#57534E]">{available.length}件の記事・SNS・映像資料</p>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="min-h-[30px] rounded-full border border-[#dfd7c7] bg-white px-3 py-0.5 text-xs font-bold text-[#C83E2B] hover:border-[#C83E2B] cursor-pointer"
+            >
+              条件をリセット
+            </button>
+          )}
+        </div>
       </div>
 
       {articles.length === 0 ? <div className="py-8 text-center">
@@ -188,7 +249,7 @@ export function QuizSourceArchive({visible, songs, onSelectSong, resetEpoch = ''
           {unavailable.map(renderArticle)}
         </details>}
       </>}
-      <p className="text-xs leading-relaxed text-[#68625C]">日付は掲載元で確認できたものです。更新日・放送日・発行日・発売日は区別して表示し、確認できないものは「公開日未確認」としています。</p>
+      <p className="text-xs leading-relaxed text-[#68625C]">公開日・更新日・放送日・発売日などは、各掲載元で確認できた日付を表示しています。</p>
     </div>
   );
 }

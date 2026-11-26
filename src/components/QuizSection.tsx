@@ -146,7 +146,7 @@ export function QuizSection({
             id="quiz-heading"
             className="font-note-serif text-xl sm:text-2xl font-bold tracking-[.04em] text-[#253331]"
           >
-            {viewTab === 'archive' ? '参考記事・インタビュー・SNS' : 'Official髭男dism検定'}
+            {viewTab === 'archive' ? <>参考記事・<wbr />インタビュー・SNS</> : 'Official髭男dism検定'}
           </h1>
           {viewTab === 'quiz' && questionSet && questionSet !== 'current' && quizStage !== 'select' && (
             <p className="mt-1.5 text-xs text-[#57534E]">
@@ -188,18 +188,26 @@ export function QuizSection({
             </button>}
           </>
         )}
-        {quizStage === 'finished' && (
-          <QuizResultCard
-            visible={viewTab === 'quiz'}
-            activeCourseLabel={getCourseLabel(difficulty, scope)}
-            quizSummary={calculateQuizResult(score, questions)}
-            questions={questions}
-            questionOutcomes={session.outcomes}
-            onRestart={() => startCourse(difficulty, scope, questionSet)}
-            onChooseCourse={chooseCourse}
-            onOpenArchive={onOpenArchive}
-          />
-        )}
+        {quizStage === 'finished' && (() => {
+          const maxVol = difficulty === 'all' ? 6 : 2;
+          const volMatch = /^vol([1-6])$/.exec(scope);
+          const currentVol = volMatch ? Number(volMatch[1]) : null;
+          const nextScope = currentVol && currentVol < maxVol ? (`vol${currentVol + 1}` as QuestionScopeFilter) : null;
+          return (
+            <QuizResultCard
+              visible={viewTab === 'quiz'}
+              activeCourseLabel={getCourseLabel(difficulty, scope)}
+              quizSummary={calculateQuizResult(score, questions)}
+              questions={questions}
+              questionOutcomes={session.outcomes}
+              nextVolumeLabel={nextScope ? `次のセット（Vol.${currentVol! + 1}）へ進む` : undefined}
+              onNextVolume={nextScope ? () => startCourse(difficulty, nextScope, 'current') : undefined}
+              onRestart={() => startCourse(difficulty, scope, questionSet)}
+              onChooseCourse={chooseCourse}
+              onOpenArchive={onOpenArchive}
+            />
+          );
+        })()}
         {hasOpenedArchive && (
           <Suspense fallback={viewTab === 'archive' ? <div role="status" className="py-8 text-xs text-[#57534E]">参考資料を読み込み中…</div> : null}>
             <QuizSourceArchive visible={viewTab === 'archive'} songs={songs} onSelectSong={onSelectSong} resetEpoch={resetEpoch} />

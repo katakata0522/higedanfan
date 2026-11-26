@@ -1,7 +1,9 @@
-import { RotateCcw, Award, Newspaper, ChevronDown } from 'lucide-react';
+import { ArrowRight, RotateCcw, Award, Newspaper, ChevronDown } from 'lucide-react';
 import { useLayoutEffect, useRef } from 'react';
 import type { QuizQuestion } from '../../data/higedanTypes';
+import { songPagePath } from '../../songPages/publishedSongPageIds';
 import { formatOrderingSequence, type QuizResultSummary } from '../../utils/quizScoring';
+import { saveSongReturnTab } from '../../utils/songReturnTab';
 import type { QuizQuestionOutcome } from './quizSession';
 
 interface Props {
@@ -10,13 +12,24 @@ interface Props {
   quizSummary: QuizResultSummary;
   questions?: readonly QuizQuestion[];
   questionOutcomes?: readonly QuizQuestionOutcome[];
+  nextVolumeLabel?: string;
+  onNextVolume?: () => void;
   onRestart: () => void;
   onChooseCourse: () => void;
   onOpenArchive?: () => void;
 }
 
 export function QuizResultCard({
-  visible, activeCourseLabel, quizSummary, questions, questionOutcomes, onRestart, onChooseCourse, onOpenArchive,
+  visible,
+  activeCourseLabel,
+  quizSummary,
+  questions,
+  questionOutcomes,
+  nextVolumeLabel,
+  onNextVolume,
+  onRestart,
+  onChooseCourse,
+  onOpenArchive,
 }: Props) {
   const heading = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
@@ -51,10 +64,25 @@ export function QuizResultCard({
       </p>
 
       <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+        {nextVolumeLabel && onNextVolume && (
+          <button
+            type="button"
+            onClick={onNextVolume}
+            className="inline-flex items-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#A93020] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          >
+            <span>{nextVolumeLabel}</span>
+            <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </button>
+        )}
+
         <button
           type="button"
           onClick={onRestart}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#C83E2B] px-5 py-2.5 text-xs font-bold text-white hover:bg-[#A93020] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className={`inline-flex items-center gap-2 rounded-lg px-5 py-2.5 text-xs font-bold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+            nextVolumeLabel && onNextVolume
+              ? 'border border-[#D5CEC2] bg-white text-[#1C1917] hover:border-[#1C1917] hover:bg-[#F2EFE9]'
+              : 'bg-[#C83E2B] text-white hover:bg-[#A93020]'
+          }`}
         >
           <RotateCcw className="h-4 w-4" />
           同じコースにもう一度挑戦する
@@ -81,7 +109,7 @@ export function QuizResultCard({
       {questions && questions.length > 0 && (
         <details className="group mt-4 rounded-xl border border-[#E6E1D6] bg-[#FBF9F5] text-left">
           <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-xs sm:text-sm font-bold text-[#253331] [&::-webkit-details-marker]:hidden">
-            <span>今回の{questions.length}問を振り返る（正誤と答え）</span>
+            <span>今回の{questions.length}問を振り返る（正誤と解説）</span>
             <ChevronDown aria-hidden="true" className="h-4 w-4 shrink-0 text-[#57534E] transition-transform group-open:rotate-180" />
           </summary>
           <ol className="divide-y divide-[#E6E1D6] border-t border-[#E6E1D6] px-4 py-2 text-xs sm:text-sm">
@@ -90,8 +118,9 @@ export function QuizResultCard({
               const answerText = q.questionType === 'ordering' && q.correctOrder
                 ? formatOrderingSequence(q.options, q.correctOrder)
                 : (q.options[q.correctIndex] ?? '');
+              const songPath = q.relatedSongId ? songPagePath(q.relatedSongId) : null;
               return (
-                <li key={q.id} className="space-y-1 py-3">
+                <li key={q.id} className="space-y-1.5 py-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-mono-num text-[11px] font-bold text-[#57534E]">
                       問{idx + 1}
@@ -109,7 +138,19 @@ export function QuizResultCard({
                     )}
                   </div>
                   <p className="font-bold leading-relaxed text-[#1C1917]">{q.prompt}</p>
-                  <p className="text-xs leading-relaxed text-[#253331]">答え：{answerText}</p>
+                  <p className="text-xs font-bold leading-relaxed text-[#253331]">答え：{answerText}</p>
+                  {q.explanation && (
+                    <p className="text-xs leading-relaxed text-[#57534E]">{q.explanation}</p>
+                  )}
+                  {songPath && (
+                    <a
+                      href={`${import.meta.env.BASE_URL}${songPath}`}
+                      onClick={() => saveSongReturnTab('quiz')}
+                      className="inline-flex items-center gap-1 pt-0.5 text-[11px] font-bold text-[#1E3A5F] underline underline-offset-2 hover:text-[#C83E2B]"
+                    >
+                      この曲の解説を見る →
+                    </a>
+                  )}
                 </li>
               );
             })}

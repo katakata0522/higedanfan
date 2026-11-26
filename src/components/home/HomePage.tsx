@@ -107,8 +107,8 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
             <span className="inline-block whitespace-nowrap">いつもの日常に</span>
             <span className="inline-block whitespace-nowrap">ひとかけのヒゲダンを</span>
           </h1>
-          <p className="mt-3 mx-auto max-w-3xl text-[14.5px] sm:text-[17px] font-bold leading-[1.75] text-[#57534E]">
-            溢れる髭男への想いをあなたにも受け取ってほしくて<span className="inline-block whitespace-nowrap">形にしました。</span><span className="inline-block whitespace-nowrap">Have Fun!</span>
+          <p className="mt-3 mx-auto max-w-3xl text-[14.5px] sm:text-[17px] font-bold leading-[1.75] text-[#57534E] [word-break:auto-phrase] [text-wrap:pretty]">
+            <span className="inline-block whitespace-nowrap">溢れる髭男への想いを</span><wbr /><span className="inline-block whitespace-nowrap">あなたにも受け取ってほしくて</span><wbr /><span className="inline-block whitespace-nowrap">形にしました。</span><span className="inline-block whitespace-nowrap">Have Fun!</span>
           </p>
         </header>
 
@@ -261,7 +261,7 @@ export function HomePage({ songs, onSelectTab }: HomePageProps) {
                       （{member.nickname}）
                     </span>
                   </div>
-                  <p className="mt-3 font-note-serif text-[13.5px] font-bold leading-snug text-[#253331]">
+                  <p className="mt-3 font-note-serif text-[13.5px] font-bold leading-snug text-[#253331] [word-break:auto-phrase] [text-wrap:pretty]">
                     {member.headline}
                   </p>
                   <p className="mt-1.5 text-[13px] leading-relaxed text-[#57534E]">

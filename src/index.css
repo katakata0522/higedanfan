@@ -166,6 +166,9 @@
   font-size: 13px;
   color: #57534E;
   line-height: 26px;
+  word-break: auto-phrase;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 .fusen-motif {
   position: absolute;
@@ -242,4 +245,10 @@
     transform: none !important;
     transition: none !important;
   }
+}
+
+/* Embedded cross-origin iframes can paint above top-layer modals in some WebViews */
+html:has(dialog:modal) main iframe,
+html:has(dialog[open]) main iframe {
+  display: none;
 }

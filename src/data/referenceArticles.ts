@@ -2436,7 +2436,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/85289/2",
     "kind": "review",
-    "date": null,
+    "date": "2020-02-25",
     "dateKind": "published",
     "relatedSongIds": [
       "yesterday-song",
@@ -2465,7 +2465,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/92604/2",
     "kind": "review",
-    "date": null,
+    "date": "2020-09-27",
     "dateKind": "published",
     "relatedSongIds": [
       "hello-song",
@@ -2480,7 +2480,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/99133/",
     "kind": "review",
-    "date": null,
+    "date": "2021-04-19",
     "dateKind": "published",
     "relatedSongIds": [
       "zero-no-mamade",
@@ -2509,7 +2509,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/103446/2",
     "kind": "news",
-    "date": null,
+    "date": "2021-08-30",
     "dateKind": "published",
     "relatedSongIds": [
       "editorial-song",
@@ -2523,7 +2523,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "THE FIRST TIMES",
     "url": "https://www.thefirsttimes.jp/news/0000325242/",
     "kind": "news",
-    "date": null,
+    "date": "2023-09-12",
     "dateKind": "published",
     "relatedSongIds": [
       "editorial-song",
@@ -2724,7 +2724,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/139995/2",
     "kind": "review",
-    "date": null,
+    "date": "2024-07-26",
     "dateKind": "published",
     "relatedSongIds": [
       "mixed-nuts",
@@ -2739,7 +2739,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Official髭男dism／ポニーキャニオン",
     "url": "https://irorirecords.com/news-entry/2229",
     "kind": "official",
-    "date": null,
+    "date": "2024-12-16",
     "dateKind": "published",
     "relatedSongIds": [
       "same-blue"
@@ -2752,7 +2752,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/156427/2",
     "kind": "news",
-    "date": null,
+    "date": "2025-12-10",
     "dateKind": "published",
     "relatedSongIds": [
       "same-blue",
@@ -2781,7 +2781,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/149125/2",
     "kind": "review",
-    "date": null,
+    "date": "2025-05-02",
     "dateKind": "published",
     "relatedSongIds": [
       "fifty-percent",
@@ -2797,7 +2797,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "THE FIRST TIMES",
     "url": "https://www.thefirsttimes.jp/report/0000631289/",
     "kind": "review",
-    "date": null,
+    "date": "2025-06-09",
     "dateKind": "published",
     "relatedSongIds": [
       "pretender",
@@ -2826,7 +2826,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/154596/2",
     "kind": "review",
-    "date": null,
+    "date": "2025-10-14",
     "dateKind": "published",
     "relatedSongIds": [
       "get-back-to-jinsei",
@@ -2840,7 +2840,7 @@ export const REFERENCE_ARTICLES: readonly ReferenceArticle[] = [
     "publisher": "Billboard JAPAN",
     "url": "https://www.billboard-japan.com/d_news/detail/156856/2",
     "kind": "news",
-    "date": null,
+    "date": "2025-12-24",
     "dateKind": "published",
     "relatedSongIds": [
       "white-noise",

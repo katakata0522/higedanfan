@@ -109,7 +109,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
             <button
               type="button"
               onClick={editing ? onCancelEdit : onBack}
-              className="inline-flex items-center gap-1 rounded-md border border-[#D5CEC2] bg-[#FBF9F5] px-2.5 py-1 text-xs font-bold text-[#57534E] hover:border-[#1C1917] hover:text-[#1C1917] transition-colors cursor-pointer"
+              className="inline-flex min-h-[36px] items-center gap-1 rounded-md border border-[#D5CEC2] bg-[#FBF9F5] px-3 py-1.5 text-xs font-bold text-[#57534E] hover:border-[#1C1917] hover:text-[#1C1917] transition-colors cursor-pointer"
             >
               <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
               {editing ? '結果に戻る' : '戻る'}
@@ -127,7 +127,7 @@ export function MoodQuestionnaire({ session, onChoose, onBack, onCancelEdit }: M
       </div>
 
       <div key={step} className="mood-question-enter">
-      <h2 ref={headingRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-[#1C1917] focus:outline-none">
+      <h2 ref={headingRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-[#1C1917] focus:outline-none [word-break:auto-phrase] [text-wrap:pretty]">
         {question.title}
       </h2>
       <p className="mt-1 text-xs sm:text-sm text-[#57534E]">{question.description}</p>
