@@ -7,6 +7,7 @@ import {
   type PublicCornerMeta,
 } from '../src/config/siteFeatures';
 import { catalogEntries } from '../src/data/catalogEntries';
+import { songAnnouncements } from '../src/data/songAnnouncements';
 import { REFERENCE_ARTICLES } from '../src/data/referenceArticles';
 import { SACRED_SPOTS, TOUR_ARCHIVES } from '../src/data/higedanData';
 import { isTempoUnderReview } from '../src/data/tempoReviewStatus';
@@ -45,7 +46,12 @@ function buildCornerBody(
         return `<li><a href="/higedanfan/songs/${escapeHtml(entry.id)}/">${escapeHtml(fact.recording)}</a>（${escapeHtml(formatAlbumDisplayName(fact.album))}・${formatDuration(fact.seconds)}・${tempoText}・地声 ${escapeHtml(fact.low)}〜${escapeHtml(fact.chest)}・裏声最高 ${escapeHtml(fact.falsetto ?? '—')}・配信 ${escapeHtml(fact.release)}）</li>`;
       })
       .join('\n');
-    detailHtml = `<section aria-label="掲載曲データ一覧"><ol>\n${items}\n</ol></section>`;
+    const announcements = songAnnouncements.map(({ title, facts }) => {
+      const details = facts.length > 0 ? ' ' + escapeHtml(facts.join('・')) : '';
+      return `<li><strong>${escapeHtml(title)}</strong>${details}</li>`;
+    }).join('\n');
+    const announcementHtml = announcements ? `<ul aria-label="配信予定の楽曲">\n${announcements}\n</ul>\n` : '';
+    detailHtml = `${announcementHtml}<section aria-label="掲載曲データ一覧"><ol>\n${items}\n</ol></section>`;
   } else if (corner.id === 'tour_archive') {
     const totalEvents = TOUR_ARCHIVES.reduce((sum, t) => sum + t.events.length, 0);
     const items = TOUR_ARCHIVES

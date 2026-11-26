@@ -1,17 +1,32 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { HIGEDAN_SONGS } from '../data/higedanData';
+import { songAnnouncements } from '../data/songAnnouncements';
 import { songReadings } from '../data/songReadings';
 import { songLatinReadings } from '../data/songLatinReadings';
 import { songTitleAliases } from '../data/songLatinReadings';
 import { filterAndSortDiscography, type DiscographyFilter } from './discography';
-import { matchedSongContexts } from './songSearch';
+import { songPagePath } from '../songPages/publishedSongPageIds';
+import { findSongAnnouncements, matchedSongContexts } from './songSearch';
 
 function search(searchQuery: string, filters: Partial<DiscographyFilter> = {}) {
   return filterAndSortDiscography(HIGEDAN_SONGS, {
     era: 'all', sound: 'all', sortBy: 'guide_order', searchQuery, ...filters,
   });
 }
+
+test('配信予定曲は曲名・別表記・確認済みの情報で探せて、曲別ページを持たない', () => {
+  for (const song of songAnnouncements) {
+    assert.equal(songPagePath(song.id), null);
+    assert.ok(!HIGEDAN_SONGS.some(entry => entry.id === song.id));
+    assert.equal(new URL(song.sourceUrl).protocol, 'https:');
+    for (const query of [song.title, ...song.aliases, ...song.facts]) {
+      assert.ok(findSongAnnouncements(query, song.era).includes(song), query);
+    }
+  }
+  assert.deepEqual(findSongAnnouncements('エバーグリーン', 'traveler'), []);
+  assert.deepEqual(findSongAnnouncements('Evergreen ポケモン', 'all').map(song => song.id), ['evergreen']);
+});
 
 test('phone keyboard variants and known title readings find their song first', () => {
   for (const [query, title] of [

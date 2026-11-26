@@ -1,4 +1,4 @@
-import { albumForSearch, matchedSongContexts } from '../utils/songSearch';
+import { albumForSearch, findSongAnnouncements, matchedSongContexts } from '../utils/songSearch';
 import { formatAlbumDisplayName, partialEpCoverage } from '../utils/songCatalog';
 import { EP_TRACK_ORDER_MAP, filterAndSortDiscography } from '../utils/discography';
 import { formatDuration, formatSongBpm } from '../utils/format';
@@ -100,6 +100,9 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
       : { ...DEFAULT_GUIDE_FILTERS, era: initialEraFilter }
   );
   const { era: eraFilter, album: albumFilter, sound: soundFilter, searchQuery } = filters;
+  const announcements = albumFilter === 'all' && soundFilter === 'all' && (activeSubView !== 'vocal_range' || !voiceHigh)
+    ? findSongAnnouncements(searchQuery, eraFilter)
+    : [];
   const [cardPage, setCardPage] = useState<number>(() =>
     restored ? Math.max(1, Math.ceil(restored.visibleCount / CARDS_PER_PAGE)) : 1
   );
@@ -195,7 +198,7 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
     });
   };
 
-  const emptyResults = (
+  const emptyResults = announcements.length > 0 ? null : (
     <div className="mt-4 notebook-paper rounded-xl p-6 text-center">
       <p className="font-note-serif text-sm font-bold text-[#253331]">条件に一致する楽曲が見つかりませんでした。</p>
       {globalMatchCount > 0 ? (
@@ -276,12 +279,26 @@ export const DiscographySection: React.FC<DiscographySectionProps> = ({
           onChange={setFilters}
           resultCount={filteredSongs.length}
           shownCount={displayedSongs.length}
+          announcementCount={announcements.length}
           onReset={() => {
             setFilters(DEFAULT_GUIDE_FILTERS);
             setVoiceHigh('');
             setKeyShift(0);
           }}
         />
+
+        {announcements.length > 0 ? (
+          <ul aria-label="配信予定の楽曲" className="mt-3 notebook-paper divide-y divide-[#e5dccb] rounded-lg px-3 text-sm">
+            {announcements.map(song => (
+              <li key={song.id} className="py-2.5">
+                <strong className="text-[#253331]">{song.title}</strong>
+                {song.facts.length > 0 ? (
+                  <span className="block mt-0.5 text-[#57534E]">{song.facts.join('・')}</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         {epCoverage && (
           <p className="mt-3 notebook-paper rounded-lg p-3 text-sm text-[#57534E]">
