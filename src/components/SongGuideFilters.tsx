@@ -58,6 +58,7 @@ interface Props {
   onChange: (values: SongGuideFilterValues) => void;
   resultCount: number;
   shownCount: number;
+  announcementCount: number;
   onReset?: () => void;
 }
 
@@ -65,11 +66,13 @@ const chipBaseClass = 'inline-flex min-h-[34px] items-center rounded-full px-3 p
 const chipActiveClass = `${chipBaseClass} bg-[#253331] text-[#faf6eb]`;
 const chipIdleClass = `${chipBaseClass} border border-[#dfd7c7] bg-[#fffdf8] text-[#45413C] hover:border-[#253331] hover:text-[#253331]`;
 
-export function SongGuideFilters({ values, onChange, resultCount, shownCount, onReset }: Props) {
+export function SongGuideFilters({ values, onChange, resultCount, shownCount, announcementCount, onReset }: Props) {
   const [expanded, setExpanded] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const resultStatus = useRef<HTMLSpanElement>(null);
   const { era, album, sound, sortBy, searchQuery } = values;
+  const matchingCount = resultCount + announcementCount;
+  const visibleCount = shownCount + announcementCount;
   const albumLabel = album !== 'all' ? (ALBUM_FILTERS.find(option => option.id === album)?.label ?? album) : null;
   const soundLabel = sound !== 'all' ? (SOUND_FILTERS.find(option => option.id === sound)?.label ?? null) : null;
   const sortLabel = values.tableSort
@@ -240,7 +243,8 @@ export function SongGuideFilters({ values, onChange, resultCount, shownCount, on
         <div className="flex flex-wrap items-center gap-1.5">
           <span ref={resultStatus} id="song-guide-result-count" role="status" aria-atomic="true" tabIndex={-1}
             className="scroll-mt-20 font-bold text-[#253331]">
-            該当：{resultCount} 曲{shownCount < resultCount && `（${shownCount}曲を表示中）`}
+            該当：{matchingCount} 曲{visibleCount < matchingCount ? `（${visibleCount}曲を表示中）` : null}
+            {announcementCount > 0 ? `・うち配信予定 ${announcementCount} 曲` : null}
           </span>
           {activeChips.map(chip => (
             <button

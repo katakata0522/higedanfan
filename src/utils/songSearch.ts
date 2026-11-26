@@ -1,4 +1,6 @@
 import type { SongItem } from '../data/higedanData';
+import type { EraTag } from '../data/higedanTypes';
+import { songAnnouncements } from '../data/songAnnouncements';
 import { songReadings } from '../data/songReadings';
 import { songLatinReadings, songTitleAliases } from '../data/songLatinReadings';
 import { normalizeJaSearchKey, normalizeJaText } from './jaTextNormalize';
@@ -8,6 +10,16 @@ import { ALBUM_CHRONOLOGY_RANK, songAlbums, songwriterInfo } from './songCatalog
 // 曲名の空白・句読点の有無によらず検索する。
 function keywords(query: string): string[] {
   return normalizeJaText(sanitizeUserText(query, 60)).split(/\s+/).map(normalizeJaSearchKey).filter(Boolean);
+}
+
+export function findSongAnnouncements(query: string, era: EraTag | 'all') {
+  const words = keywords(query);
+  if (query.trim() && !words.length) return [];
+  return songAnnouncements.filter(song => {
+    if (era !== 'all' && era !== song.era) return false;
+    const fields = [song.title, ...song.aliases, ...song.facts].map(normalizeJaSearchKey);
+    return words.every(word => fields.some(field => field.includes(word)));
+  });
 }
 
 function titleKeys(song: SongItem): string[] {
