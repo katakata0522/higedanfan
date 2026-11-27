@@ -1,10 +1,42 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { browserScope } from './announcement-ci-scope.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { browserScope, selectScope } from './announcement-ci-scope.mjs';
 
 const change = (path, header = ':100644 100644 abc def M') => header + '\0' + path + '\0';
 const data = change('src/data/songAnnouncementRecords.json');
 const pages = change('discography/index.html') + change('vocal-range/index.html');
+
+test('mainの限定検証は公開済みの直前版からの変更に限る', async t => {
+  const cwd = mkdtempSync(join(tmpdir(), 'fan-browser-scope-'));
+  t.after(() => rmSync(cwd, { recursive: true, force: true }));
+  const git = (...args) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: 'pipe' }).trim();
+  git('init');
+  git('config', 'user.name', 'CI');
+  git('config', 'user.email', 'ci@example.invalid');
+  mkdirSync(join(cwd, 'src/data'), { recursive: true });
+  const path = join(cwd, 'src/data/songAnnouncementRecords.json');
+  const commit = value => {
+    writeFileSync(path, JSON.stringify(value));
+    git('add', '.');
+    git('commit', '-m', 'fixture');
+  };
+  commit([]);
+  const base = git('rev-parse', 'HEAD');
+  commit(['new']);
+  const env = { GITHUB_EVENT_NAME: 'push', GITHUB_REF: 'refs/heads/main', PUSH_BASE_SHA: base };
+  const fetchBase = async () => new Response(base);
+  assert.equal(await selectScope(env, cwd, fetchBase), 'announcements');
+  assert.equal(await selectScope(env, cwd, async () => new Response('another release')), 'full');
+  assert.equal(await selectScope(env, cwd, async () => { throw new Error('offline'); }), 'full');
+  assert.equal(await selectScope({ GITHUB_EVENT_NAME: 'pull_request', PR_BASE_SHA: base }, cwd,
+    async () => { throw new Error('PR must run locally'); }), 'announcements');
+  commit(['next']);
+  assert.equal(await selectScope(env, cwd, fetchBase), 'full');
+});
 
 test('告知データは生成HTMLと一緒でも限定検証を使う', () => {
   assert.equal(browserScope(data), 'announcements');

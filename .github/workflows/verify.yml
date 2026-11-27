@@ -4,6 +4,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
 
 concurrency:
   group: song-guide-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
@@ -36,6 +37,7 @@ jobs:
         id: browser
         env:
           PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BASE_SHA: ${{ github.event.before }}
         run: |
           scope=$(node .github/scripts/announcement-ci-scope.mjs)
           echo "scope=$scope" >> "$GITHUB_OUTPUT"

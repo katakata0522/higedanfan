@@ -21,18 +21,25 @@ export function browserScope(rawDiff) {
   return 'full';
 }
 
-function selectScope() {
-  const base = process.env.PR_BASE_SHA;
-  if (process.env.GITHUB_EVENT_NAME !== 'pull_request' || !/^[0-9a-f]{40}$/.test(base ?? '')) return 'full';
+export async function selectScope(env = process.env, cwd = process.cwd(), fetchMarker = fetch) {
+  const mainPush = env.GITHUB_EVENT_NAME === 'push' && env.GITHUB_REF === 'refs/heads/main';
+  const base = mainPush ? env.PUSH_BASE_SHA : env.PR_BASE_SHA;
+  if ((!mainPush && env.GITHUB_EVENT_NAME !== 'pull_request') || !/^[0-9a-f]{40}$/.test(base ?? '')) return 'full';
   try {
-    const git = (...args) => execFileSync('git', ['-c', 'safe.directory=' + process.cwd(), ...args], { encoding: 'utf8' });
+    const git = (...args) => execFileSync('git', ['-c', 'safe.directory=' + cwd, ...args], { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
     if (git('rev-parse', 'HEAD^1').trim() !== base) return 'full';
-    return browserScope(git('diff', '--raw', '--no-renames', '-z', base, 'HEAD'));
+    const scope = browserScope(git('diff', '--raw', '--no-renames', '-z', base, 'HEAD'));
+    if (!mainPush || scope === 'full') return scope;
+    // 未配信の変更を取りこぼさないよう、mainの基点は本番採用版とも照合する。
+    const marker = await fetchMarker('https://katakatalab.com/higedanfan/public-source-version.txt', {
+      cache: 'no-store', redirect: 'error', signal: AbortSignal.timeout(4000),
+    });
+    return marker.ok && (await marker.text()).trim() === base ? scope : 'full';
   } catch {
     return 'full';
   }
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  console.log(selectScope());
+  console.log(await selectScope());
 }
