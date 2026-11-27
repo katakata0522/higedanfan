@@ -10,6 +10,16 @@ const change = (path, header = ':100644 100644 abc def M') => header + '\0' + pa
 const data = change('src/data/songAnnouncementRecords.json');
 const pages = change('discography/index.html') + change('vocal-range/index.html');
 
+test('公開手順とREADMEの本文だけならブラウザー検証を省く', () => {
+  const readme = change('README.md');
+  const release = change('docs/release-workflow.md');
+  for (const diff of [readme, release, readme + release]) assert.equal(browserScope(diff), 'docs');
+  for (const diff of [release + data, readme + change('docs/other.md'),
+    change('README.md', ':000000 100644 00 ab A'), change('docs/release-workflow.md', ':100644 120000 ab cd T')]) {
+    assert.equal(browserScope(diff), 'full');
+  }
+});
+
 test('mainの限定検証は公開済みの直前版からの変更に限る', async t => {
   const cwd = mkdtempSync(join(tmpdir(), 'fan-browser-scope-'));
   t.after(() => rmSync(cwd, { recursive: true, force: true }));

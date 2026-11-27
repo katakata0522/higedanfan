@@ -46,6 +46,7 @@ jobs:
         if: steps.browser.outputs.scope != 'full'
         run: git -c safe.directory="$GITHUB_WORKSPACE" diff --exit-code HEAD -- '*.html'
       - name: Verify the bundled Chromium matches the locked Playwright
+        if: steps.browser.outputs.scope != 'docs'
         run: |
           node <<'NODE'
           const assert = require('node:assert/strict');
@@ -55,6 +56,7 @@ jobs:
           fs.accessSync(require('playwright').chromium.executablePath(), fs.constants.X_OK);
           NODE
       - name: 変更範囲のブラウザー検証
+        if: steps.browser.outputs.scope != 'docs'
         env:
           BROWSER_SCOPE: ${{ steps.browser.outputs.scope }}
         run: |
