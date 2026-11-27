@@ -3,6 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 const records = 'src/data/songAnnouncementRecords.json';
 const allowed = new Set([records, 'discography/index.html', 'vocal-range/index.html']);
+const releaseDocs = new Set(['README.md', 'docs/release-workflow.md']);
 
 export function browserScope(rawDiff) {
   const fields = rawDiff.split('\0');
@@ -13,6 +14,7 @@ export function browserScope(rawDiff) {
     if (!/^:100644 100644 [0-9a-f]+ [0-9a-f]+ M$/.test(fields[i])) return 'full';
     files.push(fields[i + 1]);
   }
+  if (files.every(file => releaseDocs.has(file))) return 'docs';
   if (files.includes(records) && files.every(file => allowed.has(file))) return 'announcements';
   if (files.length === 1 && files[0] === 'src/components/home/HomePage.tsx') return 'home';
   const tourData = ['src/data/tourArchiveRecords.json', 'src/data/tourSetlistRecords.json'];
