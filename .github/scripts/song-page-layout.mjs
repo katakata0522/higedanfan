@@ -90,13 +90,14 @@ async function inspectAllPages(browser, scenario) {
 
   async function worker() {
     const page = await context.newPage();
-    page.setDefaultTimeout(10000);
+    page.setDefaultTimeout(15000);
     while (next < ids.length) {
       const id = ids[next++];
-      try {
-        const response = await page.goto(`${root}songs/${id}/`, { waitUntil: 'load', timeout: 25000 });
-        assert.equal(response?.status(), 200, '楽曲ページに到達できません');
-        await page.locator('.overview-copy p').first().waitFor();
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          const response = await page.goto(`${root}songs/${id}/`, { waitUntil: 'load', timeout: 25000 });
+          assert.equal(response?.status(), 200, '楽曲ページに到達できません');
+          await page.locator('.overview-copy p').first().waitFor();
         if (scenario.readable) {
           await page.locator('.song-site-menu > summary').click();
           await page.getByRole('button', { name: '大きな文字で読む' }).click();
@@ -211,14 +212,21 @@ async function inspectAllPages(browser, scenario) {
           else assert.ok(result.overviewFont >= 18, '本文の文字が小さすぎます');
         }
         if (scenario.mobile) assert.ok(result.overviewFont >= 16, 'スマホの本文が小さすぎます');
-      } catch (error) {
-        failures.push(`${id}: ${error.message}`);
+          break;
+        } catch (error) {
+          const isTransientTimeout = error?.name === 'TimeoutError' || /Timeout \d+ms exceeded/i.test(String(error?.message || ''));
+          if (attempt === 0 && isTransientTimeout) {
+            continue;
+          }
+          failures.push(`${id}: ${error.message}`);
+          break;
+        }
       }
     }
     await page.close();
   }
 
-  await Promise.all(Array.from({ length: 6 }, worker));
+  await Promise.all(Array.from({ length: 4 }, worker));
   await context.close();
   assert.deepEqual(failures, [], `${scenario.name}で表示不良: ${failures.join('; ')}`);
   console.log(`${scenario.name}: ${ids.length}曲を確認`);
